@@ -1,0 +1,14 @@
+# Sketch-Modeling-Agent 智能体配置
+
+name: sketch-modeling-agent
+description: NCTI 参数化建模草图绘制智能体 - 生成 NCTI Python 脚本，支持草图创建、几何绘制、约束添加与编辑
+
+# 工具配置：文件读写（file:read/file:write）+ 命令执行（bash 组含 bash）
+tool_groups:
+  - file:read
+  - file:write
+  - bash
+
+# Skills 配置：只加载 sketch-modeling 技能
+skills:
+  - sketch-modeling
