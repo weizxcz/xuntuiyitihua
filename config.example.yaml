@@ -1041,6 +1041,28 @@ sandbox:
 #   #     max_turns: 80
 #   #     timeout_seconds: 600
 #
+#   # 添加自定义 subagent (虽然配置名为 custom_agents ，但实际运行类型为 subagent )：
+#   # 各字段含义与默认值（来自 CustomSubagentConfig）：
+#   #   description      (必填) 告诉主代理什么情况下委托任务给此子代理
+#   #   system_prompt    (必填) 子代理的系统提示词（角色、能力边界、输出纪律等）
+#   #   tools            工具白名单，省略 = 继承主代理全部工具
+#   #   disallowed_tools 禁用工具，默认 [task, ask_clarification, present_files]
+#   #   skills           技能白名单，省略 = 继承全部技能；技能定义放 skills/custom/<name>/
+#   #   model            模型名，默认 "inherit"（用主代理的模型）
+#   #   max_turns        最大轮数，默认 50
+#   #   timeout_seconds  超时秒数，默认 900
+#   #
+#   #   custom_agents:
+#   #     my-specialist:
+#   #       description: "<什么场景下委托给此子代理>"
+#   #       system_prompt: |
+#   #         <子代理角色与职责>
+#   #       tools: [write_file, read_file, str_replace]
+#   #       skills: [<skill-name>]
+#   #       model: inherit
+#   #       max_turns: 50
+#   #       timeout_seconds: 900
+#
 #   # Model override: by default, subagents inherit the lead agent's model.
 #   # Set `model` to use a different model (e.g., a local Ollama model for cost savings).
 #   # The model name must match a name defined in the `models:` section above.
