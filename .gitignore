@@ -32,9 +32,20 @@ config.yaml
 # Claude Code settings
 .claude/settings.local.json
 
-# .deer-flow runtime state (JWT secret, database, sessions, per-user agents)
-# — NOT versioned
-backend/.deer-flow/
+# .deer-flow runtime state (JWT secret, database, sessions)
+# — NOT versioned, except custom agent configs under agents/sketch-modeling-agent.
+# NOTE: must ignore directory *contents* (/**) not the directory itself, so the
+# negation (!) rules below can re-include files. Ignoring the bare dir would
+# short-circuit git and skip the negation checks entirely.
+backend/.deer-flow/**
+!backend/.deer-flow/users/
+backend/.deer-flow/users/**
+!backend/.deer-flow/users/*/
+backend/.deer-flow/users/*/**
+!backend/.deer-flow/users/*/agents/
+backend/.deer-flow/users/*/agents/**
+!backend/.deer-flow/users/*/agents/sketch-modeling-agent/
+!backend/.deer-flow/users/*/agents/sketch-modeling-agent/**
 logs/
 
 # --- Local / personal secrets & runtime artifacts (NOT versioned) ---
@@ -51,9 +62,6 @@ docs/pr-evidence/
 
 # Personal study notes (not part of the project)
 docs/notes/
-
-# Custom skills (personal, not versioned)
-skills/custom/
 
 # OS / editor noise
 .DS_Store
