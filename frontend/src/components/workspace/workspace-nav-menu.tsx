@@ -99,7 +99,7 @@ export function WorkspaceNavMenu() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <a
-                    href="https://deerflow.tech/"
+                    href="https://opencax.cn/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
