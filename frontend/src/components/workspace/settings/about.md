@@ -1,10 +1,8 @@
-# 🦌 [About DeerFlow 2.0](https://github.com/bytedance/deer-flow)
+# 🏭 [About NTIC-CAX-Agent](https://github.com/your-org/NTIC-CAX-Agent)
 
-> **From Open Source, Back to Open Source**
+> Welcome to NTIC-CAX-Agent, a super agent.
 
-**DeerFlow** (**D**eep **E**xploration and **E**fficient **R**esearch **Flow**) is a community-driven SuperAgent harness that researches, codes, and creates.
-With the help of sandboxes, memories, tools and skills, it handles
-different levels of tasks that could take minutes to hours.
+NTIC-CAX-Agent is a super agent. With built-in and custom Skills, NTIC-CAX-Agent helps you achieve sketch-based parametric modeling, simulation workflow orchestration, and generate structured model analysis reports.
 
 ---
 
@@ -14,11 +12,11 @@ Explore DeerFlow on GitHub: [github.com/bytedance/deer-flow](https://github.com/
 
 ## 🌐 Official Website
 
-Visit the official website of DeerFlow: [deerflow.tech](https://deerflow.tech/)
+Visit the official website of DeerFlow: [opencax.cn](https://opencax.cn/)
 
 ## 📧 Support
 
-If you have any questions or need help, please contact us at [support@deerflow.tech](mailto:support@deerflow.tech).
+If you have any questions or need help, please contact us at [support@opencax.cn](mailto:support@opencax.cn).
 
 ---
 
