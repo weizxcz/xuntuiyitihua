@@ -1,0 +1,4 @@
+# GUI 框架
+wxPython==4.2.1
+# HTTP 客户端
+requests>=2.28.0

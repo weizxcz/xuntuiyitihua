@@ -1,0 +1,15 @@
+{
+    "dllPath" :
+        "../SDK",
+    "addKernelPath":
+        [
+            "OCC"
+        ],
+    "loadDLL":[
+        "ncti_command.dll",
+        "ncti_occ_plugin.dll",
+        "ncti_doc_occ.dll",
+        "ncti_render_vulkan.dll",
+        "ncti_window.dll"
+    ]
+}

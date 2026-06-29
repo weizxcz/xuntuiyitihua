@@ -1,0 +1,12 @@
+# GUI 框架
+wxPython==4.2.1
+
+# 数值计算
+numpy
+
+# 点云采样
+open3d
+
+# 图可视化
+networkx
+graphviz
