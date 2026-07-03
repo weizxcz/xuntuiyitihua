@@ -380,22 +380,12 @@ print(ellipseArc.ObjectType())              # 获取类型名称
 
 根据两条直线及上面其中各一点创建圆角。
 
-**定义1（点坐标定位）：** `skt.CurveRadius(point1, line1, point2, line2)`
+**定义（距离定位）：** `SketchWorkPlane.CurveRadius(r, objLine1, objLine2)` — 距离方式定位圆角。
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| point1 | NCTI.Point | 第 1 个线段对象上的点坐标 |
+| 参数 | 类型         | 说明 |
+|------|------------|------|
+| r | float      | ,圆角半径 |
 | line1 | SketchLine | 第 1 个线段对象（已创建的直线变量） |
-| point2 | NCTI.Point | 第 2 个线段对象上的点坐标 |
-| line2 | SketchLine | 第 2 个线段对象（已创建的直线变量） |
-
-**定义2（距离定位）：** `skt.CurveRadius(point1, line1, point2, line2)` — 参数形式与定义1 相同，两个点参数以距离方式定位圆角。
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| point1 | NCTI.Point | 第 1 条边上用于定位的距离点 |
-| line1 | SketchLine | 第 1 个线段对象（已创建的直线变量） |
-| point2 | NCTI.Point | 第 2 条边上用于定位的距离点 |
 | line2 | SketchLine | 第 2 个线段对象（已创建的直线变量） |
 
 > **关键：line1、line2 必须是之前通过 `skt.AddLine()` 创建并赋值的直线对象。**
@@ -406,10 +396,7 @@ skt.Open()
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(30, 0, 0))
 l2 = skt.AddLine(NCTI.Point(30, 0, 0), NCTI.Point(30, 20, 0))
 
-# 定义1：点坐标定位
-skt.CurveRadius(NCTI.Point(15, 0, 0), l1, NCTI.Point(30, 10, 0), l2)
-
-# 定义2：距离定位
+# 定义：距离定位
 skt.CurveRadius(NCTI.Point(15, 15, 0), l1, NCTI.Point(0, 15, 0), l2)
 skt.Close()
 ```
@@ -418,22 +405,13 @@ skt.Close()
 
 根据两条直线及上面其中各一点创建倒角。
 
-**定义1（点坐标定位）：** `skt.CurveChamfer(point1, line1, point2, line2)`
+**定义（距离定位）：** `SketchWorkPlane.CurveChamfer(distance1, lineObject1, distance2, lineObject2)` — 以距离方式定位倒角。
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| point1 | NCTI.Point | 第 1 个线段对象上的点坐标 |
+| 参数 | 类型         | 说明 |
+|------|------------|------|
+| distance1 | float      | 倒角在直线对象一这边的长度 |
 | line1 | SketchLine | 第 1 个线段对象（已创建的直线变量） |
-| point2 | NCTI.Point | 第 2 个线段对象上的点坐标 |
-| line2 | SketchLine | 第 2 个线段对象（已创建的直线变量） |
-
-**定义2（距离定位）：** `skt.CurveChamfer(point1, line1, point2, line2)` — 参数形式与定义1 相同，两个点参数以距离方式定位倒角。
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| point1 | NCTI.Point | 第 1 条边上用于定位的距离点 |
-| line1 | SketchLine | 第 1 个线段对象（已创建的直线变量） |
-| point2 | NCTI.Point | 第 2 条边上用于定位的距离点 |
+| distance2 | float      | 倒角在直线对象二这边的长度 |
 | line2 | SketchLine | 第 2 个线段对象（已创建的直线变量） |
 
 > **关键：line1、line2 必须是之前通过 `skt.AddLine()` 创建并赋值的直线对象。**
@@ -444,11 +422,8 @@ skt.Open()
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(30, 0, 0))
 l2 = skt.AddLine(NCTI.Point(30, 0, 0), NCTI.Point(30, 20, 0))
 
-# 定义1：点坐标定位
-skt.CurveChamfer(NCTI.Point(15, 0, 0), l1, NCTI.Point(30, 10, 0), l2)
-
-# 定义2：距离定位
-skt.CurveChamfer(NCTI.Point(15, 15, 0), l1, NCTI.Point(0, 15, 0), l2)
+# 定义：距离定位
+skt.CurveChamfer(3, l1, 4, l2)
 skt.Close()
 ```
 
