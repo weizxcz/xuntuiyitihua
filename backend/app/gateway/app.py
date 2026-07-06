@@ -23,9 +23,11 @@ from app.gateway.routers import (
     memory,
     models,
     runs,
+    sessions,
     skills,
     suggestions,
     thread_runs,
+    threads_runs_doe,
     threads,
     uploads,
 )
@@ -408,8 +410,13 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
     # Thread Runs API (LangGraph Platform-compatible runs lifecycle)
     app.include_router(thread_runs.router)
 
+    app.include_router(threads_runs_doe.router)
+
     # Stateless Runs API (stream/wait without a pre-existing thread)
     app.include_router(runs.router)
+
+    # Session management API (maps session_id to thread_id)
+    app.include_router(sessions.router)
 
     @app.get("/health", tags=["health"])
     async def health_check() -> dict[str, str]:
