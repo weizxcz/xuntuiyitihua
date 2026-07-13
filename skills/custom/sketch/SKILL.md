@@ -1,5 +1,5 @@
 ---
-name: sketch-modeling
+name: sketch
 description: >
   Trigger: user requests any sketch modeling operation — create/open/close sketch,
   draw geometry (point, line, centerline, spline, rect, circle, arc, ellipse,

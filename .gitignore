@@ -33,7 +33,7 @@ config.yaml
 .claude/settings.local.json
 
 # .deer-flow runtime state (JWT secret, database, sessions)
-# — NOT versioned, except custom agent configs under agents/sketch-modeling-agent.
+# — NOT versioned, except custom agent configs under agents/sketch-agent.
 # NOTE: must ignore directory *contents* (/**) not the directory itself, so the
 # negation (!) rules below can re-include files. Ignoring the bare dir would
 # short-circuit git and skip the negation checks entirely.
