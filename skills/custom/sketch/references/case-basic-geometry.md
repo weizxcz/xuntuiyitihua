@@ -396,8 +396,8 @@ skt.Open()
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(30, 0, 0))
 l2 = skt.AddLine(NCTI.Point(30, 0, 0), NCTI.Point(30, 20, 0))
 
-# 定义：距离定位
-skt.CurveRadius(NCTI.Point(15, 15, 0), l1, NCTI.Point(0, 15, 0), l2)
+# 根据给定的圆角半径和直线生成圆角
+skt.CurveRadius(10, l1, l2)
 skt.Close()
 ```
 
@@ -489,8 +489,8 @@ skt.Open()
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(30, 0, 0))
 l2 = skt.AddLine(NCTI.Point(30, 0, 0), NCTI.Point(30, 20, 0))
 
-# 在交点处创建圆角
-skt.CurveRadius(NCTI.Point(15, 0, 0), l1, NCTI.Point(30, 10, 0), l2)
+# 根据给定的圆角半径和直线生成圆角
+skt.CurveRadius(10, l1, l2)
 
 skt.Close()
 ```

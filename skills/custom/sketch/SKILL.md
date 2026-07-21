@@ -91,7 +91,7 @@ yh_doc = YH.YHDocument(doc)
 
 ## 跨步变量规则
 
-- 圆角/倒角需要直线对象引用：`skt.CurveRadius(NCTI.Point(...), l1, NCTI.Point(...), l2)`
+- 圆角需要直线对象引用（半径定位，3 参）：`skt.CurveRadius(10, l1, l2)`
 - 修剪可传位置点（可选附带对象列表）：`skt.CurveTrimming(NCTI.Point(...))` 或 `skt.CurveTrimming(NCTI.Point(...), [c1, l1])`
 - 偏移需要对象数组 + 距离：`skt.CurveOffset([line1], 2)`
 - 约束需要对象引用：`skt.AddConsLength(0, l1)`
