@@ -1,0 +1,115 @@
+<mxfile host="app.diagrams.net" modified="2026-07-20T00:00:00.000Z" agent="NTIC-CAX-Agent" version="24.0.0">
+  <diagram id="sketch-flow" name="草图-规格化转译+求解验证流程">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1250" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- 标题 -->
+        <mxCell id="title" value="草图 Agent：规格化转译 + 求解验证 端到端流程" style="text;html=1;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="10" width="420" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- 主链路节点 -->
+        <mxCell id="user" value="用户 / 前端" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="60" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway" value="API Gateway&#10;(threads_runs)" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="400" y="130" width="140" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="lead" value="Lead Agent&#10;(LangGraph StateGraph)" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="390" y="204" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="mw" value="20 中间件链&#10;(鉴权/沙箱/记忆/Clarification/Checkpointer)" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="370" y="284" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="skill" value="sketch Skill 注入&#10;(SKILL.md: 工作流 A–E 改写)" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="380" y="370" width="180" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="llm" value="LLM 生成 SketchSpec&#10;(结构化 JSON，不再裸写 Python)" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="458" width="200" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="transpile" value="Transpiler 确定性转译&#10;(Spec → NCTI Python，不依赖 LLM)" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="550" width="200" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="sandbox" value="沙箱 bash 执行&#10;(import YH → RunSolve)" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="370" y="642" width="200" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="verify" value="verify_sketch 读内核状态&#10;(过/欠约束、退化几何、约束值)" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="734" width="220" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="decide" value="有 issues?" style="rhombus;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="828" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="deliver" value="交付草图&#10;(STEP / 预览)" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="848" width="150" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- 长期记忆 -->
+        <mxCell id="mem_in" value="长期记忆 注入&#10;(用户画像 / 领域知识 → system)" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="80" y="458" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="mem_save" value="成功 Spec 沉淀&#10;(入长期记忆当知识库)" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="80" y="734" width="180" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- 阶段标注 -->
+        <mxCell id="note1" value="① 规格化转译：把“意图”与“代码”解耦" style="text;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="550" width="240" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="note2" value="② 求解验证：内核硬验证 + 有界重试闭环" style="text;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="734" width="240" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="note3" value="⚠ 深层验证(RunSolve异常/DOF/冲突查询)&#10;待内核 API 文档冻结后实现" style="text;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="610" y="828" width="250" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- 边 -->
+        <mxCell id="e_user_gw" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="user" target="gateway">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gw_lead" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="gateway" target="lead">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lead_mw" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="mw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mw_skill" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="mw" target="skill">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_skill_llm" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="skill" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mem_llm" value="注入" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" parent="1" source="mem_in" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_llm_trans" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="llm" target="transpile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_trans_sandbox" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="transpile" target="sandbox">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sandbox_verify" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="sandbox" target="verify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mem_save_verify" value="成功沉淀" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" parent="1" source="verify" target="mem_save">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_verify_decide" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="verify" target="decide">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_decide_deliver" value="否 (无 issues)" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" edge="1" parent="1" source="decide" target="deliver">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_decide_llm" value="是 (有 issues) → 退回改 Spec，有界重试 ≤3" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="1" source="decide" target="llm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="868" />
+              <mxPoint x="200" y="484" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

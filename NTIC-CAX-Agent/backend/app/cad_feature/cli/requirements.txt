@@ -1,0 +1,15 @@
+# cad_feature 无头 CLI（recognition_cli.py / recognition_core.py）的第三方依赖
+#
+# 运行环境：装了 NCTI SDK 的 wygcleaner（或等价）conda 环境，由 backend 的
+# runner 经 subprocess 在独立子进程内调用。这些包**只装在该子进程环境**，
+# 不要加入 backend/pyproject.toml——网关 uv 环境刻意不装 numpy/sklearn，
+# 以维持架构 A 的进程隔离（详见 docs/cad-feature-cleaner-integration-plan.md）。
+#
+# 安装（在 wygcleaner 环境）：
+#   pip install -r backend/app/cad_feature/cli/requirements.txt
+#
+# 实际 import（按代码核对，scipy 并未被引入，请勿误加）：
+#   recognition_core.py : import numpy ; from sklearn.decomposition import PCA
+#   recognition_cli.py  : import numpy（函数内 lazy import）
+numpy>=1.24
+scikit-learn>=1.3

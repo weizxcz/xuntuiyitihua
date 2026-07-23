@@ -1,0 +1,189 @@
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1180" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- ===== 参与者标签（顶部） ===== -->
+    <mxCell id="p1" value="用户 / 前端&#10;(Next.js :3000)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="30" y="40" width="130" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="p2" value="API Gateway&#10;(FastAPI :8001)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="200" y="40" width="130" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="p3" value="Lead Agent&#10;(LangGraph)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="370" y="40" width="130" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="p4" value="LLM&#10;(Qwen)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="540" y="40" width="130" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="p5" value="Sandbox / 宿主&#10;(bash, 文件系统)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="710" y="40" width="130" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="p6" value="NCTI 草图内核&#10;(YH.* API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="880" y="40" width="130" height="44" as="geometry" />
+    </mxCell>
+
+    <!-- ===== 生命线 ===== -->
+    <mxCell id="pl1" style="rounded=0;html=1;fillColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="94" y="84" width="3" height="900" as="geometry" />
+    </mxCell>
+    <mxCell id="pl2" style="rounded=0;html=1;fillColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="264" y="84" width="3" height="900" as="geometry" />
+    </mxCell>
+    <mxCell id="pl3" style="rounded=0;html=1;fillColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="434" y="84" width="3" height="900" as="geometry" />
+    </mxCell>
+    <mxCell id="pl4" style="rounded=0;html=1;fillColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="604" y="84" width="3" height="900" as="geometry" />
+    </mxCell>
+    <mxCell id="pl5" style="rounded=0;html=1;fillColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="774" y="84" width="3" height="900" as="geometry" />
+    </mxCell>
+    <mxCell id="pl6" style="rounded=0;html=1;fillColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="944" y="84" width="3" height="900" as="geometry" />
+    </mxCell>
+
+    <!-- ===== 消息（请求=黑实线，返回/工具结果=橙虚线） ===== -->
+    <!-- m1 -->
+    <mxCell id="m1" value="1  POST /api/threads/{id}/runs/stream&#10;   body={message:&quot;画一个带圆角的矩形&quot;}" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="96" y="120" as="sourcePoint" />
+        <mxPoint x="262" y="120" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m2 -->
+    <mxCell id="m2" value="2  start_run(): 鉴权(owner_check) + 组装 RunContext&#10;   落 runs 记录(SQLite, status=running) → 见底部 Persistence" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="266" y="160" as="sourcePoint" />
+        <mxPoint x="432" y="160" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m3 -->
+    <mxCell id="m3" value="3  system(已注入 sketch 技能:13几何/12约束 API) + 历史 + 消息 → 意图识别" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="436" y="200" as="sourcePoint" />
+        <mxPoint x="602" y="200" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m4 返回 -->
+    <mxCell id="m4" value="4  tool_call: write_file(path, content=草图脚本)" style="edgeStyle=none;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="602" y="240" as="sourcePoint" />
+        <mxPoint x="436" y="240" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m5 -->
+    <mxCell id="m5" value="5  write_file: 写草图脚本到 /mnt/user-data/outputs/sketch.py" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="436" y="280" as="sourcePoint" />
+        <mxPoint x="772" y="280" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m6 返回 -->
+    <mxCell id="m6" value="6  已保存, 返回文件路径" style="edgeStyle=none;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="772" y="320" as="sourcePoint" />
+        <mxPoint x="436" y="320" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m7 -->
+    <mxCell id="m7" value="7  脚本已落盘, 下一步执行" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="436" y="360" as="sourcePoint" />
+        <mxPoint x="602" y="360" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m8 返回 -->
+    <mxCell id="m8" value="8  tool_call: bash('python /mnt/user-data/outputs/sketch.py')" style="edgeStyle=none;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="602" y="400" as="sourcePoint" />
+        <mxPoint x="436" y="400" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m9 -->
+    <mxCell id="m9" value="9  bash 执行草图脚本 (沙箱/local, allow_host_bash)" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="436" y="440" as="sourcePoint" />
+        <mxPoint x="772" y="440" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m10 -->
+    <mxCell id="m10" value="10  import YH; SketchWorkPlane.Open(); 绘几何+约束; RunSolve()" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="776" y="480" as="sourcePoint" />
+        <mxPoint x="942" y="480" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m11 返回 -->
+    <mxCell id="m11" value="11  草图几何对象 / 图像结果" style="edgeStyle=none;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="942" y="520" as="sourcePoint" />
+        <mxPoint x="776" y="520" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m12 返回 -->
+    <mxCell id="m12" value="12  bash stdout: 成功 + 图像路径" style="edgeStyle=none;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="772" y="560" as="sourcePoint" />
+        <mxPoint x="436" y="560" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m13 -->
+    <mxCell id="m13" value="13  汇总工具结果" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="436" y="600" as="sourcePoint" />
+        <mxPoint x="602" y="600" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m14 返回 -->
+    <mxCell id="m14" value="14  最终自然语言答案 + present_files / view_image" style="edgeStyle=none;html=1;endArrow=block;dashed=1;strokeColor=#d79b00;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="602" y="640" as="sourcePoint" />
+        <mxPoint x="436" y="640" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m15 -->
+    <mxCell id="m15" value="15  流式事件 (events: thinking / tool_call / result)" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="436" y="680" as="sourcePoint" />
+        <mxPoint x="262" y="680" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m16 -->
+    <mxCell id="m16" value="16  SSE text/event-stream 逐事件推送 (含 Content-Location)" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="262" y="720" as="sourcePoint" />
+        <mxPoint x="96" y="720" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <!-- m17 -->
+    <mxCell id="m17" value="17  渲染对话 + 草图图像给用户" style="edgeStyle=none;html=1;endArrow=block;fontSize=10;fontStyle=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="96" y="760" as="sourcePoint" />
+        <mxPoint x="40" y="760" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===== 贯穿性旁注 ===== -->
+    <mxCell id="note_p" value="Persistence（贯穿全程，绿）&#10;• runs 记录: status running → success/failed&#10;• threads / 对话历史落 SQLite&#10;• 用户归属: 主链路 get_current_user；DOE 链路额外注入 user_id(★fork)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="40" y="820" width="500" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="note_t" value="Tracing / 可观测（贯穿全程，紫）&#10;• 每个事件(思考/工具调用/结果)都发 tracing&#10;• 对应架构文档 tracing 铁律&#10;• 当前无 checkpointer → 重启丢历史(可加 sqlite/postgres)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="560" y="820" width="470" height="90" as="geometry" />
+    </mxCell>
+
+    <!-- ===== 图例 ===== -->
+    <mxCell id="leg1" value="—— 请求 / 调用" style="endArrow=none;html=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="40" y="950" as="sourcePoint" />
+        <mxPoint x="160" y="950" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="leg2" value="---- 返回 / 工具结果 (LLM tool_call 或 stdout)" style="endArrow=none;dashed=1;strokeColor=#d79b00;html=1;fontSize=10;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="300" y="950" as="sourcePoint" />
+        <mxPoint x="540" y="950" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

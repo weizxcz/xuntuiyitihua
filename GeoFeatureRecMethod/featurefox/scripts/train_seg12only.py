@@ -1,0 +1,172 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""训练 XGBoost 边分类器 —— 仅含 seg=12 的 STEP 文件版本。
+
+与 train.py 完全相同的超参和流程，唯一差异：
+  - 只使用含有盲孔 seg=12 面标注的 STEP 文件训练
+  - 模型保存为 edge_clf_seg12only.json / calibrator_seg12only.pkl
+  - 测试集沿用 gen_test_split.py 生成的 test_names.json
+
+用法（从 YHCADSmartCleaner/ 执行，yhcad_py312 环境）:
+    python -m featurefox.scripts.train_seg12only
+"""
+
+import os
+import sys
+import time
+import pickle
+import json
+
+import numpy as np
+
+# featurefox 包根目录（scripts/ 的父目录）
+FEATUREFOX_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if FEATUREFOX_ROOT not in sys.path:
+    sys.path.insert(0, FEATUREFOX_ROOT)
+from featurefox.lib._env import get_project_root
+PROJECT_ROOT = get_project_root()
+if PROJECT_ROOT and PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+# 必须在 import instance_data 之前设置，让 list_step_files 穿透到子进程
+os.environ["NCTI_SEG12_ONLY"] = "1"
+
+import xgboost as xgb
+from sklearn.isotonic import IsotonicRegression
+from sklearn.model_selection import train_test_split
+
+from featurefox.lib.edge_features import build_face_graph, FEATURE_NAMES
+from featurefox.lib.instance_data import list_step_files, collect_dataset
+from featurefox.lib.ncti_faceid_map import init_ncti_safe
+
+# 模型文件保存到 featurefox/models/
+MODEL_DIR = os.path.join(FEATUREFOX_ROOT, "models")
+EDGE_MODEL_PATH = os.path.join(MODEL_DIR, "edge_clf_seg12only.json")
+CALIBRATOR_PATH = os.path.join(MODEL_DIR, "calibrator_seg12only.pkl")
+
+# 测试集文件名：featurefox/test_names.json
+TEST_NAMES_FILE = os.path.join(FEATUREFOX_ROOT, "test_names.json")
+
+
+def train(max_files=0, test_size=0.2):
+    print("=" * 60, flush=True)
+    print("FeatureFox-NCTI 边分类器训练 —— 仅 seg=12 文件", flush=True)
+    print("=" * 60, flush=True)
+
+    # 0. 初始化 NCTI
+    ncti = init_ncti_safe(PROJECT_ROOT)
+    if ncti is None:
+        sys.exit("NCTI 初始化失败：需 yhcad_py312 环境 + config/ncti_config.json。")
+
+    # 1. 收集数据（自动仅 seg=12 文件，NCTI_SEG12_ONLY=1 已设置）
+    t0 = time.time()
+    step_files = list_step_files(max_files)
+    print("训练文件数 (仅 seg=12): {}".format(len(step_files)), flush=True)
+    print("收集边样本（NCTI 导入，较慢）...", flush=True)
+    X, y, meta = collect_dataset(step_files, ncti, build_face_graph, verbose=True)
+    X = np.array(X, dtype=np.float32)
+    y = np.array(y, dtype=np.int32)
+    print("特征矩阵: {}  标签: {}".format(X.shape, y.shape), flush=True)
+    pos = int(y.sum())
+    neg = int(len(y) - pos)
+    print("正样本(盲孔内部边): {} ({:.2f}%)".format(pos, 100.0 * pos / len(y)), flush=True)
+    print("负样本: {} ({:.2f}%)".format(neg, 100.0 * neg / len(y)), flush=True)
+    print("收集耗时: {:.1f}s".format(time.time() - t0), flush=True)
+
+    # 2. 按文件分组划分 train/calib/test（避免泄漏）
+    names = np.array([m["name"] for m in meta])
+    unique_names = sorted(set(names))
+    print("\n唯一零件数: {}".format(len(unique_names)), flush=True)
+
+    # 尝试加载已有的 test_names.json 保证评估一致
+    if os.path.exists(TEST_NAMES_FILE):
+        with open(TEST_NAMES_FILE, "r", encoding="utf-8") as f:
+            pre_split_test = set(json.load(f))
+        # 与当前 seg12-only 文件取交集
+        test_names = sorted(pre_split_test & set(unique_names))
+        rest = sorted(set(unique_names) - set(test_names))
+        train_names, calib_names = train_test_split(rest, test_size=0.2, random_state=42)
+        print("  从 test_names.json 加载测试集（交集 {} 个）".format(len(test_names)), flush=True)
+    else:
+        train_names, test_names = train_test_split(unique_names, test_size=test_size, random_state=42)
+        train_names, calib_names = train_test_split(train_names, test_size=0.2, random_state=42)
+
+    train_set = set(train_names)
+    calib_set = set(calib_names)
+    test_set = set(test_names)
+
+    train_mask = np.array([m["name"] in train_set for m in meta])
+    calib_mask = np.array([m["name"] in calib_set for m in meta])
+    test_mask = np.array([m["name"] in test_set for m in meta])
+
+    X_tr, y_tr = X[train_mask], y[train_mask]
+    X_cal, y_cal = X[calib_mask], y[calib_mask]
+    X_te, y_te = X[test_mask], y[test_mask]
+    print("train: {} 边 (pos={}), calib: {} 边 (pos={}), test: {} 边 (pos={})".format(
+        len(y_tr), int(y_tr.sum()), len(y_cal), int(y_cal.sum()),
+        len(y_te), int(y_te.sum())), flush=True)
+
+    # 3. 训练 XGBoost（FeatureFox 超参 + scale_pos_weight 处理不平衡）
+    print("\n训练 XGBoost (200 trees, depth 6, lr 0.1)...", flush=True)
+    spw = max(1.0, neg / max(1, pos))
+    clf = xgb.XGBClassifier(
+        n_estimators=200,
+        max_depth=6,
+        learning_rate=0.1,
+        scale_pos_weight=spw,
+        objective="binary:logistic",
+        tree_method="hist",
+        n_jobs=-1,
+        random_state=42,
+        eval_metric="logloss",
+    )
+    t1 = time.time()
+    clf.fit(X_tr, y_tr)
+    print("训练耗时: {:.1f}s".format(time.time() - t1), flush=True)
+
+    # 4. 等渗校准
+    print("\n等渗校准...", flush=True)
+    raw_prob_cal = clf.predict_proba(X_cal)[:, 1]
+    calibrator = IsotonicRegression(out_of_bounds="clip", y_min=0, y_max=1)
+    calibrator.fit(raw_prob_cal, y_cal)
+
+    # 5. 在 test 集评估边级指标
+    raw_prob_te = clf.predict_proba(X_te)[:, 1]
+    cal_prob_te = calibrator.transform(raw_prob_te)
+    print("\n边级 test 评估:", flush=True)
+    _eval_edges(y_te, raw_prob_te, "raw")
+    _eval_edges(y_te, cal_prob_te, "calibrated")
+
+    # 6. 保存模型
+    clf.get_booster().save_model(EDGE_MODEL_PATH)
+    with open(CALIBRATOR_PATH, "wb") as f:
+        pickle.dump(calibrator, f)
+    print("\n模型已保存:", flush=True)
+    print("  边分类器: {}".format(EDGE_MODEL_PATH), flush=True)
+    print("  校准器: {}".format(CALIBRATOR_PATH), flush=True)
+
+    # 7. 特征重要性
+    print("\n特征重要性 (top 15):", flush=True)
+    imp = clf.feature_importances_
+    order = np.argsort(imp)[::-1]
+    for idx in order[:15]:
+        print("  {:22s} {:.4f}".format(FEATURE_NAMES[idx], imp[idx]), flush=True)
+
+    print("\n总耗时: {:.1f}s".format(time.time() - t0), flush=True)
+
+
+def _eval_edges(y_true, prob, tag):
+    y_pred = (prob >= 0.5).astype(int)
+    tp = int(((y_pred == 1) & (y_true == 1)).sum())
+    fp = int(((y_pred == 1) & (y_true == 0)).sum())
+    fn = int(((y_pred == 0) & (y_true == 1)).sum())
+    p = tp / (tp + fp) if (tp + fp) > 0 else 0
+    r = tp / (tp + fn) if (tp + fn) > 0 else 0
+    f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0
+    print("  [{}] P={:.4f} R={:.4f} F1={:.4f}  (TP={} FP={} FN={})".format(
+        tag, p, r, f1, tp, fp, fn), flush=True)
+
+
+if __name__ == "__main__":
+    train(max_files=0)
+    os._exit(0)

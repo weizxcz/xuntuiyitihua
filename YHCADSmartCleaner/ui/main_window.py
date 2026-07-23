@@ -119,6 +119,10 @@ class CAEPlatform(wx.Frame):
                                       "attr_stat_blind_hole.json")
         self.infer_method = "AAG"
 
+        # 用户通过「选择预训练模型」导入的自定义模型（与内置各特征默认权重相互独立，不覆盖）
+        self.pretrained_model_custom = None
+        self.stat_path_custom = None
+
         self.pretrained_mfr_model_round = os.path.join("ai",
                                                        "brep_mfr",
                                                        "weights",
@@ -1240,8 +1244,24 @@ class CAEPlatform(wx.Frame):
                                                 default_dir="C:",
                                                 default_file="")
         if filename_path:
-            self.pretrained_model_round = filename_path
-            self.status_bar.SetStatusText(f"导入预训练模型:{filename_path}")
+            self.pretrained_model_custom = filename_path
+            # 自动在同目录匹配归一化统计量 json（即使与模型不同名也尽量定位）：
+            # 优先 同名json > attr_stat.json > 目录下唯一单个json
+            model_dir = os.path.dirname(filename_path)
+            base = os.path.splitext(os.path.basename(filename_path))[0]
+            stat_json = os.path.join(model_dir, base + ".json")
+            if not os.path.exists(stat_json):
+                stat_json = os.path.join(model_dir, "attr_stat.json")
+            if not os.path.exists(stat_json):
+                jsons = [os.path.join(model_dir, f) for f in os.listdir(model_dir)
+                         if f.lower().endswith(".json")
+                         and os.path.isfile(os.path.join(model_dir, f))]
+                stat_json = jsons[0] if len(jsons) == 1 else None
+            if stat_json and os.path.exists(stat_json):
+                self.stat_path_custom = stat_json
+                self.status_bar.SetStatusText(f"导入自定义模型:{filename_path}（统计量:{stat_json}）")
+            else:
+                self.status_bar.SetStatusText(f"导入自定义模型:{filename_path}（同目录未找到统计量json，请确认）")
         else:
             self.status_bar.SetStatusText(f"导入预训练模型失败")
 

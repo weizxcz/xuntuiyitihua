@@ -1,0 +1,15 @@
+{
+  "dllPath": "C:/path/to/YHPreCAE",
+  "addKernelPath": [
+    "OCC"
+  ],
+  "loadDLL": [
+    "ncti_command.dll",
+    "ncti_occ_plugin.dll",
+    "ncti_doc_occ.dll",
+    "ncti_render_vulkan.dll",
+    "ncti_window.dll"
+  ],
+  "aiEnvPython": "C:/Users/your-user/anaconda3/envs/onnx/python.exe",
+  "trainEnvPython": "C:/Users/your-user/anaconda3/envs/Geometry_new/python.exe"
+}

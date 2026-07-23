@@ -33,7 +33,7 @@ from featurefox_ncti.instance_features import (  # noqa: E402
     extract_instance_features, INSTANCE_FEATURE_NAMES)
 from featurefox_ncti.predict import (  # noqa: E402
     load_models, DEFAULT_THRESHOLD, MIN_INSTANCE_FACES, MIN_PLANE_RATIO)
-from ncti_faceid_map import init_ncti_safe  # noqa: E402
+from YHCADSmartCleaner.utils.through_step.featurefox.ncti_faceid_map import init_ncti_safe  # noqa: E402
 
 
 def _seg_by_cell(name):

@@ -1,0 +1,45 @@
+
+# AAGNet 模型配置 —— 通槽任务
+# 针对通槽小数据集（train≈197 样本）优化，主要改动 vs 盲孔配置：
+#   1. batch_size 128→16：原 128>样本数，加 drop_last 导致每 epoch 仅 1 次梯度更新且丢弃 35% 样本；
+#      改 16 后每 epoch≈12 个 batch，更新次数×12，drop_last 也只丢 5 个样本。
+#   2. lr 1e-4→5e-4：配合每 epoch 更新步数大幅增多，适当调高以加快收敛。
+#   3. inst_a 1→5、bottom_a 1→5：上次 val_inst_f1≈0.02、val_bottom_iou 全程 0，
+#      实例与底面都没学到，加重这两个损失迫使模型学习正样本。
+
+"edge_attr_dim": 10  # 边属性维度数量
+"node_attr_dim": 12  # 面属性维度数量
+"edge_attr_emb": 64  # 边属性嵌入维度数量
+"node_attr_emb": 64  # 面属性嵌入维度数量
+"edge_grid_dim": 0  # 边网格维度数量
+"node_grid_dim": 7 # 面网格维度数量
+"edge_grid_emb": 0  # 边网格嵌入维度数量
+"node_grid_emb": 64  # 面网格嵌入维度数量
+"num_layers": 4  # recommend: 3
+"delta": 2  # obsolete
+"mlp_ratio": 4  # 2
+"drop": 0.25
+"drop_path": 0.25
+"head_hidden_dim": 256  # 64
+"conv_on_edge": false
+"use_uv_gird": true
+"use_edge_attr": true
+"use_face_attr": true
+"seed": 42
+"device": 'cpu'
+"architecture": "AAGNetGraphEncoder" #aagnet网络编码模型名称
+"dataset_type": "full"
+"epochs": 200
+"lr": 0.0005
+"weight_decay": 0.001
+"batch_size": 16
+"ema_decay_per_epoch": 0.5
+"seg_a": 1.0
+"inst_a": 5.0
+"bottom_a": 5.0
+"n_classes": 2  # 分类数量
+
+# ===== 数据增强 =====
+"center_and_scale": true   # 居中+缩放到[-1,1]：统一不同STEP的坐标系和尺度，归一化（train/val都做）。建议始终开。
+"random_rotate": true      # 随机90°旋转UV网格(点+法向)扩充数据：只对train做，val固定关闭。
+                           # 注意：仅旋转UV网格，不同步旋转face_attr；若face_attr含方向性特征，开启前请先确认其构成。

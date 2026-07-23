@@ -1,0 +1,59 @@
+/**
+ * About NTIC-CAX-Agent markdown content. Inlined to avoid raw-loader dependency
+ * (Turbopack cannot resolve raw-loader for .md imports).
+ */
+export const aboutMarkdown = `# 🏭 [About NTIC-CAX-Agent](https://github.com/bytedance/deer-flow)
+
+> Welcome to NTIC-CAX-Agent, a super agent.
+
+NTIC-CAX-Agent is a super agent. With built-in and custom Skills, NTIC-CAX-Agent helps you achieve sketch-based parametric modeling, simulation workflow orchestration, and generate structured model analysis reports.
+
+---
+
+## 🚀 Core Features
+
+* **Skills & Tools**: With built-in and custom Skills, NTIC-CAX-Agent helps you achieve sketch-based parametric modeling, simulation workflow orchestration, and generate structured model analysis reports.
+* **Sub-Agents**: Sub-Agents help the main agent to do the tasks that are too complex to be done by the main agent.
+* **Sandbox & File System**: Safely execute code and manipulate files in the sandbox.
+* **Context Engineering**: Isolated sub-agent context, summarization to keep the context window sharp.
+* **Long-Term Memory**: Keep recording the user's profile, top of mind, and conversation history.
+
+---
+
+## 🌟 GitHub Repository
+
+![Star History Chart](https://api.star-history.com/svg?repos=bytedance/deer-flow&type=Date)
+
+Explore NTIC-CAX-Agent on GitHub: [github.com/bytedance/deer-flow](https://github.com/bytedance/deer-flow)
+
+## 🌐 Official Website
+
+Visit the official website of NTIC-CAX-Agent: [opencax.cn](https://opencax.cn/)
+
+## 📧 Support
+
+If you have any questions or need help, please contact us at [support@opencax.cn](mailto:support@opencax.cn).
+
+---
+
+## 📜 License
+
+NTIC-CAX-Agent is proudly open source and distributed under the **MIT License**.
+
+---
+
+## 🙌 Acknowledgments
+
+We extend our heartfelt gratitude to the open source projects and contributors who have made NTIC-CAX-Agent a reality. We truly stand on the shoulders of giants.
+
+### Core Frameworks
+- **[LangChain](https://github.com/langchain-ai/langchain)**: A phenomenal framework that powers our LLM interactions and chains.
+- **[LangGraph](https://github.com/langchain-ai/langgraph)**: Enabling sophisticated multi-agent orchestration.
+- **[Next.js](https://nextjs.org/)**: A cutting-edge framework for building web applications.
+
+### UI Libraries
+- **[Shadcn](https://ui.shadcn.com/)**: Minimalistic components that power our UI.
+- **[SToneX](https://github.com/stonexer)**: For his invaluable contribution to token-by-token visual effects.
+
+These outstanding projects form the backbone of NTIC-CAX-Agent and exemplify the transformative power of open source collaboration.
+`;

@@ -1,0 +1,107 @@
+<mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1150" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Tier 1: 接入层 -->
+    <mxCell id="t1" value="接入层" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="40" width="920" height="130" as="geometry" />
+    </mxCell>
+    <mxCell id="client" value="用户 / IM 客户端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="680" y="85" width="240" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="nginx" value="Nginx 反向代理&#10;:2026" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="70" y="85" width="220" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="fe" value="Frontend (Next.js)&#10;:3000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="360" y="85" width="240" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- Tier 2: 应用层 -->
+    <mxCell id="t2" value="应用层  app.gateway（FastAPI，可依赖框架层，禁止反向）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="200" width="920" height="250" as="geometry" />
+    </mxCell>
+    <mxCell id="gw" value="API Gateway  :8001（FastAPI）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="70" y="225" width="360" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="routers" value="routers: thread_runs / threads_runs_doe(★fork) / auth / artifacts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="70" y="290" width="430" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="svc" value="services / services_doe(★fork，仅多注入 user_id)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="70" y="360" width="430" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="ch" value="IM Channels（默认全关）&#10;飞书 / 钉钉 / 企微 / Slack / Discord / Telegram / WeChat" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="540" y="225" width="380" height="200" as="geometry" />
+    </mxCell>
+
+    <!-- Tier 3: 框架层 -->
+    <mxCell id="t3" value="框架层  packages/harness/deerflow（LangGraph 运行时，被应用层依赖）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="480" width="920" height="400" as="geometry" />
+    </mxCell>
+    <mxCell id="lead" value="Lead Agent：model + 20 中间件链 + 系统提示词（Clarification 必须最后）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="70" y="505" width="440" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="sub" value="SubAgents&#10;(并发 3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="70" y="580" width="200" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="sandbox" value="Sandbox&#10;(Local/Docker, bash)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="540" y="580" width="200" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="tools" value="Tools: builtin / MCP / community / ACP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="70" y="650" width="280" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="skills" value="Skills: public/ + custom/sketch(NCTI 草图建模)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="380" y="650" width="360" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="persist" value="Persistence: sqlite (threads/runs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="70" y="720" width="280" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="trace" value="Tracing / 可观测（tracing 铁律）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="380" y="720" width="360" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- 记忆双层（短期 Checkpointer / 长期 Memory）-->
+    <mxCell id="ckpt" value="短期记忆 Checkpointer&#10;(LangGraph 拥有 · thread级 · sqlite/PG)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="760" y="580" width="200" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="mem" value="长期记忆 Memory&#10;(per-user memory.json · user级 · 跨会话)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="760" y="640" width="200" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="note_mem" value="记忆双层（解耦）：&#10;• 短期 Checkpointer — LangGraph 框架层拥有，thread 级，存状态快照(对话历史/工具结果)，支持恢复/中断/human-in-loop；表由 LangGraph 管理，alembic 排除&#10;• 长期 Memory — DeerFlow 应用层，user 级；MemoryMiddleware 排队→后台 LLM 提炼 facts(置信度≥0.7)→原子写 memory.json；下次注入 system prompt 的 &lt;memory&gt; 标签" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="70" y="790" width="850" height="78" as="geometry" />
+    </mxCell>
+
+    <!-- Tier 4: 外部依赖 -->
+    <mxCell id="t4" value="外部依赖" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="910" width="920" height="150" as="geometry" />
+    </mxCell>
+    <mxCell id="llm" value="LLM Endpoint&#10;Qwen (AGENT_BASE_URL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="70" y="940" width="280" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="mcps" value="MCP Servers&#10;github / postgres / drawio" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="400" y="940" width="280" height="55" as="geometry" />
+    </mxCell>
+    <mxCell id="ncti" value="NCTI 草图内核&#10;(YH.SketchWorkPlane / YH.YHDocument)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="720" y="940" width="220" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- Edges -->
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="client" target="nginx"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="nginx" target="fe"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="nginx" target="gw"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="fe" target="gw"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="ch" target="gw"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="gw" target="lead"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="sub"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="mem"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e8b" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="ckpt"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="tools"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="sandbox"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="skills"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="tools" target="mcps"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="persist"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="trace"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="lead" target="llm"><mxGeometry relative="1" as="geometry" /></mxCell>
+    <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="skills" target="ncti"><mxGeometry relative="1" as="geometry" /></mxCell>
+  </root>
+</mxGraphModel>

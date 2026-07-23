@@ -1,0 +1,44 @@
+# ====== Python ======
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+.venv/
+venv/
+env/
+.env
+
+# 分布 / 打包
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ====== IDE ======
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ====== 项目特定 ======
+# NCTI SDK 路径配置（不同机器不同，文档要求手动改 config/ncti_config.json）
+# 视情况选择：这里默认不忽略，方便提交占位模板
+# featurefox/config/ncti_config.json
+
+# 训练产物 / 评估报告（可选：保留在仓库当 demo）
+# featurefox/_chunks/
+# featurefox/_models_fullvolume/
+# featurefox/models/*_eval_report*.json
+# featurefox/models/test_names.json
+
+# 临时文件
+*.tmp
+*.log
+*.bak
+
+# 用户数据
+*.swp

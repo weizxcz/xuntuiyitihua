@@ -1,0 +1,69 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.coverage
+.coverage.*
+.ruff_cache
+agent_history.gif
+static/browser_history/*.gif
+
+log/
+log/*
+
+# Virtual environments
+.venv
+venv/
+
+# User config file
+config.yaml
+
+# Langgraph
+.langgraph_api
+
+# Sandbox runtime working dir — pre-created and excluded from uvicorn reload
+# (scripts/serve.sh, docker/dev-entrypoint.sh). Anchored so it does not match
+# the source package backend/packages/harness/deerflow/sandbox/.
+/sandbox/
+
+# Claude Code settings
+.claude/settings.local.json
+
+# .deer-flow runtime state (JWT secret, database, sessions)
+# — NOT versioned, except custom agent configs under agents/sketch-agent.
+# NOTE: must ignore directory *contents* (/**) not the directory itself, so the
+# negation (!) rules below can re-include files. Ignoring the bare dir would
+# short-circuit git and skip the negation checks entirely.
+backend/.deer-flow/**
+!backend/.deer-flow/users/
+backend/.deer-flow/users/**
+!backend/.deer-flow/users/*/
+backend/.deer-flow/users/*/**
+!backend/.deer-flow/users/*/agents/
+backend/.deer-flow/users/*/agents/**
+!backend/.deer-flow/users/*/agents/sketch-modeling-agent/
+!backend/.deer-flow/users/*/agents/sketch-modeling-agent/**
+logs/
+
+# --- Local / personal secrets & runtime artifacts (NOT versioned) ---
+# Keep the *.example templates tracked, but never the filled-in configs.
+.env
+.env.*
+!.env.example
+extensions_config.json
+
+# Temp/build directories produced by the dev toolchain
+temp/
+pr-build/
+docs/pr-evidence/
+
+# Personal study notes (not part of the project)
+docs/notes/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+users

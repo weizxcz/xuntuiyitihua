@@ -27,7 +27,7 @@ for _p in (UTILS_DIR, TS_DIR, PROJECT_ROOT, THIS_DIR):
 from featurefox_ncti.edge_features import build_face_graph, FEATURE_NAMES  # noqa: E402
 from featurefox_ncti.instance_data import list_step_files, load_label, STEPS_DIR  # noqa: E402
 from ncti_backend import load_part, count_advanced_faces  # noqa: E402
-from ncti_faceid_map import init_ncti_safe  # noqa: E402
+from YHCADSmartCleaner.utils.through_step.featurefox.ncti_faceid_map import init_ncti_safe  # noqa: E402
 
 
 def main():

@@ -1,0 +1,95 @@
+{
+  "title": "YHCADLabeller 测试报告",
+  "timestamp": "2026-07-02 09:26:02",
+  "environment": {
+    "python_version": "3.11.15 | packaged by Anaconda, Inc. | (main, Mar 11 2026, 17:12:15) [MSC v.1942 64 bit (AMD64)]",
+    "wxpython_version": "4.2.5 msw (phoenix) wxWidgets 3.2.9",
+    "ncti_loaded": false
+  },
+  "summary": {
+    "total": 9,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 9
+  },
+  "details": {
+    "passed": [],
+    "failed": [],
+    "skipped": [],
+    "errors": [
+      {
+        "module": "Config",
+        "test_id": "C001",
+        "name": "DLL路径加载",
+        "status": "ERROR",
+        "message": "No module named 'config'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "Config",
+        "test_id": "C002",
+        "name": "NCTI初始化",
+        "status": "ERROR",
+        "message": "No module named 'config'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "Config",
+        "test_id": "C003",
+        "name": "Document创建",
+        "status": "ERROR",
+        "message": "No module named 'config'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "Mouse",
+        "test_id": "M001",
+        "name": "MouseEventDelegate初始化",
+        "status": "ERROR",
+        "message": "No module named 'function'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "UI",
+        "test_id": "U001",
+        "name": "主窗口创建",
+        "status": "ERROR",
+        "message": "No module named 'ui'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "Label",
+        "test_id": "L001",
+        "name": "添加特征名称",
+        "status": "ERROR",
+        "message": "No module named 'ui'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "Label",
+        "test_id": "L005",
+        "name": "初始空列表",
+        "status": "ERROR",
+        "message": "No module named 'ui'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "File",
+        "test_id": "F001",
+        "name": "工具栏按钮存在",
+        "status": "ERROR",
+        "message": "No module named 'ui'",
+        "timestamp": "2026-07-02 09:26:02"
+      },
+      {
+        "module": "Display",
+        "test_id": "G001",
+        "name": "select_body复选框",
+        "status": "ERROR",
+        "message": "No module named 'ui'",
+        "timestamp": "2026-07-02 09:26:02"
+      }
+    ]
+  }
+}

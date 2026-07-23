@@ -38,7 +38,7 @@ from sklearn.model_selection import train_test_split  # noqa: E402
 
 from featurefox_ncti.edge_features import build_face_graph, FEATURE_NAMES  # noqa: E402
 from featurefox_ncti.instance_data import list_step_files, collect_dataset  # noqa: E402
-from ncti_faceid_map import init_ncti_safe  # noqa: E402
+from YHCADSmartCleaner.utils.through_step.featurefox.ncti_faceid_map import init_ncti_safe  # noqa: E402
 
 MODEL_DIR = THIS_DIR
 EDGE_MODEL_PATH = os.path.join(MODEL_DIR, "edge_clf.json")

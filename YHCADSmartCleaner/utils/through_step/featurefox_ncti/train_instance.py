@@ -40,7 +40,7 @@ from featurefox_ncti.instance_features import (  # noqa: E402
 from featurefox_ncti.predict import (  # noqa: E402
     load_models, DEFAULT_THRESHOLD, MIN_INSTANCE_FACES, MIN_PLANE_RATIO)
 from ncti_backend import load_part, count_advanced_faces  # noqa: E402
-from ncti_faceid_map import init_ncti_safe  # noqa: E402
+from YHCADSmartCleaner.utils.through_step.featurefox.ncti_faceid_map import init_ncti_safe  # noqa: E402
 
 INST_MODEL_PATH = os.path.join(THIS_DIR, "inst_clf.json")
 INST_CALIB_PATH = os.path.join(THIS_DIR, "inst_calibrator.pkl")

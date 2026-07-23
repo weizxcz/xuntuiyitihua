@@ -26,7 +26,7 @@ from featurefox_ncti.predict import (  # noqa: E402
     load_models, load_instance_models, predict_through_slots)
 from featurefox_ncti.instance_data import list_step_files, load_label, STEPS_DIR  # noqa: E402
 from ncti_backend import load_part  # noqa: E402
-from ncti_faceid_map import init_ncti_safe  # noqa: E402
+from YHCADSmartCleaner.utils.through_step.featurefox.ncti_faceid_map import init_ncti_safe  # noqa: E402
 
 
 def main():
