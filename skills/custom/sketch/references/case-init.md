@@ -10,7 +10,7 @@
 
 ### 1. 创建草图工作平面
 
-`skt = YH.SketchWorkPlane(doc)` — 默认平面
+`skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))` — 默认平面
 `skt = YH.SketchWorkPlane(doc, origin, hDir, vDir)` — 自定义平面
 
 | 参数 | 类型 | 说明 |
@@ -23,7 +23,7 @@
 
 ```python
 # 默认平面
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 
 # 自定义平面（原点 (5,0,0)，水平方向 (0,1,0)，竖直方向 (0,0,1)）
 origin = NCTI.Point(5, 0, 0)
@@ -37,7 +37,7 @@ skt = YH.SketchWorkPlane(doc, origin, hDir, vDir)
 `skt.Open()` — 无参数。进入草图绘制模式，所有绘制操作前必须先调用。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Close()   # 先关闭（演示）
 skt.Open()    # 再打开
 ```
@@ -47,7 +47,7 @@ skt.Open()    # 再打开
 `skt.Close()` — 无参数。退出草图绘制模式。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Close()
 ```
 
@@ -60,7 +60,7 @@ skt.Close()
 | objName | str | 对象名称；绘制后可从左侧对象树查看，或鼠标悬停在图形上查看 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 # 根据实际对象名获取（对象名来自对象树）
 c1 = skt.GetObject("yhd23")
@@ -76,7 +76,7 @@ print(c1.ObjectName())
 | strObjNameList | list[str] | 草图对象名称列表 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 skt.AddLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 # 根据实际对象名删除
@@ -88,7 +88,7 @@ skt.Delete(["yhd23", "yhd33"])
 `skt.GetAllDisplayObjects()` — 无参数。返回草图内全部绘图几何图元对象。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 allGeo = skt.GetAllDisplayObjects()
 ```
@@ -106,7 +106,7 @@ allCons = skt.GetAllConsObjects()
 `skt.GetOrigin()` — 无参数。返回草图原点 SketchOrigin 对象。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 org = skt.GetOrigin()
 pos = org.Point()          # 获取原点坐标
 print(pos)
@@ -117,7 +117,7 @@ print(pos)
 `skt.GetXAxis()` — 无参数。返回草图基准 X 轴 SketchXAxis 对象。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 xAxis = skt.GetXAxis()
 name = xAxis.ObjectName()  # 获取名称
 vec = xAxis.Direct()       # 获取方向向量
@@ -150,7 +150,7 @@ endPt = centerLine.EndPoint()         # 获取终点
 `skt.RunSolve()` — 无参数。执行草图约束求解，更新几何图元位置尺寸。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 yh_doc = YH.YHDocument(doc)
 yh_doc.AutoSolve(False)          # 先关闭自动求解
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(10, 0, 0))
@@ -197,7 +197,7 @@ yh_doc = YH.YHDocument(doc)
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 # 对象名来自左侧对象树
 skt0 = yh_doc.GetSketch("yh_sketch_work_plane_14")
 ```
@@ -245,7 +245,7 @@ yh_doc.CreatCoordinateSystem(NCTI.Point(0, 20, 0), NCTI.Vector(1, 0, 0), NCTI.Ve
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.AddCircle(NCTI.Point(0, 0, 0), 50)
 skt.AddLine(NCTI.Point(50, 0, 0), NCTI.Point(80, 90, 0))
 yh_doc.ExportPython("D:/test.py", 1)
@@ -261,7 +261,7 @@ yh_doc.ExportPython("D:/test.py", 1)
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 yh_doc.AutoSolve(False)         # 关闭自动求解
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 50)
 consR = skt.AddConsRadius(c1)
@@ -294,7 +294,7 @@ skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(50, 50, 0))
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 yh_doc.AutoCalFreeCons(False)
 skt.AddCircle(NCTI.Point(0, 0, 0), 50)
 ```
@@ -309,7 +309,7 @@ skt.AddCircle(NCTI.Point(0, 0, 0), 50)
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 yh_doc.AutoCalCloseArea(False)
 skt.AddCircle(NCTI.Point(0, 0, 0), 50)
 ```
@@ -343,7 +343,7 @@ yh_doc.Clear()
 
 X 轴（获取名称/类型/方向、设置名称）：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 xAxis = skt.GetXAxis()
 print(xAxis.ObjectName())             # 获取名称
 xAxis.SetObjectName('nameTest')       # 设置名称
@@ -353,7 +353,7 @@ print(xAxis.Direct())                 # 获取方向向量
 
 Y 轴（获取名称/类型/方向、设置名称）：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 yAxis = skt.GetYAxis()
 print(yAxis.ObjectName())             # 获取名称
 yAxis.SetObjectName('nameTest')       # 设置名称
@@ -372,7 +372,7 @@ print(yAxis.Direct())                 # 获取方向向量
 
 获取原点坐标、名称/类型、设置名称：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 org = skt.GetOrigin()
 print(org.Point())                    # 获取原点坐标
 print(org.ObjectName())               # 获取名称
@@ -394,7 +394,7 @@ print(org.ObjectType())               # 获取类型名称
 
 获取起点/终点坐标、名称/类型、设置名称：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 centerLine = skt.GetCenterLine()
 print(centerLine.StartPoint())        # 获取起点坐标
 print(centerLine.EndPoint())          # 获取终点坐标
@@ -415,7 +415,7 @@ yh_doc = YH.YHDocument(doc)
 yh_doc.AutoCalFreeCons(False)        # 关闭自动弱约束，便于精确控制
 
 # 草图入口
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 # 绘图

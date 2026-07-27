@@ -31,7 +31,7 @@
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 yh_doc.AutoSolve(False)
 yh_doc.AutoCalFreeCons(False)
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
@@ -52,7 +52,7 @@ skt.AddConsXpos(0, c1, 1, l1)
 **双对象：** `cons1 = skt.AddConsYpos(index1, sketchObject1, index2, sketchObject2)`
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 cons1 = skt.AddConsYpos(0, l1, 1, l1)
 ```
@@ -67,7 +67,7 @@ cons1 = skt.AddConsYpos(0, l1, 1, l1)
 参数同水平尺寸约束。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 cons1 = skt.AddConsLength(0, l1, 1, l1)
 ```
@@ -92,7 +92,7 @@ cons1 = skt.AddConsLength(0, l1, 1, l1)
 | center | NCTI.Point | 圆心坐标 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 
 # 方式一：传入圆/圆弧对象
@@ -120,7 +120,7 @@ cons1 = skt.AddConsRadius(c1)
 > 单对象版默认是该直线与 X 轴的角度；也可传入直线对象与坐标轴对象（如 `skt.GetXAxis()`）。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l1 = skt.AddLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 l2 = skt.AddLine(NCTI.Point(10, 30, 0), NCTI.Point(40, 20, 0))
 
@@ -150,7 +150,7 @@ skt.AddConsAngle(l1, l2)
 | sketchObject2 | SketchObject | 对象二 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(5, 5, 0), NCTI.Point(15, 15, 0))
 a2 = skt.AddLine(NCTI.Point(20, 5, 0), NCTI.Point(20, 15, 0))
 cons1 = skt.AddConsParallel(a1, a2)
@@ -170,7 +170,7 @@ cons1 = skt.AddConsParallel(a1, a2)
 | sketchObject2 | SketchObject | 直线对象二 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l1 = skt.AddLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 l2 = skt.AddLine(NCTI.Point(10, 30, 0), NCTI.Point(30, 20, 0))
 cons1 = skt.AddConsVertical(l1, l2)
@@ -190,7 +190,7 @@ cons1 = skt.AddConsVertical(l1, l2)
 | sketchObject2 | SketchObject | 对象二（可为直线对象） |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 l2 = skt.AddLine(NCTI.Point(10, 30, 0), NCTI.Point(40, 20, 0))
 cons1 = skt.AddConsTangent(c1, l2)
@@ -209,7 +209,7 @@ cons1 = skt.AddConsTangent(c1, l2)
 | sketchObject2 | SketchObject | 对象二，须与对象一类型相同（可选） |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 a2 = skt.AddLine(NCTI.Point(21, 20, 0), NCTI.Point(40, 10, 0))
 cons1 = skt.AddConsEqual(a1, a2)
@@ -230,7 +230,7 @@ cons1 = skt.AddConsEqual(a1, a2)
 | sketchObject1/sketchObject2 | SketchObject | 双对象模式：两个对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 # 单对象：使 a1 水平
 cons1 = skt.AddConsXAxis(a1)
@@ -238,7 +238,7 @@ cons1 = skt.AddConsXAxis(a1)
 
 双对象（两个点沿水平方向对齐）：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 a2 = skt.AddLine(NCTI.Point(30, 10, 0), NCTI.Point(40, 20, 0))
 # a1 的点 0 与 a2 的点 1 沿水平方向对齐
@@ -255,7 +255,7 @@ cons2 = skt.AddConsXAxis(0, a1, 1, a2)
 参数模式同水平约束。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 # 单对象：使 a1 竖直
 cons1 = skt.AddConsYAxis(a1)
@@ -263,7 +263,7 @@ cons1 = skt.AddConsYAxis(a1)
 
 双对象（两个点沿竖直方向对齐）：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 a2 = skt.AddLine(NCTI.Point(30, 10, 0), NCTI.Point(40, 20, 0))
 # a1 的点 0 与 a2 的点 1 沿竖直方向对齐
@@ -288,7 +288,7 @@ cons2 = skt.AddConsYAxis(0, a1, 1, a2)
 
 单对象（与基准共点）：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 # a1 的点 0 重合约束
 cons1 = skt.AddConsCoincide(0, a1)
@@ -296,7 +296,7 @@ cons1 = skt.AddConsCoincide(0, a1)
 
 双对象（两点重合 / 共线）：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 a2 = skt.AddLine(NCTI.Point(21, 20, 0), NCTI.Point(30, 10, 0))
 # a1 的点 1 与 a2 的点 0 重合
@@ -330,7 +330,7 @@ skt.SwitchConsDisplay()
 | consList | list | 约束对象列表（可选） |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 consAngle = skt.GetObject("yhc...")     # 通过对象名获取约束对象
 skt.ShowCons(1, [consAngle])            # 显示该约束
 skt.ShowCons(0)                         # 隐藏全部约束
@@ -359,7 +359,7 @@ skt.SwitchConsRadius(consRadius)
 | sketchObject | SketchObject | 需要固定的草图几何对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 skt.FixedCons(c1)
 ```
@@ -446,7 +446,7 @@ skt.ConsType(1, ["yhcxxx"])
 **示例：绘制直线并添加水平、竖直尺寸约束**
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 # 绘制一条直线
@@ -468,7 +468,7 @@ yh_doc = YH.YHDocument(doc)
 yh_doc.AutoSolve(False)
 yh_doc.AutoCalFreeCons(False)
 
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 # 绘制两条直线

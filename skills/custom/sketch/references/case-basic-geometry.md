@@ -16,7 +16,7 @@
 | 返回值 | SketchPoint | 点对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 p2 = skt.AddPoint(NCTI.Point(0, 1, 0))
 ```
 
@@ -31,7 +31,7 @@ p2 = skt.AddPoint(NCTI.Point(0, 1, 0))
 
 获取点坐标：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 point = skt.AddPoint(NCTI.Point(10, 10, 0))
 pos = point.Point()
 print(pos)
@@ -56,7 +56,7 @@ print(point.ObjectType())       # 获取类型名称
 | 返回值 | SketchLine | 直线对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l2 = skt.AddLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 ```
 
@@ -72,7 +72,7 @@ l2 = skt.AddLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 
 获取起点/终点坐标：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 line = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(10, 10, 0))
 print(line.StartPoint())
 print(line.EndPoint())
@@ -98,7 +98,7 @@ print(line.ObjectType())        # 获取类型名称
 | sketchObject | SketchCenterLine | 实例化的中心线对象（用于设置为有效中心线） |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 # 过给定两点创建中心线
 cl2 = skt.AddCenterLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 # 设置 cl2 为有效中心线
@@ -117,7 +117,7 @@ skt.AddCenterLine(cl2)
 
 获取起点/终点坐标：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 centerLine = skt.AddCenterLine(NCTI.Point(10, 0, 0), NCTI.Point(5, 20, 0))
 print(centerLine.StartPoint())
 print(centerLine.EndPoint())
@@ -140,7 +140,7 @@ print(centerLine.ObjectType())             # 获取类型名称
 | 返回值 | SketchSpline | 样条对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 sl2 = skt.AddSpline([NCTI.Point(0, 0, 0), NCTI.Point(6, -3, 0), NCTI.Point(-4, -2, 0), NCTI.Point(2, -5, 0)])
 ```
 
@@ -155,7 +155,7 @@ sl2 = skt.AddSpline([NCTI.Point(0, 0, 0), NCTI.Point(6, -3, 0), NCTI.Point(-4, -
 
 获取控制点集：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 spline = skt.AddSpline([NCTI.Point(0, 0, 0), NCTI.Point(6, -3, 0)])
 for pos in spline.ControlPoints():
     print(pos)
@@ -179,7 +179,7 @@ print(spline.ObjectType())             # 获取类型名称
 | 返回值 | 矩形对象 | — |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 rect2 = skt.AddRect(NCTI.Point(0, 0, 0), NCTI.Point(20, 20, 0))
 ```
 
@@ -194,7 +194,7 @@ rect2 = skt.AddRect(NCTI.Point(0, 0, 0), NCTI.Point(20, 20, 0))
 | 返回值 | SketchCircle | 圆对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 c2 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 ```
 
@@ -211,7 +211,7 @@ c2 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 
 获取圆心/半径、编辑圆心：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 print(circle.Center())
 print(circle.Radius())
@@ -249,7 +249,7 @@ print(circle.ObjectType())             # 获取类型名称
 > 两种方式根据已知条件选择。
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 # 起点、终点、弧上点
 arc2 = skt.AddArc(NCTI.Point(10, 0, 0), NCTI.Point(0, 0, 0), NCTI.Point(5, 5, 0))
 # 半径、起始角、终止角、圆心
@@ -270,7 +270,7 @@ arc3 = skt.AddArc(5, 0, 60, NCTI.Point(0, 0, 0))
 
 获取圆心/半径/角度：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 arc = skt.AddArc(5, 0, 60, NCTI.Point(0, 0, 0))
 print(arc.Center())
 print(arc.Radius())
@@ -297,7 +297,7 @@ print(arc.ObjectType())             # 获取类型名称
 | 返回值 | SketchEllipse | 椭圆对象 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 ell2 = skt.AddEllipse(NCTI.Point(0, 0, 0), NCTI.Vector(2, 0, 0), NCTI.Vector(0, 1, 0))
 ```
 
@@ -314,7 +314,7 @@ ell2 = skt.AddEllipse(NCTI.Point(0, 0, 0), NCTI.Vector(2, 0, 0), NCTI.Vector(0, 
 
 获取圆心/长半轴/短半轴：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 ellipse = skt.AddEllipse(NCTI.Point(0, 0, 0), NCTI.Vector(2, 0, 0), NCTI.Vector(0, 1, 0))
 print(ellipse.Center())
 print(ellipse.MajorAxis())
@@ -341,7 +341,7 @@ print(ellipse.ObjectType())             # 获取类型名称
 | dEndAngle | float | 椭圆弧终止角度 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 p1 = skt.AddEllipseArc(NCTI.Point(0, 0, 0), NCTI.Vector(10, 0, 0), NCTI.Vector(0, 5, 0), 10, 90)
 ```
 
@@ -360,7 +360,7 @@ p1 = skt.AddEllipseArc(NCTI.Point(0, 0, 0), NCTI.Vector(10, 0, 0), NCTI.Vector(0
 
 获取圆心/长短半轴/角度：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 ellipseArc = skt.AddEllipseArc(NCTI.Point(0, 0, 0), NCTI.Vector(10, 0, 0), NCTI.Vector(0, 5, 0), 10, 90)
 print(ellipseArc.Center())
 print(ellipseArc.MajorAxis())
@@ -391,7 +391,7 @@ print(ellipseArc.ObjectType())              # 获取类型名称
 > **关键：line1、line2 必须是之前通过 `skt.AddLine()` 创建并赋值的直线对象。**
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(30, 0, 0))
 l2 = skt.AddLine(NCTI.Point(30, 0, 0), NCTI.Point(30, 20, 0))
@@ -417,7 +417,7 @@ skt.Close()
 > **关键：line1、line2 必须是之前通过 `skt.AddLine()` 创建并赋值的直线对象。**
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(30, 0, 0))
 l2 = skt.AddLine(NCTI.Point(30, 0, 0), NCTI.Point(30, 20, 0))
@@ -443,7 +443,7 @@ skt.Close()
 | objList | list[SketchObject] | 一组草图对象（方式二使用） |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 circle1 = skt.AddCircle(NCTI.Point(5, 0, 0), 10)
 line1 = skt.AddLine(NCTI.Point(-10, 5, 0), NCTI.Point(20, 5, 0))
@@ -468,7 +468,7 @@ skt.Close()
 | distance | float | 偏移距离 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 line1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 skt.CurveOffset([line1], 2)
 ```
@@ -482,7 +482,7 @@ skt.CurveOffset([line1], 2)
 **示例：绘制两条直线并在交点处创建圆角**
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 # 绘制两条相交直线
@@ -498,7 +498,7 @@ skt.Close()
 **示例：绘制矩形和圆**
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 # 绘制矩形

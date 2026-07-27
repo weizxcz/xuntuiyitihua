@@ -82,7 +82,7 @@ skt.Close()
 
 1. **草图不存在** → 创建工作平面并打开：
    ```python
-   skt = YH.SketchWorkPlane(doc)
+   skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
    skt.Open()
    ```
 2. **草图存在但未打开** → 打开：`skt.Open()`
@@ -185,7 +185,7 @@ skt.RunSolve()                   # 手动求解
 
 ```python
 # 示例脚本
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
 skt.Close()
@@ -198,7 +198,7 @@ skt.Close()
   "scripts": [
     {
       "script_type": "create_circle",
-      "script_content": "skt = YH.SketchWorkPlane(doc)\nsk.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nsk.Close()",
+      "script_content": "skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nskt.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nskt.Close()",
       "should_execute": true
     }
   ],
@@ -225,7 +225,7 @@ skt.Close()
 ```
 
 > **重要**：
-> 1. 每次脚本生成或修改后，**必须**立即调用 `cad_script_run_scripts` 执行
+> 1. 每次脚本生成或修改后禁止使用sk命名变量，**必须**立即调用 `cad_script_run_scripts` 执行
 > 2. 执行成功后，**必须**调用 `cad_script_get_file_url` 获取下载 URL
 > 3. 将完整 URL 通过 `present_model` 工具传递给前端，供前端在 3D 查看器中加载 CAD 文件
 > 4. `present_model` 工具专门用于展示 3D 模型文件（.yha, .yhp 等格式），支持：
