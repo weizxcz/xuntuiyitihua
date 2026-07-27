@@ -67,3 +67,7 @@ docs/notes/
 .DS_Store
 Thumbs.db
 users
+.vscode
+
+mcps/**/storage
+mcps/**/uv.lock

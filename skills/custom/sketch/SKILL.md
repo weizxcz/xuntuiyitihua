@@ -5,7 +5,7 @@ description: >
   draw geometry (point, line, centerline, spline, rect, circle, arc, ellipse,
   ellipse arc, fillet, chamfer, trim, offset), add constraints, edit constraints,
   control constraint display/property, or any multi-step sketch workflow.
-  Load this skill before generating NCTI sketch scripts.
+  Load this skill before generating model sketch scripts.
 allowed-tools:
   - write_file
   - read_file
@@ -14,23 +14,67 @@ allowed-tools:
   - task
   - bash
   - present_files
+  - present_model
   - ask_clarification
+  - get_session_id
+  - cad_script_*
 ---
 
-# NCTI 草图建模
+# 脚本格式说明
+
+脚本是直接 `exec()` 执行的 Python 代码，不需要 `import` 语句或函数定义。脚本可以访问以下全局变量：
+
+| 变量 | 类型 | 说明 |
+|------|------|------|
+| `NCTI` | module | NCTI Python 模块，提供点、向量、选择管理等基础功能 |
+| `YH` | module | YH Python 模块，提供文档、草图工作平面等核心功能 |
+| `doc` | NCTI.Document | NCTI 文档对象，用于打开/保存/下载 CAD 文件 |
+| `yh_doc` | YH.YHDocument | YH 文档对象，用于创建/打开草图、管理求解开关等 |
+
+**标准脚本模板**：
+```python
+# 草图初始化（如需要）
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
+skt.Open()
+
+# 绘制几何
+circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
+line = skt.AddLine(NCTI.Point(-10, 0, 0), NCTI.Point(10, 0, 0))
+
+# 添加约束
+cons = skt.AddConsRadius(0, circle)
+cons.EditSize(30.0)
+
+# 关闭草图
+skt.Close()
+```
+
+**注意事项**：
+1. 脚本不需要 `import` 语句，`NCTI` 和 `YH` 已全局可用
+2. 脚本不需要 `def main()`，直接执行代码
+3. 使用 `NCTI.Point(x, y, z)` 或 `NCTI.Vector(x, y, z)` 创建几何基元
+4. 使用 `YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))` 创建草图工作平面
+5. 几何对象和约束的返回值需要捕获，用于后续操作（如 `l1 = skt.AddLine(...)`）
+6. **脚本执行环境会自动处理文档**：
+   - MCP 会自动新建或打开模型文件（`doc` 和 `yh_doc` 已准备好）
+   - 脚本执行后，MCP 会自动保存文件并返回下载 URL
+   - **脚本中不需要调用 `doc.New()`、`doc.Open()` 或 `doc.Save()`**
+7. 如需关闭自动求解，使用 `yh_doc.AutoSolve(False)`，然后手动调用 `skt.RunSolve()`
+
+# 草图建模
 
 ## 概述
 
-本技能覆盖 NCTI 草图建模的完整工作流：
+本技能覆盖模型草图建模的完整工作流：
 
 - **文档管理与草图初始化**：`YH.YHDocument(doc)` 文档入口；`YH.SketchWorkPlane` 创建/打开/关闭草图、获取与删除对象、获取基准对象（原点/坐标轴/中心线）、求解、封闭区域计算；文档级开关（自动求解、弱约束、闭合区域、Python 捕捉）、导出 Python、创建基准坐标系、清空
 - **几何绘制**：13 种参数化操作——点、直线、中心线、样条、矩形、圆、圆弧、椭圆、椭圆弧、圆角、倒角、修剪、偏移
-- **约束添加**：12 种类型——水平/竖直/长度/半径/角度尺寸约束，平行/垂直/相切/相等/水平(XAxis)/竖直(YAxis)/重合几何约束
+- **约束添加**：12 种类型——水平/竖直/长度/半径/角度尺寸约束，平行/垂直/相切/相等/水平 (XAxis)/竖直 (YAxis)/重合几何约束
 - **约束显示与属性控制**：显示隐藏、半径互切直径、固定约束、构造线、固定尺寸、参考尺寸、显示模式、约束类型
 - **约束编辑**：尺寸类约束可 EditSize/EditLocation/Size；平行约束额外 OpenSize/CloseSize；所有约束可查询 ObjectName/ConsData
 
-> **入口类：** 草图工作平面 `YH.SketchWorkPlane`、文档管理 `YH.YHDocument`。几何基元为 `NCTI.Point` / `NCTI.Vector`。
-> **无参方法禁用：** 所有需要 GUI 手动选对象的无参重载（如 `AddLine()`、`AddCircle()`、`AddConsXpos()`、`AddConsParallel()` 等）agent 不可使用，只调用带显式参数的版本。
+> **入口类**：草图工作平面 `YH.SketchWorkPlane`、文档管理 `YH.YHDocument`。几何基元为 `NCTI.Point` / `NCTI.Vector`。
+> **无参方法禁用**：所有需要 GUI 手动选对象的无参重载（如 `AddLine()`、`AddCircle()`、`AddConsXpos()`、`AddConsParallel()` 等）agent 不可使用，只调用带显式参数的版本。
 
 ## 前置检查
 
@@ -56,27 +100,27 @@ yh_doc = YH.YHDocument(doc)
 1. 前置检查（草图状态）
 2. 调用一个工具执行对应操作
 3. 组装完整脚本（必要时包含初始化）
-4. 通过 `write_file` 保存到 `/mnt/user-data/outputs`
+4. 保存到 `/mnt/user-data/outputs` 并执行
 
 ### B. 多步操作
 
 1. 前置检查（草图状态）
 2. 按序调用工具——确保跨步变量名一致
 3. 将所有操作按正确顺序组装成完整脚本
-4. 通过 `write_file` 保存
+4. 保存到 `/mnt/user-data/outputs` 并执行
 
 ### C. 添加约束
 
 1. 先绘制几何对象并捕获返回值：`l1 = skt.AddLine(...)`
 2. 用对象变量添加约束并捕获约束变量：`cons1 = skt.AddConsLength(0, l1)`
 3. 需要时编辑约束：`cons1.EditSize(50.0)`；平行约束需先 `cons1.OpenSize()` 再 `EditSize`
-4. 组装并保存
+4. 组装并保存执行
 
 ### D. 约束编辑
 
 1. 获取约束对象：创建时捕获返回值（`cons1 = skt.AddConsLength(0, l1)`）或按名获取（`cons1 = skt.GetObject("name")`）
 2. 应用编辑操作：`cons1.EditSize(50.0)`、`cons1.EditLocation(NCTI.Point(x, y, z))`
-3. 组装并保存
+3. 组装并保存执行
 
 ### E. 修改已有脚本
 
@@ -119,3 +163,103 @@ skt.RunSolve()                   # 手动求解
 - `/mnt/skills/custom/sketch-modeling/references/case-basic-geometry.md` — 基本几何绘制（点、直线、中心线、样条、矩形、圆、圆弧、椭圆、椭圆弧、圆角、倒角、修剪、偏移）+ 几何对象查询方法
 - `/mnt/skills/custom/sketch-modeling/references/case-constraint.md` — 约束创建（12 种尺寸/几何约束）+ 约束显示与属性控制（显示隐藏、构造线、固定尺寸、参考尺寸、约束类型等）
 - `/mnt/skills/custom/sketch-modeling/references/case-edit-constraint.md` — 约束编辑与查询（EditSize/EditLocation/Size；平行约束 OpenSize/CloseSize；ObjectName/ConsData；可编辑性总表）
+
+---
+
+## 执行方式（推荐：MCP 自动执行）
+
+**每次生成或修改脚本后，必须立即执行并获取 CAD 文件 URL 并使用 present_model 工具返回给前端加载。**
+
+### MCP 服务器工具
+
+该 MCP 服务器提供以下工具（已通过 `cad_script_*` 通配符授权）：
+
+| 工具名称 | 功能 |
+|---------|------|
+| `cad_script_run_scripts` | 执行 CAD 操作脚本 |
+| `cad_script_get_file_url` | 获取 CAD 文件的下载 URL |
+
+### 标准执行流程
+
+**步骤 1：生成/修改脚本**
+
+```python
+# 示例脚本
+skt = YH.SketchWorkPlane(doc)
+skt.Open()
+circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
+skt.Close()
+```
+
+**步骤 2：调用 `cad_script_run_scripts` 执行脚本**
+
+```json
+{
+  "scripts": [
+    {
+      "script_type": "create_circle",
+      "script_content": "skt = YH.SketchWorkPlane(doc)\nsk.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nsk.Close()",
+      "should_execute": true
+    }
+  ],
+  "model_path": "sketch.yha"
+}
+```
+
+**步骤 3：调用 `cad_script_get_file_url` 获取下载 URL**
+
+```json
+{
+  "file_path": "sketch.yha"
+}
+```
+
+**步骤 4：使用 `present_model` 工具向用户展示 3D 模型**
+
+执行完成后，调用 `present_model` 工具，传入 MCP 返回的完整 URL：
+
+```json
+{
+  "filepath": "http://127.0.0.1:8310/files/sketch.yha"
+}
+```
+
+> **重要**：
+> 1. 每次脚本生成或修改后，**必须**立即调用 `cad_script_run_scripts` 执行
+> 2. 执行成功后，**必须**调用 `cad_script_get_file_url` 获取下载 URL
+> 3. 将完整 URL 通过 `present_model` 工具传递给前端，供前端在 3D 查看器中加载 CAD 文件
+> 4. `present_model` 工具专门用于展示 3D 模型文件（.yha, .yhp 等格式），支持：
+>    - 完整 URL：`http://127.0.0.1:8310/files/uuid/example.yha`（从 MCP 服务器获取）
+> 5. **模型路径隔离规则**：
+>    - 为每个新会话生成一个随机的 UUID 作为文件夹名称（例如：`a1b2c3d4-e5f6-7890-abcd-ef1234567890/sketch.yha`）
+>    - **使用 `get_session_id` 工具生成 UUID**：调用 `get_session_id(generate=True)` 返回一个随机 UUID
+>    - 同一个会话中始终复用该 UUID 路径，确保前端能正确更新场景而非创建新实例
+>    - 不同会话使用不同的 UUID 文件夹实现隔离
+>    - 例如：会话 A 使用 `a1b2c3d4-e5f6-7890-abcd-ef1234567890/sketch.yha`，会话 B 使用 `b2c3d4e5-f6a7-8901-bcde-f23456789012/sketch.yha`
+
+### 错误处理
+
+如果执行失败：
+
+1. 检查错误信息，定位问题
+2. 修正脚本代码
+3. 重新执行步骤 2-4
+
+示例错误响应：
+```json
+{
+  "success": false,
+  "error": "脚本执行失败：..."
+}
+```
+
+---
+
+### 备选方式：保存后执行（不推荐）
+
+仅在 MCP 服务器不可时使用：
+
+1. 用 `write_file` 保存脚本到 `/mnt/user-data/outputs/xxx.py`
+2. 用 `bash` 执行：`python /mnt/user-data/outputs/xxx.py`
+
+> **注意**：使用前需确保 `extensions_config.json` 中已启用 `cad_script` MCP 服务器（HTTP 模式，端口 8310）。

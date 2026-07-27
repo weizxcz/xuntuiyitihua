@@ -832,6 +832,73 @@ export function useThreadStream({
       ) {
         const e = event as { type: "llm_retry"; message: string };
         toast(e.message);
+        return;
+      }
+
+      // Handle NCTI file generated event
+      if (
+        typeof event === "object" &&
+        event !== null &&
+        "type" in event &&
+        event.type === "ncti_file_generated"
+      ) {
+        const e = event as {
+          type: "model_file_generated";
+          model_path: string;
+          message?: string;
+        };
+        // Add model file to artifacts list
+        // This simulates the frontend showing the 3D model viewer
+        if (e.model_path) {
+          // Update thread artifacts to include the new model file
+          void queryClient.setQueriesData(
+            {
+              queryKey: ["threads", "search"],
+              exact: false,
+            },
+            (oldData: Array<AgentThread> | undefined) => {
+              return oldData?.map((t) => {
+                if (t.thread_id === threadIdRef.current) {
+                  const existingArtifacts = t.values.artifacts || [];
+                  // Check if artifact already exists
+                  if (existingArtifacts.includes(e.model_path)) {
+                    return t;
+                  }
+                  return {
+                    ...t,
+                    values: {
+                      ...t.values,
+                      artifacts: [...existingArtifacts, e.model_path],
+                    },
+                  };
+                }
+                return t;
+              });
+            },
+          );
+          // Also update infinite threads cache
+          void queryClient.setQueriesData(
+            {
+              queryKey: INFINITE_THREADS_QUERY_KEY_PREFIX,
+              exact: false,
+            },
+            (oldData: InfiniteData<AgentThread[]> | undefined) =>
+              mapInfiniteThreadsCache(oldData, (t) =>
+                t.thread_id === threadIdRef.current
+                  ? {
+                      ...t,
+                      values: {
+                        ...t.values,
+                        artifacts: t.values.artifacts?.includes(e.model_path)
+                          ? t.values.artifacts
+                          : [...(t.values.artifacts || []), e.model_path],
+                      },
+                    }
+                  : t,
+              ),
+          );
+        }
+        return;
       }
     },
     onError(error) {

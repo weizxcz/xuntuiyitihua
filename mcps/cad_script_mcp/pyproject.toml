@@ -1,0 +1,15 @@
+[project]
+name = "cad-script-mcp-app"
+version = "0.1.0"
+description = "CAD Script MCP Server - Execute NCTI/YH Python scripts for 3D modeling"
+requires-python = ">=3.8"
+dependencies = [
+    "uvicorn>=0.24.0",
+    "starlette>=0.27.0",
+    "fastapi>=0.104.0",
+]
+
+# 脚本入口点 - 可以直接运行
+[project.scripts]
+cad_script_mcp = "server_impl:main"
+cad_script_mcp_http = "server_impl:run_http_server"

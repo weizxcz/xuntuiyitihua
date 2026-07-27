@@ -2,6 +2,11 @@ import { getBackendBaseURL } from "../config";
 import { isStaticWebsiteOnly } from "../static-mode";
 import type { AgentThread } from "../threads";
 
+// 检查是否为完整 URL (http:// 或 https:// 开头)
+function isCompleteURL(path: string): boolean {
+  return /^https?:\/\//.test(path);
+}
+
 export function urlOfArtifact({
   filepath,
   threadId,
@@ -12,7 +17,12 @@ export function urlOfArtifact({
   threadId: string;
   download?: boolean;
   isMock?: boolean;
-}) {
+}): string {
+  // 如果是完整 URL，直接返回（可能添加下载参数）
+  if (isCompleteURL(filepath)) {
+    return download ? `${filepath}?download=true` : filepath;
+  }
+
   if (isStaticWebsiteOnly()) {
     return staticDemoArtifactURL({ filepath, threadId, download });
   }

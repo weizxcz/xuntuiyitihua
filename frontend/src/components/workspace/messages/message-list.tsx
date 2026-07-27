@@ -3,6 +3,7 @@ import type { BaseStream } from "@langchain/langgraph-sdk/react";
 import { ChevronUpIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useArtifacts } from "@/components/workspace/artifacts/context";
 import {
   Conversation,
   ConversationContent,
@@ -27,6 +28,7 @@ import {
   getStreamingMessageLookup,
   hasContent,
   hasPresentFiles,
+  hasPresentModel,
   hasReasoning,
   isAssistantMessageGroupStreaming,
 } from "@/core/messages/utils";
@@ -191,6 +193,7 @@ export function MessageList({
   canRegenerate?: boolean;
 }) {
   const { t } = useI18n();
+  const { autoOpen, autoSelect, select, setOpen } = useArtifacts();
   const [turnStartTime, setTurnStartTime] = useState<number | null>(null);
   const prevIsLoading = useRef(thread.isLoading);
 
@@ -249,6 +252,31 @@ export function MessageList({
     }
     return null;
   }, [groupedMessages, thread.isLoading]);
+
+  // Auto-open model file when present_model tool is called
+  useEffect(() => {
+    if (!thread.isLoading || !autoOpen || !autoSelect) {
+      return;
+    }
+    // Find the last present-model group
+    for (let i = groupedMessages.length - 1; i >= 0; i--) {
+      const group = groupedMessages[i];
+      if (group?.type === "assistant:present-model") {
+        const aiMessage = group.messages[0];
+        if (
+          aiMessage?.type === "ai" &&
+          aiMessage.tool_calls?.[0]?.args?.filepath
+        ) {
+          const filepath = aiMessage.tool_calls[0].args.filepath as string;
+          setTimeout(() => {
+            select(filepath, true);
+            setOpen(true);
+          }, 100);
+        }
+        break;
+      }
+    }
+  }, [thread.isLoading, groupedMessages, autoOpen, autoSelect, select, setOpen]);
 
   const renderAssistantActions = useCallback(
     (
@@ -464,6 +492,33 @@ export function MessageList({
                   />
                 )}
                 <ArtifactFileList files={files} threadId={threadId} />
+                {renderTokenUsage({
+                  messages: group.messages,
+                  turnUsageMessages,
+                })}
+              </div>
+            );
+          } else if (group.type === "assistant:present-model") {
+            const models: string[] = [];
+            for (const message of group.messages) {
+              if (hasPresentModel(message) && message.type === "ai") {
+                const filepath = message.tool_calls?.[0]?.args?.filepath;
+                if (filepath) {
+                  models.push(filepath as string);
+                }
+              }
+            }
+            return (
+              <div className="w-full" key={group.id}>
+                {group.messages[0] && hasContent(group.messages[0]) && (
+                  <MarkdownContent
+                    content={extractContentFromMessage(group.messages[0])}
+                    isLoading={thread.isLoading}
+                    rehypePlugins={rehypePlugins}
+                    className="mb-4"
+                  />
+                )}
+                <ArtifactFileList files={models} threadId={threadId} isModel={true} />
                 {renderTokenUsage({
                   messages: group.messages,
                   turnUsageMessages,

@@ -14,6 +14,8 @@ interface AssistantMessageGroup extends GenericMessageGroup<"assistant"> {}
 
 interface AssistantPresentFilesGroup extends GenericMessageGroup<"assistant:present-files"> {}
 
+interface AssistantPresentModelGroup extends GenericMessageGroup<"assistant:present-model"> {}
+
 interface AssistantClarificationGroup extends GenericMessageGroup<"assistant:clarification"> {}
 
 interface AssistantSubagentGroup extends GenericMessageGroup<"assistant:subagent"> {}
@@ -23,6 +25,7 @@ export type MessageGroup =
   | AssistantProcessingGroup
   | AssistantMessageGroup
   | AssistantPresentFilesGroup
+  | AssistantPresentModelGroup
   | AssistantClarificationGroup
   | AssistantSubagentGroup;
 
@@ -94,6 +97,12 @@ export function getMessageGroups(messages: Message[]): MessageGroup[] {
         groups.push({
           id: message.id,
           type: "assistant:present-files",
+          messages: [message],
+        });
+      } else if (hasPresentModel(message)) {
+        groups.push({
+          id: message.id,
+          type: "assistant:present-model",
           messages: [message],
         });
       } else if (hasSubagent(message)) {
@@ -433,6 +442,13 @@ export function hasPresentFiles(message: Message) {
   return (
     message.type === "ai" &&
     message.tool_calls?.some((toolCall) => toolCall.name === "present_files")
+  );
+}
+
+export function hasPresentModel(message: Message) {
+  return (
+    message.type === "ai" &&
+    message.tool_calls?.some((toolCall) => toolCall.name === "present_model")
   );
 }
 
