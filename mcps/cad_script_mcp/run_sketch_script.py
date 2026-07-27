@@ -392,11 +392,19 @@ if __name__ == "__main__":
 
         # 启动子进程
         python_executable = sys.executable
+
+        # 设置环境变量，确保子进程使用 UTF-8 编码
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+
         process = subprocess.Popen(
             [python_executable, temp_script_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            encoding='utf-8',
+            errors='replace',
+            env=env,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
         )
 
@@ -416,6 +424,11 @@ if __name__ == "__main__":
 
         # 尝试解析 JSON 输出
         result = None
+        # 确保 stdout 和 stderr 不为 None
+        if stdout is None:
+            stdout = ""
+        if stderr:
+            print(f"stderr: {stderr}")
         try:
             result = json.loads(stdout.strip())
         except json.JSONDecodeError:
