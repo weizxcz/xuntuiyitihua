@@ -168,7 +168,7 @@ skt.RunSolve()                   # 手动求解
 
 ## 执行方式（推荐：MCP 自动执行）
 
-**每次生成或修改脚本后，必须立即执行并获取 CAD 文件 URL 并使用 present_model 工具返回给前端加载。**
+**每次生成或修改脚本后，必须立即执行，如果执行成功结果返回了模型URL,使用 present_model 工具返回给前端加载, 没有返回URL则先URL。**
 
 ### MCP 服务器工具
 
@@ -206,7 +206,7 @@ skt.Close()
 }
 ```
 
-**步骤 3：调用 `cad_script_get_file_url` 获取下载 URL**
+**步骤 3：如果步骤2返回了file_url,使用返回的file_url,否则调用 `cad_script_get_file_url` 获取下载 URL**
 
 ```json
 {
