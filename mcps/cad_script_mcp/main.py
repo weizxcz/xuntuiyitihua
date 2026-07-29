@@ -256,7 +256,7 @@ def handle_request(request: dict) -> dict:
                                 },
                                 "model_path": {
                                     "type": "string",
-                                    "description": "模型文件路径（相对路径，不要包含 /mnt/user-data/outputs/ 前缀），格式为 {directory}/{filename}.yha，例如：abc-123/model.yha"
+                                    "description": "模型文件路径（相对路径，不要包含 /mnt/user-data/outputs/ 前缀），格式为 {session_id}/{filename}.yha，例如：abc-123/model.yha"
                                 },
                                 "need_yh": {
                                     "type": "boolean",

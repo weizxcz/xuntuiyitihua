@@ -15,10 +15,11 @@ export enum SceneMode {
 // 显示模式枚举
 export enum ShowType {
   None = 0,
-  Body = 1,
+  Point = 1,
   Face = 2,
   Edge = 4,
-  Point = 7,
+  Body = 7,
+  
 }
 
 // 选择模式枚举

@@ -42,7 +42,6 @@ allowed-tools:
 1. **草图不存在** → 创建工作平面并打开：
    ```python
    skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
-   skt.Open()
    ```
 2. **草图存在但未打开** → 打开：`skt.Open()`
 3. **草图已打开** → 直接进行绘制/约束操作
@@ -135,7 +134,6 @@ skt.RunSolve()                   # 手动求解
 ```python
 # 草图初始化（如需要）
 skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
-skt.Open()
 
 # 绘制几何
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
@@ -145,8 +143,6 @@ line = skt.AddLine(NCTI.Point(-10, 0, 0), NCTI.Point(10, 0, 0))
 cons = skt.AddConsRadius(0, circle)
 cons.EditSize(30.0)
 
-# 关闭草图
-skt.Close()
 ```
 
 ## 执行方式

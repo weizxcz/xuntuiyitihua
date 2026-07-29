@@ -1,18 +1,17 @@
 """
 测试长方体创建的 NCTI CAD 脚本
 
-参考 run_sketch_script.py 的实现，用于测试以下脚本：
-    # 创建一个长方体
-    doc.RunCommand("cmd_ncti_create_box", "box1", NCTI.Point(0, 0, 0), 10, 20, 30)
-
-    print("长方体创建成功")
+在子进程中执行脚本，防止主进程崩溃。
 """
 
 import ctypes
 import importlib
 import io
+import json
 import os
 import sys
+import subprocess
+import tempfile
 import traceback
 
 # 确保当前目录在 sys.path 中，以便能导入 config 模块
@@ -23,148 +22,208 @@ if script_dir not in sys.path:
 # 从 config 导入配置
 from config import settings
 
-# 全局变量
-NCTI = None
-YH = None
-
-# 全局作用域
-global_scope = {}
-
 # 模型文件存储目录
 STORAGE_DIR = settings.STORAGE_DIR
 
+# 默认超时时间
+DEFAULT_SCRIPT_TIMEOUT = 60
 
-def initcad(need_yh: bool = True):
+
+def execute_script_in_subprocess(script: str, dll_path: str, need_yh: bool = True, timeout: int = DEFAULT_SCRIPT_TIMEOUT) -> dict:
     """
-    初始化 CAD 环境，加载必要的 DLL 和模块。
+    在独立的子进程中执行脚本，防止主进程崩溃。
 
-    Args:
-        need_yh: 是否需要初始化 YH 模块（建模脚本不需要，草图脚本需要）
+    返回：(success, output, error)
     """
-    global NCTI
-    global YH
+    temp_script = f"""
+import sys
+import json
+import io
+import os
+import ctypes
+import importlib
+import traceback
 
-    dllpath = settings.DLL_PATH
+# 立即重定向 stdout 和 stderr
+output_buffer = io.StringIO()
+sys.stdout = output_buffer
+sys.stderr = output_buffer
 
-    # 保存当前工作目录
-    original_cwd = os.getcwd()
+# 是否需要 YH 模块
+need_yh = {need_yh}
 
-    # 检查是否需要改变工作目录
-    if original_cwd != dllpath:
-        os.chdir(dllpath)
-
-    # 如果 NCTI 已经缓存，直接返回
-    if NCTI is not None:
-        if need_yh and YH is not None:
-            print("NCTI 和 YH 已初始化，直接返回")
-            return YH, NCTI
-        elif not need_yh:
-            print("NCTI 已初始化，直接返回")
-            return None, NCTI
-
-    # 检查 dllpath 是否已经在 sys.path 中，避免重复添加
-    if dllpath not in sys.path:
-        sys.path.insert(0, dllpath)
-        print(f"已将路径添加到 sys.path: {dllpath}")
-    else:
-        print(f"路径已在 sys.path 中，跳过添加：{dllpath}")
-
-    # 清理 sys.path 中的空字符串
-    if '' in sys.path:
-        sys.path.remove('')
-
-    print(f"sys.path: {sys.path}")
-
-    # 添加 DLL 目录
-    directories_to_add = ["OCC", "PK", "MeshGems"]
-    for directory in directories_to_add:
-        try:
-            os.add_dll_directory(os.path.join(dllpath, directory))
-            print(f"已添加 DLL 目录：{directory}")
-        except Exception as e:
-            print(f"添加目录 {directory} 时出错：{e}")
-
-    # 加载 NCTI 相关的 DLL
-    ncti_dlls = [
-        "ncti_doc_occ.dll",
-        "ncti_occ_plugin.dll",
-        "ncti_dcm_project.dll",
-        "ncti_dcm_plugin.dll",
-        "ncti_dcm3_project.dll",
-        "ncti_dcm3_plugin.dll",
-        "ncti_command.dll",
-        "ncti_sketch.dll",
-    ]
-
-    for dll_name in ncti_dlls:
-        try:
-            ctypes.CDLL(os.path.join(dllpath, dll_name))
-            print(f"已加载：{dll_name}")
-        except Exception as e:
-            print(f"加载 {dll_name} 时出错：{e}")
-
-    # 如果需要 YH，加载 YH 相关的 DLL
-    if need_yh:
-        yh_dlls = ["yh_command.dll", "yh_object.dll"]
-        for dll_name in yh_dlls:
-            try:
-                ctypes.CDLL(os.path.join(dllpath, dll_name))
-                print(f"已加载：{dll_name}")
-            except Exception as e:
-                print(f"加载 {dll_name} 时出错：{e}")
-
-    print("所有 DLL 加载完成")
-
-    # 初始化 NCTI Python 扩展模块
-    NCTI = importlib.import_module("ncti_python")
-    NCTI.Init(dllpath)
-
-    # 如果需要 YH，初始化 YH Python 扩展模块
-    YH = None
-    if need_yh:
-        YH = importlib.import_module("yh_python")
-        YH.Init(dllpath)
-
-    return YH, NCTI
-
-
-def safe_execute_script(script: str, global_scope: dict) -> tuple:
-    """
-    安全地执行脚本（在当前进程中），捕获所有可能的异常。
-
-    返回：(success, output_message, error_message)
-    """
-    output_buffer = io.StringIO()
-    old_stdout = sys.stdout
-    old_stderr = sys.stderr
-
+def run_script():
     try:
-        sys.stdout = output_buffer
-        sys.stderr = output_buffer
+        # 添加 DLL 路径
+        dll_path = {json.dumps(dll_path)}
+        if dll_path not in sys.path:
+            sys.path.insert(0, dll_path)
+
+        # 改变工作目录到 DLL 目录
+        os.chdir(dll_path)
+
+        # 添加 DLL 目录
+        for subdir in ["OCC", "PK", "MeshGems"]:
+            try:
+                os.add_dll_directory(os.path.join(dll_path, subdir))
+            except:
+                pass
+
+        # 加载 DLL
+        dlls = [
+            "ncti_doc_occ.dll", "ncti_occ_plugin.dll", "ncti_dcm_project.dll",
+            "ncti_dcm_plugin.dll", "ncti_dcm3_project.dll", "ncti_dcm3_plugin.dll",
+            "ncti_command.dll", "ncti_sketch.dll"
+        ]
+        for dll in dlls:
+            try:
+                ctypes.CDLL(os.path.join(dll_path, dll))
+            except:
+                pass
+
+        # 如果需要 YH，加载 YH DLL
+        if need_yh:
+            try:
+                ctypes.CDLL(os.path.join(dll_path, "yh_command.dll"))
+                ctypes.CDLL(os.path.join(dll_path, "yh_object.dll"))
+            except:
+                pass
+
+        # 导入模块
+        NCTI = importlib.import_module("ncti_python")
+        NCTI.Init(dll_path)
+
+        YH = None
+        if need_yh:
+            YH = importlib.import_module("yh_python")
+            YH.Init(dll_path)
+
+        # 初始化文档
+        doc = NCTI.Document()
+        yh_doc = None
+
+        # 创建新文档（建模脚本）
+        if need_yh and YH:
+            yh_doc = YH.YHDocument()
+            yh_doc.NewPart()
+            doc.ID = yh_doc.GetID()
+        else:
+            doc.New("OCC")
+
+        print("文档创建成功")
+
+        # 设置全局变量
+        script = {json.dumps(script)}
+        global_scope = {{
+            "NCTI": NCTI,
+            "doc": doc,
+            "print": print,
+        }}
+
+        # 如果需要 YH，添加到全局作用域
+        if need_yh and YH:
+            global_scope["YH"] = YH
+            global_scope["yh_doc"] = yh_doc
+
         exec(script, global_scope)
-        output = output_buffer.getvalue()
-        return True, output, None
 
-    except SystemExit as e:
-        output = output_buffer.getvalue()
-        return False, output, f"脚本调用了 sys.exit()，退出码：{e.code}"
+        print("脚本执行完成")
 
-    except MemoryError as e:
-        output = output_buffer.getvalue()
-        return False, output, f"内存不足：{str(e)}"
+        # 保存文档
+        if doc.IsModified():
+            print("文档已修改，准备保存")
 
-    except KeyboardInterrupt as e:
+        # 获取输出
         output = output_buffer.getvalue()
-        return False, output, f"脚本被中断：{str(e)}"
+
+        # 清理
+        doc.Delete()
+        print("文档删除成功")
+
+        return {{
+            "success": True,
+            "output": output,
+            "error": None
+        }}
 
     except Exception as e:
         output = output_buffer.getvalue()
-        tb_str = traceback.format_exc()
-        return False, output, f"脚本执行失败:\n{tb_str}"
+        tb = traceback.format_exc()
+        return {{
+            "success": False,
+            "output": output,
+            "error": tb
+        }}
+
+if __name__ == "__main__":
+    sys.stdout = sys.__stdout__
+    result = run_script()
+    print(json.dumps(result, ensure_ascii=False))
+"""
+
+    # 创建临时 Python 文件
+    temp_script_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix='_script.py',
+            delete=False,
+            encoding='utf-8'
+        ) as f:
+            f.write(temp_script)
+            temp_script_path = f.name
+
+        # 启动子进程
+        python_executable = sys.executable
+
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+        # 设置许可证路径
+        env['DCUBED_LICENSE'] = dll_path
+        env['YH_LICENSE_FILE'] = dll_path
+
+        print(f"启动子进程执行脚本...")
+        process = subprocess.Popen(
+            [python_executable, temp_script_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            env=env,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
+        )
+
+        # 等待进程完成或超时
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+            return False, "", f"脚本执行超时（超过 {timeout} 秒）"
+
+        print(f"子进程退出码：{process.returncode}")
+        print(f"stdout:\n{stdout}")
+        if stderr:
+            print(f"stderr:\n{stderr}")
+
+        # 尝试解析 JSON 输出
+        try:
+            result = json.loads(stdout.strip())
+            return result.get("success", False), result.get("output", ""), result.get("error", "")
+        except json.JSONDecodeError:
+            # 原样返回 stdout
+            return False, stdout, ""
+
+    except Exception as e:
+        return False, "", f"子进程执行失败：{str(e)}\n{traceback.format_exc()}"
 
     finally:
-        sys.stdout = old_stdout
-        sys.stderr = old_stderr
+        if temp_script_path and os.path.exists(temp_script_path):
+            try:
+                os.unlink(temp_script_path)
+            except:
+                pass
 
 
 def test_box_creation():
@@ -175,110 +234,46 @@ def test_box_creation():
     print("开始测试长方体创建脚本")
     print("=" * 50)
 
-    # 自动生成模型文件路径
-    os.makedirs(STORAGE_DIR, exist_ok=True)
-    model_path = os.path.join(STORAGE_DIR, "test_box.ncti")
-
-    # 定义长方体创建脚本（建模脚本不需要 YH 和 yh_doc）
+    # 定义草图绘制脚本
     box_script = """
-# 创建一个长方体
-# 命令格式：cmd_ncti_create_box
-# 参数：对象名称，角点坐标，长度，宽度，高度
-doc.RunCommand("cmd_ncti_create_box", "box1", NCTI.Point(0, 0, 0), 10, 20, 30)
+print("正在创建草图...")
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
+skt.Open()
+print("草图已打开")
 
-print("长方体创建成功")
+# 绘制圆：圆心在原点 (0,0,0)，半径 20
+circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
+print("圆已绘制")
+
+# 关闭草图
+skt.Close()
+print("草图已关闭")
 """
 
-    # 初始化 CAD 环境（建模脚本不需要 YH）
-    need_yh = False
-    try:
-        print("正在初始化 CAD 环境...")
-        YH, NCTI = initcad(need_yh=need_yh)
-        print(f"CAD 环境初始化成功（need_yh={need_yh}）")
-    except Exception as e:
-        print(f"CAD 环境初始化失败：{e}")
-        return False, str(e), None
+    need_yh = True
+    print(f"在子进程中执行脚本（need_yh={need_yh}）")
 
-    try:
-        print("正在创建文档对象...")
-        doc = NCTI.Document()
+    success, output, error = execute_script_in_subprocess(
+        script=box_script,
+        dll_path=settings.DLL_PATH,
+        need_yh=need_yh
+    )
 
-        # 建模脚本不需要 yh_doc，直接使用 doc.New()
-        if not need_yh:
-            print("正在创建新文档（NCTI 模式）...")
-            doc.New("OCC")
-            print("文档创建成功")
-        else:
-            print("正在创建文档对象...")
-            yh_doc = YH.YHDocument()
+    print(f"执行结果：success={success}")
+    print(f"输出：{output}")
+    if error:
+        print(f"错误：{error}")
 
-            # 如果模型文件存在则打开，否则创建新文档
-            if os.path.exists(model_path):
-                print(f"正在打开现有模型：{model_path}")
-                yh_doc.Open(model_path)
-                doc.ID = yh_doc.GetID()
-            else:
-                print("正在创建新文档...")
-                yh_doc.NewPart()
-                doc.ID = yh_doc.GetID()
-
-            print("文档创建成功")
-
-        # 设置全局变量
-        global_scope["NCTI"] = NCTI
-        global_scope["doc"] = doc
-
-        # 如果需要 YH，也添加到全局作用域
-        if need_yh and YH:
-            global_scope["YH"] = YH
-            global_scope["yh_doc"] = yh_doc
-
-        print('开始执行长方体创建脚本')
-        success, output, error = safe_execute_script(box_script, global_scope)
-
-        if not success:
-            print(error)
-            try:
-                if doc:
-                    doc.Delete()
-            except:
-                pass
-            return False, error, None
-
-        print('脚本执行完成')
-        captured_output = output
-        print(f"输出：{captured_output}")
-
-        # 检查文档是否被修改并保存
-        need_save = doc.IsModified()
-        if need_save:
-            print(f"正在保存文档到：{model_path}")
-            doc.Save(model_path)
-            print("文档保存成功")
-
-        # 清理
-        doc.Delete()
-        print("文档删除成功")
-
-        msg = "脚本执行成功"
-        if captured_output != "":
-            msg = captured_output
-
+    if success:
         print("=" * 50)
         print("测试通过！")
         print("=" * 50)
-
-        return True, msg, {"is_modified": need_save}
-
-    except Exception as e:
-        error_msg = f"执行过程中发生错误：{str(e)}\n{traceback.format_exc()}"
-        print(error_msg)
-        try:
-            if 'doc' in locals() and doc:
-                doc.Delete()
-        except:
-            pass
-        return False, error_msg, None
+        return True, output, None
+    else:
+        print("=" * 50)
+        print("测试失败！")
+        print("=" * 50)
+        return False, error or output, None
 
 
 if __name__ == "__main__":

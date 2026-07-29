@@ -34,7 +34,7 @@ skt = YH.SketchWorkPlane(doc, origin, hDir, vDir)
 
 ### 2. 打开草图
 
-`skt.Open()` — 无参数。进入草图绘制模式，所有绘制操作前必须先调用。
+`skt.Open()` — 无参数。进入草图绘制模式，有些版本绘制操作前必须先调用。
 
 ```python
 skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
