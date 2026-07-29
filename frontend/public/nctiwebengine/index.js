@@ -12,10 +12,10 @@ return /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js":
-/*!*********************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js ***!
-  \*********************************************************************************/
+/***/ "./node_modules/three/build/three.core.js":
+/*!************************************************!*\
+  !*** ./node_modules/three/build/three.core.js ***!
+  \************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -37432,10 +37432,10 @@ if ( typeof window !== 'undefined' ) {
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.module.js":
-/*!***********************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.module.js ***!
-  \***********************************************************************************/
+/***/ "./node_modules/three/build/three.module.js":
+/*!**************************************************!*\
+  !*** ./node_modules/three/build/three.module.js ***!
+  \**************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -37856,7 +37856,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   ZeroStencilOp: () => (/* reexport safe */ _three_core_js__WEBPACK_IMPORTED_MODULE_0__.ZeroStencilOp),
 /* harmony export */   createCanvasElement: () => (/* reexport safe */ _three_core_js__WEBPACK_IMPORTED_MODULE_0__.createCanvasElement)
 /* harmony export */ });
-/* harmony import */ var _three_core_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./three.core.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var _three_core_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./three.core.js */ "./node_modules/three/build/three.core.js");
 /**
  * @license
  * Copyright 2010-2024 Three.js Authors
@@ -55442,17 +55442,17 @@ class WebGLRenderer {
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/controls/ArcballControls.js":
-/*!******************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/controls/ArcballControls.js ***!
-  \******************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/controls/ArcballControls.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/controls/ArcballControls.js ***!
+  \*********************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ArcballControls: () => (/* binding */ ArcballControls)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 
 //trackball state
@@ -58685,17 +58685,17 @@ function onWheel( event ) {
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/controls/OrbitControls.js":
-/*!****************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/controls/OrbitControls.js ***!
-  \****************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/controls/OrbitControls.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/controls/OrbitControls.js ***!
+  \*******************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   OrbitControls: () => (/* binding */ OrbitControls)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 
 // OrbitControls performs orbiting, dollying (zooming), and panning.
@@ -60244,19 +60244,19 @@ function interceptControlUp( event ) {
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/Line2.js":
-/*!*****************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/Line2.js ***!
-  \*****************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/lines/Line2.js":
+/*!********************************************************!*\
+  !*** ./node_modules/three/examples/jsm/lines/Line2.js ***!
+  \********************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Line2: () => (/* binding */ Line2)
 /* harmony export */ });
-/* harmony import */ var _lines_LineSegments2_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../lines/LineSegments2.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegments2.js");
-/* harmony import */ var _lines_LineGeometry_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lines/LineGeometry.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineGeometry.js");
-/* harmony import */ var _lines_LineMaterial_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../lines/LineMaterial.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineMaterial.js");
+/* harmony import */ var _lines_LineSegments2_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../lines/LineSegments2.js */ "./node_modules/three/examples/jsm/lines/LineSegments2.js");
+/* harmony import */ var _lines_LineGeometry_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lines/LineGeometry.js */ "./node_modules/three/examples/jsm/lines/LineGeometry.js");
+/* harmony import */ var _lines_LineMaterial_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../lines/LineMaterial.js */ "./node_modules/three/examples/jsm/lines/LineMaterial.js");
 
 
 
@@ -60280,17 +60280,17 @@ class Line2 extends _lines_LineSegments2_js__WEBPACK_IMPORTED_MODULE_0__.LineSeg
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineGeometry.js":
-/*!************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineGeometry.js ***!
-  \************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/lines/LineGeometry.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/lines/LineGeometry.js ***!
+  \***************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   LineGeometry: () => (/* binding */ LineGeometry)
 /* harmony export */ });
-/* harmony import */ var _lines_LineSegmentsGeometry_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../lines/LineSegmentsGeometry.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js");
+/* harmony import */ var _lines_LineSegmentsGeometry_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../lines/LineSegmentsGeometry.js */ "./node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js");
 
 
 class LineGeometry extends _lines_LineSegmentsGeometry_js__WEBPACK_IMPORTED_MODULE_0__.LineSegmentsGeometry {
@@ -60399,18 +60399,18 @@ class LineGeometry extends _lines_LineSegmentsGeometry_js__WEBPACK_IMPORTED_MODU
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineMaterial.js":
-/*!************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineMaterial.js ***!
-  \************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/lines/LineMaterial.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/lines/LineMaterial.js ***!
+  \***************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   LineMaterial: () => (/* binding */ LineMaterial)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.module.js");
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 
 three__WEBPACK_IMPORTED_MODULE_0__.UniformsLib.line = {
@@ -61011,19 +61011,19 @@ class LineMaterial extends three__WEBPACK_IMPORTED_MODULE_1__.ShaderMaterial {
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegments2.js":
-/*!*************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegments2.js ***!
-  \*************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/lines/LineSegments2.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/lines/LineSegments2.js ***!
+  \****************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   LineSegments2: () => (/* binding */ LineSegments2)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var _lines_LineSegmentsGeometry_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lines/LineSegmentsGeometry.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js");
-/* harmony import */ var _lines_LineMaterial_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../lines/LineMaterial.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineMaterial.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var _lines_LineSegmentsGeometry_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lines/LineSegmentsGeometry.js */ "./node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js");
+/* harmony import */ var _lines_LineMaterial_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../lines/LineMaterial.js */ "./node_modules/three/examples/jsm/lines/LineMaterial.js");
 
 
 
@@ -61393,17 +61393,17 @@ class LineSegments2 extends three__WEBPACK_IMPORTED_MODULE_0__.Mesh {
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js":
-/*!********************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js ***!
-  \********************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js":
+/*!***********************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js ***!
+  \***********************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   LineSegmentsGeometry: () => (/* binding */ LineSegmentsGeometry)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 
 const _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3();
@@ -61642,10 +61642,10 @@ class LineSegmentsGeometry extends three__WEBPACK_IMPORTED_MODULE_0__.InstancedB
 
 /***/ }),
 
-/***/ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/renderers/CSS2DRenderer.js":
-/*!*****************************************************************************************************!*\
-  !*** ./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/renderers/CSS2DRenderer.js ***!
-  \*****************************************************************************************************/
+/***/ "./node_modules/three/examples/jsm/renderers/CSS2DRenderer.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/renderers/CSS2DRenderer.js ***!
+  \********************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -61653,7 +61653,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   CSS2DObject: () => (/* binding */ CSS2DObject),
 /* harmony export */   CSS2DRenderer: () => (/* binding */ CSS2DRenderer)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 
 class CSS2DObject extends three__WEBPACK_IMPORTED_MODULE_0__.Object3D {
@@ -61975,16 +61975,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./engine/NctiSelectManager */ "./src/engine/NctiSelectManager.ts");
-/* harmony import */ var _engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./engine/NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
-/* harmony import */ var _Enums__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Enums */ "./src/Enums.ts");
-/* harmony import */ var _engine_NctiLoader__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./engine/NctiLoader */ "./src/engine/NctiLoader.ts");
-/* harmony import */ var _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./engine/NctiDisplayManager */ "./src/engine/NctiDisplayManager.ts");
-/* harmony import */ var engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! engine/NctiModelManager */ "./src/engine/NctiModelManager.ts");
-/* harmony import */ var engine_NctiRenderer__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! engine/NctiRenderer */ "./src/engine/NctiRenderer.ts");
-/* harmony import */ var engine_NctiSketchViewer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! engine/NctiSketchViewer */ "./src/engine/NctiSketchViewer.ts");
-/* harmony import */ var engine_NctiBodyViewer__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! engine/NctiBodyViewer */ "./src/engine/NctiBodyViewer.ts");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./engine/NctiSelectManager */ "./src/engine/NctiSelectManager.ts");
+/* harmony import */ var _engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./engine/NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
+/* harmony import */ var _Enums__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Enums */ "./src/Enums.ts");
+/* harmony import */ var _engine_NctiLoader__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./engine/NctiLoader */ "./src/engine/NctiLoader.ts");
+/* harmony import */ var _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./engine/NctiDisplayManager */ "./src/engine/NctiDisplayManager.ts");
+/* harmony import */ var engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! engine/NctiModelManager */ "./src/engine/NctiModelManager.ts");
+/* harmony import */ var engine_NctiRenderer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! engine/NctiRenderer */ "./src/engine/NctiRenderer.ts");
+/* harmony import */ var engine_NctiSketchViewer__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! engine/NctiSketchViewer */ "./src/engine/NctiSketchViewer.ts");
+/* harmony import */ var engine_NctiBodyViewer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! engine/NctiBodyViewer */ "./src/engine/NctiBodyViewer.ts");
 
 
 
@@ -62008,15 +62008,15 @@ class NctiViewer {
     constructor(buffer, container, config) {
         this.m_renderRequested = false;
         this.m_showGridPlan = false;
-        this.m_sceneMode = _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD;
-        this.m_nctiType = _Enums__WEBPACK_IMPORTED_MODULE_3__.NctiType.Part;
+        this.m_sceneMode = _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD;
+        this.m_nctiType = _Enums__WEBPACK_IMPORTED_MODULE_2__.NctiType.Part;
         this.m_partNctiList = [];
         this.m_container = container;
         // NctiRenderer.initialize({
         //     antialias: true,
         //     preserveDrawingBuffer: true
         // });
-        this.m_Renderer = new engine_NctiRenderer__WEBPACK_IMPORTED_MODULE_7__.NctiRenderer({
+        this.m_Renderer = new engine_NctiRenderer__WEBPACK_IMPORTED_MODULE_6__.NctiRenderer({
             antialias: true,
             preserveDrawingBuffer: true
         });
@@ -62026,24 +62026,24 @@ class NctiViewer {
         this.m_Renderer.domElement.addEventListener("mousemove", (event) => this.onMouseMove(event));
         this.m_Renderer.setSize(this.m_container.clientWidth, this.m_container.clientHeight);
         this.m_container.appendChild(this.m_Renderer.domElement);
-        _engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.NctiMaterialManager.initialize(config);
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.initialize(this.m_container, this.m_Renderer);
+        _engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.NctiMaterialManager.initialize(config);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.initialize(this.m_container, this.m_Renderer);
         // this.clearSceneGroup();
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.initialize();
-        this.m_Loader = new _engine_NctiLoader__WEBPACK_IMPORTED_MODULE_4__["default"]();
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.initialize();
+        this.m_Loader = new _engine_NctiLoader__WEBPACK_IMPORTED_MODULE_3__["default"]();
         const nctiObj = this.m_Loader.loadModel(buffer);
         this.m_nctiType = this.m_Loader.m_nctiType;
         this.m_partNctiList = this.m_Loader.m_partNctiList;
         // this.InitScene();
-        this.m_SketchViewer = new engine_NctiSketchViewer__WEBPACK_IMPORTED_MODULE_8__.NctiSketchViewer(container, this.m_Renderer, nctiObj);
+        this.m_SketchViewer = new engine_NctiSketchViewer__WEBPACK_IMPORTED_MODULE_7__.NctiSketchViewer(container, this.m_Renderer, nctiObj);
         this.m_SketchViewer.onChange = () => {
             this.requestRenderIfNotRequested();
         };
-        this.m_BodyViewer = new engine_NctiBodyViewer__WEBPACK_IMPORTED_MODULE_9__.NctiBodyViewer(container, this.m_Renderer, nctiObj);
+        this.m_BodyViewer = new engine_NctiBodyViewer__WEBPACK_IMPORTED_MODULE_8__.NctiBodyViewer(container, this.m_Renderer, nctiObj);
         this.m_BodyViewer.onChange = () => {
             this.requestRenderIfNotRequested();
         };
-        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.implShowMode();
+        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.implShowMode();
         window.addEventListener("keydown", (event) => this.onKeyDown(event));
         window.addEventListener("keyup", (event) => this.onKeyUp(event));
     }
@@ -62054,7 +62054,7 @@ class NctiViewer {
         this.m_partNctiList = this.m_Loader.m_partNctiList;
         this.m_BodyViewer.UpdateScene(nctiObj);
         this.m_SketchViewer.UpdateScene(nctiObj);
-        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.implShowMode();
+        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.implShowMode();
         // this.resetCamera();
         this.requestRenderIfNotRequested();
     }
@@ -62064,7 +62064,7 @@ class NctiViewer {
         this.m_partNctiList = this.m_Loader.m_partNctiList;
         this.m_BodyViewer.AddNctiModel(nctiObj);
         this.m_SketchViewer.AddNctiModel(nctiObj);
-        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.implShowMode();
+        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.implShowMode();
         // this.resetCamera();
         this.requestRenderIfNotRequested();
     }
@@ -62073,18 +62073,18 @@ class NctiViewer {
         this.m_nctiType = this.m_Loader.m_nctiType;
         this.m_partNctiList = this.m_Loader.m_partNctiList;
         this.m_BodyViewer.UpdateNctiModel(partName, nctiObj);
-        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.implShowMode();
+        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.implShowMode();
         // this.resetCamera();
         this.requestRenderIfNotRequested();
     }
     ChangeSceneMode() {
-        if (this.m_sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.Sketch) {
-            this.m_sceneMode = _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD;
+        if (this.m_sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.Sketch) {
+            this.m_sceneMode = _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD;
             this.m_BodyViewer.SetEnable(true);
             this.m_SketchViewer.SetEnable(false);
         }
-        else if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD) {
-            this.m_sceneMode = _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.Sketch;
+        else if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD) {
+            this.m_sceneMode = _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.Sketch;
             this.m_BodyViewer.SetEnable(false);
             this.m_SketchViewer.SetEnable(true);
         }
@@ -62095,11 +62095,11 @@ class NctiViewer {
             return;
         }
         this.m_sceneMode = sceneMode;
-        if (sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.Sketch) {
+        if (sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.Sketch) {
             this.m_BodyViewer.SetEnable(false);
             this.m_SketchViewer.SetEnable(true);
         }
-        else if (sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD) {
+        else if (sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD) {
             this.m_BodyViewer.SetEnable(true);
             this.m_SketchViewer.SetEnable(false);
         }
@@ -62116,44 +62116,44 @@ class NctiViewer {
     }
     render() {
         this.m_renderRequested = undefined;
-        if (this.m_sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD) {
+        if (this.m_sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD) {
             this.m_BodyViewer.Render();
         }
-        else if (this.m_sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.Sketch) {
+        else if (this.m_sceneMode === _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.Sketch) {
             this.m_SketchViewer.Render();
         }
     }
     onMouseDown(event) {
-        if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD) {
-            _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.onMouseDown(event);
+        if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD) {
+            _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.onMouseDown(event);
         }
     }
     onMouseUp(event) {
-        if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD) {
+        if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD) {
             // SelectManager.current.onMouseUp(event, this.m_NctiCamera);
             this.m_BodyViewer.OnMouseUp(event);
             this.requestRenderIfNotRequested();
         }
     }
     onMouseMove(event) {
-        if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_3__.SceneMode.ThreeD && _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.isDrawing) {
-            _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.onMouseMove(event);
+        if (this.m_sceneMode == _Enums__WEBPACK_IMPORTED_MODULE_2__.SceneMode.ThreeD && _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.isDrawing) {
+            _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.onMouseMove(event);
             this.requestRenderIfNotRequested();
         }
     }
     onKeyDown(event) {
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.onKeyDown(event);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.onKeyDown(event);
     }
     onKeyUp(event) {
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.onKeyUp(event);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.onKeyUp(event);
     }
     setShowMode(showType) {
-        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setShowMode(showType);
+        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setShowMode(showType);
         this.requestRenderIfNotRequested();
     }
     setSelectMode(selectMode) {
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.setSelectMode(selectMode);
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.setSelectMode(selectMode);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
     SetViewType(viewType) {
@@ -62168,7 +62168,7 @@ class NctiViewer {
         this.requestRenderIfNotRequested();
     }
     resizeScene() {
-        const currentSize = this.m_Renderer.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector2());
+        const currentSize = this.m_Renderer.getSize(new three__WEBPACK_IMPORTED_MODULE_9__.Vector2());
         const width = this.m_container.clientWidth;
         const height = this.m_container.clientHeight;
         if (currentSize.width === width && currentSize.height == height) {
@@ -62178,77 +62178,77 @@ class NctiViewer {
         // this.resetCamera(true);
         this.m_BodyViewer.Resize();
         this.m_SketchViewer.Resize();
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.resize(width, height);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.resize(width, height);
         this.requestRenderIfNotRequested();
     }
     GetSelectedParts() {
-        return _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.SelectedParts();
+        return _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.SelectedParts();
     }
     GetSelectedObjectNames() {
-        return _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.SelectedObjectNames();
+        return _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.SelectedObjectNames();
     }
     GetSelectedCellNames() {
-        return _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.SelectedCellNames();
+        return _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.SelectedCellNames();
     }
     getScreenShot() {
         const screenshot = this.m_Renderer.domElement.toDataURL('image/png');
         return screenshot;
     }
     getSceneTree() {
-        return engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetModelTree();
+        return engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetModelTree();
     }
     setBodyVisibility(partName, bodyName, visibility) {
         visibility ?
-            _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setBodyVisible(partName, bodyName) :
-            _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setBodyInvisible(partName, bodyName);
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+            _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setBodyVisible(partName, bodyName) :
+            _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setBodyInvisible(partName, bodyName);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
     setCellsVisibility(partName, bodyName, cellIds, visibility) {
-        visibility ?
-            _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setCellsVisible(partName, bodyName, cellIds) :
-            _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setCellsInvisible(partName, bodyName, cellIds);
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+        // visibility ?
+        //     DisplayManager.current.setCellsVisible(partName, bodyName, cellIds) :
+        //     DisplayManager.current.setCellsInvisible(partName, bodyName, cellIds);
+        // SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
     setAllVisible() {
-        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setAllVisible();
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+        _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setAllVisible();
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
     setSelectedInvisible() {
-        const selectedMap = _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.getSelectedMap();
+        const selectedMap = _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.getSelectedMap();
         for (const [partName, bodyMap] of selectedMap) {
-            for (const [bodyName, cellIds] of bodyMap) {
-                if (!cellIds || cellIds.size == 0) {
-                    _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setBodyInvisible(partName, bodyName);
+            for (const [bodyName, elements] of bodyMap) {
+                if (!elements || elements.size == 0) {
+                    _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setBodyInvisible(partName, bodyName);
                     continue;
                 }
-                const cellIdArr = Array.from(cellIds).filter((i) => typeof i === "number");
-                if (cellIdArr.length == 0)
+                // const cellIdArr = Array.from(elements).filter((i): i is number => typeof i === "number");
+                if (elements.size == 0)
                     continue;
-                _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setCellsInvisible(partName, bodyName, cellIdArr);
+                _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setCellsInvisible(partName, bodyName, elements);
             }
         }
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
     setSelectedVisibleOnly() {
-        const unselectedMap = _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.getUnselectedMap();
+        const unselectedMap = _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.getUnselectedMap();
         for (const [partName, bodyMap] of unselectedMap) {
-            for (const [bodyName, cellIds] of bodyMap) {
-                if (!cellIds || cellIds.size == 0) {
-                    _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setBodyInvisible(partName, bodyName);
+            for (const [bodyName, elements] of bodyMap) {
+                if (!elements || elements.size == 0) {
+                    _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setBodyInvisible(partName, bodyName);
                     continue;
                 }
-                _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_5__.DisplayManager.current.setCellsInvisible(partName, bodyName, Array.from(cellIds));
+                _engine_NctiDisplayManager__WEBPACK_IMPORTED_MODULE_4__.DisplayManager.current.setCellsInvisible(partName, bodyName, elements);
             }
         }
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
     setBodySelect(bodyName, partName) {
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.setBodySelect(bodyName, partName);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.setBodySelect(bodyName, partName);
         this.requestRenderIfNotRequested();
     }
     setCellSelect(bodyNames, cellIds) {
@@ -62262,11 +62262,11 @@ class NctiViewer {
             }
             cellMap.get(bodyName).push(cellIds[index]);
         });
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.setCellSelect(cellMap);
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.setCellSelect(cellMap);
         this.requestRenderIfNotRequested();
     }
     clearSelected() {
-        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_1__.SelectManager.current.clearSelected();
+        _engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_0__.SelectManager.current.clearSelected();
         this.requestRenderIfNotRequested();
     }
 }
@@ -62285,7 +62285,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Utils)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 class Utils {
     static vectorEquals(v1, v2, absTolerance = 0.0001) {
@@ -62358,18 +62358,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   NctiBodyLoader: () => (/* binding */ NctiBodyLoader)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
-/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
-/* harmony import */ var _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
-/* harmony import */ var _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./NctiModelManager */ "./src/engine/NctiModelManager.ts");
-/* harmony import */ var _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./NctiSelectManager */ "./src/engine/NctiSelectManager.ts");
-/* harmony import */ var ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ncti/NctiDisplayModelBody */ "./src/ncti/NctiDisplayModelBody.ts");
-/* harmony import */ var mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! mesh/NctiGridMeshLoader */ "./src/mesh/NctiGridMeshLoader.ts");
-/* harmony import */ var ncti_NctiDisplayGridMesh__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ncti/NctiDisplayGridMesh */ "./src/ncti/NctiDisplayGridMesh.ts");
-/* harmony import */ var ncti_NctiBase__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ncti/NctiBase */ "./src/ncti/NctiBase.ts");
-/* harmony import */ var ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ncti/YHDisplaySketch */ "./src/ncti/YHDisplaySketch.ts");
-/* harmony import */ var ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ncti/YHDisplayFeature */ "./src/ncti/YHDisplayFeature.ts");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
+/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
+/* harmony import */ var _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
+/* harmony import */ var _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiModelManager */ "./src/engine/NctiModelManager.ts");
+/* harmony import */ var _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./NctiSelectManager */ "./src/engine/NctiSelectManager.ts");
+/* harmony import */ var ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ncti/NctiDisplayModelBody */ "./src/ncti/NctiDisplayModelBody.ts");
+/* harmony import */ var mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! mesh/NctiGridMeshLoader */ "./src/mesh/NctiGridMeshLoader.ts");
+/* harmony import */ var ncti_NctiDisplayGridMesh__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ncti/NctiDisplayGridMesh */ "./src/ncti/NctiDisplayGridMesh.ts");
+/* harmony import */ var ncti_NctiBase__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ncti/NctiBase */ "./src/ncti/NctiBase.ts");
+/* harmony import */ var ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ncti/YHDisplaySketch */ "./src/ncti/YHDisplaySketch.ts");
+/* harmony import */ var ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ncti/YHDisplayFeature */ "./src/ncti/YHDisplayFeature.ts");
 
 
 
@@ -62384,14 +62384,14 @@ __webpack_require__.r(__webpack_exports__);
 
 class NctiBodyLoader {
     constructor(scene, maxTextSize) {
-        this.m_nctiType = src_Enums__WEBPACK_IMPORTED_MODULE_1__.NctiType.Part;
+        this.m_nctiType = src_Enums__WEBPACK_IMPORTED_MODULE_0__.NctiType.Part;
         this.m_partNctiList = [];
         this.m_NctiModels = [];
         this.m_maxTextSize = 8192;
         this.m_globalId = { Id: 0 };
         this.m_Scene = scene;
         this.m_maxTextSize = maxTextSize;
-        this.m_gridMeshLoader = new mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_7__["default"](scene);
+        this.m_gridMeshLoader = new mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_6__["default"](scene, maxTextSize);
     }
     LoadModel(nctiObject) {
         let modelBodies = nctiObject.modelBodies;
@@ -62399,8 +62399,8 @@ class NctiBodyLoader {
             return;
         }
         const partName = nctiObject.objectName;
-        let partGroup = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiGroup(partName);
-        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.addGroup(partName);
+        let partGroup = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiGroup(partName);
+        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.addGroup(partName);
         let vertCount = 0;
         let indexCount = 0;
         let lineVertCount = 0;
@@ -62411,10 +62411,10 @@ class NctiBodyLoader {
         for (let nctiModelBody of modelBodies) {
             const modelBodyName = nctiModelBody.m_cpObjName;
             modelBodyIndexMap.set(modelBodyName, { IdIndex: 0 });
-            let modelbody = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiModelBody(modelBodyName);
-            _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPartModelBody(partName, modelbody);
+            let modelbody = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiModelBody(modelBodyName);
+            _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddPartModelBody(partName, modelbody);
             modelBodyGroupMap.set(modelBodyName, modelbody);
-            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_6__["default"] || nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_11__.YHDisplayFeatureGModel) {
+            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_5__["default"] || nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_10__.YHDisplayFeatureGModel) {
                 let meshes = nctiModelBody.m_NctiMeshDataVec;
                 let edges = nctiModelBody.m_FloatVecVec;
                 let markers = nctiModelBody.m_MarkerVec;
@@ -62427,10 +62427,10 @@ class NctiBodyLoader {
                 }
                 pointCount += markers.length;
             }
-            else if (nctiModelBody instanceof ncti_NctiDisplayGridMesh__WEBPACK_IMPORTED_MODULE_8__["default"]) {
+            else if (nctiModelBody instanceof ncti_NctiDisplayGridMesh__WEBPACK_IMPORTED_MODULE_7__["default"]) {
                 gridList.push(nctiModelBody);
             }
-            else if (nctiModelBody instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_10__.YHDisplaySketchLine) {
+            else if (nctiModelBody instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_9__.YHDisplaySketchLine) {
                 lineVertCount += 2; // 两个点
                 pointCount += 2;
             }
@@ -62440,18 +62440,18 @@ class NctiBodyLoader {
         this.loadModelPoint(pointCount, modelBodies, partGroup, modelBodyIndexMap, modelBodyGroupMap);
         for (let i = 0; i < gridList.length; i++) {
             let nctiModelBody = gridList[i];
-            this.m_gridMeshLoader.loadMesh(nctiModelBody, this.m_globalId, partGroup);
+            this.m_gridMeshLoader.loadMesh(nctiModelBody, this.m_globalId, partGroup, partName);
         }
-        const bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(partGroup);
+        const bbox = new three__WEBPACK_IMPORTED_MODULE_11__.Box3().setFromObject(partGroup);
         this.m_Scene.BBox.union(bbox);
         this.m_Scene.add(partGroup);
     }
     loadModelFace(vertCount, indexCount, modelBodies, partGroup, modelBodyIndexMap, modelBodyGroupMap) {
         if (vertCount == 0)
             return;
-        const faceGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let faceMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiFaceMesh(faceGeometry);
-        let pickingFaceMesh = _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.AddPickingFaceMesh(faceGeometry);
+        const faceGeometry = new three__WEBPACK_IMPORTED_MODULE_11__.BufferGeometry();
+        let faceMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiFaceMesh(faceGeometry);
+        let pickingFaceMesh = _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.AddPickingFaceMesh(faceGeometry);
         let bufferDataOffsets = {
             VertOffset: 0,
             NormalOffset: 0,
@@ -62469,47 +62469,47 @@ class NctiBodyLoader {
         for (const nctiModelBody of modelBodies) {
             let idIndex = modelBodyIndexMap.get(nctiModelBody.m_cpObjName);
             let modelbody = modelBodyGroupMap.get(nctiModelBody.m_cpObjName);
-            const face = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiMeshInfo(nctiModelBody.m_cpObjName, partGroup.name);
+            const face = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiMeshInfo(nctiModelBody.m_cpObjName, partGroup.name);
             face.IndexOffset = indexOffset;
-            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_6__["default"]) {
+            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_5__["default"]) {
                 let meshes = nctiModelBody.m_NctiMeshDataVec;
                 let ids = nctiModelBody.m_TempIdVec;
                 this.extractFaceMesh(faceMesh, pickingFaceMesh, face, modelbody, idIndex, ids, meshes, bufferDataOffsets);
             }
-            else if (nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_11__.YHDisplayFeatureGModel) {
+            else if (nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_10__.YHDisplayFeatureGModel) {
                 let meshes = nctiModelBody.m_NctiMeshDataVec;
                 this.extractFaceMesh(faceMesh, pickingFaceMesh, face, modelbody, idIndex, null, meshes, bufferDataOffsets);
             }
         }
-        faceGeometry.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(bufferDataOffsets.vertBuffer, 3));
-        faceGeometry.setAttribute('normal', new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(bufferDataOffsets.normalBuffer, 3));
-        faceGeometry.setAttribute('color', new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(bufferDataOffsets.colorBuffer, 3));
-        const idBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(bufferDataOffsets.idBuffer, 1);
-        idBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        faceGeometry.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(bufferDataOffsets.vertBuffer, 3));
+        faceGeometry.setAttribute('normal', new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(bufferDataOffsets.normalBuffer, 3));
+        faceGeometry.setAttribute('color', new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(bufferDataOffsets.colorBuffer, 3));
+        const idBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(bufferDataOffsets.idBuffer, 1);
+        idBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_11__.IntType;
         faceGeometry.setAttribute('id', idBufferAttribute);
-        faceGeometry.setIndex(new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(bufferDataOffsets.indexBuffer, 1));
+        faceGeometry.setIndex(new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(bufferDataOffsets.indexBuffer, 1));
         const idBuffer = bufferDataOffsets.idBuffer;
         const materialIdCount = idBuffer[idBuffer.length - 1] - idBuffer[0] + 1;
         const offset = idBuffer[0];
         const maxTexSize = this.m_maxTextSize;
-        let meshMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginMeshMaterial(materialIdCount, offset, maxTexSize, {
+        let meshMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginMeshMaterial(materialIdCount, offset, maxTexSize, {
             vertexColors: true,
-            side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+            side: three__WEBPACK_IMPORTED_MODULE_11__.DoubleSide,
             polygonOffset: true,
             polygonOffsetFactor: 1,
             polygonOffsetUnits: 1
         });
         faceMesh.material = meshMaterial;
         partGroup.add(faceMesh);
-        _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddFace(partGroup.name, faceMesh);
-        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.SetPickingMeshMaterial(materialIdCount, offset, maxTexSize, pickingFaceMesh);
+        _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddFace(partGroup.name, faceMesh);
+        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.SetPickingMeshMaterial(materialIdCount, offset, maxTexSize, pickingFaceMesh);
     }
     loadModelEdge(lineVertCount, modelBodies, partGroup, modelBodyIndexMap, modelBodyGroupMap) {
         if (lineVertCount == 0)
             return;
-        const lineGeom = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let edgeMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiEdgeMesh(lineGeom);
-        let pickingEdgeMesh = _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.AddPickingEdgeMesh(lineGeom);
+        const lineGeom = new three__WEBPACK_IMPORTED_MODULE_11__.BufferGeometry();
+        let edgeMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiEdgeMesh(lineGeom);
+        let pickingEdgeMesh = _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.AddPickingEdgeMesh(lineGeom);
         let lineBufferDataOffsets = {
             VertOffset: 0,
             IdOffset: 0,
@@ -62522,22 +62522,22 @@ class NctiBodyLoader {
             const bodyName = nctiModelBody.m_cpObjName;
             let idIndex = modelBodyIndexMap.get(bodyName);
             let modelbodyGroup = modelBodyGroupMap.get(bodyName);
-            const line = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiMeshInfo(bodyName, partGroup.name);
+            const line = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiMeshInfo(bodyName, partGroup.name);
             line.IndexOffset = indexOffset;
-            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_6__["default"]) {
+            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_5__["default"]) {
                 let edges = nctiModelBody.m_FloatVecVec;
                 let ids = nctiModelBody.m_TempIdVec;
                 this.extractEdgeMesh(edgeMesh, pickingEdgeMesh, line, modelbodyGroup, idIndex, ids, edges, lineBufferDataOffsets);
             }
-            else if (nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_11__.YHDisplayFeatureGModel) {
+            else if (nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_10__.YHDisplayFeatureGModel) {
                 let edges = nctiModelBody.m_FloatVecVec;
                 this.extractEdgeMesh(edgeMesh, pickingEdgeMesh, line, modelbodyGroup, idIndex, null, edges, lineBufferDataOffsets);
             }
-            else if (nctiModelBody instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_10__.YHDisplaySketchLine) {
+            else if (nctiModelBody instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_9__.YHDisplaySketchLine) {
                 const startPt = nctiModelBody.m_ptF;
                 const endPt = nctiModelBody.m_ptE;
                 const globalId = this.m_globalId.Id++;
-                const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LineColor;
+                const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LineColor;
                 lineBufferDataOffsets.lineBuffer.set([startPt.x, startPt.y, startPt.z, endPt.x, endPt.y, endPt.z], lineBufferDataOffsets.VertOffset);
                 lineBufferDataOffsets.lineColorBuffer.set([r, g, b, r, g, b], lineBufferDataOffsets.VertOffset);
                 lineBufferDataOffsets.lineIdBuffer.set([globalId, globalId], lineBufferDataOffsets.IdOffset);
@@ -62545,27 +62545,27 @@ class NctiBodyLoader {
                 lineBufferDataOffsets.IdOffset += 2;
             }
         }
-        lineGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(lineBufferDataOffsets.lineBuffer, 3));
-        lineGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(lineBufferDataOffsets.lineColorBuffer, 3));
-        const lineIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(lineBufferDataOffsets.lineIdBuffer, 1);
-        lineIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        lineGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(lineBufferDataOffsets.lineBuffer, 3));
+        lineGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(lineBufferDataOffsets.lineColorBuffer, 3));
+        const lineIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(lineBufferDataOffsets.lineIdBuffer, 1);
+        lineIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_11__.IntType;
         lineGeom.setAttribute('id', lineIdBufferAttribute);
         const idBuffer = lineBufferDataOffsets.lineIdBuffer;
         const lineMaterialIdCount = idBuffer[idBuffer.length - 1] - idBuffer[0] + 1;
         const offset = idBuffer[0];
         const maxTexSize = this.m_maxTextSize;
-        const lineMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginMaterial(lineMaterialIdCount, offset, maxTexSize);
+        const lineMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginMaterial(lineMaterialIdCount, offset, maxTexSize);
         edgeMesh.material = lineMaterial;
         partGroup.add(edgeMesh);
-        _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddEdge(partGroup.name, edgeMesh);
-        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.SetPickingMeshMaterial(lineMaterialIdCount, offset, maxTexSize, pickingEdgeMesh);
+        _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddEdge(partGroup.name, edgeMesh);
+        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.SetPickingMeshMaterial(lineMaterialIdCount, offset, maxTexSize, pickingEdgeMesh);
     }
     loadModelPoint(pointCount, modelBodies, partGroup, modelBodyIndexMap, modelBodyGroupMap) {
         if (pointCount == 0)
             return;
-        const pointGeom = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let pointMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiPointMesh(pointGeom);
-        let pickingPointMesh = _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.AddPickingPointMesh(pointGeom);
+        const pointGeom = new three__WEBPACK_IMPORTED_MODULE_11__.BufferGeometry();
+        let pointMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiPointMesh(pointGeom);
+        let pickingPointMesh = _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.AddPickingPointMesh(pointGeom);
         let pointBufferDataOffsets = {
             VertOffset: 0,
             IdOffset: 0,
@@ -62577,22 +62577,22 @@ class NctiBodyLoader {
         for (const nctiModelBody of modelBodies) {
             let idIndex = modelBodyIndexMap.get(nctiModelBody.m_cpObjName);
             let modelbody = modelBodyGroupMap.get(nctiModelBody.m_cpObjName);
-            let points = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiMeshInfo(nctiModelBody.m_cpObjName, partGroup.name);
+            let points = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiMeshInfo(nctiModelBody.m_cpObjName, partGroup.name);
             points.IndexOffset = indexOffset;
-            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_6__["default"]) {
+            if (nctiModelBody instanceof ncti_NctiDisplayModelBody__WEBPACK_IMPORTED_MODULE_5__["default"]) {
                 let markers = nctiModelBody.m_MarkerVec;
                 let ids = nctiModelBody.m_TempIdVec;
                 this.extractPointMesh(pointMesh, pickingPointMesh, points, modelbody, idIndex, ids, markers, pointBufferDataOffsets);
             }
-            else if (nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_11__.YHDisplayFeatureGModel) {
+            else if (nctiModelBody instanceof ncti_YHDisplayFeature__WEBPACK_IMPORTED_MODULE_10__.YHDisplayFeatureGModel) {
                 let markers = nctiModelBody.m_MarkerVec;
                 this.extractPointMesh(pointMesh, pickingPointMesh, points, modelbody, idIndex, null, markers, pointBufferDataOffsets);
             }
-            else if (nctiModelBody instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_10__.YHDisplaySketchLine) {
+            else if (nctiModelBody instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_9__.YHDisplaySketchLine) {
                 const startPt = nctiModelBody.m_ptF;
                 const endPt = nctiModelBody.m_ptE;
                 const globalId = this.m_globalId.Id++;
-                const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.PointColor;
+                const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.PointColor;
                 // const { r, g, b } = MaterialManager.current.LineColor;
                 pointBufferDataOffsets.pointBuffer.set([startPt.x, startPt.y, startPt.z, endPt.x, endPt.y, endPt.z], pointBufferDataOffsets.VertOffset);
                 pointBufferDataOffsets.pointColorBuffer.set([r, g, b, r, g, b], pointBufferDataOffsets.VertOffset);
@@ -62601,20 +62601,20 @@ class NctiBodyLoader {
                 pointBufferDataOffsets.IdOffset += 2;
             }
         }
-        pointGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(pointBufferDataOffsets.pointBuffer, 3));
-        pointGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(pointBufferDataOffsets.pointColorBuffer, 3));
-        const pointIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(pointBufferDataOffsets.pointIdBuffer, 1);
-        pointIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        pointGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(pointBufferDataOffsets.pointBuffer, 3));
+        pointGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(pointBufferDataOffsets.pointColorBuffer, 3));
+        const pointIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_11__.BufferAttribute(pointBufferDataOffsets.pointIdBuffer, 1);
+        pointIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_11__.IntType;
         pointGeom.setAttribute("id", pointIdBufferAttribute);
         const idBuffer = pointBufferDataOffsets.pointIdBuffer;
         const pointMaterialIdCount = idBuffer[idBuffer.length - 1] - idBuffer[0] + 1;
         const offset = idBuffer[0];
         const maxTexSize = this.m_maxTextSize;
-        const pointMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginMaterial(pointMaterialIdCount, offset, maxTexSize);
+        const pointMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginMaterial(pointMaterialIdCount, offset, maxTexSize);
         pointMesh.material = pointMaterial;
         partGroup.add(pointMesh);
-        _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPoint(partGroup.name, pointMesh);
-        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.SetPickingMeshMaterial(pointMaterialIdCount, offset, maxTexSize, pickingPointMesh);
+        _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddPoint(partGroup.name, pointMesh);
+        _NctiSelectManager__WEBPACK_IMPORTED_MODULE_4__.SelectManager.current.SetPickingMeshMaterial(pointMaterialIdCount, offset, maxTexSize, pickingPointMesh);
     }
     extractFaceMesh(faceMesh, pickingFaceMesh, face, modelBody, num, ids, meshes, bufferDataOffsets) {
         if (meshes.length == 0) {
@@ -62625,15 +62625,15 @@ class NctiBodyLoader {
         const colorBuffer = bufferDataOffsets.colorBuffer;
         const indexBuffer = bufferDataOffsets.indexBuffer;
         const idBuffer = bufferDataOffsets.idBuffer;
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.MeshColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.MeshColor;
         let id = 0;
         for (let i = 0; i < meshes.length; i++) {
             if (ids !== null) {
                 id = ids[num.IdIndex++];
             }
             const globalId = this.m_globalId.Id++;
-            const nctiElement = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiElement(id, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_1__.ElementType.Face);
-            _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const nctiElement = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiElement(id, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Face);
+            _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddElement(globalId, nctiElement);
             modelBody.AddElement(nctiElement);
             nctiElement.SetMeshInfo(face);
             nctiElement.SetDisplayMesh(faceMesh);
@@ -62666,15 +62666,15 @@ class NctiBodyLoader {
         let lineBuffer = bufferDataOffsets.lineBuffer;
         let lineColorBuffer = bufferDataOffsets.lineColorBuffer;
         let lineIdBuffer = bufferDataOffsets.lineIdBuffer;
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LineColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LineColor;
         let id = 0;
         for (let i = 0; i < edges.length; i++) {
             if (ids !== null) {
                 id = ids[num.IdIndex++];
             }
             const globalId = this.m_globalId.Id++;
-            const nctiElement = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiElement(id, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_1__.ElementType.Edge);
-            _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const nctiElement = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiElement(id, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Edge);
+            _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddElement(globalId, nctiElement);
             modelBody.AddElement(nctiElement);
             nctiElement.SetMeshInfo(line);
             nctiElement.SetDisplayMesh(edgemesh);
@@ -62701,12 +62701,12 @@ class NctiBodyLoader {
         let pointBuffer = pointBufferDataOffsets.pointBuffer;
         let pointColorBuffer = pointBufferDataOffsets.pointColorBuffer;
         let pointIdBuffer = pointBufferDataOffsets.pointIdBuffer;
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.PointColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.PointColor;
         const offset = this.m_globalId.Id;
         let nctiId = 0;
         for (let i = 0; i < markers.length; i++) {
             const marker = markers[i];
-            if (marker instanceof ncti_NctiBase__WEBPACK_IMPORTED_MODULE_9__.NctiPosition) {
+            if (marker instanceof ncti_NctiBase__WEBPACK_IMPORTED_MODULE_8__.NctiPosition) {
                 pointBuffer[i * 3 + pointBufferDataOffsets.VertOffset] = marker.x;
                 pointBuffer[i * 3 + 1 + pointBufferDataOffsets.VertOffset] = marker.y;
                 pointBuffer[i * 3 + 2 + pointBufferDataOffsets.VertOffset] = marker.z;
@@ -62724,9 +62724,9 @@ class NctiBodyLoader {
             }
             const globalId = this.m_globalId.Id++;
             pointIdBuffer[i + pointBufferDataOffsets.IdOffset] = globalId;
-            const nctiElement = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiElement(nctiId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_1__.ElementType.Point);
+            const nctiElement = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiElement(nctiId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Point);
             modelBody.AddElement(nctiElement);
-            _NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            _NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddElement(globalId, nctiElement);
             nctiElement.SetMeshInfo(points);
             nctiElement.SetDisplayMesh(pointMesh);
             nctiElement.SetPickingMesh(pickingPointMesh);
@@ -62863,14 +62863,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   NctiSketchCamera: () => (/* binding */ NctiSketchCamera)
 /* harmony export */ });
 /* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var _NctiControl__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiControl */ "./src/engine/NctiControl.ts");
-/* harmony import */ var src_Utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! src/Utils */ "./src/Utils.ts");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var _NctiControl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiControl */ "./src/engine/NctiControl.ts");
+/* harmony import */ var src_Utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! src/Utils */ "./src/Utils.ts");
 
 
 
 
-class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
+class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_3__.OrthographicCamera {
     get ControlTarget() {
         return this.m_Controller.Target;
     }
@@ -62881,7 +62881,7 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         super();
         this.Default_Distance = 30;
         // 记录相机初始的方向，用于保持相机方向不变
-        this.m_cameraWorldDirection = new three__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+        this.m_cameraWorldDirection = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3();
         this.onControllerChange = null;
         this.m_scenePreBBox = bbox.clone();
         let distance = this.Default_Distance;
@@ -62890,7 +62890,7 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         this.setCamera(constainer, distance);
         this.position.set(0, 0, distance * 1.5);
         this.setCameraWorldDirection();
-        this.m_Controller = new _NctiControl__WEBPACK_IMPORTED_MODULE_2__["default"](this, domElement);
+        this.m_Controller = new _NctiControl__WEBPACK_IMPORTED_MODULE_1__["default"](this, domElement);
         // 代理控制器事件
         this.m_Controller.addEventListener('change', this._onControllerChange.bind(this));
         if (!bbox.isEmpty()) {
@@ -62911,11 +62911,11 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         }
     }
     updateCamera(container, bbox, force = false) {
-        if (!src_Utils__WEBPACK_IMPORTED_MODULE_3__["default"].isBoxesLargen(this.m_scenePreBBox, bbox) && !force) {
+        if (!src_Utils__WEBPACK_IMPORTED_MODULE_2__["default"].isBoxesLargen(this.m_scenePreBBox, bbox) && !force) {
             return false;
         }
         this.m_scenePreBBox = bbox.clone();
-        const farthestPoint = src_Utils__WEBPACK_IMPORTED_MODULE_3__["default"].getFarthestPointOnBBox(this.ControlTarget, bbox);
+        const farthestPoint = src_Utils__WEBPACK_IMPORTED_MODULE_2__["default"].getFarthestPointOnBBox(this.ControlTarget, bbox);
         const distance = farthestPoint.distanceTo(this.ControlTarget);
         this.setCamera(container, distance, true);
         const newPosition = this.m_cameraWorldDirection.clone().multiplyScalar(distance);
@@ -62933,7 +62933,7 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
     getCameraWidthHeight(constainer, distance) {
         const width = constainer.clientWidth;
         const height = constainer.clientHeight;
-        const halfFovV = three__WEBPACK_IMPORTED_MODULE_1__.MathUtils.DEG2RAD * 45 * 0.5;
+        const halfFovV = three__WEBPACK_IMPORTED_MODULE_3__.MathUtils.DEG2RAD * 45 * 0.5;
         const halfFovH = Math.atan((width / height) * Math.tan(halfFovV));
         const halfW = distance * Math.tan(halfFovH);
         const halfH = distance * Math.tan(halfFovV);
@@ -62986,12 +62986,12 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         this.m_Controller.update();
     }
     ZoomAll(constainer, bbox) {
-        const center = bbox.getCenter(new three__WEBPACK_IMPORTED_MODULE_1__.Vector3());
+        const center = bbox.getCenter(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3());
         this.zoomCamera();
-        if (src_Utils__WEBPACK_IMPORTED_MODULE_3__["default"].vectorEquals(center, this.ControlTarget)) {
+        if (src_Utils__WEBPACK_IMPORTED_MODULE_2__["default"].vectorEquals(center, this.ControlTarget)) {
             return;
         }
-        const size = bbox.getSize(new three__WEBPACK_IMPORTED_MODULE_1__.Vector3());
+        const size = bbox.getSize(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3());
         let bboxSize = size.length() * 2;
         // 1. 重置相机的近远裁剪面
         this.setCamera(constainer, bboxSize);
@@ -63000,9 +63000,9 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         // 2.1 先创建旋转中心到包围盒中心的向量dir
         const dir = center.clone().sub(this.ControlTarget).normalize();
         // 2.2. 创建z轴和dir叉乘的向量cross，作为相机的位置
-        const cross = new three__WEBPACK_IMPORTED_MODULE_1__.Vector3(0, 0, 1).cross(dir).normalize();
+        const cross = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 0, 1).cross(dir).normalize();
         // 2.3. 设置相机的位置为cross乘以一个距离distance
-        const distance = bbox.getSize(new three__WEBPACK_IMPORTED_MODULE_1__.Vector3()).length() * 2;
+        const distance = bbox.getSize(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3()).length() * 2;
         // 2.4 平移到旋转中心的位置
         const tempPoint = cross.multiplyScalar(distance);
         this.position.copy(tempPoint.add(this.ControlTarget));
@@ -63039,11 +63039,11 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         const screenX = rect.left + (ndc.x + 1) / 2 * rect.width;
         const screenY = rect.top + (1 - ndc.y) / 2 * rect.height;
         // console.log('屏幕坐标:', screenX, screenY);
-        return [new three__WEBPACK_IMPORTED_MODULE_1__.Vector2(cX, cY), new three__WEBPACK_IMPORTED_MODULE_1__.Vector2(screenX, screenY)];
+        return [new three__WEBPACK_IMPORTED_MODULE_3__.Vector2(cX, cY), new three__WEBPACK_IMPORTED_MODULE_3__.Vector2(screenX, screenY)];
     }
     isPointFartherBBox(point, target, bbox) {
         // 1. 计算包围盒上距离 T 最近的点 Q
-        const farthestPoint = src_Utils__WEBPACK_IMPORTED_MODULE_3__["default"].getFarthestPointOnBBox(target, bbox);
+        const farthestPoint = src_Utils__WEBPACK_IMPORTED_MODULE_2__["default"].getFarthestPointOnBBox(target, bbox);
         // 2. 计算距离平方（避免开方，提升性能）
         const pointToTarget = Math.pow((point.x - target.x), 2) + Math.pow((point.y - target.y), 2) + Math.pow((point.z - target.z), 2);
         const bboxToTarget = Math.pow((farthestPoint.x - target.x), 2) + Math.pow((farthestPoint.y - target.y), 2) + Math.pow((farthestPoint.z - target.z), 2);
@@ -63055,7 +63055,7 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
     }
     isFarFartherBBox(target, bbox) {
         // 1. 计算包围盒上距离 T 最近的点 Q
-        const farthestPoint = src_Utils__WEBPACK_IMPORTED_MODULE_3__["default"].getFarthestPointOnBBox(target, bbox);
+        const farthestPoint = src_Utils__WEBPACK_IMPORTED_MODULE_2__["default"].getFarthestPointOnBBox(target, bbox);
         const farthestDistance = farthestPoint.distanceTo(target);
         const cameraDis = this.position.distanceTo(target);
         if (farthestDistance + cameraDis > this.far) {
@@ -63085,24 +63085,24 @@ class NctiCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
         return true;
     }
     SetViewType(viewType, bbox, container) {
-        let center = new three__WEBPACK_IMPORTED_MODULE_1__.Vector3(0);
+        let center = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0);
         let size = bbox.max.length();
         let distance = size * 1.5;
         this.m_Controller.reset();
         this.setCameraView(viewType, center, distance);
         this.m_Controller.update();
-        const [endPos, startPos] = this.getCenterPos(container, bbox.getCenter(new three__WEBPACK_IMPORTED_MODULE_1__.Vector3()));
+        const [endPos, startPos] = this.getCenterPos(container, bbox.getCenter(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3()));
         this.m_Controller.MoveToCenter(startPos, endPos);
     }
 }
 
 // export const NctiCameraInstance = new NctiCamera();
-class NctiAxisCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
+class NctiAxisCamera extends three__WEBPACK_IMPORTED_MODULE_3__.OrthographicCamera {
     constructor(left, right, top, bottom, near, far) {
         super(left, right, top, bottom, near, far);
     }
 }
-class BaseOrthographicCamera extends three__WEBPACK_IMPORTED_MODULE_1__.OrthographicCamera {
+class BaseOrthographicCamera extends three__WEBPACK_IMPORTED_MODULE_3__.OrthographicCamera {
     constructor(bbox) {
         super();
         this.Default_Distance = 30;
@@ -63112,7 +63112,7 @@ class BaseOrthographicCamera extends three__WEBPACK_IMPORTED_MODULE_1__.Orthogra
     getCameraWidthHeight(constainer, distance) {
         const width = constainer.clientWidth;
         const height = constainer.clientHeight;
-        const halfFovV = three__WEBPACK_IMPORTED_MODULE_1__.MathUtils.DEG2RAD * 45 * 0.5;
+        const halfFovV = three__WEBPACK_IMPORTED_MODULE_3__.MathUtils.DEG2RAD * 45 * 0.5;
         const halfFovH = Math.atan((width / height) * Math.tan(halfFovV));
         const halfW = distance * Math.tan(halfFovH);
         const halfH = distance * Math.tan(halfFovV);
@@ -63134,12 +63134,12 @@ class NctiSketchCamera extends BaseOrthographicCamera {
         this.top = halfH;
         this.bottom = -halfH;
         this.position.set(0, 0, distance * 1.5);
-        this.m_controller = new _NctiControl__WEBPACK_IMPORTED_MODULE_2__.NctiOrbitControl(this, constainer);
+        this.m_controller = new _NctiControl__WEBPACK_IMPORTED_MODULE_1__.NctiOrbitControl(this, constainer);
         this.m_controller.addEventListener('change', this._onControllerChange.bind(this));
         this.updateProjectionMatrix();
     }
     resetCamera(container, bbox, force = false) {
-        if (!src_Utils__WEBPACK_IMPORTED_MODULE_3__["default"].isBoxesLargen(this.m_scenePreBBox, bbox) && !force) {
+        if (!src_Utils__WEBPACK_IMPORTED_MODULE_2__["default"].isBoxesLargen(this.m_scenePreBBox, bbox) && !force) {
             return false;
         }
         let distance = Math.max(bbox.max.length(), bbox.min.length()) * 2;
@@ -63178,13 +63178,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   NctiOrbitControl: () => (/* binding */ NctiOrbitControl),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var three_examples_jsm_controls_ArcballControls__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/ArcballControls */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/controls/ArcballControls.js");
-/* harmony import */ var three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/controls/OrbitControls.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var three_examples_jsm_controls_ArcballControls__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three/examples/jsm/controls/ArcballControls */ "./node_modules/three/examples/jsm/controls/ArcballControls.js");
+/* harmony import */ var three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls.js */ "./node_modules/three/examples/jsm/controls/OrbitControls.js");
 
 
 
-class NctiArcballControl extends three_examples_jsm_controls_ArcballControls__WEBPACK_IMPORTED_MODULE_1__.ArcballControls {
+class NctiArcballControl extends three_examples_jsm_controls_ArcballControls__WEBPACK_IMPORTED_MODULE_0__.ArcballControls {
     constructor(camera, domElement, scene) {
         super(camera, domElement, scene);
         this.setMouseAction('ROTATE', 2);
@@ -63208,12 +63208,12 @@ class NctiArcballControl extends three_examples_jsm_controls_ArcballControls__WE
         this.applyTransformMatrix(this.pan(startPosition, endPosition));
     }
 }
-class NctiOrbitControl extends three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_2__.OrbitControls {
+class NctiOrbitControl extends three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls {
     constructor(camera, domElement) {
         super(camera, domElement);
         this.mouseButtons = {
             LEFT: null,
-            MIDDLE: three__WEBPACK_IMPORTED_MODULE_0__.MOUSE.PAN, // 中键平移
+            MIDDLE: three__WEBPACK_IMPORTED_MODULE_2__.MOUSE.PAN, // 中键平移
             RIGHT: null
         };
         this.enableRotate = false;
@@ -63237,6 +63237,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
 /* harmony import */ var _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiModelManager */ "./src/engine/NctiModelManager.ts");
+/* harmony import */ var mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! mesh/NctiGridMeshLoader */ "./src/mesh/NctiGridMeshLoader.ts");
+
 
 
 class NctiDisplayManager {
@@ -63299,8 +63301,13 @@ class NctiDisplayManager {
         if (!bodyMap || !bodyMap.has(bodyName)) {
             return;
         }
-        const cellIds = Array.from(bodyMap.get(bodyName));
-        this.setCellsVisible(partName, bodyName, cellIds);
+        const elements = bodyMap.get(bodyName);
+        bodyMap.get(bodyName).clear();
+        mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_2__.GridMeshManager.current.SetAllVisible();
+        this.setCellsVisibility(elements, true);
+        if (bodyMap.get(bodyName).size == 0) {
+            bodyMap.delete(bodyName);
+        }
         this.setBodyVisibility(partName, bodyName, true);
         bodyMap.delete(bodyName);
     }
@@ -63315,18 +63322,46 @@ class NctiDisplayManager {
         }
         this.setBodyVisibility(partName, bodyName, false);
     }
-    setCellsVisible(partName, bodyName, cellIds) {
-        let bodyMap = this.m_UnvisibleList.get(partName);
-        if (!bodyMap || !bodyMap.has(bodyName)) {
-            return;
+    setCellsInvisible(partName, bodyName, elements) {
+        const newElements = new Set;
+        for (const element of elements) {
+            if (!element.MeshInfo.IsGrid) {
+                continue;
+            }
+            if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.GridNode) {
+                // 不单独隐藏节点
+                continue;
+            }
+            else {
+                const gridCell = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_2__.GridMeshManager.current.GetCellByGlobalId(element.ElementId);
+                gridCell.Visible = false;
+                const cellFaceIds = gridCell.m_CellFaces;
+                const cellEdgeIds = gridCell.m_CellEdges;
+                const cellNodeIds = gridCell.m_CellNodes;
+                for (const faceId of cellFaceIds) {
+                    const cellElement = _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__.ModelManager.current.GetElement(faceId);
+                    if (cellElement !== element) {
+                        newElements.add(cellElement);
+                    }
+                }
+                for (const edgeId of cellEdgeIds) {
+                    const cellElement = _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__.ModelManager.current.GetElement(edgeId);
+                    if (cellElement !== element) {
+                        newElements.add(cellElement);
+                    }
+                }
+                for (const nodeId of cellNodeIds) {
+                    const cells = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_2__.GridMeshManager.current.GetCellByNodeId(nodeId);
+                    if (cells.every(i => i.m_CellFaces.length === 0 || i.Visible === false)) {
+                        const nodeElement = _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__.ModelManager.current.GetElement(nodeId);
+                        newElements.add(nodeElement);
+                    }
+                }
+            }
         }
-        cellIds.forEach(id => bodyMap.get(bodyName).delete(id));
-        this.setCellsVisibility(partName, bodyName, cellIds, true);
-        if (bodyMap.get(bodyName).size == 0) {
-            bodyMap.delete(bodyName);
+        for (const element of newElements) {
+            elements.add(element);
         }
-    }
-    setCellsInvisible(partName, bodyName, cellIds) {
         let bodyMap = this.m_UnvisibleList.get(partName);
         if (!bodyMap) {
             bodyMap = new Map();
@@ -63335,8 +63370,8 @@ class NctiDisplayManager {
         if (!bodyMap.has(bodyName)) {
             bodyMap.set(bodyName, new Set());
         }
-        cellIds.forEach(id => bodyMap.get(bodyName).add(id));
-        this.setCellsVisibility(partName, bodyName, cellIds, false);
+        elements.forEach(element => bodyMap.get(bodyName).add(element));
+        this.setCellsVisibility(elements, false);
     }
     setBodyVisibility(partName, bodyName, visibility) {
         const modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__.ModelManager.current.GetPartBodyGroup(partName, bodyName);
@@ -63344,12 +63379,8 @@ class NctiDisplayManager {
             this.setElementVisible(element, visibility);
         }
     }
-    setCellsVisibility(partName, bodyName, cellIds, visibility) {
-        const group = _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__.ModelManager.current.GetPartBodyGroup(partName, bodyName);
-        const objectIdMap = group.ElementMap;
-        cellIds.forEach(id => {
-            const globalId = objectIdMap.get(id).ElementId;
-            const element = _NctiModelManager__WEBPACK_IMPORTED_MODULE_1__.ModelManager.current.GetElement(globalId);
+    setCellsVisibility(element, visibility) {
+        element.forEach(element => {
             this.setElementVisible(element, visibility);
         });
     }
@@ -63360,15 +63391,15 @@ class NctiDisplayManager {
         material.NeedsUpdate();
     }
     setElementVisible(element, show) {
-        if (this.isShowFaces && element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Face) {
+        if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Face || element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.GridFace) {
             this.setVisible(element.MeshInfo, element.ElementId, show, element.DisplayMesh.material);
             this.setVisible(element.MeshInfo, element.ElementId, show, element.PickingMesh.material);
         }
-        else if (this.isShowEdges && element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Edge) {
+        else if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Edge || element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.GridEdge) {
             this.setVisible(element.MeshInfo, element.ElementId, show, element.DisplayMesh.material);
             this.setVisible(element.MeshInfo, element.ElementId, show, element.PickingMesh.material);
         }
-        else if (this.isShowPoints && element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Point) {
+        else if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.Point || element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_0__.ElementType.GridNode) {
             this.setVisible(element.MeshInfo, element.ElementId, show, element.DisplayMesh.material);
             this.setVisible(element.MeshInfo, element.ElementId, show, element.PickingMesh.material);
         }
@@ -63414,8 +63445,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   NctiModelBody: () => (/* binding */ NctiModelBody),
 /* harmony export */   NctiPointMesh: () => (/* binding */ NctiPointMesh)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var three_examples_jsm_lines_Line2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/lines/Line2 */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/Line2.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var three_examples_jsm_lines_Line2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/lines/Line2 */ "./node_modules/three/examples/jsm/lines/Line2.js");
 
 
 class NctiModelBody {
@@ -63542,9 +63573,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   IsMesh: () => (/* binding */ IsMesh),
 /* harmony export */   IsPoint: () => (/* binding */ IsPoint)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var three_examples_jsm_lines_Line2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/lines/Line2 */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/Line2.js");
-/* harmony import */ var three_examples_jsm_lines_LineSegments2__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/lines/LineSegments2 */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineSegments2.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var three_examples_jsm_lines_Line2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/lines/Line2 */ "./node_modules/three/examples/jsm/lines/Line2.js");
+/* harmony import */ var three_examples_jsm_lines_LineSegments2__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/lines/LineSegments2 */ "./node_modules/three/examples/jsm/lines/LineSegments2.js");
 
 
 
@@ -63620,12 +63651,13 @@ class NctiLoader {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   NctiArrowMaterial: () => (/* binding */ NctiArrowMaterial),
+/* harmony export */   NctiGridPointMaterial: () => (/* binding */ NctiGridPointMaterial),
 /* harmony export */   NctiMeshStandardMaterial: () => (/* binding */ NctiMeshStandardMaterial),
 /* harmony export */   NctiPickingMaterial: () => (/* binding */ NctiPickingMaterial),
 /* harmony export */   NctiShaderMaterial: () => (/* binding */ NctiShaderMaterial),
 /* harmony export */   NctiSignMaterial: () => (/* binding */ NctiSignMaterial)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
 
 // import { Renderer } from './NctiRenderer.ts1';
 class NctiShaderMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_MODULE_0__.ShaderMaterial) {
@@ -63677,7 +63709,6 @@ class NctiShaderMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED
         }
     `;
         this.glslVersion = three__WEBPACK_IMPORTED_MODULE_0__.GLSL3;
-        // const maxTexSize = Renderer.current.capabilities.maxTextureSize; // 或从 renderer.getContext().getParameter(gl.MAX_TEXTURE_SIZE) 获取
         const width = Math.min(maxTexSize, idCount);
         const height = Math.ceil(idCount / width);
         this.initHiddenMap(width, height);
@@ -63799,18 +63830,6 @@ class NctiSignMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_M
 
         void main(){
             vColor = color;
-            // // 1. 在局部空间（像素单位）对箭头进行旋转
-            // float c = a_direction.y;
-            // float s = -a_direction.x;
-            // vec3 rotatedPosition = vec3(
-            //     position.x * c - position.y * s,
-            //     position.x * s + position.y * c,
-            //     0.0
-            // );
-            // // 2. 【核心】将旋转后的像素坐标乘以转换系数，变为当前缩放下的世界大小
-            // vec3 worldOffset = rotatedPosition * u_sizeFactor;
-            // // 3. 加上世界锚点，得到最终在世界坐标系中的绝对位置
-            // vec3 finalWorldPosition = a_anchor + worldOffset;
 
             vec3 worldOffset = position * u_sizeFactor;
             // 4. 标准投影矩阵计算
@@ -63834,7 +63853,96 @@ class NctiSignMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_M
             u_sizeFactor: { value: 1.0 }
         };
         this.side = three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide;
-        this.depthTest = false;
+        this.depthTest = true;
+    }
+}
+class NctiGridPointMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_MODULE_0__.ShaderMaterial) {
+    constructor(idCount, offset, maxTexSize) {
+        super();
+        this.pointVs = `
+        precision highp float;
+        uniform float u_sizeFactor;
+        uniform float u_pointSize; // 【新增】控制像素大小
+
+        in vec3 color;
+        in int id;
+        flat out int vId;
+
+        out vec3 vColor;
+
+        void main(){
+            vColor = color;
+            vId = id;
+
+            vec3 worldOffset = position * u_sizeFactor;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(worldOffset, 1.0);
+            
+            // 使用 THREE.Points 时，Shader 必须显式设置 gl_PointSize
+            // 如果不写，点可能无法显示，或者大小不可控
+            gl_PointSize = u_pointSize; 
+        }
+    `;
+        this.pointFs = `
+        precision highp float;
+
+        // 注意：不要加 layout(location = 0)，Three.js GLSL3 环境下直接声明 out 即可避免冲突
+        out vec4 fragColor;
+        
+        in vec3 vColor;
+        flat in int vId;
+
+        uniform sampler2D uHiddenMap;
+        uniform int uIdCount;
+        uniform int uOffset;
+        uniform float uTexWidth;
+        uniform float uTexHeight;
+
+        void main() {
+            int localId = vId - uOffset; // 相对于当前批次的 ID
+            if (localId < 0 || localId >= uIdCount) {
+                fragColor = vec4(vColor, 1.0);
+                return;
+            }
+            
+            // 将 1D ID 映射到 2D 纹理坐标
+            float texX = mod(float(localId), uTexWidth) + 0.5;
+            float texY = floor(float(localId) / uTexWidth) + 0.5;
+            vec2 uv = vec2(texX / uTexWidth, texY / uTexHeight);
+
+            float isHidden = texture(uHiddenMap, uv).r;
+            if (isHidden > 0.5) discard; // 隐藏点
+            
+            // 利用 gl_PointCoord 计算距离中心的距离
+            // gl_PointCoord 中心是 vec2(0.5, 0.5)
+            float dist = distance(gl_PointCoord, vec2(0.5));
+
+            // 使用 smoothstep 在 0.45 到 0.5 之间进行平滑过渡，消除边缘的像素颗粒感
+            float alpha = 1.0 - smoothstep(0.45, 0.5, dist);
+            
+            // 替代 alphaTest: 0.01
+            if (alpha < 0.01) discard; 
+
+            fragColor = vec4(vColor, alpha);
+        }
+    `;
+        this.glslVersion = three__WEBPACK_IMPORTED_MODULE_0__.GLSL3;
+        const width = Math.min(maxTexSize, idCount);
+        const height = Math.ceil(idCount / width);
+        this.initHiddenMap(width, height);
+        this.vertexShader = this.pointVs;
+        this.fragmentShader = this.pointFs;
+        this.uniforms = {
+            u_sizeFactor: { value: 1.0 },
+            u_pointSize: { value: 12.0 }, // 对应你之前 PointsMaterial 的 size: 12
+            uHiddenMap: { value: this.HiddenMap },
+            uIdCount: { value: idCount },
+            uOffset: { value: offset },
+            uTexWidth: { value: width },
+            uTexHeight: { value: height }
+        };
+        // 平滑边缘，必须开启 transparent
+        this.transparent = true;
+        this.depthTest = true;
     }
 }
 class NctiPickingMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_MODULE_0__.ShaderMaterial) {
@@ -63926,57 +64034,47 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   MaterialManager: () => (/* binding */ MaterialManager),
 /* harmony export */   NctiMaterialManager: () => (/* binding */ NctiMaterialManager)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var _NctiMaterial__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiMaterial */ "./src/engine/NctiMaterial.ts");
-/* harmony import */ var three_examples_jsm_lines_LineMaterial__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/lines/LineMaterial */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineMaterial.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiMaterial */ "./src/engine/NctiMaterial.ts");
+/* harmony import */ var three_examples_jsm_lines_LineMaterial__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/lines/LineMaterial */ "./node_modules/three/examples/jsm/lines/LineMaterial.js");
 
 
 
 class NctiMaterialManager {
-    get OriginFaceMaterial() {
-        return this.m_OriginFaceMaterial;
-    }
-    get OriginLineMaterial() {
-        return this.m_OriginLineMaterial;
-    }
-    get OriginPointMaterial() {
-        return this.m_OriginPointMaterial;
-    }
-    get GridPointMaterial() {
-        return this.m_GridPointMaterial;
-    }
     OriginMaterial(idCount, offset, maxTexSize) {
-        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_1__.NctiShaderMaterial(idCount, offset, maxTexSize);
+        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__.NctiShaderMaterial(idCount, offset, maxTexSize);
     }
     OriginArrowMaterial() {
-        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_1__.NctiArrowMaterial();
+        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__.NctiArrowMaterial();
+    }
+    OriginGridPointMaterial(idCount, offset, maxTexSize) {
+        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__.NctiGridPointMaterial(idCount, offset, maxTexSize);
     }
     OriginSignMaterial() {
-        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_1__.NctiSignMaterial();
+        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__.NctiSignMaterial();
     }
     OriginMeshMaterial(idCount, offset, maxTexSize, parameters) {
-        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_1__.NctiMeshStandardMaterial(idCount, offset, maxTexSize, parameters);
+        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__.NctiMeshStandardMaterial(idCount, offset, maxTexSize, parameters);
     }
     PickedMaterial(idCount, offset, maxTexSize) {
-        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_1__.NctiPickingMaterial(idCount, offset, maxTexSize, {
+        return new _NctiMaterial__WEBPACK_IMPORTED_MODULE_0__.NctiPickingMaterial(idCount, offset, maxTexSize, {
             polygonOffset: true,
             polygonOffsetFactor: 1,
             polygonOffsetUnits: 1
         });
     }
-    get MeshColor() {
+    calcRGB(color) {
         return {
-            r: ((this.m_meshColor >> 16) & 0xff) / 255,
-            g: ((this.m_meshColor >> 8) & 0xff) / 255,
-            b: (this.m_meshColor & 0xff) / 255,
+            r: ((color >> 16) & 0xff) / 255,
+            g: ((color >> 8) & 0xff) / 255,
+            b: (color & 0xff) / 255,
         };
     }
+    get MeshColor() {
+        return this.calcRGB(this.m_meshColor);
+    }
     get PointColor() {
-        return {
-            r: ((this.m_pointColor >> 16) & 0xff) / 255,
-            g: ((this.m_pointColor >> 8) & 0xff) / 255,
-            b: (this.m_pointColor & 0xff) / 255,
-        };
+        return this.calcRGB(this.m_pointColor);
     }
     get LineColor() {
         return {
@@ -63986,78 +64084,36 @@ class NctiMaterialManager {
         };
     }
     get MarkColor() {
-        const color = 0x2F80ED;
-        return {
-            r: ((color >> 16) & 0xff) / 255,
-            g: ((color >> 8) & 0xff) / 255,
-            b: (color & 0xff) / 255,
-        };
+        return this.calcRGB(this.m_sketchMarkerColor);
+    }
+    get CloseAreaColor() {
+        return this.calcRGB(this.m_closedAreaColor);
     }
     get DimensionalConstraintColor() {
-        const color = 0xecab4b;
-        return {
-            r: ((color >> 16) & 0xff) / 255,
-            g: ((color >> 8) & 0xff) / 255,
-            b: (color & 0xff) / 255,
-        };
+        return this.calcRGB(this.m_dimensionalConstraintColor);
     }
     get LocationConstraintColor() {
-        const color = 0xA2A7B0;
-        return {
-            r: ((color >> 16) & 0xff) / 255,
-            g: ((color >> 8) & 0xff) / 255,
-            b: (color & 0xff) / 255,
-        };
+        return this.calcRGB(this.m_locationConstraintColor);
     }
     get CenterLineColor() {
-        return 0xE294FF;
+        return this.m_centerLineColor;
     }
     get GridPointColor() {
-        return {
-            r: ((this.m_gridPointColor >> 16) & 0xff) / 255,
-            g: ((this.m_gridPointColor >> 8) & 0xff) / 255,
-            b: (this.m_gridPointColor & 0xff) / 255,
-        };
+        return this.calcRGB(this.m_gridPointColor);
     }
     get SelectedColor() {
-        return {
-            r: ((this.m_selectedColor >> 16) & 0xff) / 255,
-            g: ((this.m_selectedColor >> 8) & 0xff) / 255,
-            b: (this.m_selectedColor & 0xff) / 255,
-        };
+        return this.calcRGB(this.m_selectedColor);
     }
     constructor(config) {
+        this.m_sketchMarkerColor = 0x2F80ED;
+        this.m_closedAreaColor = 0xD2D6DA;
+        this.m_dimensionalConstraintColor = 0xecab4b;
+        this.m_locationConstraintColor = 0xA2A7B0;
+        this.m_centerLineColor = 0xE294FF;
         this.m_meshColor = config.MeshColor;
         this.m_pointColor = config.PointColor;
         this.m_selectedColor = config.SelectedColor;
         this.m_gridPointColor = config.GridPointColor;
-        this.m_OriginFaceMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
-            vertexColors: true, side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
-            polygonOffset: true,
-            polygonOffsetFactor: 1,
-            polygonOffsetUnits: 1
-        });
-        this.m_OriginPointMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.PointsMaterial({ size: 10, vertexColors: true, });
-        this.m_OriginLineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({ vertexColors: true, linewidth: 3 });
-        const createCircleTexture = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 32;
-            canvas.height = 32;
-            const context = canvas.getContext('2d');
-            context.beginPath();
-            context.arc(16, 16, 14, 0, 2 * Math.PI);
-            context.fillStyle = 'white';
-            context.fill();
-            return new three__WEBPACK_IMPORTED_MODULE_0__.CanvasTexture(canvas);
-        };
-        this.m_GridPointMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.PointsMaterial({
-            size: 12,
-            map: createCircleTexture(),
-            transparent: true,
-            alphaTest: 0.01,
-            // color: config.GridPointColor
-            vertexColors: true
-        });
     }
     static initialize(config) {
         NctiMaterialManager.m_Instance = new NctiMaterialManager(config);
@@ -64068,14 +64124,14 @@ class NctiMaterialManager {
         }
         return NctiMaterialManager.m_Instance;
     }
-    AxisMaterial(color = 0x888888) {
-        return new three_examples_jsm_lines_LineMaterial__WEBPACK_IMPORTED_MODULE_2__.LineMaterial({
+    AxisMaterial(color = 0xA7B5EA) {
+        return new three_examples_jsm_lines_LineMaterial__WEBPACK_IMPORTED_MODULE_1__.LineMaterial({
             color: color, // 坐标轴颜色
             linewidth: 2, // 【核心】屏幕像素宽度，永远是 2px，不随缩放改变
             dashed: true, // 开启虚线模式
             dashSize: 8, // 虚线实部长度（像素）
             gapSize: 4, // 虚线空隙长度（像素）
-            resolution: new three__WEBPACK_IMPORTED_MODULE_0__.Vector2(window.innerWidth, window.innerHeight) // 必须传入分辨率
+            resolution: new three__WEBPACK_IMPORTED_MODULE_2__.Vector2(window.innerWidth, window.innerHeight) // 必须传入分辨率
         });
     }
 }
@@ -64326,7 +64382,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   NctiRenderer: () => (/* binding */ NctiRenderer)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.module.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
 
 class NctiRenderer extends three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderer {
     // private static m_Instance: NctiRenderer | null = null;
@@ -64357,40 +64413,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   NctiSketchScene: () => (/* binding */ NctiSketchScene),
 /* harmony export */   NctiViewScene: () => (/* binding */ NctiViewScene)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var _NctiFnBase__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiFnBase */ "./src/engine/NctiFnBase.ts");
-/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
-/* harmony import */ var _NctiCamera__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiCamera */ "./src/engine/NctiCamera.ts");
-/* harmony import */ var three_examples_jsm_renderers_CSS2DRenderer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/renderers/CSS2DRenderer */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/renderers/CSS2DRenderer.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var _NctiFnBase__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiFnBase */ "./src/engine/NctiFnBase.ts");
+/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
+/* harmony import */ var _NctiCamera__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiCamera */ "./src/engine/NctiCamera.ts");
+/* harmony import */ var three_examples_jsm_renderers_CSS2DRenderer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/renderers/CSS2DRenderer */ "./node_modules/three/examples/jsm/renderers/CSS2DRenderer.js");
 
 
 
 
 
-class NctiScene extends three__WEBPACK_IMPORTED_MODULE_0__.Scene {
+class NctiScene extends three__WEBPACK_IMPORTED_MODULE_3__.Scene {
     get BBox() {
         return this.m_bbox;
     }
     constructor() {
         super();
-        this.m_bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3();
+        this.m_bbox = new three__WEBPACK_IMPORTED_MODULE_3__.Box3();
     }
     clearSceneGroup() {
         const children = this.children;
         for (let i = children.length - 1; i >= 0; i--) {
             const child = children[i];
-            if (child instanceof _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiGroup) {
+            if (child instanceof _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiGroup) {
                 this.clearGroup(child);
                 this.remove(child);
             }
         }
-        this.m_bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3();
+        this.m_bbox = new three__WEBPACK_IMPORTED_MODULE_3__.Box3();
     }
     deleteGroup(groupName) {
         const children = this.children;
         for (let i = children.length - 1; i >= 0; i--) {
             const child = children[i];
-            if (child instanceof _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiGroup && child.name === groupName) {
+            if (child instanceof _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiGroup && child.name === groupName) {
                 this.clearGroup(child);
                 this.remove(child);
                 return;
@@ -64400,19 +64456,19 @@ class NctiScene extends three__WEBPACK_IMPORTED_MODULE_0__.Scene {
     clearGroup(group) {
         const label = [];
         group.traverse((child) => {
-            if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_1__.IsMesh)(child)) {
+            if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_0__.IsMesh)(child)) {
                 const mesh = child;
                 if (mesh.geometry) {
                     mesh.geometry.dispose();
                 }
             }
-            else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_1__.IsLine)(child)) {
+            else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_0__.IsLine)(child)) {
                 const line = child;
                 if (line.geometry) {
                     line.geometry.dispose();
                 }
             }
-            else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_1__.IsPoint)(child)) {
+            else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_0__.IsPoint)(child)) {
                 const points = child;
                 if (points.geometry) {
                     points.geometry.dispose();
@@ -64475,7 +64531,7 @@ class NctiSketchScene extends NctiScene {
         this.m_axes = [];
     }
     InitCamera(constainer) {
-        this.m_Camera = new _NctiCamera__WEBPACK_IMPORTED_MODULE_3__.NctiSketchCamera(constainer, this.BBox);
+        this.m_Camera = new _NctiCamera__WEBPACK_IMPORTED_MODULE_2__.NctiSketchCamera(constainer, this.BBox);
     }
     Update(renderer) {
         // this.m_Camera.Update();
@@ -64607,28 +64663,28 @@ class NctiSketchScene extends NctiScene {
 }
 class NctiViewScene extends NctiScene {
     get BBoxCenter() {
-        let center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        let center = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3();
         this.BBox.getCenter(center);
         return center;
     }
     constructor() {
         super();
-        const ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(0x505050, 2);
+        const ambientLight = new three__WEBPACK_IMPORTED_MODULE_3__.AmbientLight(0x505050, 2);
         this.add(ambientLight);
-        this.m_directionalLight = new three__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight(0xffffff, 2);
+        this.m_directionalLight = new three__WEBPACK_IMPORTED_MODULE_3__.DirectionalLight(0xffffff, 2);
         this.m_directionalLight.lookAt(0, 0, 0);
         this.add(this.m_directionalLight);
-        this.m_arrowGroup = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+        this.m_arrowGroup = new three__WEBPACK_IMPORTED_MODULE_3__.Group();
         // X轴箭头（红色）
-        const xArrow = new NctiArrowHelper2(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), // 方向
+        const xArrow = new NctiArrowHelper2(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(1, 0, 0), // 方向
         0xff0000 // 颜色
         );
         this.m_arrowGroup.add(xArrow);
         // Y轴箭头（绿色）
-        const yArrow = new NctiArrowHelper2(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 0x00ff00);
+        const yArrow = new NctiArrowHelper2(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 1, 0), 0x00ff00);
         this.m_arrowGroup.add(yArrow);
         // Z轴箭头（蓝色）
-        const zArrow = new NctiArrowHelper2(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 0x0000ff);
+        const zArrow = new NctiArrowHelper2(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 0, 1), 0x0000ff);
         this.m_arrowGroup.add(zArrow);
         this.add(this.m_arrowGroup);
     }
@@ -64645,35 +64701,35 @@ class NctiPickingScene extends NctiScene {
         super();
     }
 }
-class NctiArrowHelper extends three__WEBPACK_IMPORTED_MODULE_0__.ArrowHelper {
+class NctiArrowHelper extends three__WEBPACK_IMPORTED_MODULE_3__.ArrowHelper {
     constructor(dir, color) {
-        super(dir, new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 0), 1, color, 0.4, 0.2);
+        super(dir, new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 0, 0), 1, color, 0.4, 0.2);
     }
 }
-class NctiArrowHelper2 extends three__WEBPACK_IMPORTED_MODULE_0__.ArrowHelper {
+class NctiArrowHelper2 extends three__WEBPACK_IMPORTED_MODULE_3__.ArrowHelper {
     constructor(dir, color) {
-        super(dir, new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 0), 3, color);
+        super(dir, new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 0, 0), 3, color);
     }
 }
-class NctiAxisScene extends three__WEBPACK_IMPORTED_MODULE_0__.Scene {
+class NctiAxisScene extends three__WEBPACK_IMPORTED_MODULE_3__.Scene {
     constructor() {
         super();
-        this.m_arrowGroup = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+        this.m_arrowGroup = new three__WEBPACK_IMPORTED_MODULE_3__.Group();
         // X轴箭头（红色）
-        const xArrow = new NctiArrowHelper(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), // 方向
+        const xArrow = new NctiArrowHelper(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(1, 0, 0), // 方向
         0xff0000 // 颜色
         );
         this.m_arrowGroup.add(xArrow);
         // Y轴箭头（绿色）
-        const yArrow = new NctiArrowHelper(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 0x00ff00);
+        const yArrow = new NctiArrowHelper(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 1, 0), 0x00ff00);
         this.m_arrowGroup.add(yArrow);
         // Z轴箭头（蓝色）
-        const zArrow = new NctiArrowHelper(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 0x0000ff);
+        const zArrow = new NctiArrowHelper(new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(0, 0, 1), 0x0000ff);
         this.m_arrowGroup.add(zArrow);
         this.add(this.m_arrowGroup);
     }
     UpdateAxis(quaternion) {
-        const quat = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+        const quat = new three__WEBPACK_IMPORTED_MODULE_3__.Quaternion();
         quat.copy(quaternion);
         quat.invert();
         this.m_arrowGroup.quaternion.copy(quat);
@@ -64696,14 +64752,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   SelectManager: () => (/* binding */ SelectManager)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
-/* harmony import */ var _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
-/* harmony import */ var _NctiScene__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiScene */ "./src/engine/NctiScene.ts");
-/* harmony import */ var _NctiFnBase__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./NctiFnBase */ "./src/engine/NctiFnBase.ts");
-/* harmony import */ var mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! mesh/NctiGridMeshLoader */ "./src/mesh/NctiGridMeshLoader.ts");
-/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
-/* harmony import */ var _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./NctiModelManager */ "./src/engine/NctiModelManager.ts");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
+/* harmony import */ var _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
+/* harmony import */ var _NctiScene__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiScene */ "./src/engine/NctiScene.ts");
+/* harmony import */ var _NctiFnBase__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiFnBase */ "./src/engine/NctiFnBase.ts");
+/* harmony import */ var mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! mesh/NctiGridMeshLoader */ "./src/mesh/NctiGridMeshLoader.ts");
+/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
+/* harmony import */ var _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./NctiModelManager */ "./src/engine/NctiModelManager.ts");
 
 
 
@@ -64718,9 +64774,6 @@ class NctiSelectManager {
     }
     get PickingScene() {
         return this.m_PickingScene;
-    }
-    set GridManager(value) {
-        this.m_gridManager = value;
     }
     SelectedParts() {
         let objNameArr = [];
@@ -64774,22 +64827,22 @@ class NctiSelectManager {
             let resultId;
             for (const cell of cellDatas) {
                 switch (cell.type) {
-                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Node:
+                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Node:
                         resultId = this.CalcCellId(cell.elementId, cell.type, 0);
                         printData = `NodeNumber: ${cell.elementId}, resultId: ${resultId}`;
                         cellArr.push(printData);
                         break;
-                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Cell:
+                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Cell:
                         resultId = this.CalcCellId(cell.elementId, cell.type, 0);
                         printData = `CellNunber: ${cell.elementId}, resultId: ${resultId}`;
                         cellArr.push(printData);
                         break;
-                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Face:
+                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Face:
                         resultId = this.CalcCellId(cell.elementId, cell.type, cell.faceIndex);
                         printData = `CellNunber: ${cell.elementId}, FaceIndex:${cell.faceIndex}, resultId: ${resultId}`;
                         cellArr.push(printData);
                         break;
-                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Edge:
+                    case mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Edge:
                         resultId = this.CalcCellId(cell.elementId, cell.type, cell.edgeIndex);
                         printData = `CellNunber: ${cell.elementId}, EdgeIndex:${cell.edgeIndex}, resultId: ${resultId}`;
                         cellArr.push(printData);
@@ -64811,7 +64864,7 @@ class NctiSelectManager {
         }
         // 当前如果是体选择模式，就独显体; 如果是非体选择模式，就对体上选择的元素进行独显
         if (this.SelectBody) {
-            _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.PartBodyMap.forEach((modelBodyMap, partName) => {
+            _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.PartBodyMap.forEach((modelBodyMap, partName) => {
                 const selectedBodyMap = this.m_selectedPartBodyMap.get(partName);
                 if (!selectedBodyMap) {
                     let bodyMap = new Map();
@@ -64840,12 +64893,13 @@ class NctiSelectManager {
             let bodyMap = new Map();
             unselectedMap.set(partName, bodyMap);
             for (const [bodyName, selectedNctiIds] of selectedModelBodyMap) {
-                let ncitIds = new Set();
-                bodyMap.set(bodyName, ncitIds);
-                const modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetPartBodyGroup(partName, bodyName);
-                for (const [nctiId, _] of modelBody.ElementMap) {
-                    if (!selectedNctiIds.has(nctiId)) {
-                        ncitIds.add(nctiId);
+                // let ncitIds: Set<number | BigInt> = new Set();
+                let elements = new Set();
+                bodyMap.set(bodyName, elements);
+                const modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetPartBodyGroup(partName, bodyName);
+                for (const [_, element] of modelBody.ElementMap) {
+                    if (!selectedNctiIds.has(element)) {
+                        elements.add(element);
                     }
                 }
             }
@@ -64853,22 +64907,23 @@ class NctiSelectManager {
         return unselectedMap;
     }
     get SelectPoint() {
-        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Point);
+        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Point);
     }
     get SelectEdge() {
-        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Edge);
+        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Edge);
     }
     get SelectFace() {
-        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Face);
+        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Face);
     }
     get SelectBody() {
-        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Body);
+        return !!(this.m_selectMode & src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Body);
     }
     constructor(container, renderer) {
         this.m_pickedObjectList = [];
-        this.m_selectMode = src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Body | src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Face | src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Edge | src_Enums__WEBPACK_IMPORTED_MODULE_1__.SelectType.Point;
-        this.m_StartPoint = new three__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-        this.m_EndPoint = new three__WEBPACK_IMPORTED_MODULE_0__.Vector2();
+        this.m_selectMode = src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Body | src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Face | src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Edge | src_Enums__WEBPACK_IMPORTED_MODULE_0__.SelectType.Point;
+        // private m_gridManager: NctiGridMeshManager;
+        this.m_StartPoint = new three__WEBPACK_IMPORTED_MODULE_7__.Vector2();
+        this.m_EndPoint = new three__WEBPACK_IMPORTED_MODULE_7__.Vector2();
         this.m_isDrawing = false;
         this.m_isMultiSelect = false;
         this.m_isUnselect = false;
@@ -64880,11 +64935,11 @@ class NctiSelectManager {
         canvas2D.id = 'canvas2d';
         container.appendChild(canvas2D);
         this.m_constext2D = canvas2D.getContext('2d');
-        this.m_PickingScene = new _NctiScene__WEBPACK_IMPORTED_MODULE_3__.NctiPickingScene();
+        this.m_PickingScene = new _NctiScene__WEBPACK_IMPORTED_MODULE_2__.NctiPickingScene();
         this.m_Renderer = renderer;
     }
     addGroup(groupName) {
-        let group = new _NctiElement__WEBPACK_IMPORTED_MODULE_6__.NctiGroup(groupName);
+        let group = new _NctiElement__WEBPACK_IMPORTED_MODULE_5__.NctiGroup(groupName);
         this.m_PickingScene.add(group);
         this.m_Group = group;
         return group;
@@ -64898,25 +64953,25 @@ class NctiSelectManager {
         this.m_PickingScene.deleteGroup(partName);
     }
     AddPickingFaceMesh(geometry) {
-        const pickingMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_6__.NctiFaceMesh(geometry);
-        _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.AddFace(this.m_Group.name, pickingMesh);
+        const pickingMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_5__.NctiFaceMesh(geometry);
+        _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.AddFace(this.m_Group.name, pickingMesh);
         this.m_Group.add(pickingMesh);
         return pickingMesh;
     }
     AddPickingEdgeMesh(geometry) {
-        const pickingMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_6__.NctiEdgeMesh(geometry);
-        _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.AddEdge(this.m_Group.name, pickingMesh);
+        const pickingMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_5__.NctiEdgeMesh(geometry);
+        _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.AddEdge(this.m_Group.name, pickingMesh);
         this.m_Group.add(pickingMesh);
         return pickingMesh;
     }
     AddPickingPointMesh(geometry) {
-        const pickingMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_6__.NctiPointMesh(geometry);
-        _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.AddPoint(this.m_Group.name, pickingMesh);
+        const pickingMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_5__.NctiPointMesh(geometry);
+        _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.AddPoint(this.m_Group.name, pickingMesh);
         this.m_Group.add(pickingMesh);
         return pickingMesh;
     }
     SetPickingMeshMaterial(materialIdCount, offset, maxTexSize, mesh) {
-        const material = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.PickedMaterial(materialIdCount, offset, maxTexSize);
+        const material = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.PickedMaterial(materialIdCount, offset, maxTexSize);
         mesh.material = material;
     }
     resize(width, height) {
@@ -64927,30 +64982,30 @@ class NctiSelectManager {
         const renderer = this.m_Renderer;
         const dpr = renderer.getPixelRatio();
         camera.setViewOffset(renderer.getContext().drawingBufferWidth, renderer.getContext().drawingBufferHeight, position.x * dpr | 0, position.y * dpr | 0, 2, 2);
-        const pickingTexture = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderTarget(1, 1, {
-            type: three__WEBPACK_IMPORTED_MODULE_0__.IntType,
-            format: three__WEBPACK_IMPORTED_MODULE_0__.RGBAIntegerFormat,
+        const pickingTexture = new three__WEBPACK_IMPORTED_MODULE_7__.WebGLRenderTarget(1, 1, {
+            type: three__WEBPACK_IMPORTED_MODULE_7__.IntType,
+            format: three__WEBPACK_IMPORTED_MODULE_7__.RGBAIntegerFormat,
             internalFormat: 'RGBA32I',
         });
         renderer.setRenderTarget(pickingTexture);
-        renderer.setClearColor(new three__WEBPACK_IMPORTED_MODULE_0__.Color(-1, -1, -1), 0);
+        renderer.setClearColor(new three__WEBPACK_IMPORTED_MODULE_7__.Color(-1, -1, -1), 0);
         renderer.render(this.m_PickingScene, camera);
         renderer.setRenderTarget(null);
         camera.clearViewOffset();
         const pixelBuffer = new Int32Array(4);
         renderer.readRenderTargetPixels(pickingTexture, 0, 0, 1, 1, pixelBuffer);
-        const id = pixelBuffer[0];
-        console.log(id);
-        if (id !== -1) {
-            const object = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetElement(id);
+        const globalid = pixelBuffer[0];
+        console.log(globalid);
+        if (globalid !== -1) {
+            const object = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetElement(globalid);
             if (!object) {
                 return;
             }
             if (this.m_isUnselect) {
-                this.UnSelectObject(object, id);
+                this.UnSelectObject(object, globalid);
             }
             else {
-                this.selectObject(object, id);
+                this.selectObject(object, globalid);
             }
         }
         console.log(this.SelectedGridData());
@@ -64985,51 +65040,48 @@ class NctiSelectManager {
                     bodyMap.set(bodyName, new Set());
                 }
                 if (element.MeshInfo.IsGrid) {
-                    const group = object.parent;
-                    if (!this.m_selectedGridMap.has(group.name)) {
-                        this.m_selectedGridMap.set(group.name, new Set());
-                    }
-                    let cellId;
-                    let gridCellArray = this.m_selectedGridMap.get(group.name);
-                    if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsPoint)(object)) {
-                        const nodeId = this.m_gridManager.GetNodeId(id);
-                        const cellData = {
-                            elementId: nodeId,
-                            type: mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Node,
-                            SelectedId: id
-                        };
-                        cellId = this.CalcCellId(nodeId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Node);
-                        gridCellArray.add(cellData);
-                    }
-                    else {
-                        const cell = this.m_gridManager.GetCellByGlobalId(id);
-                        const cellData = {
-                            elementId: cell.m_CellId,
-                            type: mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Cell,
-                            SelectedId: id
-                        };
-                        if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsMesh)(object)) {
-                            cellData.faceIndex = cell.GetFaceIndex(id);
-                            cellData.type = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Face;
-                            cellId = this.CalcCellId(cell.m_CellId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Face, cellData.faceIndex);
-                        }
-                        else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsLine)(object)) {
-                            cellData.edgeIndex = cell.GetEdgeIndex(id);
-                            cellData.type = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Edge;
-                            cellId = this.CalcCellId(cell.m_CellId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Edge, cellData.edgeIndex);
-                        }
-                        else {
-                            cellId = this.CalcCellId(cell.m_CellId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_5__.GridElemType.Elem_Cell);
-                        }
-                        gridCellArray.add(cellData);
-                    }
-                    bodyMap.get(group.name).add(cellId);
+                    // const group = object.parent;
+                    // if (!this.m_selectedGridMap.has(group.name)) {
+                    //     this.m_selectedGridMap.set(group.name, new Set());
+                    // }
+                    // let cellId: BigInt;
+                    // let gridCellArray = this.m_selectedGridMap.get(group.name);
+                    // if (IsPoint(object)) {
+                    //     const nodeId = GridMeshManager.current.GetNodeId(id);
+                    //     const cellData: GridElemData = {
+                    //         elementId: nodeId,
+                    //         type: GridElemType.Elem_Node,
+                    //         SelectedId: id
+                    //     }
+                    //     cellId = this.CalcCellId(nodeId, GridElemType.Elem_Node)
+                    //     gridCellArray.add(cellData);
+                    // } else {
+                    //     const cell = GridMeshManager.current.GetCellByGlobalId(id);
+                    //     const cellData: GridElemData = {
+                    //         elementId: cell.m_CellId,
+                    //         type: GridElemType.Elem_Cell,
+                    //         SelectedId: id
+                    //     }
+                    //     if (IsMesh(object)) {
+                    //         cellData.faceIndex = cell.GetFaceIndex(id);
+                    //         cellData.type = GridElemType.Elem_Face;
+                    //         cellId = this.CalcCellId(cell.m_CellId, GridElemType.Elem_Face, cellData.faceIndex);
+                    //     } else if (IsLine(object)) {
+                    //         cellData.edgeIndex = cell.GetEdgeIndex(id);
+                    //         cellData.type = GridElemType.Elem_Edge;
+                    //         cellId = this.CalcCellId(cell.m_CellId, GridElemType.Elem_Edge, cellData.edgeIndex);
+                    //     } else {
+                    //         cellId = this.CalcCellId(cell.m_CellId, GridElemType.Elem_Cell);
+                    //     }
+                    //     gridCellArray.add(cellData)
+                    // }
+                    bodyMap.get(bodyName).add(element);
                     this.m_pickedObjectList.push([element, id]);
                     return;
                 }
                 // const objId = this.m_PickingScene.SceneIdMap.get(id);
-                const objId = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetElement(id).NctiId;
-                bodyMap.get(bodyName).add(objId);
+                // const objId = ModelManager.current.GetElement(id).NctiId;
+                bodyMap.get(bodyName).add(element);
                 this.m_pickedObjectList.push([element, id]);
             }
         }
@@ -65055,12 +65107,12 @@ class NctiSelectManager {
                 return;
             }
             const cells = bodyModel.get(bodyName);
-            const objId = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetElement(id).NctiId;
+            const element = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetElement(id);
             if (cells.size === 0) {
                 bodyModel.delete(bodyName);
             }
-            else if (cells.has(objId)) {
-                cells.delete(objId);
+            else if (cells.has(element)) {
+                cells.delete(element);
                 this.UnhighlightObject(element, id);
             }
         }
@@ -65103,13 +65155,13 @@ class NctiSelectManager {
         const height = Math.abs(maxY - minY);
         const dpr = renderer.getPixelRatio();
         camera.setViewOffset(renderer.getContext().drawingBufferWidth, renderer.getContext().drawingBufferHeight, minX * dpr | 0, minY * dpr | 0, width, height);
-        let rectPickingTexture = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderTarget(width, height, {
-            type: three__WEBPACK_IMPORTED_MODULE_0__.IntType,
-            format: three__WEBPACK_IMPORTED_MODULE_0__.RGBAIntegerFormat,
+        let rectPickingTexture = new three__WEBPACK_IMPORTED_MODULE_7__.WebGLRenderTarget(width, height, {
+            type: three__WEBPACK_IMPORTED_MODULE_7__.IntType,
+            format: three__WEBPACK_IMPORTED_MODULE_7__.RGBAIntegerFormat,
             internalFormat: 'RGBA32I',
         });
         renderer.setRenderTarget(rectPickingTexture);
-        renderer.setClearColor(new three__WEBPACK_IMPORTED_MODULE_0__.Color(-1, -1, -1), 0);
+        renderer.setClearColor(new three__WEBPACK_IMPORTED_MODULE_7__.Color(-1, -1, -1), 0);
         renderer.render(this.m_PickingScene, camera);
         renderer.setRenderTarget(null);
         camera.clearViewOffset();
@@ -65123,7 +65175,7 @@ class NctiSelectManager {
             selectedIds.add(id);
         }
         selectedIds.forEach(id => {
-            const object = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetElement(id);
+            const object = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetElement(id);
             if (this.m_isUnselect) {
                 this.UnSelectObject(object, id);
             }
@@ -65137,7 +65189,7 @@ class NctiSelectManager {
         console.log(this.SelectedCellNames());
     }
     HighlightModelBody(partName, modelBodyName) {
-        let modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetPartBodyGroup(partName, modelBodyName);
+        let modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetPartBodyGroup(partName, modelBodyName);
         // let elements = modelBody.ElementMap.values();
         for (const [_, element] of modelBody.ElementMap) {
             if (this.HighlightObject(element, element.ElementId)) {
@@ -65146,7 +65198,7 @@ class NctiSelectManager {
         }
     }
     UnhighlightModelBody(partName, modelBodyName) {
-        let modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetPartBodyGroup(partName, modelBodyName);
+        let modelBody = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetPartBodyGroup(partName, modelBodyName);
         // let elements = modelBody.ElementMap.values();
         for (const [_, element] of modelBody.ElementMap) {
             this.UnhighlightObject(element, element.ElementId);
@@ -65156,47 +65208,41 @@ class NctiSelectManager {
         if (!object.DisplayMesh.visible) {
             return false;
         }
-        if (this.SelectEdge && (0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsLine)(object.DisplayMesh)) {
+        if (this.SelectEdge && (0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsLine)(object.DisplayMesh)) {
             this.HighlightEdges(object, id, true);
             return true;
         }
-        if (this.SelectPoint && (0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsPoint)(object.DisplayMesh)) {
+        if (this.SelectPoint && (0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsPoint)(object.DisplayMesh)) {
             this.HighlightPoints(object, id, true);
             return true;
         }
-        if (this.SelectFace && (0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsMesh)(object.DisplayMesh)) {
+        if (this.SelectFace && (0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsMesh)(object.DisplayMesh)) {
             this.HighlightFaces(object, id, true);
             return true;
         }
         return false;
     }
     UnhighlightObject(object, id) {
-        if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsLine)(object.DisplayMesh)) {
+        if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsLine)(object.DisplayMesh)) {
             this.HighlightEdges(object, id, false);
         }
-        else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsPoint)(object.DisplayMesh)) {
+        else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsPoint)(object.DisplayMesh)) {
             this.HighlightPoints(object, id, false);
         }
-        else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_4__.IsMesh)(object.DisplayMesh)) {
+        else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsMesh)(object.DisplayMesh)) {
             this.HighlightFaces(object, id, false);
         }
     }
     HighlightPoints(object, id, isHighlight) {
         let point = object.MeshInfo;
         let pointMesh = object.DisplayMesh;
-        const originColor = point.IsGrid ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.GridPointColor : _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.PointColor;
-        const { r, g, b } = isHighlight ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.SelectedColor : originColor;
+        const originColor = point.IsGrid ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.GridPointColor : _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.PointColor;
+        const { r, g, b } = isHighlight ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.SelectedColor : originColor;
         const color = pointMesh.geometry.getAttribute('color').array;
         if (id !== undefined) {
-            if (pointMesh.parent.userData.groupType == src_Enums__WEBPACK_IMPORTED_MODULE_1__.ModelType.SimuBody) {
-                pointMesh.material = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.GridPointMaterial;
-            }
-            else {
-                const { start } = point.IndexInfo.get(id);
-                // const index = id - point.IndexInfo.keys().next().value + start;
-                const index = id - start;
-                color.set([r, g, b], index * 3);
-            }
+            const { start } = point.IndexInfo.get(id);
+            const index = id - start;
+            color.set([r, g, b], index * 3);
         }
         else {
             for (let i = 0; i < color.length; i += 3) {
@@ -65208,7 +65254,7 @@ class NctiSelectManager {
         pointMesh.geometry.getAttribute('color').needsUpdate = true;
     }
     HighlightEdges(object, id, isHighlight) {
-        const { r, g, b } = isHighlight ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.SelectedColor : _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LineColor;
+        const { r, g, b } = isHighlight ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.SelectedColor : _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.LineColor;
         let lineMesh = object.DisplayMesh;
         let line = object.MeshInfo;
         const color = lineMesh.geometry.attributes.color.array;
@@ -65230,7 +65276,7 @@ class NctiSelectManager {
         lineMesh.geometry.attributes.color.needsUpdate = true;
     }
     HighlightFaces(object, id, isHighlight) {
-        const { r, g, b } = isHighlight ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.SelectedColor : _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.MeshColor;
+        const { r, g, b } = isHighlight ? _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.SelectedColor : _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.MeshColor;
         let mesh = object.DisplayMesh;
         let face = object.MeshInfo;
         const color = mesh.geometry.attributes.color.array;
@@ -65290,7 +65336,7 @@ class NctiSelectManager {
         const renderer = this.m_Renderer;
         const canvas = renderer.domElement;
         const rect = canvas.getBoundingClientRect();
-        let position = new three__WEBPACK_IMPORTED_MODULE_0__.Vector2();
+        let position = new three__WEBPACK_IMPORTED_MODULE_7__.Vector2();
         position.x = (event.clientX - rect.left) * canvas.width / rect.width;
         position.y = (event.clientY - rect.top) * canvas.height / rect.height;
         if (event.button === 0) {
@@ -65349,11 +65395,11 @@ class NctiSelectManager {
     setCellSelect(cellMap) {
         this.clearSelected();
         for (const [bodyName, cellIds] of cellMap) {
-            const group = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetPartBodyGroup("", bodyName);
+            const group = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetPartBodyGroup("", bodyName);
             const objIdMap = group.ElementMap;
             cellIds.forEach(cellid => {
                 const globalId = objIdMap.get(parseInt(cellid)).ElementId;
-                const element = _NctiModelManager__WEBPACK_IMPORTED_MODULE_7__.ModelManager.current.GetElement(globalId);
+                const element = _NctiModelManager__WEBPACK_IMPORTED_MODULE_6__.ModelManager.current.GetElement(globalId);
                 const partName = element.MeshInfo.PartName;
                 const bodyName = element.MeshInfo.Name;
                 if (this.HighlightObject(element, globalId)) {
@@ -65367,7 +65413,7 @@ class NctiSelectManager {
                         bodyMap.set(bodyName, new Set());
                     }
                     const objId = element.NctiId;
-                    bodyMap.get(bodyName).add(objId);
+                    bodyMap.get(bodyName).add(element);
                     this.m_pickedObjectList.push([element, globalId]);
                 }
             });
@@ -65414,13 +65460,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   NctiSketchLoader: () => (/* binding */ NctiSketchLoader)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ncti/YHDisplaySketch */ "./src/ncti/YHDisplaySketch.ts");
-/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
-/* harmony import */ var _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
-/* harmony import */ var ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ncti/YHDispalyConstraint */ "./src/ncti/YHDispalyConstraint.ts");
-/* harmony import */ var three_examples_jsm_lines_LineGeometry__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! three/examples/jsm/lines/LineGeometry */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/lines/LineGeometry.js");
-/* harmony import */ var three_examples_jsm_renderers_CSS2DRenderer_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! three/examples/jsm/renderers/CSS2DRenderer.js */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/renderers/CSS2DRenderer.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ncti/YHDisplaySketch */ "./src/ncti/YHDisplaySketch.ts");
+/* harmony import */ var _NctiElement__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiElement */ "./src/engine/NctiElement.ts");
+/* harmony import */ var _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
+/* harmony import */ var ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ncti/YHDispalyConstraint */ "./src/ncti/YHDispalyConstraint.ts");
+/* harmony import */ var three_examples_jsm_lines_LineGeometry__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! three/examples/jsm/lines/LineGeometry */ "./node_modules/three/examples/jsm/lines/LineGeometry.js");
+/* harmony import */ var three_examples_jsm_renderers_CSS2DRenderer_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! three/examples/jsm/renderers/CSS2DRenderer.js */ "./node_modules/three/examples/jsm/renderers/CSS2DRenderer.js");
 
 
 
@@ -65456,44 +65502,52 @@ class NctiSketchLoader {
             return;
         }
         const partName = nctiObject.objectName;
-        let partGroup = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiGroup(partName);
+        let partGroup = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiGroup(partName);
         let signVertCount = 0;
         let arrowVertCount = 0;
+        let faceVertCount = 0;
+        let faceIndexCount = 0;
         let lineVertCount = 0;
         let pointVertCount = 0;
         for (let sketchPlane of sketchPlanes) {
             for (const sketchObj of sketchPlane.SketchObjVec) {
-                // if (sketchObj instanceof YHDisplaySketchLine ||
-                //     sketchObj instanceof YHDisplaySketchCircle ||
-                //     sketchObj instanceof YHDisplaySketchEllipse ||
-                //     sketchObj instanceof YHDisplaySketchOrigin ||
-                //     sketchObj instanceof YHDisplaySketchArc ||
-                //     sketchObj instanceof YHDisplaySketchSpline ||
-                //     sketchObj instanceof YHDisplaySketchEllipseArc ||
-                //     sketchObj instanceof YHDisplaySketchPoint) {
                 lineVertCount += sketchObj.VertexCount;
                 pointVertCount += sketchObj.PointCount;
-                // }
             }
             for (const consObj of sketchPlane.ConsObjVec) {
-                if (consObj.ConstraintType === ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.ConstraintType.Dimensional) {
+                if (consObj.ConstraintType === ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.ConstraintType.Dimensional) {
                     lineVertCount += consObj.VertexCount;
                     arrowVertCount += consObj.ArrowVertexCount;
                 }
-                else if (consObj.ConstraintType === ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.ConstraintType.Location) {
+                else if (consObj.ConstraintType === ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.ConstraintType.Location) {
                     signVertCount += consObj.VertexCount;
                 }
             }
+            for (const sketchObj of sketchPlane.SketchClosedAreaVec) {
+                faceVertCount += sketchObj.FaceVertexCount;
+                faceIndexCount += sketchObj.FaceIndexCount;
+            }
         }
-        const arrowGeom = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let arrowMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiFaceMesh(arrowGeom);
-        const lineGeom = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let edgeMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiEdgeMesh(lineGeom);
-        const signGeom = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let signMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiEdgeMesh(signGeom);
-        const pointGeom = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        let pointMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiPointMesh(pointGeom);
+        const clasedAreaGeom = new three__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry();
+        let aclasedAreaMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiFaceMesh(clasedAreaGeom);
+        const arrowGeom = new three__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry();
+        let arrowMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiFaceMesh(arrowGeom);
+        const lineGeom = new three__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry();
+        let edgeMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiEdgeMesh(lineGeom);
+        const signGeom = new three__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry();
+        let signMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiEdgeMesh(signGeom);
+        const pointGeom = new three__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry();
+        let pointMesh = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiPointMesh(pointGeom);
         let sketchBufferData = {
+            // 封闭面数据
+            closedAreaVertOffset: 0,
+            closedAreaIndexOffset: 0,
+            closedAreaIdOffset: 0,
+            closedAreaBuffer: new Float32Array(faceVertCount),
+            closedAreaNormalBuffer: new Float32Array(faceVertCount),
+            closedAreaIndexBuffer: new Uint32Array(faceIndexCount),
+            closedAreaColorBuffer: new Float32Array(faceVertCount),
+            closedAreaIdBuffer: new Int32Array(faceVertCount / 3),
             // 约束图标数据
             signVertOffset: 0,
             signIdOffset: 0,
@@ -65520,120 +65574,165 @@ class NctiSketchLoader {
         };
         for (let sketchPlane of sketchPlanes) {
             for (const sketchObj of sketchPlane.SketchObjVec) {
-                if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchLine) {
+                if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchLine) {
                     this.extractLine(sketchObj, sketchBufferData);
                 }
-                else if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchCircle ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchEllipse ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchArc ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchSpline ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchEllipseArc) {
+                else if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchCircle ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchEllipse ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchArc ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchSpline ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchEllipseArc) {
                     this.extractCircle(sketchObj, sketchBufferData);
                 }
-                else if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchXAxis ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchYAxis ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchCenterLine) {
+                else if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchXAxis ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchYAxis ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchCenterLine) {
                     this.extractAxis(sketchObj, partGroup);
                 }
-                else if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchOrigin ||
-                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchPoint) {
+                else if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchOrigin ||
+                    sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchPoint) {
                     this.extractPoint(sketchObj, sketchBufferData);
                 }
             }
             for (const consObj of sketchPlane.ConsObjVec) {
-                if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsXpos || consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsYpos) {
+                if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsXpos || consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsYpos) {
                     this.extractPosConstraint(consObj, sketchBufferData, partGroup);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsAngle) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsAngle) {
                     this.extractAngle(consObj, sketchBufferData, partGroup);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsRadius) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsRadius) {
                     this.extractConsRadius(consObj, sketchBufferData, partGroup);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsLength) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsLength) {
                     this.extractConsLength(consObj, sketchBufferData, partGroup);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsCoincide) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsCoincide) {
                     this.extractConsCoincide(consObj, sketchBufferData);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsVertical ||
-                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsXAxis ||
-                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsYAxis ||
-                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsEqual) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsVertical ||
+                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsXAxis ||
+                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsYAxis ||
+                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsEqual) {
                     this.extractConsVertical(consObj, sketchBufferData);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsParallel) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsParallel) {
                     this.extractConsParallel(consObj, sketchBufferData);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsTangent) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_3__.YHDisplayConsTangent) {
                     this.extractConsTangent(consObj, sketchBufferData);
                 }
             }
+            for (const sketchObj of sketchPlane.SketchClosedAreaVec) {
+                if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchClosedArea) {
+                    this.extracClosedArea(sketchObj, sketchBufferData);
+                }
+            }
         }
+        // 绘制封闭面
+        clasedAreaGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.closedAreaBuffer, 3));
+        clasedAreaGeom.setAttribute("normal", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.closedAreaNormalBuffer, 3));
+        clasedAreaGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.closedAreaColorBuffer, 3));
+        const idBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.closedAreaIdBuffer, 1);
+        idBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_4__.IntType;
+        clasedAreaGeom.setAttribute('id', idBufferAttribute);
+        clasedAreaGeom.setIndex(new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.closedAreaIndexBuffer, 1));
+        const closedAreaMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginSignMaterial();
+        aclasedAreaMesh.material = closedAreaMaterial;
+        let bbox = new three__WEBPACK_IMPORTED_MODULE_4__.Box3().setFromObject(arrowMesh);
+        this.m_Scene.BBox.union(bbox);
+        partGroup.add(aclasedAreaMesh);
         // 绘制箭头
-        arrowGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.arrowBuffer, 3));
-        arrowGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.arrowColorBuffer, 3));
-        arrowGeom.setAttribute("a_anchor", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.arrowAnchorBuffer, 3));
-        arrowGeom.setAttribute("a_direction", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.arrowDirectionBuffer, 3));
-        // const arrowIdBufferAttribute = new THREE.BufferAttribute(sketchBufferData.arrowIdBuffer, 1);
-        // arrowIdBufferAttribute.gpuType = THREE.IntType;
-        // arrowGeom.setAttribute("id", arrowIdBufferAttribute);
-        // const arrowMaterial = MaterialManager.current.OriginMaterial(6, 0, 8096);
-        const arrowMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginArrowMaterial();
+        arrowGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.arrowBuffer, 3));
+        arrowGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.arrowColorBuffer, 3));
+        arrowGeom.setAttribute("a_anchor", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.arrowAnchorBuffer, 3));
+        arrowGeom.setAttribute("a_direction", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.arrowDirectionBuffer, 3));
+        const arrowMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginArrowMaterial();
         arrowMesh.material = arrowMaterial;
-        let bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(arrowMesh);
+        bbox = new three__WEBPACK_IMPORTED_MODULE_4__.Box3().setFromObject(arrowMesh);
         this.m_Scene.BBox.union(bbox);
         this.m_Scene.AddConsArrows(arrowMesh);
         partGroup.add(arrowMesh);
         // 绘制图标
-        signGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signBuffer, 3));
-        signGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signColorBuffer, 3));
-        const signIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signIdBuffer, 1);
-        signIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        signGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.signBuffer, 3));
+        signGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.signColorBuffer, 3));
+        const signIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.signIdBuffer, 1);
+        signIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_4__.IntType;
         lineGeom.setAttribute("id", signIdBufferAttribute);
-        const signMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginSignMaterial();
+        const signMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginSignMaterial();
         signMesh.material = signMaterial;
-        bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(signMesh);
+        bbox = new three__WEBPACK_IMPORTED_MODULE_4__.Box3().setFromObject(signMesh);
         this.m_Scene.BBox.union(bbox);
         this.m_Scene.AddConsSigns(signMesh);
         partGroup.add(signMesh);
         // this.m_Scene.add(signMesh);
         // 绘制线及辅助线
-        lineGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.lineBuffer, 3));
-        lineGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.lineColorBuffer, 3));
-        const lineIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.lineIdBuffer, 1);
-        lineIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        lineGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.lineBuffer, 3));
+        lineGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.lineColorBuffer, 3));
+        const lineIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.lineIdBuffer, 1);
+        lineIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_4__.IntType;
         lineGeom.setAttribute("id", lineIdBufferAttribute);
-        const lineMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginMaterial(1, 0, 8096);
+        const lineMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginMaterial(1, 0, 8096);
         edgeMesh.material = lineMaterial;
-        bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(edgeMesh);
+        bbox = new three__WEBPACK_IMPORTED_MODULE_4__.Box3().setFromObject(edgeMesh);
         this.m_Scene.BBox.union(bbox);
         partGroup.add(edgeMesh);
         // this.m_Scene.add(edgeMesh);
         // 绘制点
-        const pointMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.OriginMaterial(1, 0, 8096);
-        pointGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.pointBuffer, 3));
-        pointGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.pointColorBuffer, 3));
-        const pointIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.pointIdBuffer, 1);
-        pointIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        const pointMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.OriginMaterial(1, 0, 8096);
+        pointGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.pointBuffer, 3));
+        pointGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.pointColorBuffer, 3));
+        const pointIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_4__.BufferAttribute(sketchBufferData.pointIdBuffer, 1);
+        pointIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_4__.IntType;
         pointGeom.setAttribute("id", pointIdBufferAttribute);
         pointMesh.material = pointMaterial;
         partGroup.add(pointMesh);
         this.m_Scene.add(partGroup);
     }
     extractPoint(pointObj, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LineColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LineColor;
         const globalId = this.m_globalId.Id++;
         // const origin = sketchObj as YHDisplaySketchOrigin;
         const pt = pointObj.Point;
         sketchBufferData.pointBuffer.set([pt.x, pt.y, 0], sketchBufferData.pointVertOffset);
-        sketchBufferData.pointColorBuffer.set([1, g, b], sketchBufferData.pointVertOffset);
+        sketchBufferData.pointColorBuffer.set([r, g, b], sketchBufferData.pointVertOffset);
         sketchBufferData.pointVertOffset += 3;
         sketchBufferData.pointIdBuffer.set([globalId], sketchBufferData.pointIdOffset);
         sketchBufferData.pointIdOffset += 1;
     }
+    extracClosedArea(pointObj, sketchBufferData) {
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.CloseAreaColor;
+        const globalId = this.m_globalId.Id++;
+        // const origin = sketchObj as YHDisplaySketchOrigin;
+        for (const meshData of pointObj.m_NctiMeshDataVec) {
+            const position = meshData.positions;
+            const normals = meshData.normals;
+            const indices = meshData.triangles;
+            for (let i = 0; i < position.length; i += 3) {
+                let p = position.slice(i, i + 3);
+                p[2] = -1;
+                let n = normals.slice(i, i + 3);
+                n[2] = 1;
+                sketchBufferData.closedAreaBuffer.set(p, sketchBufferData.closedAreaVertOffset);
+                sketchBufferData.closedAreaNormalBuffer.set(n, sketchBufferData.closedAreaVertOffset);
+                sketchBufferData.closedAreaColorBuffer.set([r, g, b], sketchBufferData.closedAreaVertOffset);
+                sketchBufferData.closedAreaIdBuffer.set([globalId], sketchBufferData.closedAreaIdOffset);
+                sketchBufferData.closedAreaVertOffset += 3;
+                sketchBufferData.closedAreaIdOffset += 1;
+            }
+            for (let i = 0; i < indices.length; i += 3) {
+                sketchBufferData.closedAreaIndexBuffer.set(indices.slice(i, i + 3), sketchBufferData.closedAreaIndexOffset);
+                sketchBufferData.closedAreaIndexOffset += 3;
+            }
+        }
+        // sketchBufferData.pointBuffer.set([pt.x, pt.y, 0], sketchBufferData.pointVertOffset);
+        // sketchBufferData.pointColorBuffer.set([r, g, b], sketchBufferData.pointVertOffset);
+        // sketchBufferData.pointVertOffset += 3;
+        // sketchBufferData.pointIdBuffer.set([globalId], sketchBufferData.pointIdOffset);
+        // sketchBufferData.pointIdOffset += 1;
+    }
     extractCircle(lineObj, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LineColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LineColor;
         const globalId = this.m_globalId.Id++;
         for (const curveData of lineObj.m_FloatVecVec) {
             for (let i = 0; i < curveData.length - 3; i += 3) {
@@ -65644,7 +65743,7 @@ class NctiSketchLoader {
                 sketchBufferData.lineIdOffset += 2;
             }
         }
-        let mkColor = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.MarkColor;
+        let mkColor = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.MarkColor;
         for (const pt of lineObj.Points) {
             sketchBufferData.pointBuffer.set([pt.x, pt.y, 0], sketchBufferData.pointVertOffset);
             sketchBufferData.pointColorBuffer.set([mkColor.r, mkColor.g, mkColor.b], sketchBufferData.pointVertOffset);
@@ -65654,7 +65753,7 @@ class NctiSketchLoader {
         }
     }
     extractLine(lineObj, lineBufferData) {
-        let { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LineColor;
+        let { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LineColor;
         const globalId = this.m_globalId.Id++;
         const startPt = lineObj.m_ptF;
         const endPt = lineObj.m_ptE;
@@ -65664,7 +65763,7 @@ class NctiSketchLoader {
         lineBufferData.lineIdBuffer[lineBufferData.lineIdOffset] = globalId;
         lineBufferData.lineIdBuffer[lineBufferData.lineIdOffset + 1] = globalId;
         lineBufferData.lineIdOffset += 2;
-        let mkColor = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.MarkColor;
+        let mkColor = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.MarkColor;
         lineBufferData.pointBuffer.set([startPt.x, startPt.y, 1, endPt.x, endPt.y, 1], lineBufferData.pointVertOffset);
         lineBufferData.pointColorBuffer.set([mkColor.r, mkColor.g, mkColor.b, mkColor.r, mkColor.g, mkColor.b], lineBufferData.pointVertOffset);
         lineBufferData.pointVertOffset += 6;
@@ -65672,7 +65771,7 @@ class NctiSketchLoader {
         lineBufferData.pointIdOffset += 2;
     }
     extractAngle(angle, sketchBufferData, group) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.DimensionalConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.DimensionalConstraintColor;
         const globalId = this.m_globalId.Id++;
         angle.calcSketchData();
         let text = angle.Text;
@@ -65698,7 +65797,7 @@ class NctiSketchLoader {
         }
     }
     setArrowBuffer(element, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.DimensionalConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.DimensionalConstraintColor;
         // const buffer = element.buffer;
         // sketchBufferData.arrowBuffer.set(buffer, sketchBufferData.arrowVertOffset);
         sketchBufferData.arrowBuffer.set(this.ArrowBuffer, sketchBufferData.arrowVertOffset);
@@ -65723,7 +65822,7 @@ class NctiSketchLoader {
         sketchBufferData.arrowVertOffset += this.ArrowBuffer.length;
     }
     extractConsRadius(conRadius, sketchBufferData, group) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.DimensionalConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.DimensionalConstraintColor;
         const globalId = this.m_globalId.Id++;
         conRadius.calcSketchData();
         let text = conRadius.Text;
@@ -65740,7 +65839,7 @@ class NctiSketchLoader {
         }
     }
     extractConsCoincide(consObj, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LocationConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LocationConstraintColor;
         const globalId = this.m_globalId.Id++;
         const buffer = consObj.GetBufferData();
         for (let i = 0; i < buffer.length; i += 3) {
@@ -65771,7 +65870,7 @@ class NctiSketchLoader {
         }
     }
     extractConsParallel(consObj, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LocationConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LocationConstraintColor;
         const globalId = this.m_globalId.Id++;
         for (const elementVec of consObj.m_FloatVecVecVec1) {
             for (const element of elementVec) {
@@ -65797,7 +65896,7 @@ class NctiSketchLoader {
         }
     }
     extractConsVertical(consObj, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LocationConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LocationConstraintColor;
         const globalId = this.m_globalId.Id++;
         let buffer = consObj.GetBufferData(consObj.m_FloatVecVecVec1);
         for (let i = 0; i < buffer.length; i += 3) {
@@ -65817,7 +65916,7 @@ class NctiSketchLoader {
         }
     }
     extractConsTangent(consObj, sketchBufferData) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LocationConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.LocationConstraintColor;
         const globalId = this.m_globalId.Id++;
         let buffer = consObj.GetBufferData(consObj.m_FloatVecVecVec1);
         for (let i = 0; i < buffer.length; i += 3) {
@@ -65829,7 +65928,7 @@ class NctiSketchLoader {
         }
     }
     extractConsLength(conRadius, sketchBufferData, group) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.DimensionalConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.DimensionalConstraintColor;
         const globalId = this.m_globalId.Id++;
         conRadius.calcSketchData();
         let text = conRadius.Text;
@@ -65849,28 +65948,27 @@ class NctiSketchLoader {
         let axisMaterial;
         let start;
         let end;
-        if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_1__.YHDisplaySketchCenterLine) {
+        if (sketchObj instanceof ncti_YHDisplaySketch__WEBPACK_IMPORTED_MODULE_0__.YHDisplaySketchCenterLine) {
             const ptF = sketchObj.m_ptF;
             const ptE = sketchObj.m_ptE;
-            start = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(ptF.x, ptF.y, ptF.z);
-            end = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(ptE.x, ptE.y, ptE.z);
-            axisMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.AxisMaterial(_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.CenterLineColor);
+            start = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(ptF.x, ptF.y, ptF.z);
+            end = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(ptE.x, ptE.y, ptE.z);
+            axisMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.AxisMaterial(_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.CenterLineColor);
         }
         else {
             const vec = sketchObj.m_vec;
-            start = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-            end = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(vec.x, vec.y, vec.z);
-            axisMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.AxisMaterial();
+            start = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3();
+            end = new three__WEBPACK_IMPORTED_MODULE_4__.Vector3(vec.x, vec.y, vec.z);
+            axisMaterial = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.AxisMaterial();
         }
         const geometry = new three_examples_jsm_lines_LineGeometry__WEBPACK_IMPORTED_MODULE_5__.LineGeometry();
         geometry.setPositions([start.x, start.y, start.z, end.x, end.y, end.z]);
-        let axis = new _NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiAxisMesh(start, end, geometry, axisMaterial);
+        let axis = new _NctiElement__WEBPACK_IMPORTED_MODULE_1__.NctiAxisMesh(start, end, geometry, axisMaterial);
         axis.computeLineDistances(); // 确保虚线计算正确
         this.m_Scene.AddAxis(axis);
         group.add(axis);
     }
     addLabel(text, textPos, group) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.DimensionalConstraintColor;
         const div = document.createElement('div');
         div.className = 'cad-text';
         div.textContent = text;
@@ -65881,7 +65979,7 @@ class NctiSketchLoader {
         // this.m_Scene.add(label);
     }
     extractPosConstraint(posCons, sketchBufferData, group) {
-        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.DimensionalConstraintColor;
+        const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_2__.MaterialManager.current.DimensionalConstraintColor;
         const globalId = this.m_globalId.Id++;
         posCons.calcSketchData();
         let text = posCons.Text;
@@ -65914,20 +66012,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _NctiScene__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiScene */ "./src/engine/NctiScene.ts");
 /* harmony import */ var _NctiSketchLoader__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiSketchLoader */ "./src/engine/NctiSketchLoader.ts");
-/* harmony import */ var three_examples_jsm_renderers_CSS2DRenderer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/renderers/CSS2DRenderer */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/examples/jsm/renderers/CSS2DRenderer.js");
-/* harmony import */ var _NctiBaseViewer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NctiBaseViewer */ "./src/engine/NctiBaseViewer.ts");
+/* harmony import */ var three_examples_jsm_renderers_CSS2DRenderer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/renderers/CSS2DRenderer */ "./node_modules/three/examples/jsm/renderers/CSS2DRenderer.js");
+/* harmony import */ var _NctiBaseViewer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiBaseViewer */ "./src/engine/NctiBaseViewer.ts");
 
 
 
 
-class NctiSketchViewer extends _NctiBaseViewer__WEBPACK_IMPORTED_MODULE_3__["default"] {
+class NctiSketchViewer extends _NctiBaseViewer__WEBPACK_IMPORTED_MODULE_2__["default"] {
     constructor(container, renderer, nctiObject) {
         super(container, renderer);
         this.m_container = container;
         this.m_SketchScene = new _NctiScene__WEBPACK_IMPORTED_MODULE_0__.NctiSketchScene();
         this.m_Renderer = renderer;
         // CSS2D 渲染器 (渲染文字)
-        this.m_LabelRenderer = new three_examples_jsm_renderers_CSS2DRenderer__WEBPACK_IMPORTED_MODULE_2__.CSS2DRenderer();
+        this.m_LabelRenderer = new three_examples_jsm_renderers_CSS2DRenderer__WEBPACK_IMPORTED_MODULE_3__.CSS2DRenderer();
         this.m_LabelRenderer.setSize(container.clientWidth, container.clientHeight);
         this.m_LabelRenderer.domElement.style.position = 'absolute';
         this.m_LabelRenderer.domElement.style.top = '0px';
@@ -65994,15 +66092,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   GridElemType: () => (/* binding */ GridElemType),
 /* harmony export */   GridMeshManager: () => (/* binding */ GridMeshManager),
 /* harmony export */   NctiCell: () => (/* binding */ NctiCell),
-/* harmony export */   NctiGridMeshManager: () => (/* binding */ NctiGridMeshManager),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
-/* harmony import */ var engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! engine/NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
-/* harmony import */ var _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiMeshManager */ "./src/mesh/NctiMeshManager.ts");
-/* harmony import */ var engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! engine/NctiElement */ "./src/engine/NctiElement.ts");
-/* harmony import */ var engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! engine/NctiModelManager */ "./src/engine/NctiModelManager.ts");
-/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.core.js");
+/* harmony import */ var engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! engine/NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
+/* harmony import */ var _NctiMeshManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiMeshManager */ "./src/mesh/NctiMeshManager.ts");
+/* harmony import */ var engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! engine/NctiElement */ "./src/engine/NctiElement.ts");
+/* harmony import */ var engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! engine/NctiModelManager */ "./src/engine/NctiModelManager.ts");
+/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
+/* harmony import */ var engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! engine/NctiSelectManager */ "./src/engine/NctiSelectManager.ts");
+
 
 
 
@@ -66010,17 +66109,21 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class NctiCell {
+    get Visible() {
+        return this.m_Visible;
+    }
+    set Visible(v) {
+        if (v === false) {
+            GridMeshManager.current.AddInvisibleCell(this);
+        }
+        this.m_Visible = v;
+    }
     constructor(id) {
+        this.m_Visible = true;
         this.m_CellId = id;
         this.m_CellNodes = [];
         this.m_CellEdges = [];
         this.m_CellFaces = [];
-    }
-    GetFaceIndex(globalId) {
-        return this.m_CellFaces.indexOf(globalId);
-    }
-    GetEdgeIndex(globalId) {
-        return this.m_CellEdges.indexOf(globalId);
     }
 }
 var GridElemType;
@@ -66038,8 +66141,13 @@ class NctiGridMeshManager {
     constructor() {
         this.m_cellsMap = new Map();
         this.m_cellElementMap = new Map();
-        this.m_NodesMap = new Map();
+        this.m_cellNodeElementMap = new Map();
+        // this.m_NodesMap = new Map();
         this.m_NodeIdMap = new Map();
+        this.m_invisibleCells = new Set();
+    }
+    AddInvisibleCell(cell) {
+        this.m_invisibleCells.add(cell);
     }
     AddCellBody(cellName, cells) {
         this.m_cellsMap.set(cellName, cells);
@@ -66053,12 +66161,26 @@ class NctiGridMeshManager {
     GetCellByGlobalId(globalId) {
         return this.m_cellElementMap.get(globalId);
     }
-    AddNodes(bodyName, globalid) {
-        if (!this.m_NodesMap.has(bodyName)) {
-            this.m_NodesMap.set(bodyName, []);
+    BindNodeCell(nodeGlobalId, cell) {
+        if (!this.m_cellNodeElementMap.has(nodeGlobalId)) {
+            this.m_cellNodeElementMap.set(nodeGlobalId, []);
         }
-        this.m_NodesMap.get(bodyName).push(globalid);
+        this.m_cellNodeElementMap.get(nodeGlobalId).push(cell);
     }
+    GetCellByNodeId(nodeGlobalId) {
+        return this.m_cellNodeElementMap.get(nodeGlobalId);
+    }
+    SetAllVisible() {
+        this.m_invisibleCells.forEach(i => {
+            i.Visible = true;
+        });
+    }
+    // AddNodes(bodyName: string, globalid: number) {
+    //     if (!this.m_NodesMap.has(bodyName)) {
+    //         this.m_NodesMap.set(bodyName, []);
+    //     }
+    //     this.m_NodesMap.get(bodyName).push(globalid);
+    // }
     SetNodeId(globalId, nodeId) {
         this.m_NodeIdMap.set(globalId, nodeId);
     }
@@ -66076,45 +66198,43 @@ const GridMeshManager = {
     }
 };
 class NctiGridMeshLoader {
-    // m_materialManager: NctiMaterialManager;
-    // m_SelectManager: NctiSelectManager;
-    // m_gridManager: NctiGridMeshManager;
-    constructor(scene) {
+    constructor(scene, maxTextSize) {
+        this.m_maxTextSize = 8192;
         this.m_Scene = scene;
-        // this.m_materialManager = materialManager;
-        // this.m_SelectManager = selectMamager;
-        // this.m_gridManager = new NctiGridMeshManager();
-        // this.m_SelectManager.GridManager = this.m_gridManager;
+        this.m_maxTextSize = maxTextSize;
     }
-    loadMesh(gridMesh, globalId, group) {
+    loadMesh(gridMesh, globalId, group, partName) {
         const startElem = gridMesh.StartElement;
+        const modelBodyName = gridMesh.m_cpObjName;
+        let modelbody = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiModelBody(modelBodyName);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddPartModelBody(partName, modelbody);
         const cellCount = gridMesh.ElemType.length;
         let cells = Array.from({ length: cellCount }, (_, i) => new NctiCell(i + startElem));
         GridMeshManager.current.AddCellBody(gridMesh.m_cpObjName, cells);
-        this.AddGridTriangles(gridMesh, globalId, group);
-        this.AddGridEdges(gridMesh, globalId, group);
-        this.AddGridPoints(gridMesh, globalId, group);
+        this.AddGridTriangles(gridMesh, globalId, group, modelbody);
+        this.AddGridEdges(gridMesh, globalId, group, modelbody);
+        this.AddGridPoints(gridMesh, globalId, group, modelbody);
     }
     calcNormal(vecs) {
-        const ab = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(vecs[1], vecs[0]);
-        const ac = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(vecs[2], vecs[0]);
-        const normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().crossVectors(ab, ac).normalize();
+        const ab = new three__WEBPACK_IMPORTED_MODULE_6__.Vector3().subVectors(vecs[1], vecs[0]);
+        const ac = new three__WEBPACK_IMPORTED_MODULE_6__.Vector3().subVectors(vecs[2], vecs[0]);
+        const normal = new three__WEBPACK_IMPORTED_MODULE_6__.Vector3().crossVectors(ab, ac).normalize();
         return [normal.x, normal.y, normal.z];
     }
-    AddGridTriangles(modelBody, globalIdObj, group) {
-        let points = modelBody.Position;
-        let elemData = modelBody.ElemData;
-        const cellTypes = modelBody.ElemType;
+    AddGridTriangles(gridMeshBody, globalIdObj, group, modelbody) {
+        let points = gridMeshBody.Position;
+        let elemData = gridMeshBody.ElemData;
+        const cellTypes = gridMeshBody.ElemType;
         let vertexNum = 0;
         let offset = 0;
         let triList = new Set();
-        const cells = GridMeshManager.current.GetCells(modelBody.m_cpObjName);
+        const cells = GridMeshManager.current.GetCells(gridMeshBody.m_cpObjName);
         let faceArray = [];
         for (let i = 0; i < cellTypes.length; i++) {
             const celltype = cellTypes[i];
-            const vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].ElementVert(celltype);
+            const vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_1__["default"].ElementVert(celltype);
             const elements = elemData.slice(offset, offset + vertSize);
-            const cellMap = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].DispFace(celltype);
+            const cellMap = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_1__["default"].DispFace(celltype);
             cellMap.forEach((val) => {
                 const cellName = [elements[val[0]], elements[val[1]], elements[val[2]]].sort((a, b) => a - b).join('-');
                 if (triList.has(cellName)) {
@@ -66127,26 +66247,29 @@ class NctiGridMeshLoader {
             });
             offset += vertSize;
         }
-        const geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        const mesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiFaceMesh(geometry, engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.OriginFaceMaterial);
-        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiMeshInfo(modelBody.m_cpObjName, group.name);
+        const geometry = new three__WEBPACK_IMPORTED_MODULE_6__.BufferGeometry();
+        const mesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiFaceMesh(geometry);
+        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
         meshInfo.IndexOffset = globalIdObj.Id;
-        // const mesh = new NctiFace(offset, geometry,MaterialManager.current.OriginFaceMaterial);
-        // mesh.IsGrid = true;
-        const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.MeshColor;
-        const startNode = modelBody.StartNode;
-        const startElem = modelBody.StartElement;
+        meshInfo.IsGrid = true;
+        let pickingFaceMesh = engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.AddPickingFaceMesh(geometry);
+        const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__.MaterialManager.current.MeshColor;
+        const startNode = gridMeshBody.StartNode;
+        const startElem = gridMeshBody.StartElement;
         const verts = new Float32Array(vertexNum);
         const norms = new Float32Array(vertexNum);
         const colors = new Float32Array(vertexNum);
         const idBuffer = new Int32Array(vertexNum / 3);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddFace(group.name, mesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddFace(group.name, mesh);
         let idOffset = 0;
         for (let i = 0; i < faceArray.length; i++) {
             const globalId = globalIdObj.Id++;
-            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.Face);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_4__.ElementType.GridFace);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddElement(globalId, nctiElement);
+            modelbody.AddElement(nctiElement);
+            nctiElement.SetMeshInfo(meshInfo);
             nctiElement.SetDisplayMesh(mesh);
+            nctiElement.SetPickingMesh(pickingFaceMesh);
             const triIndices = faceArray[i][0];
             const cell = faceArray[i][1];
             cell.m_CellFaces.push(globalId);
@@ -66159,7 +66282,7 @@ class NctiGridMeshLoader {
                 verts[(i * 3 + j) * 3] = x;
                 verts[(i * 3 + j) * 3 + 1] = y;
                 verts[(i * 3 + j) * 3 + 2] = z;
-                currentVecs[j] = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(x, y, z);
+                currentVecs[j] = new three__WEBPACK_IMPORTED_MODULE_6__.Vector3(x, y, z);
             });
             const normal = this.calcNormal(currentVecs);
             triIndices.forEach((_, j) => {
@@ -66173,27 +66296,38 @@ class NctiGridMeshLoader {
             });
             meshInfo.AddIndexInfo(globalId, idOffset, triIndices.length);
             idOffset += triIndices.length;
-            // this.m_SelectManager.addSceneData(globalId, globalId)
         }
-        geometry.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(verts, 3));
-        geometry.setAttribute("normal", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(norms, 3));
-        geometry.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(colors, 3));
-        geometry.setAttribute("id", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(idBuffer, 1));
+        geometry.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(verts, 3));
+        geometry.setAttribute("normal", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(norms, 3));
+        geometry.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(colors, 3));
+        geometry.setAttribute("id", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(idBuffer, 1));
+        const materialIdCount = idBuffer[idBuffer.length - 1] - idBuffer[0] + 1;
+        offset = idBuffer[0];
+        const maxTexSize = this.m_maxTextSize;
+        let meshMaterial = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__.MaterialManager.current.OriginMeshMaterial(materialIdCount, offset, maxTexSize, {
+            vertexColors: true,
+            side: three__WEBPACK_IMPORTED_MODULE_6__.DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: 1,
+            polygonOffsetUnits: 1
+        });
+        mesh.material = meshMaterial;
         group.add(mesh);
-        // this.m_SelectManager.addPickingMeshObj(geometry, mesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddFace(group.name, mesh);
+        engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.SetPickingMeshMaterial(materialIdCount, offset, maxTexSize, pickingFaceMesh);
     }
-    AddGridEdges(modelBody, globalIdObj, group) {
-        const points = modelBody.Position;
-        const elemData = modelBody.ElemData;
-        const cellTypes = modelBody.ElemType;
+    AddGridEdges(gridMeshBody, globalIdObj, group, modelBody) {
+        const points = gridMeshBody.Position;
+        const elemData = gridMeshBody.ElemData;
+        const cellTypes = gridMeshBody.ElemType;
         let offset = 0;
         let edgeArray = [];
-        const cells = GridMeshManager.current.GetCells(modelBody.m_cpObjName);
+        const cells = GridMeshManager.current.GetCells(gridMeshBody.m_cpObjName);
         for (let i = 0; i < cellTypes.length; i++) {
             const celltype = cellTypes[i];
-            const vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].ElementVert(celltype);
+            const vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_1__["default"].ElementVert(celltype);
             const elements = elemData.slice(offset, offset + vertSize);
-            const cellMap = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].DispEdge(celltype);
+            const cellMap = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_1__["default"].DispEdge(celltype);
             cellMap.forEach(val => {
                 const sIndex = elements[val[0]];
                 const eIndex = elements[val[1]];
@@ -66202,25 +66336,27 @@ class NctiGridMeshLoader {
             });
             offset += vertSize;
         }
-        const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.LineColor;
-        const segmentsGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        const line = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiEdgeMesh(segmentsGeometry, engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.OriginLineMaterial);
-        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiMeshInfo(modelBody.m_cpObjName, group.name);
+        const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__.MaterialManager.current.LineColor;
+        const segmentsGeometry = new three__WEBPACK_IMPORTED_MODULE_6__.BufferGeometry();
+        const line = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiEdgeMesh(segmentsGeometry);
+        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
         meshInfo.IndexOffset = globalIdObj.Id;
-        // const line = new NctiEdge(num[1], segmentsGeometry, this.m_materialManager.OriginLineMaterial);
-        // line.IsGrid = true;
+        meshInfo.IsGrid = true;
+        let pickingEdgeMesh = engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.AddPickingEdgeMesh(segmentsGeometry);
         const vertCount = edgeArray.length * 2;
         const linePositions = new Float32Array(vertCount * 3);
         const lineColorBuffer = new Float32Array(vertCount * 3);
         const idBuffer = new Int32Array(vertCount);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddEdge(group.name, line);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddEdge(group.name, line);
         let idOffset = 0;
         edgeArray.forEach(([edge, cell], i) => {
             const globalId = globalIdObj.Id++;
-            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.Edge);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_4__.ElementType.GridEdge);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddElement(globalId, nctiElement);
+            modelBody.AddElement(nctiElement);
             nctiElement.SetDisplayMesh(line);
             nctiElement.SetMeshInfo(meshInfo);
+            nctiElement.SetPickingMesh(pickingEdgeMesh);
             GridMeshManager.current.SetCellElementId(globalId, cell);
             cell.m_CellEdges.push(globalId);
             const [v1, v2] = edge.split('-').map(Number);
@@ -66234,25 +66370,34 @@ class NctiGridMeshLoader {
             meshInfo.AddIndexInfo(globalId, idOffset, 2);
             idOffset += 2;
         });
-        segmentsGeometry.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(linePositions, 3));
-        segmentsGeometry.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(lineColorBuffer, 3));
-        segmentsGeometry.setAttribute("id", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(idBuffer, 1));
+        segmentsGeometry.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(linePositions, 3));
+        segmentsGeometry.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(lineColorBuffer, 3));
+        const lineIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(idBuffer, 1);
+        lineIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_6__.IntType;
+        segmentsGeometry.setAttribute('id', lineIdBufferAttribute);
+        // segmentsGeometry.setAttribute("id", new THREE.BufferAttribute(idBuffer, 1));
         line.computeLineDistances();
         line.scale.set(1, 1, 1);
+        const lineMaterialIdCount = idBuffer[idBuffer.length - 1] - idBuffer[0] + 1;
+        offset = idBuffer[0];
+        const maxTexSize = this.m_maxTextSize;
+        const lineMaterial = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__.MaterialManager.current.OriginMaterial(lineMaterialIdCount, offset, maxTexSize);
+        line.material = lineMaterial;
         group.add(line);
-        // this.m_SelectManager.addPickingEdgeObj(segmentsGeometry, line);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddEdge(group.name, line);
+        engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.SetPickingMeshMaterial(lineMaterialIdCount, offset, maxTexSize, pickingEdgeMesh);
     }
-    AddGridPoints(modelBody, globalIdObj, group) {
-        const points = modelBody.Position;
-        const cellTypes = modelBody.ElemType;
-        const elemData = modelBody.ElemData;
+    AddGridPoints(gridMeshBody, globalIdObj, group, modelBody) {
+        const points = gridMeshBody.Position;
+        const cellTypes = gridMeshBody.ElemType;
+        const elemData = gridMeshBody.ElemData;
         const pointsCount = points.length / 3;
-        const startNode = modelBody.StartNode;
-        const cells = GridMeshManager.current.GetCells(modelBody.m_cpObjName);
+        const startNode = gridMeshBody.StartNode;
+        const cells = GridMeshManager.current.GetCells(gridMeshBody.m_cpObjName);
         let pointArray = new Map;
         for (let i = 0, offset = 0, vertSize = 0; i < cellTypes.length; i++, offset += vertSize) {
             const celltype = cellTypes[i];
-            vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].ElementVert(celltype);
+            vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_1__["default"].ElementVert(celltype);
             const elements = elemData.slice(offset, offset + vertSize);
             elements.forEach(id => {
                 if (!pointArray.has(id)) {
@@ -66261,42 +66406,50 @@ class NctiGridMeshLoader {
                 pointArray.get(id).push(cells[i]);
             });
         }
-        const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.GridPointColor;
-        const markerGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        const point = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiPointMesh(markerGeometry, engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.GridPointMaterial);
-        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiMeshInfo(modelBody.m_cpObjName, group.name);
+        const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__.MaterialManager.current.GridPointColor;
+        const markerGeometry = new three__WEBPACK_IMPORTED_MODULE_6__.BufferGeometry();
+        const point = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiPointMesh(markerGeometry);
+        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
         meshInfo.IndexOffset = globalIdObj.Id;
-        // point.IsGrid = true;
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPoint(group.name, point);
-        const interleavedBUffer32 = new Float32Array(points.buffer);
+        meshInfo.IsGrid = true;
+        let pickingPointMesh = engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.AddPickingPointMesh(markerGeometry);
+        const interleavedBuffer32 = new Float32Array(points.buffer);
         const colorBuffer = new Float32Array(points.length);
         const idBuffer = new Int32Array(pointsCount);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddPoint(group.name, point);
         for (let i = 0; i < pointsCount; i++) {
             const globalId = globalIdObj.Id++;
-            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.Point);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_2__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_4__.ElementType.GridNode);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddElement(globalId, nctiElement);
+            modelBody.AddElement(nctiElement);
             nctiElement.SetDisplayMesh(point);
             nctiElement.SetMeshInfo(meshInfo);
+            nctiElement.SetPickingMesh(pickingPointMesh);
             colorBuffer[i * 3] = r;
             colorBuffer[i * 3 + 1] = g;
             colorBuffer[i * 3 + 2] = b;
             idBuffer[i] = globalId;
-            meshInfo.AddIndexInfo(globalId, globalId);
+            meshInfo.AddIndexInfo(globalId, meshInfo.IndexOffset);
             pointArray.get(i).forEach(cell => {
                 cell.m_CellNodes.push(globalId);
-                GridMeshManager.current.SetCellElementId(globalId, cell);
+                GridMeshManager.current.BindNodeCell(globalId, cell);
             });
-            GridMeshManager.current.AddNodes(modelBody.m_cpObjName, globalId);
+            // GridMeshManager.current.AddNodes(gridMeshBody.m_cpObjName, globalId);
             GridMeshManager.current.SetNodeId(globalId, i + startNode);
-            // this.m_SelectManager.addSceneData(globalId, globalId)
         }
-        markerGeometry.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(interleavedBUffer32, 3));
-        markerGeometry.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(colorBuffer, 3));
-        const idBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(idBuffer, 1);
-        idBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
+        markerGeometry.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(interleavedBuffer32, 3));
+        markerGeometry.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(colorBuffer, 3));
+        const idBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_6__.BufferAttribute(idBuffer, 1);
+        idBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_6__.IntType;
         markerGeometry.setAttribute("id", idBufferAttribute);
+        const pointMaterialIdCount = idBuffer[idBuffer.length - 1] - idBuffer[0] + 1;
+        const offset = idBuffer[0];
+        const maxTexSize = this.m_maxTextSize;
+        const pointMaterial = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_0__.MaterialManager.current.OriginGridPointMaterial(pointMaterialIdCount, offset, maxTexSize);
+        point.material = pointMaterial;
         group.add(point);
-        // this.m_SelectManager.addPickingPointObj(markerGeometry, point);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_3__.ModelManager.current.AddPoint(group.name, point);
+        engine_NctiSelectManager__WEBPACK_IMPORTED_MODULE_5__.SelectManager.current.SetPickingMeshMaterial(pointMaterialIdCount, offset, maxTexSize, pickingPointMesh);
     }
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (NctiGridMeshLoader);
@@ -67120,13 +67273,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _NctiBase__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiBase */ "./src/ncti/NctiBase.ts");
-/* harmony import */ var _NctiCompress__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiCompress */ "./src/ncti/NctiCompress.ts");
-/* harmony import */ var _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiDisplayMeshObject */ "./src/ncti/NctiDisplayMeshObject.ts");
+/* harmony import */ var _NctiCompress__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiCompress */ "./src/ncti/NctiCompress.ts");
+/* harmony import */ var _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiDisplayMeshObject */ "./src/ncti/NctiDisplayMeshObject.ts");
 
 
-
-class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODULE_2__["default"] {
+class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODULE_1__["default"] {
     constructor() {
         super(...arguments);
         this.m_MeshPackedTagVec = new Array();
@@ -67136,8 +67287,9 @@ class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODUL
         this.m_SPCVecIndex = new Array();
         this.m_LoadsVecIndex = new Array();
         this.m_OutputsIndex = new Array();
+        this.m_ScalarObjectsIndex = new Array();
     }
-    get m_currentVer() { return 1; }
+    get m_currentVer() { return 2; }
     get Position() {
         return this.m_Position;
     }
@@ -67160,6 +67312,9 @@ class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODUL
             case 1:
                 NctiDisplayGridMesh.prototype.ReadVersion_1.call(this, stream);
                 break;
+            case 2:
+                NctiDisplayGridMesh.prototype.ReadVersion_2.call(this, stream);
+                break;
             default:
                 break;
         }
@@ -67175,79 +67330,17 @@ class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODUL
         this.m_ElemData = new Uint32Array(stream.readNumber());
         if (typeNum > 0) {
             this.m_ElemType = new Uint8Array(typeNum);
-            // this.m_MeshPackedTypeVec = new Array()
-            if (this.CompressionLevel != -1) {
-                for (let i = 0; i < this.m_PackedSubNum; i++) {
-                    let meshPack = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiMeshPacked();
-                    meshPack.m_buf = stream.readPacked(4);
-                    meshPack.m_bufSize = meshPack.m_buf[0] |
-                        meshPack.m_buf[1] << 8 |
-                        meshPack.m_buf[2] << 16 |
-                        meshPack.m_buf[3] << 24;
-                    meshPack.m_props = stream.readPacked(5);
-                    meshPack.m_packed = stream.readPacked(meshPack.m_bufSize);
-                    this.m_MeshPackedTypeVec.push(meshPack);
-                }
-            }
-            else {
-                this.m_ElemType = stream.readPacked(typeNum);
-            }
+            this.m_ElemType = stream.readPacked(typeNum);
         }
         if (tagNum > 0) {
             this.m_ElemTag = new Uint32Array(tagNum);
-            // this.m_MeshPackedTagVec = new Array(this.m_PackedSubNum);
-            if (this.CompressionLevel != -1) {
-                for (let i = 0; i < this.m_PackedSubNum; i++) {
-                    let meshPack = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiMeshPacked();
-                    meshPack.m_buf = stream.readPacked(4);
-                    meshPack.m_bufSize = meshPack.m_buf[0] |
-                        meshPack.m_buf[1] << 8 |
-                        meshPack.m_buf[2] << 16 |
-                        meshPack.m_buf[3] << 24;
-                    meshPack.m_props = stream.readPacked(5);
-                    meshPack.m_packed = stream.readPacked(meshPack.m_bufSize);
-                    this.m_MeshPackedTagVec.push(meshPack);
-                }
-            }
-            else {
-                stream.readUint32Array(this.m_ElemTag);
-            }
+            stream.readUint32Array(this.m_ElemTag);
         }
         if (this.m_Position.length > 0) {
-            if (this.CompressionLevel != -1) {
-                for (let i = 0; i < this.m_PackedSubNum; i++) {
-                    let meshPack = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiMeshPacked();
-                    meshPack.m_buf = stream.readPacked(4);
-                    meshPack.m_bufSize = meshPack.m_buf[0] |
-                        meshPack.m_buf[1] << 8 |
-                        meshPack.m_buf[2] << 16 |
-                        meshPack.m_buf[3] << 24;
-                    meshPack.m_props = stream.readPacked(5);
-                    meshPack.m_packed = stream.readPacked(meshPack.m_bufSize);
-                    this.m_MeshPackedPosVec.push(meshPack);
-                }
-            }
-            else {
-                stream.readFloat32Array(this.m_Position);
-            }
+            stream.readFloat32Array(this.m_Position);
         }
         if (this.m_ElemData.length > 0) {
-            if (this.CompressionLevel != -1) {
-                for (let i = 0; i < this.m_PackedSubNum; i++) {
-                    let meshPack = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiMeshPacked();
-                    meshPack.m_buf = stream.readPacked(4);
-                    meshPack.m_bufSize = meshPack.m_buf[0] |
-                        meshPack.m_buf[1] << 8 |
-                        meshPack.m_buf[2] << 16 |
-                        meshPack.m_buf[3] << 24;
-                    meshPack.m_props = stream.readPacked(5);
-                    meshPack.m_packed = stream.readPacked(meshPack.m_bufSize);
-                    this.m_MeshPackedElemVec.push(meshPack);
-                }
-            }
-            else {
-                stream.readUint32Array(this.m_ElemData);
-            }
+            stream.readUint32Array(this.m_ElemData);
         }
         this.m_ModelBody = stream.readNumber();
         let num = stream.readNumber();
@@ -67257,11 +67350,19 @@ class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODUL
         }
         this.m_PackedIsSame = true;
     }
+    ReadVersion_2(stream) {
+        this.ReadVersion_1(stream);
+        let num = stream.readNumber();
+        for (let i = 0; i < num; i++) {
+            let val = stream.readNumber();
+            this.m_ScalarObjectsIndex.push(val);
+        }
+    }
     UnCompressTag(num) {
         if (this.m_ElemType.length === 0) {
             return;
         }
-        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_1__.NctiCompress(this.m_CompressionLevel);
+        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_0__.NctiCompress(this.m_CompressionLevel);
         let len = this.m_ElemTag.length / this.m_PackedSubNum / 4 + 1;
         let lenS = num * len;
         let lenE = num * len + len - 1;
@@ -67271,7 +67372,7 @@ class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODUL
         compressCal.StreamReadPackedFloatsSub(this.m_ElemTag.buffer, 1, this.m_MeshPackedTagVec[num].m_props, this.m_MeshPackedTagVec[num].m_packed);
     }
     UnCompressType(num) {
-        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_1__.NctiCompress(this.m_CompressionLevel);
+        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_0__.NctiCompress(this.m_CompressionLevel);
         let len = this.m_ElemType.length / this.m_PackedSubNum / 4 + 1;
         let lenS = num * len;
         let lenE = num * len + len - 1;
@@ -67281,23 +67382,23 @@ class NctiDisplayGridMesh extends _NctiDisplayMeshObject__WEBPACK_IMPORTED_MODUL
         compressCal.StreamReadPackedIntsSub(this.m_ElemType, lenS, lenE, 1, this.m_MeshPackedTypeVec[num].m_props, this.m_MeshPackedTypeVec[num].m_packed);
     }
     UnCompressPosition(num) {
-        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_1__.NctiCompress(this.m_CompressionLevel);
+        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_0__.NctiCompress(this.m_CompressionLevel);
         compressCal.StreamReadPackedFloatsSub(this.m_Position.buffer, 1, this.m_MeshPackedPosVec[num].m_props, this.m_MeshPackedPosVec[num].m_packed);
     }
     UnCompressElement(num) {
-        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_1__.NctiCompress(this.m_CompressionLevel);
+        let compressCal = new _NctiCompress__WEBPACK_IMPORTED_MODULE_0__.NctiCompress(this.m_CompressionLevel);
         compressCal.StreamReadPackedFloatsSub(this.m_ElemData.buffer, 1, this.m_MeshPackedElemVec[num].m_props, this.m_MeshPackedElemVec[num].m_packed);
     }
     UnCompress() {
-        if (this.CompressionLevel === -1) {
-            return;
-        }
-        for (let i = 0; i < this.m_PackedSubNum; i++) {
-            this.UnCompressTag(i);
-            this.UnCompressType(i);
-            this.UnCompressPosition(i);
-            this.UnCompressElement(i);
-        }
+        // if (this.CompressionLevel === -1) {
+        //     return;
+        // }
+        // for (let i = 0; i < this.m_PackedSubNum; i++) {
+        //     this.UnCompressTag(i);
+        //     this.UnCompressType(i);
+        //     this.UnCompressPosition(i);
+        //     this.UnCompressElement(i);
+        // }
     }
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (NctiDisplayGridMesh);
@@ -68505,6 +68606,9 @@ class NctiObject {
                     consObj.sketchObj1 = this.nctiObjList[consObj.SketchObj1Index];
                     consObj.sketchObj2 = this.nctiObjList[consObj.SketchObj2Index];
                 }
+            }
+            for (const sktObjNum of sketchPlane.m_SketchClosedAreaVec) {
+                sketchPlane.SketchClosedAreaVec.push(this.nctiObjList[sktObjNum]);
             }
         }
     }
@@ -69723,6 +69827,7 @@ class YHDisplaySketchWorkPlane extends YHDisplayFeature {
         this.m_ConsObjVec = [];
         this.m_SketchClosedAreaVec = [];
         this.pSketchObjVec = [];
+        this.pSketchClosedAreaVec = [];
         this.pConsObjVec = [];
     }
     get Origin() {
@@ -69745,6 +69850,9 @@ class YHDisplaySketchWorkPlane extends YHDisplayFeature {
     }
     get SketchObjVec() {
         return this.pSketchObjVec;
+    }
+    get SketchClosedAreaVec() {
+        return this.pSketchClosedAreaVec;
     }
     AddSketchObj(sketchObj) {
         this.pSketchObjVec.push(sketchObj);
@@ -69962,11 +70070,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   YHDisplaySketchYAxis: () => (/* binding */ YHDisplaySketchYAxis),
 /* harmony export */   YHSketchPubFun: () => (/* binding */ YHSketchPubFun)
 /* harmony export */ });
-/* harmony import */ var _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiDisplayObject */ "./src/ncti/NctiDisplayObject.ts");
+/* harmony import */ var _NctiBase__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiBase */ "./src/ncti/NctiBase.ts");
+/* harmony import */ var _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiDisplayObject */ "./src/ncti/NctiDisplayObject.ts");
 
-class YHDisplaySketchObject extends _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiDisplayObject {
+
+class YHDisplaySketchObject extends _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiDisplayObject {
     get m_currentVer() { return 2; }
     get VertexCount() {
+        return 0;
+    }
+    get FaceVertexCount() {
+        return 0;
+    }
+    get FaceIndexCount() {
         return 0;
     }
     get PointCount() {
@@ -70012,7 +70128,7 @@ class YHDisplaySketchObject extends _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_
         this.m_IsTectonicline = stream.read_bool();
     }
     GetPointByIndex(index) {
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchOrigin extends YHDisplaySketchObject {
@@ -70044,7 +70160,7 @@ class YHDisplaySketchOrigin extends YHDisplaySketchObject {
         if (index === 0) {
             return this.m_pt;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchXAxis extends YHDisplaySketchObject {
@@ -70122,7 +70238,7 @@ class YHDisplaySketchLine extends YHDisplaySketchObject {
         else if (index === 1) {
             return this.m_ptE;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchCenterLine extends YHDisplaySketchObject {
@@ -70152,7 +70268,7 @@ class YHDisplaySketchCenterLine extends YHDisplaySketchObject {
         else if (index === 1) {
             return this.m_ptE;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchArc extends YHDisplaySketchObject {
@@ -70165,8 +70281,7 @@ class YHDisplaySketchArc extends YHDisplaySketchObject {
     }
     get VertexCount() {
         return YHSketchPubFun.GetVertexCount(this.m_FloatVecVec);
-        // removed by dead control flow
-
+        ;
     }
     get PointCount() {
         return 3;
@@ -70207,7 +70322,7 @@ class YHDisplaySketchArc extends YHDisplaySketchObject {
         else if (index === 2) {
             return this.m_center;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchPoint extends YHDisplaySketchObject {
@@ -70240,7 +70355,7 @@ class YHDisplaySketchPoint extends YHDisplaySketchObject {
         if (index === 0) {
             return this.m_Postion_S;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHSplineData {
@@ -70276,7 +70391,7 @@ class YHDisplaySketchSpline extends YHDisplaySketchObject {
         const data = stream.readPackedFloat64Array(count * 3);
         this.m_controlPosVec = new Array(count);
         for (let i = 0; i < data.length / 3; i++) {
-            this.m_controlPosVec[i] = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
+            this.m_controlPosVec[i] = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
         }
         this.m_FloatVecVec = YHSketchPubFun.ReadFloatVecData(stream);
         this.m_FloatLockedVecVec_S = YHSketchPubFun.ReadFloatVecVecData(stream);
@@ -70295,7 +70410,7 @@ class YHDisplaySketchSpline extends YHDisplaySketchObject {
         if (index >= 0 && index < this.m_controlPosVec.length) {
             return this.m_controlPosVec[index];
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchCircle extends YHDisplaySketchObject {
@@ -70333,7 +70448,7 @@ class YHDisplaySketchCircle extends YHDisplaySketchObject {
         if (index === 0) {
             return this.m_center;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchEllipse extends YHDisplaySketchObject {
@@ -70380,7 +70495,7 @@ class YHDisplaySketchEllipse extends YHDisplaySketchObject {
         if (index >= 0 && index < 5) {
             return posVec[index];
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchEllipseArc extends YHDisplaySketchObject {
@@ -70433,7 +70548,7 @@ class YHDisplaySketchEllipseArc extends YHDisplaySketchObject {
         else if (index === 2) {
             return this.m_ptE;
         }
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_0__.NctiPosition();
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
     }
 }
 class YHDisplaySketchClosedArea extends YHDisplaySketchObject {
@@ -70441,6 +70556,15 @@ class YHDisplaySketchClosedArea extends YHDisplaySketchObject {
     constructor() {
         super();
         this.m_SketchObjVec = new Array;
+        this.m_NctiMeshDataVec = [];
+        this.m_faceVertexCount = 0;
+        this.m_faceIndexCount = 0;
+    }
+    get FaceVertexCount() {
+        return this.m_faceVertexCount;
+    }
+    get FaceIndexCount() {
+        return this.m_faceIndexCount;
     }
     restore_data(stream) {
         super.restore_data(stream);
@@ -70461,15 +70585,21 @@ class YHDisplaySketchClosedArea extends YHDisplaySketchObject {
             this.m_SketchObjVec.push(sketchObj);
         }
         num = stream.readNumber();
+        this.m_faceVertexCount = 0;
+        this.m_faceIndexCount = 0;
         for (let i = 0; i < num; i++) {
             let numS = stream.readNumber();
             if (numS % 3 === 0) {
+                const meshData = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiModelData();
                 // let vectemp = stream.readNumber();
-                const positions = stream.readPackedFloatArray(numS);
+                meshData.positions = stream.readPackedFloatArray(numS);
+                this.m_faceVertexCount += meshData.positions.length;
                 numS = stream.readNumber();
-                const normals = stream.readPackedFloatArray(numS);
+                meshData.normals = stream.readPackedFloatArray(numS);
                 numS = stream.readNumber();
-                const triangles = stream.readPackedUint32(numS);
+                meshData.triangles = stream.readPackedUint32(numS);
+                this.m_faceIndexCount += meshData.triangles.length;
+                this.m_NctiMeshDataVec.push(meshData);
             }
         }
     }

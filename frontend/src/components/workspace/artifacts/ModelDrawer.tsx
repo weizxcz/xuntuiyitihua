@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { ShowType } from "./components/ModelToolbar";
 
 export interface ModelDrawerProps {
   loading?: boolean;
@@ -79,7 +80,7 @@ export function ModelDrawer({
         }) as unknown as NctiViewerInstance;
         nctiLoaderRef.current = instance;
         instance.SetSceneMode(sceneMode)
-        instance.setShowMode(0);
+        instance.setShowMode(~ShowType.Point);
         instance.show();
         onMounted?.(instance);
         onChange?.("mounted");

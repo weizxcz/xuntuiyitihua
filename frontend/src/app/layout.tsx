@@ -19,7 +19,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressContentEditableWarning suppressHydrationWarning>
       <head>
-        <script src="/nctiwebengine.js" defer />
+        <script src="/nctiwebengine/index.js" defer />
       </head>
       <body>
         <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>

@@ -1,84 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 
 import { urlOfArtifact } from "@/core/artifacts/utils";
 import { cn } from "@/lib/utils";
 
 import ModelToolbar from "./components/ModelToolbar";
-import { ModelDrawer } from "./ModelDrawer";
-
-// NCTI Web Engine 类型定义
-declare global {
-  interface Window {
-    NctiWebEngine?: {
-      NctiLoader: new (
-        data: ArrayBuffer,
-        container: HTMLElement,
-        config?: {
-          MeshColor?: number;
-          PointColor?: number;
-          SelectedColor?: number;
-          GridPointColor?: number;
-        },
-      ) => NctiViewerInstance;
-    };
-  }
-}
-
-interface NctiViewerInstance {
-  show: () => void;
-  hide: () => void;
-  resizeScene: () => void;
-  GetSelectedObjectNames: () => string[] | null;
-  GetSelectedCellNames: () => string[] | null;
-  getScreenShot: () => string | null;
-  clearSceneGroup: () => void;
-  setShowMode: (mode: number) => void;
-  setSelectMode: (mode: number) => void;
-  setBodySelect: (bodyName: string, partName: string) => void;
-  setCellSelect: (objectNames: string[], cellIds: string[]) => void;
-  clearSelected: () => void;
-  ZoomAll: () => void;
-  SetViewType: (type: number) => void;
-  setSelectedVisibleOnly: () => void;
-  setAllVisible: () => void;
-  setSelectedInvisible: () => void;
-  getSceneTree: () => Map<string, string[]>;
-  updateScene: (buffer: ArrayBuffer) => void;
-  addNctiBody: (buffer: ArrayBuffer, parentName?: string) => void;
-  NctiType?: number;
-  PartNctiList?: string[];
-}
-
-// 显示模式枚举
-export enum ShowType {
-  None = 0,
-  Body = 1,
-  Face = 2,
-  Edge = 4,
-  Point = 8,
-}
-
-// 选择模式枚举
-export enum SelectType {
-  None = 0,
-  Body = 1,
-  Face = 2,
-  Edge = 4,
-  Point = 8,
-}
-
-// 视图类型枚举
-export enum ViewType {
-  PositiveX = 1,
-  NegativeX = 2,
-  PositiveY = 3,
-  NegativeY = 4,
-  PositiveZ = 5,
-  NegativeZ = 6,
-}
-
+import { ModelDrawer, type NctiViewerInstance } from "./ModelDrawer";
 
 // 带加载状态的模型查看器面板
 export interface ModelViewerPanelProps {
@@ -95,7 +23,24 @@ export function ModelViewerPanel({ filepath, threadId, className }: ModelViewerP
   const [sceneMode, setSceneMode] = useState<0 | 1>(0)
 
   // 加载模型文件 URL
-  const modelUrl = urlOfArtifact({ filepath, threadId });
+  const modelUrl = useMemo(() => {
+    return urlOfArtifact({ filepath, threadId })
+  }, [filepath, threadId]);
+
+  // 解析 URL 中的 need_yh 参数，自动设置 sceneMode
+  // need_yh=1 表示草图模型（场景模式 1），need_yh=0 表示建模模型（场景模式 0）
+  useEffect(() => {
+    if (!modelUrl) return;
+    try {
+      const url = new URL(modelUrl);
+      const needYhParam = url.searchParams.get('need_yh');
+      if (needYhParam !== null) {
+        setSceneMode(needYhParam === '1' || needYhParam === 'true' ? 0 : 1);
+      }
+    } catch {
+      // 如果不是完整 URL，跳过解析
+    }
+  }, [modelUrl]);
 
   // 加载模型
   const loadModel = useCallback(async (url: string) => {
@@ -141,9 +86,13 @@ export function ModelViewerPanel({ filepath, threadId, className }: ModelViewerP
           </div>
         )}
         <div className="flex flex-col h-full">
-          <ModelToolbar modelViewerRef={modelViewerRef} onChange={(val) => {
-            setSceneMode(val.sceneMode)
-          }}/>
+          <ModelToolbar 
+            modelViewerRef={modelViewerRef.current}
+            onChange={(val) => {
+              setSceneMode(val.sceneMode)
+            }}
+            sceneMode={sceneMode}
+          />
           <ModelDrawer
             onMounted={instance => modelViewerRef.current = instance}
             data={modelData}

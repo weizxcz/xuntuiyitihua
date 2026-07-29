@@ -238,7 +238,8 @@ def execute_script_in_subprocess(
     new_ncti_path: str = None,
     obj_names: list = None,
     cell_names: list = None,
-    task_id: str = None
+    task_id: str = None,
+    need_yh: bool = True
 ) -> dict:
     """
     在独立的子进程中执行脚本，防止主进程崩溃。
@@ -257,6 +258,7 @@ def execute_script_in_subprocess(
         执行结果字典，包含 success, output, error, result 等字段
     """
     # 构建子进程脚本 - 注意：必须在任何输出之前重定向 stdout/stderr
+    need_yh_flag = need_yh  # 将参数传递给子进程
     temp_script = f"""
 import sys
 import json
@@ -270,6 +272,9 @@ import traceback
 output_buffer = io.StringIO()
 sys.stdout = output_buffer
 sys.stderr = output_buffer
+
+# 是否需要 YH 模块
+need_yh = {need_yh_flag}
 
 def run_script():
     try:
@@ -289,7 +294,7 @@ def run_script():
         dlls = [
             "ncti_doc_occ.dll", "ncti_occ_plugin.dll", "ncti_dcm_project.dll",
             "ncti_dcm_plugin.dll", "ncti_dcm3_project.dll", "ncti_dcm3_plugin.dll",
-            "ncti_command.dll", "ncti_sketch.dll", "yh_command.dll", "yh_object.dll"
+            "ncti_command.dll", "ncti_sketch.dll"
         ]
         for dll in dlls:
             try:
@@ -297,32 +302,49 @@ def run_script():
             except:
                 pass
 
+        # 如果需要 YH，加载 YH DLL
+        if need_yh:
+            try:
+                ctypes.CDLL(os.path.join(dll_path, "yh_command.dll"))
+                ctypes.CDLL(os.path.join(dll_path, "yh_object.dll"))
+            except:
+                pass
+
         # 导入模块
         NCTI = importlib.import_module("ncti_python")
         NCTI.Init(dll_path)
-        YH = importlib.import_module("yh_python")
-        YH.Init(dll_path)
+
+        YH = None
+        if need_yh:
+            YH = importlib.import_module("yh_python")
+            YH.Init(dll_path)
 
         # 初始化文档
         doc = NCTI.Document()
-        yh_doc = YH.YHDocument()
+        yh_doc = None
 
         # 打开或创建文档
         ncti_path = {json.dumps(ncti_path)}
         if ncti_path and os.path.exists(ncti_path):
-            yd = yh_doc.Open(ncti_path)
-            doc.ID = yd.GetID()
+            if need_yh and YH:
+                yh_doc = YH.YHDocument()
+                yd = yh_doc.Open(ncti_path)
+                doc.ID = yd.GetID()
+            else:
+                doc.Open(ncti_path)
         else:
-            yh_doc.NewPart()
-            doc.ID = yh_doc.GetID()
+            if need_yh and YH:
+                yh_doc = YH.YHDocument()
+                yh_doc.NewPart()
+                doc.ID = yh_doc.GetID()
+            else:
+                doc.New("OCC")
 
         # 设置全局变量
         script = {json.dumps(script)}
         global_scope = {{
             "NCTI": NCTI,
-            "YH": YH,
             "doc": doc,
-            "yh_doc": yh_doc,
             "print": print,
             "len": len, "str": str, "int": int, "float": float,
             "list": list, "dict": dict, "tuple": tuple, "set": set,
@@ -332,6 +354,11 @@ def run_script():
             "bool": bool, "type": type, "isinstance": isinstance,
             "hasattr": hasattr, "getattr": getattr, "setattr": setattr,
         }}
+
+        # 如果需要 YH，添加到全局作用域
+        if need_yh and YH:
+            global_scope["YH"] = YH
+            global_scope["yh_doc"] = yh_doc
 
         exec(script, global_scope)
 
@@ -516,19 +543,21 @@ def handle_execute_sketch_command(params: ExecScriptParams, use_subprocess: bool
     ncti_path = params.ncti_path
     new_ncti_path = params.new_ncti_path
     task_id = params.task_id
+    need_yh = params.need_yh
 
     dll_path = settings.DLL_PATH
 
     # 使用子进程执行（推荐）
     if use_subprocess:
-        print(f"使用子进程执行脚本，超时时间：{DEFAULT_SCRIPT_TIMEOUT}秒")
+        print(f"使用子进程执行脚本，超时时间：{DEFAULT_SCRIPT_TIMEOUT}秒，need_yh={need_yh}")
         result = execute_script_in_subprocess(
             script=script,
             dll_path=dll_path,
             timeout=DEFAULT_SCRIPT_TIMEOUT,
             ncti_path=ncti_path,
             new_ncti_path=new_ncti_path,
-            task_id=task_id
+            task_id=task_id,
+            need_yh=need_yh
         )
 
         if result.get("success"):

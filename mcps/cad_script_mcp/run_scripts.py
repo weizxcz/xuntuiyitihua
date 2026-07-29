@@ -226,7 +226,8 @@ def execute_script(
     script_content: str,
     model_path: Path,
     object_names: Optional[List[str]] = None,
-    cell_ids: Optional[List[str]] = None
+    cell_ids: Optional[List[str]] = None,
+    need_yh: bool = True
 ) -> Dict[str, Any]:
     """执行脚本 - 调用 run_sketch_script.py 的 handle_execute_sketch_command 函数
 
@@ -235,6 +236,7 @@ def execute_script(
         model_path: 模型文件保存路径
         object_names: 选中对象名称列表（可选）
         cell_ids: 选中单元格 ID 列表（可选）
+        need_yh: 是否需要 YH 模块和 yh_doc 对象（草图脚本需要，建模脚本不需要）
 
     Returns:
         执行结果
@@ -254,7 +256,8 @@ def execute_script(
             script=script_content,
             ncti_path=ncti_path_str,
             new_ncti_path=ncti_path_str,
-            task_id="mcp_task"
+            task_id="mcp_task",
+            need_yh=need_yh
         )
 
         # 调用 run_sketch_script.py 中的函数
@@ -281,7 +284,8 @@ def execute_script(
 
 def run_scripts(
     scripts: List[Dict[str, Any]],
-    ncti_path: str
+    ncti_path: str,
+    need_yh: bool = True
 ) -> Dict[str, Any]:
     """
     执行 CAD 脚本
@@ -298,12 +302,13 @@ def run_scripts(
         ncti_path: 会话标识符（必填），用于生成唯一的目录和文件名。
                    格式：{storage_dir}/{ncti_path}/{ncti_path}.ncti
                    同一次对话应传入相同的值，确保操作同一个 ncti 文件。
+        need_yh: 是否需要 YH 模块和 yh_doc 对象（草图脚本需要，建模脚本不需要）
 
     Returns:
         执行结果，以 script_type 为键
     """
     model_path = get_model_path(ncti_path)
-    logger.info(f"会话模型文件：{model_path}")
+    logger.info(f"会话模型文件：{model_path}, need_yh={need_yh}")
 
     type_counts = {}
     results = {}
@@ -328,7 +333,7 @@ def run_scripts(
             results[key] = {"success": False, "error": "脚本内容为空"}
             continue
 
-        result = execute_script(script_content, model_path)
+        result = execute_script(script_content, model_path, need_yh=need_yh)
         results[key] = result
 
     # 返回目录信息，方便调用方知道文件存储位置

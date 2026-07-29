@@ -19,6 +19,7 @@ class ExecScriptParams(BaseModel):
     ncti_path: str
     new_ncti_path: str
     task_id: Optional[str] = None
+    need_yh: bool = True  # 是否需要 YH 模块和 yh_doc 对象（草图脚本需要，建模脚本不需要）
 
 
 class ExecScriptResp(BaseModel):

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ export enum ShowType {
   Body = 1,
   Face = 2,
   Edge = 4,
-  Point = 8,
+  Point = 7,
 }
 
 // 选择模式枚举
@@ -32,49 +32,56 @@ export enum SelectType {
 
 // 视图类型枚举
 export enum ViewType {
-  PositiveX = 1,
-  NegativeX = 2,
-  PositiveY = 3,
-  NegativeY = 4,
-  PositiveZ = 5,
-  NegativeZ = 6,
+  PositiveX = 0,
+  NegativeX = 1,
+  PositiveY = 2,
+  NegativeY = 3,
+  PositiveZ = 4,
+  NegativeZ = 5,
 }
 
 export interface ModelToolbarProps {
-  modelViewerRef: React.RefObject<NctiViewerInstance | null>;
+  sceneMode: SceneMode;
+  modelViewerRef: NctiViewerInstance | null;
   onChange?: (value: { sceneMode: SceneMode }) => void;
   className?: string;
 }
 
-export default function ModelToolbar({ modelViewerRef, onChange, className }: ModelToolbarProps) {
+export default function ModelToolbar({ 
+  modelViewerRef,
+  onChange,
+  className,
+  sceneMode,
+}: ModelToolbarProps) {
   const [bodyActive, setBodyActive] = useState(true);
   const [meshActive, setMeshActive] = useState(true);
   const [lineActive, setLineActive] = useState(true);
   const [pointActive, setPointActive] = useState(true);
-  const [sceneMode, setSceneMode] = useState<SceneMode>(SceneMode.Sketch);
-  const [showValues, setShowValues] = useState<string[]>(["body", "mesh", "line", "point"]);
+  const [showValues, setShowValues] = useState<string[]>(["mesh", "line"]);
 
   const handleSceneModeChange = useCallback(() => {
     const newMode = sceneMode === SceneMode.ThreeD ? SceneMode.Sketch : SceneMode.ThreeD;
-    setSceneMode(newMode);
-    console.log(newMode);
-    (modelViewerRef.current as any)?.SetSceneMode?.(newMode);
+    modelViewerRef?.SetSceneMode?.(newMode);
     onChange?.({ sceneMode: newMode });
   }, [sceneMode, modelViewerRef, onChange]);
+
+  useEffect(() => {
+    modelViewerRef?.SetSceneMode(sceneMode)
+  }, [modelViewerRef, sceneMode])
 
   const handleBodySelect = useCallback(() => {
     const newBodyActive = !bodyActive;
     setBodyActive(newBodyActive);
 
     if (newBodyActive) {
-      modelViewerRef.current?.setSelectMode?.(
+      modelViewerRef?.setSelectMode?.(
         SelectType.Body | SelectType.Face | SelectType.Edge | SelectType.Point
       );
       setMeshActive(true);
       setLineActive(true);
       setPointActive(true);
     } else {
-      modelViewerRef.current?.setSelectMode?.(SelectType.None | SelectType.Face | SelectType.Edge | SelectType.Point);
+      modelViewerRef?.setSelectMode?.(SelectType.None | SelectType.Face | SelectType.Edge | SelectType.Point);
     }
   }, [bodyActive, modelViewerRef]);
 
@@ -84,7 +91,7 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
     if (!newMeshActive) {
       setBodyActive(false);
     }
-    modelViewerRef.current?.setSelectMode?.(
+    modelViewerRef?.setSelectMode?.(
       SelectType.None |
         (newMeshActive ? SelectType.Face : SelectType.None) |
         (lineActive ? SelectType.Edge : SelectType.None) |
@@ -98,7 +105,7 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
     if (!newLineActive) {
       setBodyActive(false);
     }
-    modelViewerRef.current?.setSelectMode?.(
+    modelViewerRef?.setSelectMode?.(
       SelectType.None |
         (meshActive ? SelectType.Face : SelectType.None) |
         (newLineActive ? SelectType.Edge : SelectType.None) |
@@ -112,7 +119,7 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
     if (!newPointActive) {
       setBodyActive(false);
     }
-    modelViewerRef.current?.setSelectMode?.(
+    modelViewerRef?.setSelectMode?.(
       SelectType.None |
         (meshActive ? SelectType.Face : SelectType.None) |
         (lineActive ? SelectType.Edge : SelectType.None) |
@@ -133,14 +140,14 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
 
       if (isAddingBody) {
         newValue = ["body", "mesh", "line", "point"];
-        modelViewerRef.current?.setShowMode(ShowType.Body);
+        modelViewerRef?.setShowMode(ShowType.Body);
       } else if (isRemovingBody) {
         newValue = checkedValue.filter((v) => v !== "body");
         const showMode =
           (newValue.includes("mesh") ? ShowType.Face : ShowType.None) |
           (newValue.includes("line") ? ShowType.Edge : ShowType.None) |
           (newValue.includes("point") ? ShowType.Point : ShowType.None);
-        modelViewerRef.current?.setShowMode(showMode);
+        modelViewerRef?.setShowMode(showMode);
       } else if (isChangingMeshLinePoint) {
         const hasMesh = checkedValue.includes("mesh");
         const hasLine = checkedValue.includes("line");
@@ -156,14 +163,14 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
           (newValue.includes("mesh") ? ShowType.Face : ShowType.None) |
           (newValue.includes("line") ? ShowType.Edge : ShowType.None) |
           (newValue.includes("point") ? ShowType.Point : ShowType.None);
-        modelViewerRef.current?.setShowMode(showMode);
+        modelViewerRef?.setShowMode(showMode);
       } else {
         newValue = checkedValue;
         const showMode =
           (newValue.includes("mesh") ? ShowType.Face : ShowType.None) |
           (newValue.includes("line") ? ShowType.Edge : ShowType.None) |
           (newValue.includes("point") ? ShowType.Point : ShowType.None);
-        modelViewerRef.current?.setShowMode(showMode);
+        modelViewerRef?.setShowMode(showMode);
       }
 
       setShowValues(newValue);
@@ -177,25 +184,25 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
         add: ViewType[`Negative${direction}`] as number,
         minus: ViewType[`Positive${direction}`] as number,
       };
-      modelViewerRef.current?.SetViewType(opMap[operation]);
+      modelViewerRef?.SetViewType(opMap[operation]);
     },
     [modelViewerRef]
   );
 
   const handleZoomAll = useCallback(() => {
-    modelViewerRef.current?.ZoomAll();
+    modelViewerRef?.ZoomAll();
   }, [modelViewerRef]);
 
   const handleShowAll = useCallback(() => {
-    modelViewerRef.current?.setAllVisible();
+    modelViewerRef?.setAllVisible();
   }, [modelViewerRef]);
 
   const handleHideAll = useCallback(() => {
-    modelViewerRef.current?.setSelectedInvisible();
+    modelViewerRef?.setSelectedInvisible();
   }, [modelViewerRef]);
 
   const handleViewOnly = useCallback(() => {
-    modelViewerRef.current?.setSelectedVisibleOnly();
+    modelViewerRef?.setSelectedVisibleOnly();
   }, [modelViewerRef]);
 
   return (
@@ -275,7 +282,7 @@ export default function ModelToolbar({ modelViewerRef, onChange, className }: Mo
       <div className="w-px h-8 bg-slate-300 dark:bg-slate-600 mx-1" />
 
       {/* 显示模式复选框 */}
-      <div className="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-slate-700 rounded px-2 py-1 w-[80px]">
+      <div className="flex flex-wrap flex-shrink-0 items-center gap-1 bg-slate-100 dark:bg-slate-700 rounded px-2 py-1 w-[80px]">
         {["body", "mesh", "line", "point"].map((item) => (
           <label key={item} className="flex items-center gap-1 cursor-pointer">
             <input

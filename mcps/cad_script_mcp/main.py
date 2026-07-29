@@ -78,11 +78,16 @@ def get_file_url(file_path: str) -> str:
     return f"http://{host}:{_HTTP_PORT}/files/{file_path}?t={timestamp}"
 
 
-def handle_run_scripts(scripts: list, model_path: str) -> Dict[str, Any]:
+def handle_run_scripts(scripts: list, model_path: str, need_yh: bool = True) -> Dict[str, Any]:
     """执行 CAD 脚本 - 使用 run_sketch_script.py 中的 handle_execute_sketch_command 函数。
 
     如果模型文件不存在则创建新文档，存在则打开现有文档再执行脚本。
     使用子进程执行脚本，防止主进程崩溃。
+
+    Args:
+        scripts: 脚本列表
+        model_path: 模型文件路径
+        need_yh: 是否需要 YH 模块和 yh_doc 对象（草图脚本需要，建模脚本不需要）
     """
     logger.info(f"[handle_run_scripts] 开始处理，model_path={model_path}, scripts 数量={len(scripts)}")
 
@@ -138,7 +143,8 @@ def handle_run_scripts(scripts: list, model_path: str) -> Dict[str, Any]:
                 script=script_content,
                 ncti_path=full_model_path,
                 new_ncti_path=new_model_path,
-                task_id="mcp_task"
+                task_id="mcp_task",
+                need_yh=need_yh  # 根据参数决定是否初始化 YH
             )
             # 使用子进程执行（use_subprocess=True）
             success, msg, resp = handle_execute_sketch_command(params, use_subprocess=True)
@@ -150,9 +156,13 @@ def handle_run_scripts(scripts: list, model_path: str) -> Dict[str, Any]:
 
         logger.info(f"[handle_run_scripts] 脚本执行完成，结果：{results}")
 
-        # 添加文件 URL 到结果
-        results["file_url"] = get_file_url(model_path)
-        logger.info(f"[handle_run_scripts] 添加 file_url: {results['file_url']}")
+        # 添加文件 URL 到结果，拼接 need_yh 参数方便模型查看器根据模型类型切换展示模式
+        file_url = get_file_url(model_path)
+        # 拼接 need_yh 参数
+        separator = "&" if "?" in file_url else "?"
+        file_url = f"{file_url}{separator}need_yh={1 if need_yh else 0}"
+        results["file_url"] = file_url
+        logger.info(f"[handle_run_scripts] 添加 file_url: {file_url}")
 
         return results
 
@@ -246,7 +256,12 @@ def handle_request(request: dict) -> dict:
                                 },
                                 "model_path": {
                                     "type": "string",
-                                    "description": "模型文件路径，格式为 {directory}/{filename}.yha"
+                                    "description": "模型文件路径（相对路径，不要包含 /mnt/user-data/outputs/ 前缀），格式为 {directory}/{filename}.yha，例如：abc-123/model.yha"
+                                },
+                                "need_yh": {
+                                    "type": "boolean",
+                                    "description": "是否需要 YH 模块和 yh_doc 对象（草图脚本需要设为 true，建模脚本设为 false）",
+                                    "default": True
                                 }
                             },
                             "required": ["scripts", "model_path"]
@@ -278,7 +293,8 @@ def handle_request(request: dict) -> dict:
         if tool_name == "run_scripts":
             result = handle_run_scripts(
                 arguments.get("scripts", []),
-                arguments.get("model_path", "")
+                arguments.get("model_path", ""),
+                arguments.get("need_yh", True)  # 默认需要 YH（兼容草图脚本）
             )
         elif tool_name == "get_file_url":
             result = handle_get_file_url(arguments.get("file_path", ""))
@@ -306,6 +322,11 @@ def handle_request(request: dict) -> dict:
             "id": request.get("id"),
             "result": {}
         }
+
+    # 通知类方法不需要响应，直接返回 None
+    elif method == "notifications/initialized":
+        _log_connection_debug(f"[请求 #{req_id}] 收到初始化完成通知（通知类，无需响应）")
+        return None
 
     else:
         _log_connection_debug(f"[请求 #{req_id}] 未实现的方法：{method}")
@@ -436,11 +457,15 @@ def main():
                         _log_connection_debug(f"[请求 #{current_req_id}] JSON 解析成功，方法：{request.get('method', 'unknown')}")
                         response = handle_request(request)
 
-                        # 写入响应
-                        response_str = json.dumps(response, ensure_ascii=False)
-                        _log_connection_debug(f"[请求 #{current_req_id}] 发送响应，长度：{len(response_str)}")
-                        sys.stdout.write(f"Content-Length: {len(response_str)}\r\n\r\n{response_str}")
-                        sys.stdout.flush()
+                        # 通知类方法返回 None，不需要发送响应
+                        if response is not None:
+                            # 写入响应
+                            response_str = json.dumps(response, ensure_ascii=False)
+                            _log_connection_debug(f"[请求 #{current_req_id}] 发送响应，长度：{len(response_str)}")
+                            sys.stdout.write(f"Content-Length: {len(response_str)}\r\n\r\n{response_str}")
+                            sys.stdout.flush()
+                        else:
+                            _log_connection_debug(f"[请求 #{current_req_id}] 通知类方法，跳过响应发送")
                         buffer = ""
                         _log_connection_debug(f"[请求 #{current_req_id}] 响应已发送并清空 buffer")
                 except json.JSONDecodeError as e:
