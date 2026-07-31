@@ -1,0 +1,45 @@
+{
+  "name": "@deer-flow/js-sdk",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for DeerFlow AI Agent",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "deerflow",
+    "agent",
+    "langgraph",
+    "ai",
+    "sdk"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "eslint": "^8.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "eventsource-parser": "^1.1.0",
+    "uuid": "^9.0.0"
+  }
+}

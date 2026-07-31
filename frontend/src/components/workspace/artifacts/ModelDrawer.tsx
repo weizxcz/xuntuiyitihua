@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 
 import { cn } from "@/lib/utils";
+
 import { ShowType } from "./components/ModelToolbar";
+
+// NctiType 枚举
+enum NctiType {
+  Assembly = 0,
+  Part = 1,
+}
 
 export interface ModelDrawerProps {
   loading?: boolean;
@@ -15,6 +22,7 @@ export interface ModelDrawerProps {
   onModelChange?: (type: string) => void;
   className?: string;
   sceneMode: number
+  baseDir?: string; // 模型文件所在目录，用于加载装配体零件
 }
 
 export interface NctiViewerInstance {
@@ -43,7 +51,7 @@ export interface NctiViewerInstance {
   SetSceneMode: (mode: number) => void;
 }
 
-export function ModelDrawer({
+const ModelDrawer = memo(function ModelDrawer({
   data,
   loading = false,
   updateScene,
@@ -52,17 +60,66 @@ export function ModelDrawer({
   selected,
   onModelChange,
   className,
-  sceneMode
+  sceneMode,
+  baseDir
 }: ModelDrawerProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const nctiLoaderRef = useRef<NctiViewerInstance | null>(null);
   const updateRef = useRef<boolean | undefined>(updateScene);
+  const [assemblyLoading, setAssemblyLoading] = useState(false);
+
+  // 使用 ref 来保持回调函数的稳定引用
+  const onChangeRef = useRef(onChange);
+  const onMountedRef = useRef(onMounted);
+  const onModelChangeRef = useRef(onModelChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+    onMountedRef.current = onMounted;
+    onModelChangeRef.current = onModelChange;
+  }, [onChange, onMounted, onModelChange]);
+
+  // 递归加载装配体的零件
+  const loadAssmNcti = useCallback(async (name: string, instance: NctiViewerInstance) => {
+    try {
+      const url = `${baseDir}/${name}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`下载零件失败：${response.status} ${response.statusText}`);
+      }
+      const buffer = await response.arrayBuffer();
+      instance.addNctiBody(buffer);
+
+      // 如果是装配体，继续递归加载子零件
+      if (instance.NctiType === NctiType.Assembly) {
+        const partList = instance.PartNctiList ?? [];
+        for (const part of partList) {
+        await loadAssmNcti(part, instance);
+      }
+      }
+    } catch (error) {
+      console.error(`加载零件 ${name} 失败:`, error);
+    }
+  }, [baseDir]);
+
+  // 加载装配体
+  const loadAssembly = useCallback(async (instance: NctiViewerInstance) => {
+    if (instance.NctiType === NctiType.Assembly) {
+      setAssemblyLoading(true);
+      const partList = instance.PartNctiList ?? [];
+      for (const part of partList) {
+        await loadAssmNcti(part, instance);
+      }
+      setAssemblyLoading(false);
+      onModelChangeRef.current?.("mounted");
+    }
+  }, [loadAssmNcti]);
 
   useEffect(() => {
     if (data && canvasRef.current) {
       if (updateRef.current) {
         nctiLoaderRef.current?.updateScene(data);
-        onChange?.("update");
+        onChangeRef.current?.("update");
       } else {
         canvasRef.current.replaceChildren();
 
@@ -82,17 +139,17 @@ export function ModelDrawer({
         instance.SetSceneMode(sceneMode)
         instance.setShowMode(~ShowType.Point);
         instance.show();
-        onMounted?.(instance);
-        onChange?.("mounted");
+        onMountedRef.current?.(instance);
+        onChangeRef.current?.("mounted");
 
-        // 检查是否是装配体
-        if (instance.NctiType === 0) { // NctiType.Assembly = 0
-          onModelChange?.("mounted");
+        // 检查是否是装配体，如果是则递归加载零件
+        if (instance.NctiType === NctiType.Assembly) {
+          void loadAssembly(instance);
         }
         updateRef.current = true;
       }
     }
-  }, [data]);
+  }, [data, sceneMode, loadAssembly]);
 
   useEffect(() => {
     updateRef.current = updateScene;
@@ -119,7 +176,7 @@ export function ModelDrawer({
 
   return (
     <div className={cn("relative flex flex-1 flex-col w-full h-full overflow-hidden", className)}>
-      {loading && (
+      {(loading || assemblyLoading) && (
         <div
           style={{
             position: "absolute",
@@ -163,4 +220,6 @@ export function ModelDrawer({
       </div>
     </div>
   );
-}
+});
+
+export { ModelDrawer };

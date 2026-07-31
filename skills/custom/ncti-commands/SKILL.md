@@ -10,10 +10,8 @@ allowed-tools:
   - str_replace
   - bash
   - task
-  - cad_script_run_scripts
-  - cad_script_get_file_url
+  - exec_script
   - get_session_id
-  - present_model
 ---
 
 # NCTI 命令 Skill
@@ -45,14 +43,15 @@ allowed-tools:
 1. 确认用户需求
 2. 查找对应命令文档
 3. 组装完整脚本
-4. 调用执行工具执行脚本
+4. 调用执行工具返回脚本给用户
 
 ### B. 多步操作
 
 1. 分解任务为多个步骤
 2. 按序调用工具
 3. 确保跨步变量名一致
-4. 组装完整脚本并执行
+4. 组装完整脚本
+5. 调用执行工具返回脚本给用户
 
 ### C. 修改已有脚本
 
@@ -82,9 +81,14 @@ doc.RunCommand("cmd_ncti_create_box", "box1", NCTI.Point(0, 0, 0), 10, 20, 30)
 
 **简要流程**：
 1. 生成/修改脚本
-2. 调用 `cad_script_run_scripts` 执行（`need_yh: false`）
-3. 获取文件 URL（如未返回）
-4. 使用 `present_model` 展示模型
+2. 将脚本展示给用户
+3. 调用 `exec_script(script, description, need_yh=false)` 执行脚本
+4. Frontend 通过 `hasExecScript()` 识别工具调用
+5. Frontend 创建 `assistant:exec-script` 消息分组
+6. 模型查看器接收 `script` 和 `needYh` 参数
+7. 模型查看器自动调用 MCP 执行并展示模型
+
+**注意**：`need_yh` 参数必须设为 `false`，因为 NCTI 命令脚本只使用 NCTI 模块。
 
 ## 参考目录
 
@@ -147,6 +151,7 @@ NCTI.Vector3(x, y, z)
 3. 对象名称在创建时指定，用于后续引用
 4. 约束系统需要先创建再使用
 5. 执行前确保依赖的对象已存在
+6. 执行前将脚本展示给用户
 
 ## 类别统计
 
@@ -156,13 +161,3 @@ NCTI.Vector3(x, y, z)
 | 基础命令 | 227 |
 | 约束命令 | 133 |
 | AI 属性类 | 2 |
-
-
-## 备选方式：保存后执行（不推荐）
-
-仅在 MCP 服务器不可时使用：
-
-1. 用 `write_file` 保存脚本到 `/mnt/user-data/outputs/xxx.py`
-2. 用 `bash` 执行：`python /mnt/user-data/outputs/xxx.py`
-
-> **注意**：使用前需确保 `extensions_config.json` 中已启用 `cad_script` MCP 服务器（HTTP 模式，端口 8310）。

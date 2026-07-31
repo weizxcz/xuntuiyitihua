@@ -129,12 +129,37 @@ def serialize_messages_tuple(obj: Any) -> Any:
     return serialize_lc_object(obj)
 
 
+def serialize_messages_last(obj: Any) -> Any:
+    """Serialize a values-mode snapshot to only include the last message.
+
+    This is a custom mode that returns only the last message from the
+    ``messages`` array in the state snapshot, reducing data transfer.
+    """
+    if not isinstance(obj, dict):
+        return serialize_lc_object(obj)
+
+    # Copy the state dict
+    result: dict[str, Any] = {}
+    for key, value in obj.items():
+        if key == "messages" and isinstance(value, (list, tuple)):
+            # Only include the last message
+            if value:
+                result[key] = [serialize_lc_object(value[-1])]
+            else:
+                result[key] = []
+        else:
+            result[key] = serialize_lc_object(value)
+
+    return result
+
+
 def serialize(obj: Any, *, mode: str = "") -> Any:
     """Serialize LangChain objects with mode-specific handling.
 
     * ``messages`` — obj is ``(message_chunk, metadata_dict)``
     * ``values`` — obj is the full state dict; ``__pregel_*`` keys stripped and
       base64 ``data:`` image blocks dropped from hide_from_ui messages
+    * ``messages-last`` — like ``values`` but only returns the last message
     * everything else — recursive ``model_dump()`` / ``dict()`` fallback
     """
     if mode == "messages":
@@ -143,4 +168,7 @@ def serialize(obj: Any, *, mode: str = "") -> Any:
         # ``values`` snapshots stream the full state to the frontend, so they
         # must drop base64 image payloads the same way the REST endpoints do.
         return serialize_channel_values_for_api(obj) if isinstance(obj, dict) else serialize_lc_object(obj)
+    if mode == "messages-last":
+        # ``messages-last`` also needs to strip base64 image data
+        return serialize_messages_last(obj) if isinstance(obj, dict) else serialize_lc_object(obj)
     return serialize_lc_object(obj)

@@ -68,6 +68,8 @@ docs/notes/
 Thumbs.db
 users
 .vscode
+.claude
 
 mcps/**/storage
 mcps/**/uv.lock
+**/node_modules

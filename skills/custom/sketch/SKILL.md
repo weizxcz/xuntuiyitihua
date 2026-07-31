@@ -14,10 +14,9 @@ allowed-tools:
   - task
   - bash
   - present_files
-  - present_model
   - ask_clarification
   - get_session_id
-  - cad_script_*
+  - exec_script
 ---
 
 # 草图建模 Skill
@@ -58,14 +57,14 @@ yh_doc = YH.YHDocument(doc)
 1. 前置检查（草图状态）
 2. 调用一个工具执行对应操作
 3. 组装完整脚本（必要时包含初始化）
-4. 调用执行工具执行脚本
+4. 调用执行工具返回脚本给用户
 
 ### B. 多步操作
 
 1. 前置检查（草图状态）
 2. 按序调用工具——确保跨步变量名一致
 3. 将所有操作按正确顺序组装成完整脚本
-4. 组装完整脚本并执行
+4. 调用执行工具返回脚本给用户
 
 ### C. 添加约束
 
@@ -151,15 +150,10 @@ cons.EditSize(30.0)
 
 **简要流程**：
 1. 生成/修改脚本
-2. 调用 `cad_script_run_scripts` 执行（`need_yh: true`）
-3. 获取文件 URL（如未返回）
-4. 使用 `present_model` 展示模型
+2. 调用 `exec_script(script, description, need_yh=true)` 执行脚本
+3. Frontend 通过 `hasExecScript()` 识别工具调用
+4. Frontend 创建 `assistant:exec-script` 消息分组
+5. 模型查看器接收 `script` 和 `needYh` 参数
+6. 模型查看器自动调用 MCP 执行并展示模型
 
-## 备选方式：保存后执行（不推荐）
-
-仅在 MCP 服务器不可时使用：
-
-1. 用 `write_file` 保存脚本到 `/mnt/user-data/outputs/xxx.py`
-2. 用 `bash` 执行：`python /mnt/user-data/outputs/xxx.py`
-
-> **注意**：使用前需确保 `extensions_config.json` 中已启用 `cad_script` MCP 服务器（HTTP 模式，端口 8310）。
+**注意**：`need_yh` 参数必须设为 `true`，因为草图脚本需要使用 YH 模块。

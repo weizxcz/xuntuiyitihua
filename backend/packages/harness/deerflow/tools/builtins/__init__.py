@@ -1,4 +1,5 @@
 from .clarification_tool import ask_clarification_tool
+from .exec_script_tool import exec_script_tool
 from .get_session_id_tool import get_session_id_tool
 from .present_file_tool import present_file_tool
 from .present_model_tool import present_model_tool
@@ -16,4 +17,5 @@ __all__ = [
     "view_image_tool",
     "task_tool",
     "get_session_id_tool",
+    "exec_script_tool",
 ]

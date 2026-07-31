@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeerFlow JS SDK 测试</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00d9ff;
+    }
+    .config-section {
+      background: #16213e;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .config-section h2 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #00d9ff;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #aaa;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background: #0f0f23;
+      color: #fff;
+      font-size: 14px;
+    }
+    .chat-container {
+      background: #16213e;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .chat-messages {
+      height: 400px;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .message {
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+    .message.user {
+      background: #0f3460;
+      margin-left: auto;
+    }
+    .message.assistant {
+      background: #1a1a2e;
+      margin-right: auto;
+    }
+    .message.system {
+      background: #333;
+      color: #aaa;
+      font-size: 12px;
+      text-align: center;
+      max-width: 100%;
+    }
+    .message .role {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    .message .content {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .chat-input {
+      display: flex;
+      padding: 15px;
+      border-top: 1px solid #333;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background: #0f0f23;
+      color: #fff;
+      font-size: 14px;
+    }
+    .chat-input button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      background: #00d9ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-input button:hover {
+      background: #00b8d9;
+    }
+    .chat-input button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .actions button {
+      padding: 8px 16px;
+      border: 1px solid #00d9ff;
+      border-radius: 5px;
+      background: transparent;
+      color: #00d9ff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .actions button:hover {
+      background: #00d9ff;
+      color: #000;
+    }
+    .status {
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+    .status.streaming {
+      color: #00d9ff;
+    }
+    .thread-info {
+      background: #0f0f23;
+      padding: 10px 15px;
+      font-size: 12px;
+      color: #888;
+      border-bottom: 1px solid #333;
+    }
+    .thread-info span {
+      color: #00d9ff;
+    }
+    .sdk-status {
+      margin-top: 10px;
+      padding: 10px;
+      background: #0f0f23;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    .sdk-status code {
+      color: #00d9ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DeerFlow JS SDK 测试</h1>
+
+    <div class="config-section">
+      <h2>配置</h2>
+      <div class="form-group">
+        <label>Backend URL</label>
+        <input type="text" id="baseUrl" value="http://localhost:8301" placeholder="http://localhost:8301">
+      </div>
+      <div class="form-group">
+        <label>User ID (可选)</label>
+        <input type="text" id="userId" placeholder="user-123">
+      </div>
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="debugMode" checked>
+          <span style="font-size: 14px; color: #aaa;">启用调试模式（打印所有事件）</span>
+        </label>
+      </div>
+      <div class="actions">
+        <button onclick="testConnection()">测试连接</button>
+        <button onclick="createNewThread()">创建新线程</button>
+        <button onclick="clearChat()">清空聊天</button>
+      </div>
+      <div class="sdk-status">
+        SDK 状态：<span id="sdkStatus">未初始化</span>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h2>Tool Call 事件处理器说明</h2>
+      <div style="font-size: 13px; color: #aaa; line-height: 1.6;">
+        <p style="margin-bottom: 10px;">当 Agent 在对话中调用工具时，会触发相应的事件处理器：</p>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="padding: 5px 0; border-bottom: 1px solid #333;">
+            <code style="color: #00d9ff;">exec_script</code> - 当 Agent 请求执行脚本时触发
+          </li>
+          <li style="padding: 5px 0; border-bottom: 1px solid #333;">
+            <code style="color: #00d9ff;">present_files</code> - 当 Agent 请求展示文件时触发
+          </li>
+          <li style="padding: 5px 0;">
+            <code style="color: #00d9ff;">present_model</code> - 当 Agent 请求展示模型时触发
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="chat-container">
+      <div class="thread-info">
+        当前线程：<span id="threadId">未创建</span>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="message system">
+          点击"创建新线程"开始对话，或直接输入消息
+        </div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+        <button id="sendBtn" onclick="sendMessage()">发送</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <!-- 引入打包后的 ESM 版本 SDK -->
+  <script type="module">
+    import { DeerFlowClient } from './dist/index.mjs';
+
+    // 全局状态
+    let client = null;
+    let threadId = null;
+    let isSending = false;
+
+    // DOM 元素
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusEl = document.getElementById('status');
+    const threadIdEl = document.getElementById('threadId');
+    const sdkStatusEl = document.getElementById('sdkStatus');
+
+    // 添加消息到聊天界面
+    function addMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.innerHTML = `
+        <div class="role">${role === 'user' ? '你' : '助手'}</div>
+        <div class="content">${escapeHtml(content)}</div>
+      `;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addSystemMessage(content) {
+      const div = document.createElement('div');
+      div.className = 'message system';
+      div.textContent = content;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function setStatus(text, streaming = false) {
+      statusEl.textContent = text;
+      statusEl.classList.toggle('streaming', streaming);
+    }
+
+    function setSdkStatus(status) {
+      sdkStatusEl.textContent = status;
+    }
+
+    // ==================== Tool Call 事件处理器 ====================
+
+    /**
+     * exec_script 事件处理器
+     * 当 Agent 请求执行脚本时调用
+     */
+    function handleExecScript(event) {
+      console.log('=== exec_script 事件触发 ===');
+      console.log('事件详情:', event);
+
+      // event.args 包含解析后的参数
+      const { script, description, language } = event.args;
+
+      addSystemMessage(`📜 收到脚本执行请求: ${description || '无描述'}`);
+      addSystemMessage(`🔧 语言：${language || '未知'}`);
+      addSystemMessage(`📝 脚本内容:\n\`\`\`\n${script}\n\`\`\``);
+
+      // 在这里你可以：
+      // 1. 显示脚本内容给用户确认
+      // 2. 在浏览器中执行（如 JavaScript）
+      // 3. 通过 WebSocket 发送到后端执行
+      // 4. 记录到日志
+    }
+
+    /**
+     * present_files 事件处理器
+     * 当 Agent 请求展示文件时调用
+     */
+    function handlePresentFiles(event) {
+      console.log('=== present_files 事件触发 ===');
+      console.log('事件详情:', event);
+
+      const { filepaths } = event.args;
+
+      addSystemMessage(`📁 收到文件展示请求: ${filepaths.join(', ')}`);
+
+      // 在这里你可以：
+      // 1. 打开文件查看器
+      // 2. 下载文件
+      // 3. 显示文件预览
+    }
+
+    /**
+     * present_model 事件处理器
+     * 当 Agent 请求展示模型时调用
+     */
+    function handlePresentModel(event) {
+      console.log('=== present_model 事件触发 ===');
+      console.log('事件详情:', event);
+
+      addSystemMessage(`📊 收到模型展示请求`);
+
+      // 在这里你可以：
+      // 1. 打开 3D 模型查看器
+      // 2. 显示模型参数
+    }
+
+    // 测试连接
+    window.testConnection = async function() {
+      const baseUrl = document.getElementById('baseUrl').value;
+      try {
+        client = new DeerFlowClient({ baseUrl });
+        setSdkStatus('已初始化 - DeerFlowClient');
+        const models = await client.models.list();
+        addSystemMessage(`连接成功！可用模型：${models.length} 个`);
+        models.forEach(m => {
+          addSystemMessage(`  - ${m.display_name || m.name}`);
+        });
+      } catch (e) {
+        setSdkStatus('连接失败');
+        addSystemMessage(`连接失败：${e.message}`);
+      }
+    };
+
+    // 创建新线程
+    window.createNewThread = async function() {
+      const baseUrl = document.getElementById('baseUrl').value;
+      const userId = document.getElementById('userId').value || null;
+
+      try {
+        client = new DeerFlowClient({ baseUrl, userId });
+        setSdkStatus('已初始化 - DeerFlowClient');
+        const thread = await client.threads.create({
+          assistant_id: 'lead_agent'
+        });
+        threadId = thread.thread_id;
+        threadIdEl.textContent = threadId;
+        addSystemMessage(`创建新线程：${threadId}`);
+      } catch (e) {
+        addSystemMessage(`创建线程失败：${e.message}`);
+      }
+    };
+
+    // 清空聊天
+    window.clearChat = function() {
+      chatMessages.innerHTML = '<div class="message system">聊天已清空</div>';
+    };
+
+    // 处理回车键
+    window.handleKeyPress = function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    };
+
+    // 发送消息（使用 streamWithHandlers 方法）
+    window.sendMessage = async function() {
+      const content = messageInput.value.trim();
+      if (!content || isSending) return;
+
+      isSending = true;
+      sendBtn.disabled = true;
+      sendBtn.textContent = '发送中...';
+
+      // 如果没有线程，先创建线程
+      if (!threadId) {
+        try {
+          const baseUrl = document.getElementById('baseUrl').value;
+          const userId = document.getElementById('userId').value || null;
+          client = new DeerFlowClient({ baseUrl, userId });
+          setSdkStatus('已初始化 - DeerFlowClient');
+          const thread = await client.threads.create({
+            assistant_id: 'lead_agent'
+          });
+          threadId = thread.thread_id;
+          threadIdEl.textContent = threadId;
+          addSystemMessage(`创建新线程：${threadId}`);
+        } catch (e) {
+          addSystemMessage(`创建线程失败：${e.message}`);
+          isSending = false;
+          sendBtn.disabled = false;
+          sendBtn.textContent = '发送';
+          return;
+        }
+      }
+
+      // 添加用户消息
+      addMessage('user', content);
+      messageInput.value = '';
+      setStatus('正在思考...', true);
+
+      // 创建 AI 消息占位
+      const aiMessageDiv = document.createElement('div');
+      aiMessageDiv.className = 'message assistant';
+      aiMessageDiv.innerHTML = '<div class="role">助手</div><div class="content"></div>';
+      chatMessages.appendChild(aiMessageDiv);
+      const contentEl = aiMessageDiv.querySelector('.content');
+
+      let fullResponse = '';
+
+      try {
+        // 使用新的 streamWithHandlers 方法，支持 tool call 事件处理
+        await client.threads.streamWithHandlers(threadId, {
+          messages: [{ type: 'human', content }],
+          config: {
+            configurable: {
+              assistant_id: 'lead_agent'
+            }
+          },
+          // 注册工具调用事件处理器
+          handlers: {
+            // exec_script 事件：当 Agent 请求执行脚本时
+            exec_script: handleExecScript,
+            // present_files 事件：当 Agent 请求展示文件时
+            present_files: handlePresentFiles,
+            // present_model 事件：当 Agent 请求展示模型时
+            present_model: handlePresentModel,
+          },
+          // 启用调试模式，打印所有事件
+          debug: true,
+        });
+
+        setStatus('完成');
+      } catch (e) {
+        contentEl.textContent += `\n[错误：${e.message}]`;
+        setStatus('出错');
+      }
+
+      isSending = false;
+      sendBtn.disabled = false;
+      sendBtn.textContent = '发送';
+      messageInput.focus();
+    };
+
+    // 初始化
+    messageInput.focus();
+  </script>
+</body>
+</html>

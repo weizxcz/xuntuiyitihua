@@ -103,68 +103,77 @@ def handle_run_scripts(scripts: list, model_path: str, need_yh: bool = True) -> 
         }
 
     try:
-        results = {}
-        type_counts = {}
-
-        for script in scripts:
-            base_type = script.get("script_type", "unknown")
-            script_content = script.get("script_content", "")
-            should_execute = script.get("should_execute", False)
-
-            # 处理脚本类型计数
-            if base_type in results:
-                type_counts[base_type] = type_counts.get(base_type, 0) + 1
-                key = f"{base_type}{type_counts[base_type]}"
-            else:
-                key = base_type
-
-            if not should_execute:
-                results[key] = {"skipped": True, "reason": "should_execute=false"}
-                continue
-
-            if not script_content:
-                results[key] = {"success": False, "error": "脚本内容为空"}
-                continue
-
-            # 调用 run_sketch_script.py 中的 handle_execute_sketch_command 函数
-            # 使用子进程执行（use_subprocess=True）防止主进程崩溃
-            logger.info(f"[handle_run_scripts] 执行脚本：{key}")
-
-            # 构建完整路径
-            full_model_path = str(_STORAGE_DIR / model_path)
-            new_model_path = str(_STORAGE_DIR / model_path)
-
-            # 确保目录存在
-            Path(new_model_path).parent.mkdir(parents=True, exist_ok=True)
-
-            params = ExecScriptParams(
-                obj_names=[],
-                cell_ids=[],
-                script=script_content,
-                ncti_path=full_model_path,
-                new_ncti_path=new_model_path,
-                task_id="mcp_task",
-                need_yh=need_yh  # 根据参数决定是否初始化 YH
-            )
-            # 使用子进程执行（use_subprocess=True）
-            success, msg, resp = handle_execute_sketch_command(params, use_subprocess=True)
-
-            if success:
-                results[key] = {"success": True, "message": msg or "脚本执行成功"}
-            else:
-                results[key] = {"success": False, "error": msg or "脚本执行失败"}
-
-        logger.info(f"[handle_run_scripts] 脚本执行完成，结果：{results}")
-
+        # 简化返回结构：直接返回脚本执行结果，不用 script_type 包装
         # 添加文件 URL 到结果，拼接 need_yh 参数方便模型查看器根据模型类型切换展示模式
         file_url = get_file_url(model_path)
         # 拼接 need_yh 参数
         separator = "&" if "?" in file_url else "?"
         file_url = f"{file_url}{separator}need_yh={1 if need_yh else 0}"
-        results["file_url"] = file_url
         logger.info(f"[handle_run_scripts] 添加 file_url: {file_url}")
 
-        return results
+        # 处理第一个脚本（支持批量脚本时只执行第一个）
+        if not scripts:
+            return {
+                "success": False,
+                "error": "没有提供脚本",
+                "file_url": file_url
+            }
+
+        script = scripts[0]
+        base_type = script.get("script_type", "unknown")
+        script_content = script.get("script_content", "")
+        should_execute = script.get("should_execute", False)
+
+        if not should_execute:
+            return {
+                "success": True,
+                "skipped": True,
+                "reason": "should_execute=false",
+                "file_url": file_url
+            }
+
+        if not script_content:
+            return {
+                "success": False,
+                "error": "脚本内容为空",
+                "file_url": file_url
+            }
+
+        # 调用 run_sketch_script.py 中的 handle_execute_sketch_command 函数
+        # 使用子进程执行（use_subprocess=True）防止主进程崩溃
+        logger.info(f"[handle_run_scripts] 执行脚本：{base_type}")
+
+        # 构建完整路径
+        full_model_path = str(_STORAGE_DIR / model_path)
+        new_model_path = str(_STORAGE_DIR / model_path)
+
+        # 确保目录存在
+        Path(new_model_path).parent.mkdir(parents=True, exist_ok=True)
+
+        params = ExecScriptParams(
+            obj_names=[],
+            cell_ids=[],
+            script=script_content,
+            ncti_path=full_model_path,
+            new_ncti_path=new_model_path,
+            task_id="mcp_task",
+            need_yh=need_yh  # 根据参数决定是否初始化 YH
+        )
+        # 使用子进程执行（use_subprocess=True）
+        success, msg, resp = handle_execute_sketch_command(params, use_subprocess=True)
+
+        # 打印子进程的输出（如果需要）
+        if msg and len(msg) > 20:  # 只打印有意义的输出
+            logger.info(f"[handle_run_scripts] 脚本输出：{msg[:500]}")
+
+        if success:
+            result = {"success": True, "message": msg or "脚本执行成功", "file_url": file_url}
+        else:
+            result = {"success": False, "error": msg or "脚本执行失败", "file_url": file_url}
+
+        logger.info(f"[handle_run_scripts] 脚本执行完成，结果：{result}")
+
+        return result
 
     except Exception as e:
         logger.exception("[handle_run_scripts] 脚本执行失败")
@@ -268,6 +277,29 @@ def handle_request(request: dict) -> dict:
                         }
                     },
                     {
+                        "name": "exec_script",
+                        "description": "Execute a script for CAD modeling operations. 此工具将脚本返回给调用方，由调用方自行执行。",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "script": {
+                                    "type": "string",
+                                    "description": "The Python script content to execute."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Description of what the script does."
+                                },
+                                "need_yh": {
+                                    "type": "boolean",
+                                    "description": "是否需要 YH 模块和 yh_doc 对象（草图脚本需要设为 true，建模脚本设为 false）",
+                                    "default": True
+                                }
+                            },
+                            "required": ["script"]
+                        }
+                    },
+                    {
                         "name": "get_file_url",
                         "description": "获取 CAD 文件的下载 URL。",
                         "inputSchema": {
@@ -296,6 +328,18 @@ def handle_request(request: dict) -> dict:
                 arguments.get("model_path", ""),
                 arguments.get("need_yh", True)  # 默认需要 YH（兼容草图脚本）
             )
+        elif tool_name == "exec_script":
+            # exec_script 工具只返回脚本内容，不执行
+            script = arguments.get("script", "")
+            description = arguments.get("description", "")
+            need_yh = arguments.get("need_yh", True)
+            result = {
+                "success": True,
+                "script": script,
+                "description": description,
+                "need_yh": need_yh,
+                "message": "Script returned to caller for execution."
+            }
         elif tool_name == "get_file_url":
             result = handle_get_file_url(arguments.get("file_path", ""))
         else:
@@ -359,6 +403,27 @@ def create_http_app() -> FastAPI:
         _log_connection_debug(f"[HTTP] MCP 请求收到：{request.get('method', 'unknown')}")
         result = handle_request(request)
         _log_connection_debug(f"[HTTP] MCP 响应发送")
+        return result
+
+    @app.post("/api/execute")
+    async def execute_script_endpoint(request: Dict[str, Any]):
+        """简化的脚本执行接口，无需 MCP 协议。
+
+        直接执行脚本，返回执行结果。
+        """
+        scripts = request.get("scripts", [])
+        model_path = request.get("model_path", "")
+        need_yh = request.get("need_yh", True)
+
+        _log_connection_debug(f"[HTTP] 脚本执行请求：model_path={model_path}, scripts 数量={len(scripts)}")
+
+        result = handle_run_scripts(
+            scripts=scripts,
+            model_path=model_path,
+            need_yh=need_yh
+        )
+
+        _log_connection_debug(f"[HTTP] 脚本执行响应：{result}")
         return result
 
     @app.get("/health")

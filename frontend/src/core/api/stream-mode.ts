@@ -2,6 +2,7 @@ const SUPPORTED_RUN_STREAM_MODES = new Set([
   "values",
   "messages",
   "messages-tuple",
+  "messages-last",
   "updates",
   "events",
   "debug",

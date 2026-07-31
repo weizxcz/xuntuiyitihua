@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, memo } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -48,7 +48,7 @@ export interface ModelToolbarProps {
   className?: string;
 }
 
-export default function ModelToolbar({ 
+const ModelToolbar = memo(function ModelToolbar({
   modelViewerRef,
   onChange,
   className,
@@ -389,4 +389,6 @@ export default function ModelToolbar({
       </div>
     </div>
   );
-}
+});
+
+export default ModelToolbar;

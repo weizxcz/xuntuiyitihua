@@ -88,6 +88,9 @@ export function ArtifactFileDetail({
   const isSkillFile = useMemo(() => {
     return filepath.endsWith(".skill");
   }, [filepath]);
+  const isExecScript = useMemo(() => {
+    return filepath.startsWith("http");
+  }, [filepath]);
   const isModelFile = useMemo(() => {
     // 提取 URL 路径部分（去掉查询参数）
     const path = filepath?.split("?")[0] ?? "";
@@ -179,8 +182,8 @@ export function ArtifactFileDetail({
       <ArtifactHeader className="px-2">
         <div className="flex items-center gap-2">
           <ArtifactTitle>
-            {isWriteFile || isModelFile ? (
-              <div className="px-2">{getFileName(filepath)}</div>
+            {isWriteFile || isModelFile || isExecScript ? (
+              <div className="px-2">{isExecScript ? "3D 模型" : getFileName(filepath)}</div>
             ) : (
               <Select value={filepath} onValueChange={select}>
                 <SelectTrigger className="border-none bg-transparent! shadow-none select-none focus:outline-0 active:outline-0">
@@ -329,7 +332,7 @@ export function ArtifactFileDetail({
             src={urlOfArtifact({ filepath, threadId, isMock })}
           />
         )}
-        {!isCodeFile && !canPreviewInBrowser && !isModelFile && (
+        {!isCodeFile && !canPreviewInBrowser && !isModelFile && !isExecScript && (
           <ArtifactDownloadFallback
             filepath={filepath}
             threadId={threadId}
@@ -337,10 +340,9 @@ export function ArtifactFileDetail({
           />
         )}
         {/* Model 3D Model Viewer with toolbar */}
-        {isModelFile && (
+        {(isModelFile || isExecScript) && (
           <ModelViewerPanel
-            filepath={filepath}
-            threadId={threadId}
+            modelUrl={filepath}
           />
         )}
       </ArtifactContent>

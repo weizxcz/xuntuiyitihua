@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeerFlow Qt Embedded Client</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #ffffff;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      display: flex;
+      width: 100%;
+      max-width: 800px;
+      padding: 20px;
+    }
+    .input-area {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      gap: 10px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #333;
+      font-size: 14px;
+    }
+    .input-area input:focus {
+      outline: none;
+    }
+    .input-area button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: #00d9ff;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .input-area button:hover:not(:disabled) {
+      background: #00b8d9;
+    }
+    .input-area button:disabled {
+      background: #ddd;
+      cursor: not-allowed;
+    }
+    .send-icon {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+    .loading {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="输入消息..." />
+      <button id="sendBtn" disabled>
+        <svg class="send-icon" viewBox="0 0 24 24" id="sendIcon">
+          <path d="M12 2L2 12h6v8h8v-8h6L12 2z"/>
+        </svg>
+        <div class="loading" id="loadingIcon" style="display: none;"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- 引入 DeerFlow SDK -->
+  <script src="./dist/index.global.js"></script>
+
+  <script>
+    /**
+     * DeerFlow Qt 嵌入客户端
+     *
+     * 通信流程：
+     * 1. Qt 发送消息给页面（消息类型：chat, script_result, error, end 等）
+     * 2. 页面根据消息类型调用 SDK 处理
+     * 3. SDK 获取到执行脚本事件时，页面通知 Qt 执行
+     * 4. Qt 执行出错后发送消息给页面，SDK 再发送给大模型
+     * 5. 消息结束时，页面通知 Qt
+     */
+
+    // 获取 DeerFlowClient 类（从全局 DeerFlow 对象）
+    var DeerFlowClient = window.DeerFlow ? window.DeerFlow.DeerFlowClient : null;
+
+    if (!DeerFlowClient) {
+      console.error('[QtEmbeddedClient] 无法加载 DeerFlowClient，请确保 SDK 已正确加载');
+    }
+
+    // ==================== Qt 通信模块 ====================
+
+    /**
+     * Qt 消息类型定义
+     */
+    const QtMessageType = {
+      CHAT: 'chat',           // 聊天消息
+      SCRIPT_REQUEST: 'script_request',  // 脚本执行请求
+      SCRIPT_RESULT: 'script_result',    // 脚本执行结果
+      ERROR: 'error',         // 错误消息
+      END: 'end',             // 消息结束
+      INIT: 'init',           // 初始化
+      THREAD_CREATED: 'thread_created',  // 线程创建成功
+    };
+
+    /**
+     * Qt 通信管理器
+     */
+    class QtCommunicationManager {
+      constructor() {
+        this.messageHandler = null;
+        this.isInitialized = false;
+      }
+
+      /**
+       * 设置消息处理器
+       */
+      setHandler(handler) {
+        this.messageHandler = handler;
+      }
+
+      /**
+       * 发送消息到 Qt
+       */
+      sendToQt(message) {
+        const messageStr = JSON.stringify(message);
+        console.log('[QtComm] 发送消息:', messageStr);
+
+        // CEF 引擎 (Windows Qt 客户端)
+        if (window.IsCEFEngine) {
+          const yhNotify = window.yhNotify;
+          if (typeof yhNotify === 'function') {
+            yhNotify(messageStr);
+          }
+        }
+        // WebView2 引擎
+        else if (window.chrome?.webview?.hostObjects?.QWebViewWebView2) {
+          const webview = window.chrome.webview.hostObjects.QWebViewWebView2;
+          const NotifyCPP = webview.NotifyCPP;
+          if (typeof NotifyCPP === 'function') {
+            NotifyCPP(messageStr);
+          }
+        }
+        // 开发环境模拟
+        else {
+          console.warn('[QtComm] 未检测到客户端环境，模拟发送:', message);
+        }
+      }
+
+      /**
+       * 设置 Qt 消息监听器
+       */
+      setupListener() {
+        if (window.IsCEFEngine) {
+          window.onMessage = (message) => {
+            console.log('[QtComm] 接收消息:', message);
+            this.handleMessage(message);
+          };
+        } else if (window.chrome?.webview) {
+          window.chrome.webview.addEventListener('message', (event) => {
+            console.log('[QtComm] 接收消息:', event.data);
+            this.handleMessage(event.data);
+          });
+        } else {
+          console.warn('[QtComm] 未检测到客户端环境');
+        }
+      }
+
+      /**
+       * 处理来自 Qt 的消息
+       */
+      handleMessage(message) {
+        try {
+          const data = typeof message === 'string' ? JSON.parse(message) : message;
+          console.log('[QtComm] 解析后的消息:', data);
+
+          if (this.messageHandler) {
+            this.messageHandler(data);
+          }
+        } catch (e) {
+          console.error('[QtComm] 解析消息失败:', e);
+        }
+      }
+
+      /**
+       * 发送初始化完成消息
+       */
+      sendInitComplete() {
+        this.sendToQt({
+          type: QtMessageType.INIT,
+          status: 'ready',
+          timestamp: Date.now()
+        });
+      }
+
+      /**
+       * 发送脚本执行请求
+       */
+      sendScriptRequest(scriptInfo) {
+        this.sendToQt({
+          type: QtMessageType.SCRIPT_REQUEST,
+          script_id: scriptInfo.script_id,
+          thread_id: this.threadId,
+          description: scriptInfo.description,
+          language: scriptInfo.language,
+          script: scriptInfo.script,
+          timestamp: Date.now()
+        });
+      }
+
+      /**
+       * 发送消息结束通知
+       */
+      sendEndNotification(threadId, messageId) {
+        this.sendToQt({
+          type: QtMessageType.END,
+          thread_id: threadId,
+          message_id: messageId,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    // ==================== 客户端应用 ====================
+
+    class QtEmbeddedClient {
+      constructor() {
+        this.qtComm = new QtCommunicationManager();
+        this.client = null;
+        this.threadId = null;
+        this.isStreaming = false;
+        this.currentMessageId = null;
+        this.isDebug = true;  // 调试模式开关
+
+        // DOM 元素
+        this.messageInput = document.getElementById('messageInput');
+        this.sendBtn = document.getElementById('sendBtn');
+        this.sendIcon = document.getElementById('sendIcon');
+        this.loadingIcon = document.getElementById('loadingIcon');
+
+        this.init();
+      }
+
+      /**
+       * 初始化客户端
+       */
+      init() {
+        // 设置 Qt 消息监听器
+        this.qtComm.setupListener();
+
+        // 设置消息处理器
+        this.qtComm.setHandler((message) => this.handleQtMessage(message));
+
+        // 绑定 UI 事件
+        this.sendBtn.addEventListener('click', () => this.handleSendClick());
+        this.messageInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.handleSendClick();
+          }
+        });
+
+        // 模拟 Qt 连接状态（开发环境）
+        this.updateQtStatus('connecting');
+        setTimeout(() => {
+          this.updateQtStatus('connected');
+          // 发送初始化完成消息
+          this.qtComm.sendInitComplete();
+        }, 500);
+      }
+
+      /**
+       * 更新 Qt 连接状态
+       */
+      updateQtStatus(status) {
+        switch (status) {
+          case 'connected':
+            this.qtStatusText = 'Qt 已连接';
+            this.sendBtn.disabled = false;
+            break;
+          case 'connecting':
+            this.qtStatusText = 'Qt 连接中...';
+            break;
+          case 'error':
+            this.qtStatusText = 'Qt 连接失败';
+            break;
+        }
+      }
+
+      /**
+       * 更新流状态
+       */
+      updateStreamStatus(status, text) {
+        if (status === 'streaming') {
+          this.sendIcon.style.display = 'none';
+          this.loadingIcon.style.display = 'block';
+        } else {
+          this.sendIcon.style.display = 'block';
+          this.loadingIcon.style.display = 'none';
+        }
+      }
+
+      /**
+       * 处理来自 Qt 的消息
+       */
+      async handleQtMessage(message) {
+        console.log('[QtEmbeddedClient] 处理 Qt 消息:', message);
+
+        switch (message.type) {
+          case QtMessageType.INIT:
+            // Qt 初始化完成
+            this.updateQtStatus('connected');
+            break;
+
+          case QtMessageType.CHAT:
+            // 处理聊天消息
+            await this.handleChatMessage(message);
+            break;
+
+          case QtMessageType.SCRIPT_RESULT:
+            // 处理脚本执行结果
+            await this.handleScriptResult(message);
+            break;
+
+          case QtMessageType.ERROR:
+            // 处理错误消息
+            await this.handleError(message);
+            break;
+
+          case QtMessageType.END:
+            // 消息结束
+            this.updateStreamStatus('idle', '完成');
+            break;
+        }
+      }
+
+      /**
+       * 处理聊天消息
+       */
+      async handleChatMessage(message) {
+        const { content, thread_id, message_id } = message;
+
+        if (thread_id) {
+          this.threadId = thread_id;
+        }
+
+        this.currentMessageId = message_id || `msg-${Date.now()}`;
+
+        // 添加用户消息到界面
+        this.addMessage('user', content);
+
+        // 初始化 SDK
+        await this.ensureSdkInitialized();
+
+        // 开始流式处理
+        await this.processMessage(content);
+      }
+
+      /**
+       * 处理脚本执行结果
+       */
+      async handleScriptResult(message) {
+        const { script_id, success, result, error } = message;
+
+        if (success) {
+          this.addMessage('tool', `脚本执行成功：${JSON.stringify(result)}`);
+          // 将结果发送给大模型继续对话
+          await this.sendScriptResultToModel(script_id, result);
+        } else {
+          this.addMessage('error', `脚本执行失败：${error}`);
+          // 将错误发送给大模型处理
+          await this.sendScriptErrorToModel(script_id, error);
+        }
+      }
+
+      /**
+       * 处理错误消息
+       */
+      async handleError(message) {
+        const { error, context } = message;
+        this.addMessage('error', `错误：${error}`);
+
+        // 将错误发送给大模型处理
+        if (this.client && this.threadId) {
+          try {
+            await this.sendScriptErrorToModel(null, `${error}\n上下文：${JSON.stringify(context)}`);
+          } catch (e) {
+            console.error('[QtEmbeddedClient] 发送错误到模型失败:', e);
+          }
+        }
+      }
+
+      /**
+       * 确保 SDK 已初始化
+       */
+      async ensureSdkInitialized() {
+        if (this.client) return;
+
+        // 从 window 全局变量获取后端 URL，默认值为 http://172.16.34.129:8310
+        const baseUrl = window.DEER_FLOW_BACKEND_BASE_URL || 'http://172.16.34.129:8301';
+
+        this.client = new DeerFlowClient({ baseUrl, isDebug: true });
+
+        // 如果没有线程，创建新线程
+        if (!this.threadId) {
+          try {
+            const thread = await this.client.threads.create({
+              assistant_id: 'lead_agent'
+            });
+            this.threadId = thread.thread_id;
+            console.log('[QtEmbeddedClient] 创建线程:', this.threadId);
+          } catch (e) {
+            console.error('[QtEmbeddedClient] 创建线程失败:', e);
+          }
+        }
+      }
+
+      /**
+       * 处理用户点击发送
+       */
+      async handleSendClick() {
+        const content = this.messageInput.value.trim();
+        if (!content || this.isStreaming) return;
+
+        this.messageInput.value = '';
+        await this.processMessage(content);
+      }
+
+      /**
+       * 处理消息发送 - 使用 messages 模式解析 tool call
+       */
+      async processMessage(content) {
+        if (!this.client || !this.threadId) {
+          await this.ensureSdkInitialized();
+        }
+
+        if (!this.client || !this.threadId) {
+          this.addMessage('error', 'SDK 初始化失败，无法发送消息');
+          return;
+        }
+
+        this.isStreaming = true;
+        this.updateStreamStatus('streaming');
+
+        // 添加 AI 消息占位
+        const aiMessageId = this.addMessage('assistant', '');
+        let fullResponse = '';
+        // 用于跟踪已处理的 tool call，避免重复
+        const processedToolCallIds = new Set();
+
+        try {
+          // 使用 stream 方法，订阅 messages-last 模式（只返回最后一条消息）
+          for await (const event of this.client.threads.stream(this.threadId, {
+            messages: [{ type: 'human', content }],
+            config: {
+              configurable: {
+                assistant_id: 'lead_agent'
+              }
+            },
+            streamModes: ['messages-last'],
+          })) {
+            if (this.isDebug) {
+              console.log('[QtEmbeddedClient] 收到事件:', event.type, event);
+            }
+
+            // 处理 messages-last 模式的事件
+            if (event.type === 'messages-last' && event.data && event.data.messages) {
+              const messages = event.data.messages;
+              // messages-last 只包含最后一条消息
+              const lastMsg = messages[0];
+
+              if (lastMsg && lastMsg.type === 'ai') {
+                // 提取内容
+                if (lastMsg.content) {
+                  fullResponse += (typeof lastMsg.content === 'string' ? lastMsg.content : '');
+                  // 更新 AI 消息显示
+                  const aiMsgEl = document.getElementById(aiMessageId);
+                  if (aiMsgEl) {
+                    aiMsgEl.querySelector('.content').textContent = fullResponse;
+                    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                  }
+                }
+
+                // 检查完整的 tool_calls
+                const toolCalls = lastMsg.tool_calls || [];
+                if (this.isDebug && toolCalls.length > 0) {
+                  console.log('[QtEmbeddedClient] 解析到 tool_calls:', toolCalls);
+                }
+
+                for (const toolCall of toolCalls) {
+                  // 避免重复处理
+                  if (!toolCall.id || processedToolCallIds.has(toolCall.id)) {
+                    continue;
+                  }
+                  processedToolCallIds.add(toolCall.id);
+
+                  // 解析工具名称和参数
+                  const toolName = toolCall.name;
+                  const args = toolCall.args || {};
+
+                  if (this.isDebug) {
+                    console.log('[QtEmbeddedClient] 解析到 ToolCall:', toolName, args);
+                  }
+
+                  // 处理 exec_script tool call
+                  if (toolName === 'exec_script') {
+                    await this.handleExecScriptFromToolCall({
+                      id: toolCall.id,
+                      args,
+                      description: args.description || '执行脚本',
+                      language: args.language || 'python',
+                      script: args.script,
+                    });
+                  }
+                }
+              }
+            }
+          }
+
+          // 消息结束，通知 Qt
+          this.qtComm.sendEndNotification(this.threadId, this.currentMessageId);
+          this.updateStreamStatus('idle', '完成');
+        } catch (e) {
+          this.addMessage('error', `处理失败：${e.message}`);
+          this.updateStreamStatus('error', '错误');
+        } finally {
+          this.isStreaming = false;
+          processedToolCallIds.clear();
+        }
+      }
+
+      /**
+       * 发送脚本结果到模型
+       */
+      async sendScriptResultToModel(scriptId, result) {
+        if (!this.client || !this.threadId) return;
+
+        try {
+          // 使用简单的 stream 方法，不需要 handlers
+          for await (const event of this.client.threads.stream(this.threadId, {
+            messages: [{
+              type: 'human',
+              content: `脚本执行成功，结果：${JSON.stringify(result)}`
+            }],
+            config: {
+              configurable: {
+                assistant_id: 'lead_agent'
+              }
+            },
+            streamModes: ['messages'],
+          })) {
+            // 只处理流，不需要额外处理事件
+            if (this.isDebug) {
+              console.log('[QtEmbeddedClient] 发送结果到模型:', event);
+            }
+          }
+        } catch (e) {
+          console.error('[QtEmbeddedClient] 发送脚本结果失败:', e);
+        }
+      }
+
+      /**
+       * 发送脚本错误到模型
+       */
+      async sendScriptErrorToModel(scriptId, error) {
+        if (!this.client || !this.threadId) return;
+
+        try {
+          // 使用简单的 stream 方法，不需要 handlers
+          for await (const event of this.client.threads.stream(this.threadId, {
+            messages: [{
+              type: 'human',
+              content: `脚本执行失败：${error}`
+            }],
+            config: {
+              configurable: {
+                assistant_id: 'lead_agent'
+              }
+            },
+            streamModes: ['messages'],
+          })) {
+            // 只处理流，不需要额外处理事件
+            if (this.isDebug) {
+              console.log('[QtEmbeddedClient] 发送错误到模型:', event);
+            }
+          }
+        } catch (e) {
+          console.error('[QtEmbeddedClient] 发送脚本错误失败:', e);
+        }
+      }
+
+      /**
+       * 处理 exec_script tool call - 直接发送给 Qt 执行
+       */
+      async handleExecScriptFromToolCall(toolCall) {
+        console.log('[QtEmbeddedClient] 解析到 exec_script tool call:', toolCall);
+
+        const { script, description, language, script_id } = toolCall;
+
+        this.addMessage('tool', `📜 请求执行脚本：${description || '无描述'}\n语言：${language || '未知'}`);
+
+        // 向 Qt 发送脚本执行请求
+        const id = script_id || `script-${Date.now()}`;
+        this.qtComm.sendScriptRequest({
+          script_id: id,
+          description: description || '',
+          language: language || 'python',
+          script: script,
+        });
+
+        // 等待 Qt 执行结果（通过 handleScriptResult 处理）
+      }
+
+      /**
+       * 添加消息到界面（简化模式，仅用于调试）
+       */
+      addMessage(role, content) {
+        console.log(`[Message] ${role}: ${content}`);
+        return `msg-${Date.now()}`;
+      }
+    }
+
+    // 初始化应用
+    window.qtEmbeddedClient = new QtEmbeddedClient();
+  </script>
+</body>
+</html>
