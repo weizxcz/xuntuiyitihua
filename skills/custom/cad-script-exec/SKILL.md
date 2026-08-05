@@ -42,9 +42,10 @@ allowed-tools:
 1. **不需要 import 语句** - `NCTI`、`YH`、`doc` 等已全局可用
 2. **不需要 `def main()`** - 直接执行代码
 3. **不需要 `doc.New()`/`doc.Open()`/`doc.Save()`** - MCP 会自动处理文档
-4. **不需要询问用户参数** - 如果需要用户输入参数，在脚本中使用`doc.ReturnDialogData`
-4. **捕获返回值** - 几何对象和约束的返回值需要捕获，用于后续操作
-5. **使用几何基元** - `NCTI.Point(x, y, z)` 或 `NCTI.Vector(x, y, z)`
+4. **不需要询问认为问题** - 按你的理解直接生成脚本
+5. **不需要询问用户参数** - 如果需要用户输入参数，在脚本中使用`doc.ReturnDialogData`
+6. **捕获返回值** - 几何对象和约束的返回值需要捕获，用于后续操作
+7. **使用几何基元** - `NCTI.Point(x, y, z)` 或 `NCTI.Vector(x, y, z)`
 
 ### 脚本模板
 
@@ -59,10 +60,11 @@ doc.RunCommand("cmd_ncti_xxx", "obj_name", NCTI.Point(0, 0, 0), param1, param2)
 
 ```python
 # 草图初始化（如需要）
-skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
-skt.Open()
-
+skt = yh_doc.GetActivitySketch()
+if skt is None:
+  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 # 绘制几何
+skt.Open()
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
 line = skt.AddLine(NCTI.Point(-10, 0, 0), NCTI.Point(10, 0, 0))
 
@@ -212,14 +214,16 @@ exec_script(
 
 ```python
 # 步骤 1：生成脚本
-skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
+skt = yh_doc.GetActivitySketch()
+if skt is None:
+  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
 skt.Close()
 
 # 步骤 2：执行（need_yh: true，因为使用 YH 模块）
 exec_script(
-    script="skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nskt.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nskt.Close()",
+    script="skt = yh_doc.GetActivitySketch()\nif skt is None:\n  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nskt.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nskt.Close()",
     description="创建一个半径为 20 的圆",
     need_yh=true
 )

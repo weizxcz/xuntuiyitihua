@@ -703,6 +703,7 @@ export function MessageList({
 // 执行脚本卡片组件
 function ExecScriptCard({
   threadId,
+  toolCallId,
   script,
   needYh,
 }: {
@@ -711,10 +712,28 @@ function ExecScriptCard({
   script: string;
   needYh: boolean;
 }) {
-  const { select: selectArtifact, setOpen: setArtifactsOpen } = useArtifacts();
+  const { select: selectArtifact, setOpen: setArtifactsOpen, setArtifacts } = useArtifacts();
   const [status, setStatus] = useState<"idle" | "executing" | "success" | "failed">("idle");
   const [error, setError] = useState<string | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  // 使用唯一的虚拟文件路径来存储脚本代码
+  const scriptArtifactPath = useMemo(() =>
+    `script:${threadId}:${toolCallId ?? Date.now()}.py`,
+    [threadId, toolCallId]
+  );
+
+  // 初始化脚本代码到 artifacts 系统
+  useEffect(() => {
+    // 将脚本代码作为一个虚拟 artifact 注册
+    setArtifacts((prev = []) => {
+      if (!prev.includes(scriptArtifactPath)) {
+        // 将脚本内容存储到 sessionStorage 以便后续读取
+        sessionStorage.setItem(scriptArtifactPath, script);
+        return [...prev, scriptArtifactPath];
+      }
+      return prev;
+    });
+  }, [scriptArtifactPath, script, setArtifacts]);
 
   // 执行脚本并获取模型 URL
   const executeScript = useCallback(async () => {
@@ -806,12 +825,18 @@ function ExecScriptCard({
     void executeScript();
   }, [executeScript]);
 
+  const handleViewCodeClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    selectArtifact(scriptArtifactPath, true);
+    setArtifactsOpen(true);
+  }, [scriptArtifactPath, selectArtifact, setArtifactsOpen]);
+
   const handleCardClick = useCallback(() => {
-    if (status === "success") {
-      selectArtifact(result.file_url, true);
+    if (status === "success" && fileUrl) {
+      selectArtifact(fileUrl, true);
       setArtifactsOpen(true);
     }
-  }, [status, selectArtifact, setArtifactsOpen]);
+  }, [status, fileUrl, selectArtifact, setArtifactsOpen]);
 
   return (
     <Card className="cursor-pointer" onClick={handleCardClick}>
@@ -827,20 +852,30 @@ function ExecScriptCard({
             {status === "idle" && "点击执行运行脚本"}
           </CardDescription>
         </div>
-        <Button
-          size="sm"
-          variant={status === "success" ? "default" : "secondary"}
-          onClick={handleExecuteClick}
-          disabled={status === "executing" || status === "success"}
-        >
-          {status === "executing" ? (
-            <Loader2Icon className="size-3 animate-spin" />
-          ) : status === "success" ? (
-            "已执行"
-          ) : (
-            "执行"
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleViewCodeClick}
+            title="在右侧打开代码"
+          >
+            查看代码
+          </Button>
+          <Button
+            size="sm"
+            variant={status === "success" ? "default" : "secondary"}
+            onClick={handleExecuteClick}
+            disabled={status === "executing" || status === "success"}
+          >
+            {status === "executing" ? (
+              <Loader2Icon className="size-3 animate-spin" />
+            ) : status === "success" ? (
+              "已执行"
+            ) : (
+              "执行"
+            )}
+          </Button>
+        </div>
       </CardHeader>
       <div className="px-4 pb-4">
         <ScrollArea className="h-[200px]">

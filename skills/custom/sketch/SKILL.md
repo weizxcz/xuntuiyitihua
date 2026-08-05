@@ -33,17 +33,21 @@ allowed-tools:
 
 > **入口类**：草图工作平面 `YH.SketchWorkPlane`、文档管理 `YH.YHDocument`。几何基元为 `NCTI.Point` / `NCTI.Vector`。
 > **无参方法禁用**：所有需要 GUI 手动选对象的无参重载（如 `AddLine()`、`AddCircle()`、`AddConsXpos()`、`AddConsParallel()` 等）agent 不可使用，只调用带显式参数的版本。
+>**注意入参**：所有使调用的方法都要查看skill，使用准确的入参格式。
+> **设置名称**：所有几何对象和约束都要设置唯一名称，便于跨步引用(如`circle = skt.AddCircle(NCTI.Point(0,0,0), 10)\nname = 'nameTest'
+type = circle.SetObjectName(name)`)
 
 ## 前置检查
 
 任何草图绘制操作前，先确认草图状态：
+1. **获取激活草图工作平面** -> `skt = yh_doc.GetActivitySketch()`，若返回 `None` 则草图不存在
 
-1. **草图不存在** → 创建工作平面并打开：
+2. **激活草图工作平面不存在** → 创建工作平面并打开：
    ```python
    skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
    ```
-2. **草图存在但未打开** → 打开：`skt.Open()`
-3. **草图已打开** → 直接进行绘制/约束操作
+3. **草图存在但未打开** → 打开：`skt.Open()`
+4. **草图已打开** → 直接进行绘制/约束操作
 
 需要文档级控制（求解开关、导出、按名获取已有平面等）时，额外创建文档入口：
 ```python
@@ -131,8 +135,9 @@ skt.RunSolve()                   # 手动求解
 
 **标准脚本模板**：
 ```python
-# 草图初始化（如需要）
-skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
+skt = yh_doc.GetActivitySketch()
+if None == skt:
+    skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 
 # 绘制几何
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)

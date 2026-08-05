@@ -23,9 +23,9 @@
       display: flex;
       width: 100%;
       max-width: 800px;
-      padding: 20px;
     }
     .input-area {
+      position: relative;
       display: flex;
       align-items: center;
       width: 100%;
@@ -33,21 +33,30 @@
       border: 1px solid #ddd;
       border-radius: 8px;
       background: #fff;
-      gap: 10px;
     }
-    .input-area input {
+    .input-area textarea {
       flex: 1;
-      padding: 8px 0;
+      padding: 8px;
+      padding-right: 50px;
       border: none;
       outline: none;
       background: transparent;
       color: #333;
       font-size: 14px;
+      width: 100%;
+      resize: none;
+      min-height: 38px;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.4;
+      font-family: inherit;
     }
-    .input-area input:focus {
+    .input-area textarea:focus {
       outline: none;
     }
     .input-area button {
+      position: absolute;
+      right: 12px;
       width: 36px;
       height: 36px;
       padding: 0;
@@ -89,7 +98,7 @@
 <body>
   <div class="container">
     <div class="input-area">
-      <input type="text" id="messageInput" placeholder="输入消息..." />
+      <textarea type="text" id="messageInput" placeholder="输入消息..." rows="1"></textarea>
       <button id="sendBtn" disabled>
         <svg class="send-icon" viewBox="0 0 24 24" id="sendIcon">
           <path d="M12 2L2 12h6v8h8v-8h6L12 2z"/>
@@ -134,6 +143,7 @@
       END: 'end',             // 消息结束
       INIT: 'init',           // 初始化
       THREAD_CREATED: 'thread_created',  // 线程创建成功
+      NEW_SESSION: 'new_session',  // 开启新会话
     };
 
     /**
@@ -264,6 +274,9 @@
         this.isStreaming = false;
         this.currentMessageId = null;
         this.isDebug = true;  // 调试模式开关
+        this.tempListeners = [];  // 临时监听器存储
+        this.pendingScriptResults = [];  // 流进行中时收集的脚本结果
+        this.currentStreamController = null;  // 当前流的控制器
 
         // DOM 元素
         this.messageInput = document.getElementById('messageInput');
@@ -271,7 +284,21 @@
         this.sendIcon = document.getElementById('sendIcon');
         this.loadingIcon = document.getElementById('loadingIcon');
 
+        // 绑定输入框自动调整高度事件
+        this.messageInput.addEventListener('input', () => this.autoResizeInput());
+
         this.init();
+      }
+
+      /**
+       * 自动调整输入框高度
+       */
+      autoResizeInput() {
+        const textarea = this.messageInput;
+        // 先重置高度以获取正确的 scrollHeight
+        textarea.style.height = 'auto';
+        // 设置新高度
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
       }
 
       /**
@@ -286,6 +313,7 @@
 
         // 绑定 UI 事件
         this.sendBtn.addEventListener('click', () => this.handleSendClick());
+        this.loadingIcon.addEventListener('click', () => this.handleCancelClick());
         this.messageInput.addEventListener('keypress', (e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -327,9 +355,14 @@
         if (status === 'streaming') {
           this.sendIcon.style.display = 'none';
           this.loadingIcon.style.display = 'block';
+          // 点击加载图标可以取消
+          this.loadingIcon.style.cursor = 'pointer';
+          this.loadingIcon.title = '点击取消';
         } else {
           this.sendIcon.style.display = 'block';
           this.loadingIcon.style.display = 'none';
+          this.loadingIcon.style.cursor = 'default';
+          this.loadingIcon.title = '';
         }
       }
 
@@ -338,6 +371,15 @@
        */
       async handleQtMessage(message) {
         console.log('[QtEmbeddedClient] 处理 Qt 消息:', message);
+
+        // 先检查是否有临时监听器（等待脚本执行结果）
+        if (this.tempListeners && this.tempListeners.length > 0) {
+          for (const listener of this.tempListeners) {
+            listener(message);
+          }
+          // 如果有临时监听器，不再调用主处理器
+          return;
+        }
 
         switch (message.type) {
           case QtMessageType.INIT:
@@ -351,7 +393,7 @@
             break;
 
           case QtMessageType.SCRIPT_RESULT:
-            // 处理脚本执行结果
+            // 处理脚本执行结果（备用，正常情况下由临时监听器处理）
             await this.handleScriptResult(message);
             break;
 
@@ -363,6 +405,11 @@
           case QtMessageType.END:
             // 消息结束
             this.updateStreamStatus('idle', '完成');
+            break;
+
+          case QtMessageType.NEW_SESSION:
+            // 开启新会话
+            await this.handleNewSession(message);
             break;
         }
       }
@@ -395,15 +442,12 @@
       async handleScriptResult(message) {
         const { script_id, success, result, error } = message;
 
-        if (success) {
-          this.addMessage('tool', `脚本执行成功：${JSON.stringify(result)}`);
-          // 将结果发送给大模型继续对话
-          await this.sendScriptResultToModel(script_id, result);
-        } else {
-          this.addMessage('error', `脚本执行失败：${error}`);
-          // 将错误发送给大模型处理
-          await this.sendScriptErrorToModel(script_id, error);
+        if (!success) {
+          // 失败时立即回填到输入框
+          this.messageInput.value = `脚本执行错误：${error}`;
+          this.autoResizeInput();
         }
+        // 成功时直接忽略
       }
 
       /**
@@ -411,15 +455,47 @@
        */
       async handleError(message) {
         const { error, context } = message;
-        this.addMessage('error', `错误：${error}`);
 
-        // 将错误发送给大模型处理
-        if (this.client && this.threadId) {
-          try {
-            await this.sendScriptErrorToModel(null, `${error}\n上下文：${JSON.stringify(context)}`);
-          } catch (e) {
-            console.error('[QtEmbeddedClient] 发送错误到模型失败:', e);
+        // 立即回填到输入框
+        this.messageInput.value = `脚本执行错误：${error}\n上下文：${JSON.stringify(context)}`;
+        this.autoResizeInput();
+      }
+
+      /**
+       * 处理新会话请求
+       * Qt 发送 new_session 消息时，创建新线程
+       */
+      async handleNewSession(message) {
+        console.log('[QtEmbeddedClient] 收到新会话请求');
+
+        try {
+          // 如果有旧线程，可以选择删除（可选）
+          if (this.threadId && this.client) {
+            try {
+              await this.client.threads.delete(this.threadId);
+              console.log('[QtEmbeddedClient] 已删除旧线程:', this.threadId);
+            } catch (e) {
+              console.warn('[QtEmbeddedClient] 删除旧线程失败:', e);
+            }
           }
+
+          // 创建新线程
+          await this.ensureSdkInitialized();
+          const thread = await this.client.threads.create({
+            assistant_id: 'lead_agent'
+          });
+          this.threadId = thread.thread_id;
+          console.log('[QtEmbeddedClient] 创建新线程:', this.threadId);
+
+          // 通知 Qt 线程创建成功
+          this.qtComm.sendToQt({
+            type: QtMessageType.THREAD_CREATED,
+            thread_id: this.threadId,
+            timestamp: Date.now()
+          });
+        } catch (e) {
+          console.error('[QtEmbeddedClient] 创建新线程失败:', e);
+          this.addMessage('error', `创建新会话失败：${e.message}`);
         }
       }
 
@@ -452,15 +528,166 @@
        * 处理用户点击发送
        */
       async handleSendClick() {
+        // 如果正在流式处理，点击则取消
+        if (this.isStreaming) {
+          this.handleCancelClick();
+          return;
+        }
+
         const content = this.messageInput.value.trim();
-        if (!content || this.isStreaming) return;
+        if (!content) return;
 
         this.messageInput.value = '';
         await this.processMessage(content);
       }
 
       /**
+       * 处理取消点击
+       */
+      handleCancelClick() {
+        if (!this.isStreaming) return;
+
+        console.log('[QtEmbeddedClient] 取消当前会话');
+        this.isStreaming = false;
+
+        // 中断当前流
+        if (this.currentStreamController) {
+          this.currentStreamController.abort();
+        }
+
+        this.updateStreamStatus('idle', '已取消');
+        this.addMessage('system', '✓ 已取消');
+      }
+
+      /**
+       * 统一处理消息流 - 处理来自 AI 的流式响应
+       * @param {AsyncIterable} stream - 流式迭代器
+       * @param {string} aiMessageId - AI 消息的 DOM 元素 ID
+       * @param {Object} options - 选项
+       * @param {boolean} options.handleToolCalls - 是否处理 tool_calls，默认 true
+       * @param {Function} options.onToolCall - tool_call 回调函数
+       * @param {Function} options.onScriptResult - 脚本结果回调（当 Qt 返回脚本结果时触发）
+       * @param {Function} options.onComplete - 流完成回调
+       * @returns {Promise<{fullResponse: string}>}
+       */
+      async processStream(stream, aiMessageId, options = {}) {
+        const {
+          handleToolCalls = true,
+          onToolCall = null,
+          onScriptResult = null,
+          onComplete = null
+        } = options;
+
+        let fullResponse = '';
+        const processedToolCallIds = new Set();
+
+        try {
+          for await (const event of stream) {
+            if (this.isDebug) {
+              console.log('[QtEmbeddedClient] 收到事件:', event.type, event);
+            }
+
+            // 处理 messages-last 模式的事件
+            if (event.type === 'messages-last' && event.data && event.data.messages) {
+              const messages = event.data.messages;
+              const lastMsg = messages[0];
+
+              if (lastMsg && lastMsg.type === 'ai') {
+                // 提取内容
+                if (lastMsg.content) {
+                  const newContent = typeof lastMsg.content === 'string' ? lastMsg.content : '';
+                  fullResponse += newContent;
+                  // 更新 AI 消息显示
+                  this.updateAIMessageDisplay(aiMessageId, fullResponse);
+                }
+
+                // 处理 tool_calls
+                if (handleToolCalls && lastMsg.tool_calls && lastMsg.tool_calls.length > 0) {
+                  for (const toolCall of lastMsg.tool_calls) {
+                    if (!toolCall.id || processedToolCallIds.has(toolCall.id)) {
+                      continue;
+                    }
+                    processedToolCallIds.add(toolCall.id);
+
+                    const toolName = toolCall.name;
+                    const args = toolCall.args || {};
+
+                    if (this.isDebug) {
+                      console.log('[QtEmbeddedClient] 解析到 ToolCall:', toolName, args);
+                    }
+
+                    // 处理 exec_script tool call - 发送脚本请求给 Qt，不等待结果
+                    if (toolName === 'exec_script') {
+                      // 发送脚本请求给 Qt，不等待返回
+                      this.handleExecScriptFromToolCall({
+                        id: toolCall.id,
+                        args,
+                        description: args.description || '执行脚本',
+                        language: args.language || 'python',
+                        script: args.script,
+                      });
+                    }
+
+                    // 调用自定义回调
+                    if (onToolCall) {
+                      await onToolCall(toolCall);
+                    }
+                  }
+                }
+              }
+            }
+
+            // 监听来自 Qt 的脚本结果消息
+            if (event.type === QtMessageType.SCRIPT_RESULT) {
+              if (onScriptResult) {
+                onScriptResult(event);
+              }
+            }
+          }
+
+          if (onComplete) {
+            await onComplete();
+          }
+        } catch (e) {
+          if (e.name === 'AbortError' || e.message === 'Stream aborted') {
+            console.log('[QtEmbeddedClient] 流被用户取消');
+          } else {
+            console.error('[QtEmbeddedClient] 流处理失败:', e);
+            throw e;
+          }
+        } finally {
+          processedToolCallIds.clear();
+        }
+
+        return { fullResponse };
+      }
+
+      /**
+       * 更新 AI 消息显示
+       */
+      updateAIMessageDisplay(aiMessageId, content) {
+        const aiMsgEl = document.getElementById(aiMessageId);
+        if (aiMsgEl) {
+          const contentEl = aiMsgEl.querySelector('.content');
+          if (contentEl) {
+            contentEl.textContent = content;
+          }
+          // 滚动到底部
+          if (this.messagesContainer) {
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+          }
+        }
+      }
+
+      /**
        * 处理消息发送 - 使用 messages 模式解析 tool call
+       *
+       * 流程：
+       * 1. 流式处理消息，遇到 exec_script 时发送脚本请求给 Qt
+       * 2. 流进行中时，收集 Qt 返回的脚本结果到 pendingScriptResults
+       * 3. 流结束后，检查是否有需要发送的脚本结果
+       * 4. 如果有结果，发送结果并触发 AI 继续
+       * 5. 如果没有结果，直接结束
        */
       async processMessage(content) {
         if (!this.client || !this.threadId) {
@@ -477,116 +704,81 @@
 
         // 添加 AI 消息占位
         const aiMessageId = this.addMessage('assistant', '');
-        let fullResponse = '';
-        // 用于跟踪已处理的 tool call，避免重复
-        const processedToolCallIds = new Set();
+
+        // 清空之前的待处理结果
+        this.pendingScriptResults = [];
+
+        // 先创建 AbortController
+        this.currentStreamController = new AbortController();
 
         try {
-          // 使用 stream 方法，订阅 messages-last 模式（只返回最后一条消息）
-          for await (const event of this.client.threads.stream(this.threadId, {
+          // 创建流，传入 signal 用于取消
+          const stream = this.client.threads.stream(this.threadId, {
             messages: [{ type: 'human', content }],
             config: {
+              recursion_limit: 1000,
               configurable: {
                 assistant_id: 'lead_agent'
               }
             },
             streamModes: ['messages-last'],
-          })) {
-            if (this.isDebug) {
-              console.log('[QtEmbeddedClient] 收到事件:', event.type, event);
+            signal: this.currentStreamController.signal,
+          });
+
+          // 使用统一的流处理方法
+          await this.processStream(stream, aiMessageId, {
+            // 当收到 Qt 的脚本结果时，记录下来
+            onScriptResult: (result) => {
+              this.pendingScriptResults.push(result);
+              console.log('[QtEmbeddedClient] 收到 Qt 脚本结果，已记录:', result);
             }
+          });
 
-            // 处理 messages-last 模式的事件
-            if (event.type === 'messages-last' && event.data && event.data.messages) {
-              const messages = event.data.messages;
-              // messages-last 只包含最后一条消息
-              const lastMsg = messages[0];
-
-              if (lastMsg && lastMsg.type === 'ai') {
-                // 提取内容
-                if (lastMsg.content) {
-                  fullResponse += (typeof lastMsg.content === 'string' ? lastMsg.content : '');
-                  // 更新 AI 消息显示
-                  const aiMsgEl = document.getElementById(aiMessageId);
-                  if (aiMsgEl) {
-                    aiMsgEl.querySelector('.content').textContent = fullResponse;
-                    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-                  }
-                }
-
-                // 检查完整的 tool_calls
-                const toolCalls = lastMsg.tool_calls || [];
-                if (this.isDebug && toolCalls.length > 0) {
-                  console.log('[QtEmbeddedClient] 解析到 tool_calls:', toolCalls);
-                }
-
-                for (const toolCall of toolCalls) {
-                  // 避免重复处理
-                  if (!toolCall.id || processedToolCallIds.has(toolCall.id)) {
-                    continue;
-                  }
-                  processedToolCallIds.add(toolCall.id);
-
-                  // 解析工具名称和参数
-                  const toolName = toolCall.name;
-                  const args = toolCall.args || {};
-
-                  if (this.isDebug) {
-                    console.log('[QtEmbeddedClient] 解析到 ToolCall:', toolName, args);
-                  }
-
-                  // 处理 exec_script tool call
-                  if (toolName === 'exec_script') {
-                    await this.handleExecScriptFromToolCall({
-                      id: toolCall.id,
-                      args,
-                      description: args.description || '执行脚本',
-                      language: args.language || 'python',
-                      script: args.script,
-                    });
-                  }
-                }
-              }
-            }
-          }
+          // 流结束后，无需处理
 
           // 消息结束，通知 Qt
           this.qtComm.sendEndNotification(this.threadId, this.currentMessageId);
           this.updateStreamStatus('idle', '完成');
         } catch (e) {
-          this.addMessage('error', `处理失败：${e.message}`);
-          this.updateStreamStatus('error', '错误');
+          if (e.name === 'AbortError' || e.message === 'Stream aborted') {
+            // 用户取消，不显示错误
+          } else {
+            this.addMessage('error', `处理失败：${e.message}`);
+            this.updateStreamStatus('error', '错误');
+          }
         } finally {
           this.isStreaming = false;
-          processedToolCallIds.clear();
+          this.pendingScriptResults = [];  // 清空待处理结果
+          this.currentStreamController = null;
         }
       }
 
       /**
        * 发送脚本结果到模型
        */
-      async sendScriptResultToModel(scriptId, result) {
+      async sendScriptResultToModel(result) {
         if (!this.client || !this.threadId) return;
 
         try {
-          // 使用简单的 stream 方法，不需要 handlers
-          for await (const event of this.client.threads.stream(this.threadId, {
+          // 添加 AI 消息占位
+          const aiMessageId = this.addMessage('assistant', '');
+
+          const stream = this.client.threads.stream(this.threadId, {
             messages: [{
               type: 'human',
-              content: `脚本执行成功，结果：${JSON.stringify(result)}`
+              content: [{ type: 'text', text: `脚本执行成功，结果：${JSON.stringify(result)}` }]
             }],
             config: {
+              recursion_limit: 1000,
               configurable: {
                 assistant_id: 'lead_agent'
               }
             },
-            streamModes: ['messages'],
-          })) {
-            // 只处理流，不需要额外处理事件
-            if (this.isDebug) {
-              console.log('[QtEmbeddedClient] 发送结果到模型:', event);
-            }
-          }
+            streamModes: ['messages-last'],
+          });
+
+          // 使用统一的流处理方法
+          await this.processStream(stream, aiMessageId);
         } catch (e) {
           console.error('[QtEmbeddedClient] 发送脚本结果失败:', e);
         }
@@ -595,35 +787,69 @@
       /**
        * 发送脚本错误到模型
        */
-      async sendScriptErrorToModel(scriptId, error) {
+      async sendScriptErrorToModel(result) {
         if (!this.client || !this.threadId) return;
 
         try {
-          // 使用简单的 stream 方法，不需要 handlers
-          for await (const event of this.client.threads.stream(this.threadId, {
+          // 添加 AI 消息占位
+          const aiMessageId = this.addMessage('assistant', '');
+
+          const stream = this.client.threads.stream(this.threadId, {
             messages: [{
               type: 'human',
-              content: `脚本执行失败：${error}`
+              content: [{ type: 'text', text: `脚本执行失败：${result.error}` }]
             }],
             config: {
+              recursion_limit: 1000,
               configurable: {
                 assistant_id: 'lead_agent'
               }
             },
-            streamModes: ['messages'],
-          })) {
-            // 只处理流，不需要额外处理事件
-            if (this.isDebug) {
-              console.log('[QtEmbeddedClient] 发送错误到模型:', event);
-            }
-          }
+            streamModes: ['messages-last'],
+          });
+
+          // 使用统一的流处理方法
+          await this.processStream(stream, aiMessageId);
         } catch (e) {
           console.error('[QtEmbeddedClient] 发送脚本错误失败:', e);
         }
       }
 
       /**
-       * 处理 exec_script tool call - 直接发送给 Qt 执行
+       * 触发 AI 继续响应（发送空消息）
+       */
+      async triggerAIContinue() {
+        if (!this.client || !this.threadId) return;
+
+        try {
+          // 添加 AI 消息占位
+          const aiMessageId = this.addMessage('assistant', '');
+
+          const stream = this.client.threads.stream(this.threadId, {
+            messages: [{ type: 'human', content: '' }],
+            config: {
+              recursion_limit: 1000,
+              configurable: {
+                assistant_id: 'lead_agent'
+              }
+            },
+            streamModes: ['messages-last'],
+          });
+
+          // 使用统一的流处理方法
+          await this.processStream(stream, aiMessageId);
+        } catch (e) {
+          console.error('[QtEmbeddedClient] AI 继续响应失败:', e);
+        }
+      }
+
+      /**
+       * 处理 exec_script tool call - 发送脚本请求给 Qt，不等待返回
+       *
+       * 逻辑说明：
+       * - 页面只负责发送脚本执行请求给 Qt
+       * - Qt 客户端决定是否执行脚本，并主动发送结果
+       * - 页面不等待结果，直接返回（fire-and-forget）
        */
       async handleExecScriptFromToolCall(toolCall) {
         console.log('[QtEmbeddedClient] 解析到 exec_script tool call:', toolCall);
@@ -632,7 +858,7 @@
 
         this.addMessage('tool', `📜 请求执行脚本：${description || '无描述'}\n语言：${language || '未知'}`);
 
-        // 向 Qt 发送脚本执行请求
+        // 向 Qt 发送脚本执行请求，不等待返回
         const id = script_id || `script-${Date.now()}`;
         this.qtComm.sendScriptRequest({
           script_id: id,
@@ -641,7 +867,25 @@
           script: script,
         });
 
-        // 等待 Qt 执行结果（通过 handleScriptResult 处理）
+        console.log('[QtEmbeddedClient] 已发送脚本请求给 Qt，等待 Qt 主动返回结果:', id);
+        // 直接返回，不返回 promise，不等待结果
+      }
+
+      /**
+       * 添加临时监听器
+       */
+      addTempListener(handler) {
+        this.tempListeners.push(handler);
+      }
+
+      /**
+       * 移除临时监听器
+       */
+      removeTempListener(handler) {
+        const index = this.tempListeners.indexOf(handler);
+        if (index > -1) {
+          this.tempListeners.splice(index, 1);
+        }
       }
 
       /**

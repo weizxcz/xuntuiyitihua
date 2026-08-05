@@ -162,6 +162,16 @@ export class DeerFlowClient {
        * })) {
        *   console.log(event);
        * }
+       *
+       * // With cancel support
+       * const controller = new AbortController();
+       * for await (const event of client.threads.stream(threadId, {
+       *   messages: [{ type: "human", content: "Hello!" }],
+       *   signal: controller.signal
+       * })) {
+       *   console.log(event.type, event.data);
+       * }
+       * // Later: controller.abort() to cancel
        * ```
        */
       stream: async function* (
@@ -169,11 +179,19 @@ export class DeerFlowClient {
         options: {
           messages: Message[];
           config?: Record<string, unknown>;
+          context?: Record<string, unknown>;
           streamModes?: StreamMode[];
+          signal?: AbortSignal;
         },
       ): AsyncGenerator<StreamEvent> {
         // Use httpClient from closure
         const streamModes = options.streamModes ?? ["values", "messages", "custom"];
+
+        // 自动将 threadId 添加到 context 中（如果未提供）
+        const context = options.context ?? {};
+        if (!context.thread_id) {
+          (context as any).thread_id = threadId;
+        }
 
         const response = await fetch(`${httpClient.getBaseUrl()}/api/threads/${threadId}/runs/stream`, {
           method: "POST",
@@ -181,8 +199,10 @@ export class DeerFlowClient {
           body: JSON.stringify({
             input: { messages: options.messages },
             config: options.config,
+            context,
             stream_mode: streamModes,
           }),
+          signal: options.signal,
         });
 
         if (!response.ok) {
@@ -197,6 +217,7 @@ export class DeerFlowClient {
         const decoder = new TextDecoder();
 
         let currentEvent = ""; // 用于存储当前事件的 type
+        const lastMessageIds = new Map<string, string>(); // 用于 messages-last 模式去重：mode -> last message id
 
         while (true) {
           const { done, value } = await reader.read();
@@ -218,7 +239,25 @@ export class DeerFlowClient {
               try {
                 const parsed = JSON.parse(data);
                 // 添加 event type 到 parsed 对象
-                yield { type: currentEvent, data: parsed } as StreamEvent;
+                const event: StreamEvent = { type: currentEvent, data: parsed } as StreamEvent;
+
+                // messages-last 模式去重：如果消息 ID 与上次相同，跳过
+                if (currentEvent === "messages-last" && parsed?.messages?.length > 0) {
+                  const lastMsg = parsed.messages[parsed.messages.length - 1];
+                  const msgId = lastMsg?.id || "";
+                  const lastId = lastMessageIds.get("messages-last") || "";
+
+                  if (msgId && msgId === lastId) {
+                    // 跳过重复消息
+                    continue;
+                  }
+
+                  if (msgId) {
+                    lastMessageIds.set("messages-last", msgId);
+                  }
+                }
+
+                yield event;
                 // 重置 currentEvent，每个 data 事件后重置
                 currentEvent = "";
               } catch {
@@ -303,6 +342,9 @@ export class DeerFlowClient {
         // 用于跟踪已处理的 tool call ID，避免重复触发
         const processedToolCallIds = new Set<string>();
 
+        // 用于 messages-last 模式去重：跟踪最后一条消息的 ID
+        let lastMessagesLastId = "";
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -321,8 +363,16 @@ export class DeerFlowClient {
                   continue;
                 }
 
-                if (debug) {
-                  console.log("[DeerFlow SDK] 收到事件:", parsed.type, parsed);
+                // messages-last 模式去重：如果消息 ID 与上次相同，跳过
+                if (parsed.type === "messages-last" && parsed?.messages?.length > 0) {
+                  const lastMsg = parsed.messages[parsed.messages.length - 1];
+                  const msgId = lastMsg?.id || "";
+                  if (msgId && msgId === lastMessagesLastId) {
+                    continue; // 跳过重复消息
+                  }
+                  if (msgId) {
+                    lastMessagesLastId = msgId;
+                  }
                 }
 
                 // 提取消息的辅助函数

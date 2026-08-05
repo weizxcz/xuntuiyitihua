@@ -11,7 +11,7 @@ import { env } from "@/env";
 
 export interface ArtifactsContextType {
   artifacts: string[];
-  setArtifacts: (artifacts: string[]) => void;
+  setArtifacts: (artifacts: string[] | ((prev: string[]) => string[])) => void;
 
   selectedArtifact: string | null;
   autoSelect: boolean;
@@ -62,7 +62,13 @@ export function ArtifactsProvider({ children }: ArtifactsProviderProps) {
 
   const value: ArtifactsContextType = {
     artifacts,
-    setArtifacts,
+    setArtifacts: (artifactsUpdater) => {
+      if (typeof artifactsUpdater === 'function') {
+        setArtifacts(artifactsUpdater);
+      } else {
+        setArtifacts(artifactsUpdater);
+      }
+    },
 
     open,
     autoOpen,

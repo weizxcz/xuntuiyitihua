@@ -62380,6 +62380,50 @@ class Utils {
             box2.max.z > box1.max.z);
         return minLarger || maxLarger;
     }
+    /**
+     * GetCircelTess
+     */
+    static GetCircelTess(aX, aY, radius, aStartAngle = 0, aEndAngle = Math.PI * 2, divisions = 24) {
+        const arc = new three__WEBPACK_IMPORTED_MODULE_0__.ArcCurve(aX, aY, radius, aStartAngle, aEndAngle, false);
+        const points = arc.getPoints(divisions);
+        const vertexCount = (points.length - 1) * 2;
+        const float32Array3D = new Float32Array(vertexCount * 3);
+        let offset = 0;
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            float32Array3D[offset] = p1.x;
+            float32Array3D[offset + 1] = p1.y;
+            float32Array3D[offset + 2] = 0;
+            float32Array3D[offset + 3] = p2.x;
+            float32Array3D[offset + 4] = p2.y;
+            float32Array3D[offset + 5] = 0;
+            offset += 6;
+        }
+        return float32Array3D;
+    }
+    /**
+     * GetCornerTess
+     */
+    static GetCornerTess(aX, aY, radius, aStartAngle = 0, aEndAngle = Math.PI * 2, divisions = 24) {
+        const arc = new three__WEBPACK_IMPORTED_MODULE_0__.ArcCurve(aX, aY, radius, aStartAngle, aEndAngle, false);
+        const points = arc.getPoints(divisions);
+        const vertexCount = (points.length - 1) * 2;
+        const float32Array3D = new Float32Array(vertexCount * 3);
+        let offset = 0;
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            float32Array3D[offset] = p1.x;
+            float32Array3D[offset + 1] = p1.y;
+            float32Array3D[offset + 2] = 0;
+            float32Array3D[offset + 3] = p2.x;
+            float32Array3D[offset + 4] = p2.y;
+            float32Array3D[offset + 5] = 0;
+            offset += 6;
+        }
+        return float32Array3D;
+    }
 }
 
 
@@ -63968,6 +64012,7 @@ class NctiSignMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_M
         precision highp float;
         uniform float u_sizeFactor;
         in vec3 color;
+        in vec3 a_anchor;
 
         out vec3 vColor;
 
@@ -63975,8 +64020,9 @@ class NctiSignMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPORTED_M
             vColor = color;
 
             vec3 worldOffset = position * u_sizeFactor;
+            vec3 finalWorldPosition = a_anchor + worldOffset;
             // 4. 标准投影矩阵计算
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(worldOffset, 1.0);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(finalWorldPosition, 1.0);
         }
     `;
         this.pointFs = `
@@ -64054,7 +64100,7 @@ class NctiGridPointMaterial extends NctiShaderMaterialMixin(three__WEBPACK_IMPOR
 
             float isHidden = texture(uHiddenMap, uv).r;
             if (isHidden > 0.5) discard; // 隐藏点
-            
+
             // 利用 gl_PointCoord 计算距离中心的距离
             // gl_PointCoord 中心是 vec2(0.5, 0.5)
             float dist = distance(gl_PointCoord, vec2(0.5));
@@ -65155,44 +65201,47 @@ class NctiSelectManager {
                     bodyMap.set(bodyName, new Set());
                 }
                 if (element.MeshInfo.IsGrid) {
-                    // const group = object.parent;
-                    // if (!this.m_selectedGridMap.has(group.name)) {
-                    //     this.m_selectedGridMap.set(group.name, new Set());
-                    // }
-                    // let cellId: BigInt;
-                    // let gridCellArray = this.m_selectedGridMap.get(group.name);
-                    // if (IsPoint(object)) {
-                    //     const nodeId = GridMeshManager.current.GetNodeId(id);
-                    //     const cellData: GridElemData = {
-                    //         elementId: nodeId,
-                    //         type: GridElemType.Elem_Node,
-                    //         SelectedId: id
-                    //     }
-                    //     cellId = this.CalcCellId(nodeId, GridElemType.Elem_Node)
-                    //     gridCellArray.add(cellData);
-                    // } else {
-                    //     const cell = GridMeshManager.current.GetCellByGlobalId(id);
-                    //     const cellData: GridElemData = {
-                    //         elementId: cell.m_CellId,
-                    //         type: GridElemType.Elem_Cell,
-                    //         SelectedId: id
-                    //     }
-                    //     if (IsMesh(object)) {
-                    //         cellData.faceIndex = cell.GetFaceIndex(id);
-                    //         cellData.type = GridElemType.Elem_Face;
-                    //         cellId = this.CalcCellId(cell.m_CellId, GridElemType.Elem_Face, cellData.faceIndex);
-                    //     } else if (IsLine(object)) {
-                    //         cellData.edgeIndex = cell.GetEdgeIndex(id);
-                    //         cellData.type = GridElemType.Elem_Edge;
-                    //         cellId = this.CalcCellId(cell.m_CellId, GridElemType.Elem_Edge, cellData.edgeIndex);
-                    //     } else {
-                    //         cellId = this.CalcCellId(cell.m_CellId, GridElemType.Elem_Cell);
-                    //     }
-                    //     gridCellArray.add(cellData)
-                    // }
-                    bodyMap.get(bodyName).add(element);
-                    this.m_pickedObjectList.push([element, id]);
-                    return;
+                    const group = object.parent;
+                    if (!this.m_selectedGridMap.has(group.name)) {
+                        this.m_selectedGridMap.set(group.name, new Set());
+                    }
+                    let cellId;
+                    let gridCellArray = this.m_selectedGridMap.get(group.name);
+                    if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsPoint)(object)) {
+                        const nodeId = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridMeshManager.current.GetNodeId(id);
+                        const cellData = {
+                            elementId: nodeId,
+                            type: mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Node,
+                            SelectedId: id
+                        };
+                        cellId = this.CalcCellId(nodeId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Node);
+                        gridCellArray.add(cellData);
+                    }
+                    else {
+                        const cell = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridMeshManager.current.GetCellByGlobalId(id);
+                        const cellData = {
+                            elementId: cell.m_CellId,
+                            type: mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Cell,
+                            SelectedId: id
+                        };
+                        if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsMesh)(object)) {
+                            cellData.faceIndex = cell.GetFaceIndex(id);
+                            cellData.type = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Face;
+                            cellId = this.CalcCellId(cell.m_CellId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Face, cellData.faceIndex);
+                        }
+                        else if ((0,_NctiFnBase__WEBPACK_IMPORTED_MODULE_3__.IsLine)(object)) {
+                            cellData.edgeIndex = cell.GetEdgeIndex(id);
+                            cellData.type = mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Edge;
+                            cellId = this.CalcCellId(cell.m_CellId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Edge, cellData.edgeIndex);
+                        }
+                        else {
+                            cellId = this.CalcCellId(cell.m_CellId, mesh_NctiGridMeshLoader__WEBPACK_IMPORTED_MODULE_4__.GridElemType.Elem_Cell);
+                        }
+                        gridCellArray.add(cellData);
+                    }
+                    // bodyMap.get(bodyName).add(element);
+                    // this.m_pickedObjectList.push([element, id]);
+                    // return;
                 }
                 // const objId = this.m_PickingScene.SceneIdMap.get(id);
                 // const objId = ModelManager.current.GetElement(id).NctiId;
@@ -65668,6 +65717,7 @@ class NctiSketchLoader {
             signIdOffset: 0,
             signBuffer: new Float32Array(signVertCount * 3),
             signColorBuffer: new Float32Array(signVertCount * 3),
+            signAnchorBuffer: new Float32Array(signVertCount * 3),
             signIdBuffer: new Int32Array(signVertCount),
             arrowVertOffset: 0,
             arrowIdOffset: 0,
@@ -65725,13 +65775,11 @@ class NctiSketchLoader {
                 else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsCoincide) {
                     this.extractConsCoincide(consObj, sketchBufferData);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsVertical ||
-                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsXAxis ||
-                    consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsYAxis ||
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsYAxis ||
                     consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsEqual) {
                     this.extractConsVertical(consObj, sketchBufferData);
                 }
-                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsParallel) {
+                else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsXAxis || consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsVertical || consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsParallel) {
                     this.extractConsParallel(consObj, sketchBufferData);
                 }
                 else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsTangent) {
@@ -65771,6 +65819,7 @@ class NctiSketchLoader {
         // 绘制图标
         signGeom.setAttribute("position", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signBuffer, 3));
         signGeom.setAttribute("color", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signColorBuffer, 3));
+        signGeom.setAttribute("a_anchor", new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signAnchorBuffer, 3));
         const signIdBufferAttribute = new three__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute(sketchBufferData.signIdBuffer, 1);
         signIdBufferAttribute.gpuType = three__WEBPACK_IMPORTED_MODULE_0__.IntType;
         lineGeom.setAttribute("id", signIdBufferAttribute);
@@ -65956,53 +66005,52 @@ class NctiSketchLoader {
     extractConsCoincide(consObj, sketchBufferData) {
         const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LocationConstraintColor;
         const globalId = this.m_globalId.Id++;
-        const buffer = consObj.GetBufferData();
-        for (let i = 0; i < buffer.length; i += 3) {
-            sketchBufferData.signBuffer.set(buffer.slice(i, i + 3), sketchBufferData.signVertOffset);
-            sketchBufferData.signColorBuffer.set([r, g, b], sketchBufferData.signVertOffset);
-            sketchBufferData.signIdBuffer.set([globalId], sketchBufferData.signIdOffset);
-            sketchBufferData.signVertOffset += 3;
-            sketchBufferData.signIdOffset += 1;
-        }
-        for (const element of consObj.m_FloatVecVec2) {
-            for (let i = 0; i < element.length - 3; i += 3) {
-                const data = element.slice(i, i + 6);
-                sketchBufferData.signBuffer.set(data, sketchBufferData.signVertOffset);
-                sketchBufferData.signColorBuffer.set([r, g, b, r, g, b], sketchBufferData.signVertOffset);
-                sketchBufferData.signIdBuffer.set([globalId, globalId], sketchBufferData.signIdOffset);
-                sketchBufferData.signVertOffset += 6;
-                sketchBufferData.signIdOffset += 2;
-            }
-        }
-        for (const element of consObj.m_FloatVecVec3) {
-            for (let i = 0; i < element.length - 3; i += 3) {
-                sketchBufferData.signBuffer.set(element.slice(i, i + 6), sketchBufferData.signVertOffset);
-                sketchBufferData.signColorBuffer.set([r, g, b, r, g, b], sketchBufferData.signVertOffset);
-                sketchBufferData.signIdBuffer.set([globalId, globalId], sketchBufferData.signIdOffset);
-                sketchBufferData.signVertOffset += 6;
-                sketchBufferData.signIdOffset += 2;
+        const anchor = consObj.Position;
+        for (const buffer of ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHSketchConsPubFun.ConsCoincideIconData) {
+            for (let i = 0; i < buffer.length; i += 3) {
+                sketchBufferData.signBuffer.set(buffer.slice(i, i + 3), sketchBufferData.signVertOffset);
+                sketchBufferData.signColorBuffer.set([r, g, b], sketchBufferData.signVertOffset);
+                sketchBufferData.signAnchorBuffer.set([anchor.x, anchor.y, anchor.z], sketchBufferData.signVertOffset);
+                sketchBufferData.signIdBuffer.set([globalId], sketchBufferData.signIdOffset);
+                sketchBufferData.signVertOffset += 3;
+                sketchBufferData.signIdOffset += 1;
             }
         }
     }
     extractConsParallel(consObj, sketchBufferData) {
         const { r, g, b } = _NctiMaterialManager__WEBPACK_IMPORTED_MODULE_3__.MaterialManager.current.LocationConstraintColor;
         const globalId = this.m_globalId.Id++;
-        for (const elementVec of consObj.m_FloatVecVecVec1) {
-            for (const element of elementVec) {
-                for (let i = 0; i < element.length - 3; i += 3) {
-                    sketchBufferData.signBuffer.set(element.slice(i, i + 3), sketchBufferData.signVertOffset);
+        let bufferArr = [];
+        if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsVertical) {
+            bufferArr = ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHSketchConsPubFun.ConsVerticalData;
+        }
+        else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsParallel) {
+            bufferArr = ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHSketchConsPubFun.ConsParallelData;
+        }
+        else if (consObj instanceof ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHDisplayConsXAxis) {
+            bufferArr = ncti_YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_4__.YHSketchConsPubFun.ConsXAxisData;
+        }
+        consObj.calcPositions();
+        let anchor = consObj.Position1;
+        if (anchor !== undefined) {
+            for (const buffer of bufferArr) {
+                for (let i = 0; i < buffer.length; i += 3) {
+                    sketchBufferData.signBuffer.set(buffer.slice(i, i + 3), sketchBufferData.signVertOffset);
                     sketchBufferData.signColorBuffer.set([r, g, b], sketchBufferData.signVertOffset);
+                    sketchBufferData.signAnchorBuffer.set([anchor.x, anchor.y, anchor.z], sketchBufferData.signVertOffset);
                     sketchBufferData.signIdBuffer.set([globalId], sketchBufferData.signIdOffset);
                     sketchBufferData.signVertOffset += 3;
                     sketchBufferData.signIdOffset += 1;
                 }
             }
         }
-        for (const elementVec of consObj.m_FloatVecVecVec2) {
-            for (const element of elementVec) {
-                for (let i = 0; i < element.length - 3; i += 3) {
-                    sketchBufferData.signBuffer.set(element.slice(i, i + 3), sketchBufferData.signVertOffset);
+        anchor = consObj.Position2;
+        if (anchor !== undefined) {
+            for (const buffer of bufferArr) {
+                for (let i = 0; i < buffer.length; i += 3) {
+                    sketchBufferData.signBuffer.set(buffer.slice(i, i + 3), sketchBufferData.signVertOffset);
                     sketchBufferData.signColorBuffer.set([r, g, b], sketchBufferData.signVertOffset);
+                    sketchBufferData.signAnchorBuffer.set([anchor.x, anchor.y, anchor.z], sketchBufferData.signVertOffset);
                     sketchBufferData.signIdBuffer.set([globalId], sketchBufferData.signIdOffset);
                     sketchBufferData.signVertOffset += 3;
                     sketchBufferData.signIdOffset += 1;
@@ -66212,9 +66260,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/.pnpm/three@0.171.0/node_modules/three/build/three.core.js");
 /* harmony import */ var engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! engine/NctiMaterialManager */ "./src/engine/NctiMaterialManager.ts");
 /* harmony import */ var _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiMeshManager */ "./src/mesh/NctiMeshManager.ts");
-/* harmony import */ var engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! engine/NctiElement */ "./src/engine/NctiElement.ts");
-/* harmony import */ var engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! engine/NctiModelManager */ "./src/engine/NctiModelManager.ts");
-/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
+/* harmony import */ var ncti_NctiBase__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ncti/NctiBase */ "./src/ncti/NctiBase.ts");
+/* harmony import */ var engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! engine/NctiElement */ "./src/engine/NctiElement.ts");
+/* harmony import */ var engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! engine/NctiModelManager */ "./src/engine/NctiModelManager.ts");
+/* harmony import */ var src_Enums__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! src/Enums */ "./src/Enums.ts");
+
 
 
 
@@ -66237,6 +66287,12 @@ class NctiCell {
         this.m_CellNodes = [];
         this.m_CellEdges = [];
         this.m_CellFaces = [];
+    }
+    GetFaceIndex(globalId) {
+        return this.m_CellFaces.indexOf(globalId);
+    }
+    GetEdgeIndex(globalId) {
+        return this.m_CellEdges.indexOf(globalId);
     }
 }
 var GridElemType;
@@ -66306,7 +66362,7 @@ class NctiGridMeshManager {
         const cells = cellMap.get(gridName);
         if (selectedElements.size > 0) {
             for (const element of selectedElements) {
-                if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.GridNode) {
+                if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_6__.ElementType.GridNode) {
                     // 不单独隐藏节点
                     continue;
                 }
@@ -66320,13 +66376,13 @@ class NctiGridMeshManager {
                     const cellEdgeIds = gridCell.m_CellEdges;
                     const cellNodeIds = gridCell.m_CellNodes;
                     for (const faceId of cellFaceIds) {
-                        const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GetElement(faceId);
+                        const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetElement(faceId);
                         // if (cellElement !== element) {
                         inverseElements.add(cellElement);
                         // }
                     }
                     for (const edgeId of cellEdgeIds) {
-                        const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GetElement(edgeId);
+                        const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetElement(edgeId);
                         // if (cellElement !== element) {
                         inverseElements.add(cellElement);
                         // }
@@ -66334,7 +66390,7 @@ class NctiGridMeshManager {
                     for (const nodeId of cellNodeIds) {
                         const cells = GridMeshManager.current.GetCellByNodeId(nodeId);
                         if (cells.every(i => i.m_CellFaces.length === 0 || i.Visible === false)) {
-                            const nodeElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GetElement(nodeId);
+                            const nodeElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetElement(nodeId);
                             inverseElements.add(nodeElement);
                         }
                     }
@@ -66349,7 +66405,7 @@ class NctiGridMeshManager {
             if (!element.MeshInfo.IsGrid) {
                 continue;
             }
-            if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.GridNode) {
+            if (element.Type == src_Enums__WEBPACK_IMPORTED_MODULE_6__.ElementType.GridNode) {
                 // 不单独隐藏节点
                 continue;
             }
@@ -66360,13 +66416,13 @@ class NctiGridMeshManager {
             const cellEdgeIds = gridCell.m_CellEdges;
             const cellNodeIds = gridCell.m_CellNodes;
             for (const faceId of cellFaceIds) {
-                const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GetElement(faceId);
+                const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetElement(faceId);
                 if (cellElement !== element) {
                     newElements.add(cellElement);
                 }
             }
             for (const edgeId of cellEdgeIds) {
-                const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GetElement(edgeId);
+                const cellElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetElement(edgeId);
                 if (cellElement !== element) {
                     newElements.add(cellElement);
                 }
@@ -66374,7 +66430,7 @@ class NctiGridMeshManager {
             for (const nodeId of cellNodeIds) {
                 const cells = GridMeshManager.current.GetCellByNodeId(nodeId);
                 if (cells.every(i => i.m_CellFaces.length === 0 || i.Visible === false)) {
-                    const nodeElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GetElement(nodeId);
+                    const nodeElement = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GetElement(nodeId);
                     newElements.add(nodeElement);
                 }
             }
@@ -66407,13 +66463,13 @@ class NctiGridMeshLoader {
             return;
         }
         const partName = nctiObject.objectName;
-        let partGroup = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiGroup(partName);
-        let pickingPartGroup = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiGroup(partName);
+        let partGroup = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiGroup(partName);
+        let pickingPartGroup = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiGroup(partName);
         for (let gridMesh of gridMeshes) {
             const startElem = gridMesh.StartElement;
             const modelBodyName = gridMesh.m_cpObjName;
-            let modelbody = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiModelBody(modelBodyName);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPartModelBody(partName, modelbody);
+            let modelbody = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiModelBody(modelBodyName);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddPartModelBody(partName, modelbody);
             const cellCount = gridMesh.ElemType.length;
             let cells = Array.from({ length: cellCount }, (_, i) => new NctiCell(i + startElem));
             GridMeshManager.current.AddCellBody(partName, gridMesh.m_cpObjName, cells);
@@ -66440,31 +66496,41 @@ class NctiGridMeshLoader {
         let offset = 0;
         let triList = new Set();
         const cells = Array.from(GridMeshManager.current.GetCells(group.name, gridMeshBody.m_cpObjName));
+        let isBodyGrid = cellTypes.some(i => i > ncti_NctiBase__WEBPACK_IMPORTED_MODULE_3__.NctiElementType.Quadrangle9);
         let faceArray = [];
         for (let i = 0; i < cellTypes.length; i++) {
             const celltype = cellTypes[i];
             const vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].ElementVert(celltype);
             const elements = elemData.slice(offset, offset + vertSize);
-            const cellMap = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].DispFace(celltype);
-            cellMap.forEach((val) => {
-                const cellName = [elements[val[0]], elements[val[1]], elements[val[2]]].sort((a, b) => a - b).join('-');
+            offset += vertSize;
+            if (isBodyGrid && celltype < ncti_NctiBase__WEBPACK_IMPORTED_MODULE_3__.NctiElementType.Quadrangle9) {
+                continue;
+            }
+            const faceIndices = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].DispFace(celltype);
+            faceIndices.forEach((val) => {
+                const cellList = val.map(i => elements[i]);
+                const cellName = cellList.join('-');
                 if (triList.has(cellName)) {
-                    return;
+                    console.log(`${cellName} has contained`);
                 }
-                triList.add(cellName);
-                let cellList = [elements[val[0]], elements[val[1]], elements[val[2]]];
-                vertexNum += 3 * 3;
+                else {
+                    triList.add(cellName);
+                }
+                if (cellList.length === 4) {
+                    vertexNum += 6 * 3;
+                }
+                else {
+                    vertexNum += 3 * 3;
+                }
                 faceArray.push([cellList, cells[i]]);
             });
-            offset += vertSize;
         }
         const geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        const mesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiFaceMesh(geometry);
-        let pickingFaceMesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiFaceMesh(geometry);
-        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
-        meshInfo.IndexOffset = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GlobalId;
+        const mesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiFaceMesh(geometry);
+        let pickingFaceMesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiFaceMesh(geometry);
+        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
+        meshInfo.IndexOffset = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GlobalId;
         meshInfo.IsGrid = true;
-        // let pickingFaceMesh = SelectManager.current.AddPickingFaceMesh(geometry);
         const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.MeshColor;
         const startNode = gridMeshBody.StartNode;
         const startElem = gridMeshBody.StartElement;
@@ -66472,39 +66538,49 @@ class NctiGridMeshLoader {
         const norms = new Float32Array(vertexNum);
         const colors = new Float32Array(vertexNum);
         const idBuffer = new Int32Array(vertexNum / 3);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddFace(group.name, mesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddFace(group.name, mesh);
         let idOffset = 0;
+        let vertOffset = 0;
+        let normOffset = 0;
+        let globalIdOffset = 0;
         for (let i = 0; i < faceArray.length; i++) {
-            const globalId = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GlobalIdAdd;
-            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.GridFace);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const globalId = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GlobalIdAdd;
+            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_6__.ElementType.GridFace);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddElement(globalId, nctiElement);
             modelbody.AddElement(nctiElement);
             nctiElement.SetMeshInfo(meshInfo);
             nctiElement.SetDisplayMesh(mesh);
             nctiElement.SetPickingMesh(pickingFaceMesh);
-            const triIndices = faceArray[i][0];
+            let triIndices = faceArray[i][0];
             const cell = faceArray[i][1];
             cell.m_CellFaces.push(globalId);
             GridMeshManager.current.SetCellElementId(globalId, cell);
             const currentVecs = new Array(3);
+            if (triIndices.length === 4) {
+                const indices = [0, 1, 2, 0, 2, 3];
+                triIndices = indices.map(k => triIndices[k]);
+            }
             triIndices.forEach((index, j) => {
                 const x = points[index * 3];
                 const y = points[index * 3 + 1];
                 const z = points[index * 3 + 2];
-                verts[(i * 3 + j) * 3] = x;
-                verts[(i * 3 + j) * 3 + 1] = y;
-                verts[(i * 3 + j) * 3 + 2] = z;
+                verts[vertOffset] = x;
+                verts[vertOffset + 1] = y;
+                verts[vertOffset + 2] = z;
                 currentVecs[j] = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(x, y, z);
+                vertOffset += 3;
             });
             const normal = this.calcNormal(currentVecs);
             triIndices.forEach((_, j) => {
-                norms[(i * 3 + j) * 3] = normal[0];
-                norms[(i * 3 + j) * 3 + 1] = normal[1];
-                norms[(i * 3 + j) * 3 + 2] = normal[2];
-                colors[(i * 3 + j) * 3] = r;
-                colors[(i * 3 + j) * 3 + 1] = g;
-                colors[(i * 3 + j) * 3 + 2] = b;
-                idBuffer[i * 3 + j] = globalId;
+                norms[normOffset] = normal[0];
+                norms[normOffset + 1] = normal[1];
+                norms[normOffset + 2] = normal[2];
+                colors[normOffset] = r;
+                colors[normOffset + 1] = g;
+                colors[normOffset + 2] = b;
+                idBuffer[globalIdOffset] = globalId;
+                normOffset += 3;
+                globalIdOffset++;
             });
             meshInfo.AddIndexInfo(globalId, idOffset, triIndices.length);
             idOffset += triIndices.length;
@@ -66525,8 +66601,8 @@ class NctiGridMeshLoader {
         });
         mesh.material = meshMaterial;
         group.add(mesh);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddFace(group.name, mesh);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddFace(group.name, pickingFaceMesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddFace(group.name, mesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddFace(group.name, pickingFaceMesh);
         const material = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.PickedMaterial(materialIdCount, offset, maxTexSize);
         pickingFaceMesh.material = material;
         pickingPartGroup.add(pickingFaceMesh);
@@ -66539,10 +66615,15 @@ class NctiGridMeshLoader {
         let offset = 0;
         let edgeArray = [];
         const cells = Array.from(GridMeshManager.current.GetCells(group.name, gridMeshBody.m_cpObjName));
+        let isBodyGrid = cellTypes.some(i => i > ncti_NctiBase__WEBPACK_IMPORTED_MODULE_3__.NctiElementType.Quadrangle9);
         for (let i = 0; i < cellTypes.length; i++) {
             const celltype = cellTypes[i];
             const vertSize = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].ElementVert(celltype);
             const elements = elemData.slice(offset, offset + vertSize);
+            offset += vertSize;
+            if (isBodyGrid && celltype < ncti_NctiBase__WEBPACK_IMPORTED_MODULE_3__.NctiElementType.Quadrangle9) {
+                continue;
+            }
             const cellMap = _NctiMeshManager__WEBPACK_IMPORTED_MODULE_2__["default"].DispEdge(celltype);
             cellMap.forEach(val => {
                 const sIndex = elements[val[0]];
@@ -66550,25 +66631,24 @@ class NctiGridMeshLoader {
                 const edge1Name = `${Math.min(sIndex, eIndex)}-${Math.max(sIndex, eIndex)}`;
                 edgeArray.push([edge1Name, cells[i]]);
             });
-            offset += vertSize;
         }
         const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.LineColor;
         const segmentsGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        const line = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiEdgeMesh(segmentsGeometry);
-        let pickingEdgeMesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiEdgeMesh(segmentsGeometry);
-        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
-        meshInfo.IndexOffset = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GlobalId;
+        const line = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiEdgeMesh(segmentsGeometry);
+        let pickingEdgeMesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiEdgeMesh(segmentsGeometry);
+        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
+        meshInfo.IndexOffset = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GlobalId;
         meshInfo.IsGrid = true;
         const vertCount = edgeArray.length * 2;
         const linePositions = new Float32Array(vertCount * 3);
         const lineColorBuffer = new Float32Array(vertCount * 3);
         const idBuffer = new Int32Array(vertCount);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddEdge(group.name, line);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddEdge(group.name, line);
         let idOffset = 0;
         edgeArray.forEach(([edge, cell], i) => {
-            const globalId = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GlobalIdAdd;
-            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.GridEdge);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const globalId = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GlobalIdAdd;
+            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_6__.ElementType.GridEdge);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddElement(globalId, nctiElement);
             modelBody.AddElement(nctiElement);
             nctiElement.SetDisplayMesh(line);
             nctiElement.SetMeshInfo(meshInfo);
@@ -66600,8 +66680,8 @@ class NctiGridMeshLoader {
         const lineMaterial = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.OriginMaterial(lineMaterialIdCount, offset, maxTexSize);
         line.material = lineMaterial;
         group.add(line);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddEdge(group.name, line);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddEdge(group.name, pickingEdgeMesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddEdge(group.name, line);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddEdge(group.name, pickingEdgeMesh);
         const material = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.PickedMaterial(lineMaterialIdCount, offset, maxTexSize);
         pickingEdgeMesh.material = material;
         pickingPartGroup.add(pickingEdgeMesh);
@@ -66628,20 +66708,20 @@ class NctiGridMeshLoader {
         }
         const { r, g, b } = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.GridPointColor;
         const markerGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        const point = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiPointMesh(markerGeometry);
-        const pickingPointMesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiPointMesh(markerGeometry);
-        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
-        meshInfo.IndexOffset = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GlobalId;
+        const point = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiPointMesh(markerGeometry);
+        const pickingPointMesh = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiPointMesh(markerGeometry);
+        const meshInfo = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiMeshInfo(gridMeshBody.m_cpObjName, group.name);
+        meshInfo.IndexOffset = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GlobalId;
         meshInfo.IsGrid = true;
         // let pickingPointMesh = SelectManager.current.AddPickingPointMesh(markerGeometry);
         const interleavedBuffer32 = new Float32Array(points.buffer);
         const colorBuffer = new Float32Array(points.length);
         const idBuffer = new Int32Array(pointsCount);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPoint(group.name, point);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddPoint(group.name, point);
         for (let i = 0; i < pointsCount; i++) {
-            const globalId = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.GlobalIdAdd;
-            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_3__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_5__.ElementType.GridNode);
-            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddElement(globalId, nctiElement);
+            const globalId = engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.GlobalIdAdd;
+            const nctiElement = new engine_NctiElement__WEBPACK_IMPORTED_MODULE_4__.NctiElement(globalId, globalId, src_Enums__WEBPACK_IMPORTED_MODULE_6__.ElementType.GridNode);
+            engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddElement(globalId, nctiElement);
             modelBody.AddElement(nctiElement);
             nctiElement.SetDisplayMesh(point);
             nctiElement.SetMeshInfo(meshInfo);
@@ -66669,8 +66749,8 @@ class NctiGridMeshLoader {
         const pointMaterial = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.OriginGridPointMaterial(pointMaterialIdCount, offset, maxTexSize);
         point.material = pointMaterial;
         group.add(point);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPoint(group.name, point);
-        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_4__.ModelManager.current.AddPoint(group.name, pickingPointMesh);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddPoint(group.name, point);
+        engine_NctiModelManager__WEBPACK_IMPORTED_MODULE_5__.ModelManager.current.AddPoint(group.name, pickingPointMesh);
         const material = engine_NctiMaterialManager__WEBPACK_IMPORTED_MODULE_1__.MaterialManager.current.PickedMaterial(pointMaterialIdCount, offset, maxTexSize);
         pickingPointMesh.material = material;
         pickingPartGroup.add(pickingPointMesh);
@@ -66840,23 +66920,18 @@ class NctiMeshManager {
         let ret = [];
         switch (tp) {
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Point1:
-            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Edge2:
-            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Edge3:
                 break;
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Triangle3:
+            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Triangle6:
                 ret = [[0, 1, 2]];
                 break;
-            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Triangle6:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Quadrangle4:
-                ret = [
-                    [0, 1, 2],
-                    [0, 2, 3],
-                ];
-                break;
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Quadrangle8:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Quadrangle9:
+                ret = [[0, 1, 2, 3]];
                 break;
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Tetrahedron4:
+            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Tetrahedron10:
                 ret = [
                     [0, 2, 1],
                     [0, 1, 3],
@@ -66864,26 +66939,39 @@ class NctiMeshManager {
                     [0, 3, 2]
                 ];
                 break;
-            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Tetrahedron10:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Hexahedron8:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Hexahedron20:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Hexahedron27:
+                ret = [
+                    [0, 3, 2, 1],
+                    [0, 1, 5, 4],
+                    [1, 2, 6, 5],
+                    [2, 3, 7, 6],
+                    [3, 0, 4, 7],
+                    [4, 5, 6, 7],
+                ];
+                break;
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Prism6:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Prism15:
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Prism18:
+                ret = [
+                    [0, 1, 2],
+                    [0, 1, 4, 3],
+                    [1, 2, 5, 4],
+                    [2, 0, 3, 5],
+                    [3, 4, 5],
+                ];
                 break;
             case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Pyramid5:
+            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Pyramid13:
+            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Pyramid14:
                 ret = [
-                    [0, 2, 1],
-                    [0, 3, 2],
+                    [0, 3, 2, 1],
                     [0, 1, 4],
                     [1, 2, 4],
                     [2, 3, 4],
-                    [3, 0, 4]
+                    [3, 0, 4],
                 ];
-                break;
-            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Pyramid13:
-            case ncti_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiElementType.Pyramid14:
                 break;
             default:
                 break;
@@ -68740,6 +68828,8 @@ class NctiObject {
             "yh_obj_feature_relation_sketch": _YHDisplayFeature__WEBPACK_IMPORTED_MODULE_15__.YHDisplayFRSketch,
             "yh_obj_ft_stretch": _YHDisplayFeature__WEBPACK_IMPORTED_MODULE_15__.YHDisplayFTStretch,
             "yh_obj_feature_body": _YHDisplayFeature__WEBPACK_IMPORTED_MODULE_15__.YHDisplayFTBody,
+            "yh_obj_ft_rotation": _YHDisplayFeature__WEBPACK_IMPORTED_MODULE_15__.YHDisplayFTRotation,
+            "yh_obj_feature_relation_rotation": _YHDisplayFeature__WEBPACK_IMPORTED_MODULE_15__.YHDisplayFRRotation,
         };
         this.modelBodies = new Array();
         this.gridMeshes = new Array();
@@ -68831,7 +68921,10 @@ class NctiObject {
                 if (consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsXpos ||
                     consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsYpos ||
                     consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsAngle ||
-                    consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsLength) {
+                    consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsLength ||
+                    consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsParallel ||
+                    consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsVertical ||
+                    consObj instanceof _YHDispalyConstraint__WEBPACK_IMPORTED_MODULE_14__.YHDisplayConsXAxis) {
                     consObj.sketchObj1 = this.nctiObjList[consObj.SketchObj1Index];
                     consObj.sketchObj2 = this.nctiObjList[consObj.SketchObj2Index];
                 }
@@ -68928,11 +69021,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   YHDisplayConsXpos: () => (/* binding */ YHDisplayConsXpos),
 /* harmony export */   YHDisplayConsYAxis: () => (/* binding */ YHDisplayConsYAxis),
 /* harmony export */   YHDisplayConsYpos: () => (/* binding */ YHDisplayConsYpos),
-/* harmony export */   YHDisplayConstraint: () => (/* binding */ YHDisplayConstraint)
+/* harmony export */   YHDisplayConstraint: () => (/* binding */ YHDisplayConstraint),
+/* harmony export */   YHSketchConsPubFun: () => (/* binding */ YHSketchConsPubFun)
 /* harmony export */ });
-/* harmony import */ var _NctiBase__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./NctiBase */ "./src/ncti/NctiBase.ts");
-/* harmony import */ var _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiDisplayObject */ "./src/ncti/NctiDisplayObject.ts");
-/* harmony import */ var _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./YHDisplaySketch */ "./src/ncti/YHDisplaySketch.ts");
+/* harmony import */ var src_Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! src/Utils */ "./src/Utils.ts");
+/* harmony import */ var _NctiBase__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NctiBase */ "./src/ncti/NctiBase.ts");
+/* harmony import */ var _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NctiDisplayObject */ "./src/ncti/NctiDisplayObject.ts");
+/* harmony import */ var _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./YHDisplaySketch */ "./src/ncti/YHDisplaySketch.ts");
+
 
 
 
@@ -68944,7 +69040,7 @@ var ConstraintType;
     ConstraintType[ConstraintType["Dimensional"] = 1] = "Dimensional";
     ConstraintType[ConstraintType["Location"] = 2] = "Location";
 })(ConstraintType || (ConstraintType = {}));
-class YHDisplayConstraint extends _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiDisplayObject {
+class YHDisplayConstraint extends _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiDisplayObject {
     get m_currentVer() { return 1; }
     get VertexCount() {
         return 0;
@@ -69035,7 +69131,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
         return this.m_DrawCurve;
     }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexCount(this.m_DrawCurve);
+        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexCount(this.m_DrawCurve);
         lineVertCount += 4;
         return lineVertCount;
     }
@@ -69073,7 +69169,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
         this.m_SketchObj1 = stream.readNumber();
         this.m_SketchObj2 = stream.readNumber();
         // let num = stream.readNumber();
-        this.m_DrawCurve = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecData(stream);
+        this.m_DrawCurve = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecData(stream);
         // for (let i = 0; i < num; i++) {
         //     const numS = stream.readNumber();
         //     const floatTemp = stream.readPackedFloatArray(numS);
@@ -69086,14 +69182,14 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
         const i_posEnd = this.m_aPosition[2];
         const vecStart = i_posStart.sub(i_posCenter);
         const vecEnd = i_posEnd.sub(i_posCenter);
-        const vecStartArrow = vecStart.negate().normalize().cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(0, 0, 1));
+        const vecStartArrow = vecStart.negate().normalize().cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 0, 1));
         // const arrow1 = this.CreateArrowBuffer(i_posStart, vecStartArrow);
         this.ArrowsDatas.push({
             position: i_posStart,
             direction: vecStartArrow,
             // buffer:arrow1
         });
-        const vecEndArrow = vecEnd.normalize().cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(0, 0, 1));
+        const vecEndArrow = vecEnd.normalize().cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 0, 1));
         // const arrow2 = this.CreateArrowBuffer(i_posEnd, vecEndArrow)
         // this.ArrowsData.push(arrow2);
         this.ArrowsDatas.push({
@@ -69107,16 +69203,16 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
         this.TextPos = this.m_TextPt;
     }
     DrawHelperLine(pos, vec) {
-        const pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
-        const pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
-        const vec1 = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector();
-        const vec2 = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector();
+        const pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const vec1 = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector();
+        const vec2 = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector();
         YHSketchConsPubFun.GetPointAndVectorBySketchObj(this.sketchObj1, pt1, vec1);
         YHSketchConsPubFun.GetPointAndVectorBySketchObj(this.sketchObj2, pt2, vec2);
-        if (_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.parallel(vec.normalize(), vec1, _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESMCH)) {
+        if (_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.parallel(vec.normalize(), vec1, _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESMCH)) {
             this.GetHelperLineFloatVec(this.sketchObj1, pos, pt1, vec1);
         }
-        else if (_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.parallel(vec.normalize(), vec2, _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESMCH)) {
+        else if (_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.parallel(vec.normalize(), vec2, _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESMCH)) {
             this.GetHelperLineFloatVec(this.sketchObj2, pos, pt2, vec2);
         }
     }
@@ -69124,7 +69220,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
         const ptObjEnd = ptObjStart.add(vecObj);
         let bNeedHelperLine = false;
         let ptTmp = ptObjEnd;
-        if (vecObj.x > _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESABS) {
+        if (vecObj.x > _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESABS) {
             if (i_pos.x > ptObjEnd.x) {
                 bNeedHelperLine = true;
             }
@@ -69133,7 +69229,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
                 bNeedHelperLine = true;
             }
         }
-        else if (vecObj.x < -_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESABS) {
+        else if (vecObj.x < -_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESABS) {
             if (i_pos.x < ptObjEnd.x) {
                 bNeedHelperLine = true;
             }
@@ -69142,7 +69238,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
                 bNeedHelperLine = true;
             }
         }
-        else if (vecObj.y > _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESABS) {
+        else if (vecObj.y > _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESABS) {
             if (i_pos.y > ptObjEnd.y) {
                 bNeedHelperLine = true;
             }
@@ -69151,7 +69247,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
                 bNeedHelperLine = true;
             }
         }
-        else if (vecObj.y < -_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESABS) {
+        else if (vecObj.y < -_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESABS) {
             if (i_pos.y < ptObjEnd.y) {
                 bNeedHelperLine = true;
             }
@@ -69160,12 +69256,12 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
                 bNeedHelperLine = true;
             }
         }
-        if (i_pSketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchXAxis ||
-            i_pSketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchYAxis) {
-            ptTmp = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
+        if (i_pSketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchXAxis ||
+            i_pSketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchYAxis) {
+            ptTmp = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
             bNeedHelperLine = true;
         }
-        if (i_pSketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchEllipse) {
+        if (i_pSketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchEllipse) {
             ptTmp = ptObjStart;
             bNeedHelperLine = true;
         }
@@ -69175,7 +69271,7 @@ class YHDisplayConsAngle extends YHDisplayConstraint {
             this.Vertices.push(ptTmp, ptHelper);
         }
         else {
-            this.Vertices.push(new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(), new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition());
+            this.Vertices.push(new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(), new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition());
         }
     }
 }
@@ -69225,17 +69321,17 @@ class YHDisplayConsXpos extends YHDisplayConstraint {
     }
     calcSketchData() {
         if (Math.abs(this.m_pt2.y) > Math.abs(this.m_pt1.y)) {
-            this.TextPos = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition((this.m_pt1.x + this.m_pt2.x) / 2, this.m_pt2.y, 0);
+            this.TextPos = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition((this.m_pt1.x + this.m_pt2.x) / 2, this.m_pt2.y, 0);
         }
         else {
-            this.TextPos = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition((this.m_pt1.x + this.m_pt2.x) / 2, this.m_pt1.y, 0);
+            this.TextPos = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition((this.m_pt1.x + this.m_pt2.x) / 2, this.m_pt1.y, 0);
         }
         let y = this.TextPos.y + 5;
         let ptText = this.TextPos;
         ptText.y = y;
-        const pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(this.m_pt1.x, y, 0);
-        const pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(this.m_pt2.x, y, 0);
-        const vecY = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(0, 1, 0);
+        const pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(this.m_pt1.x, y, 0);
+        const pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(this.m_pt2.x, y, 0);
+        const vecY = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 1, 0);
         let LL = 4;
         let LR = 4;
         if (this.m_pt1.y > pt1.y) {
@@ -69250,7 +69346,7 @@ class YHDisplayConsXpos extends YHDisplayConstraint {
         this.Vertices.push(this.m_pt1, pt1.add(vecY.multiScale(LL)));
         this.Vertices.push(this.m_pt2, pt2.add(vecY.multiScale(LR)));
         //pt1 arrow1 .
-        let vecX = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(1, 0, 0);
+        let vecX = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(1, 0, 0);
         if (pt1.x > pt2.x) {
             // const arrow1Buffer = this.CreateArrowBuffer(pt1, vecX.negate());
             // this.ArrowsData.push(arrow1Buffer)
@@ -69337,13 +69433,13 @@ class YHDisplayConsYpos extends YHDisplayConstraint {
         const consPos2 = YHSketchConsPubFun.GetPointBySketchObj(this.m_ptIndex2, this.sketchObj2);
         this.TextPos = this.m_TextPos;
         this.TextPos.x = this.TextPos.x + 6;
-        const drawConsPos1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(this.TextPos.x, consPos1.y, 0);
-        const drawConsPos2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(this.TextPos.x, consPos2.y, 0);
+        const drawConsPos1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(this.TextPos.x, consPos1.y, 0);
+        const drawConsPos2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(this.TextPos.x, consPos2.y, 0);
         // 尺寸线
         this.Vertices.push(this.TextPos, drawConsPos1);
         this.Vertices.push(this.TextPos, drawConsPos2);
-        let pos1ArrowDir = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(0, -1, 0);
-        let pos2ArrowDir = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(0, 1, 0);
+        let pos1ArrowDir = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, -1, 0);
+        let pos2ArrowDir = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 1, 0);
         //arrow1
         if (drawConsPos1.y < drawConsPos2.y) {
             pos1ArrowDir = pos1ArrowDir.multiScale(-1.0);
@@ -69365,17 +69461,17 @@ class YHDisplayConsYpos extends YHDisplayConstraint {
             // buffer:arrow2
         });
         //尺寸界限1，与横轴重合
-        const boundary1Pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(drawConsPos1.x, drawConsPos1.y, drawConsPos1.z);
+        const boundary1Pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(drawConsPos1.x, drawConsPos1.y, drawConsPos1.z);
         const boundaryMoveDist = 6;
-        let boundaryMove1 = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(boundaryMoveDist, 0, 0);
+        let boundaryMove1 = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(boundaryMoveDist, 0, 0);
         if (this.TextPos.x < consPos1.x) {
             boundaryMove1 = boundaryMove1.multiScale(-1);
         }
         this.Vertices.push(consPos1, boundary1Pt1.add(boundaryMove1));
         //尺寸界限2，与横轴平行
-        const boundary1Pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(drawConsPos2.x, drawConsPos2.y, drawConsPos2.z);
+        const boundary1Pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(drawConsPos2.x, drawConsPos2.y, drawConsPos2.z);
         2;
-        const boundaryMove2 = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(boundaryMoveDist, 0, 0);
+        const boundaryMove2 = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(boundaryMoveDist, 0, 0);
         if (this.TextPos.x < consPos2.x) {
             boundaryMove2.multiScale(-1);
         }
@@ -69431,7 +69527,7 @@ class YHDisplayConsRadius extends YHDisplayConstraint {
         else {
             pt0.x = textPt.x - 8;
         }
-        if (_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.same_point(pt0, this.m_centerPos, _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESABS)) {
+        if (_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.same_point(pt0, this.m_centerPos, _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESABS)) {
             pt1.x = this.m_centerPos.x;
             pt1.y = this.m_centerPos.y;
             pt1.z = this.m_centerPos.z;
@@ -69449,13 +69545,13 @@ class YHDisplayConsRadius extends YHDisplayConstraint {
     }
     calcSketchData() {
         this.Vertices = new Array();
-        let pt0 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
-        let pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
+        let pt0 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        let pt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
         this.TextPos = this.m_TextPt;
         this.getConnectPosition(this.TextPos, pt1, pt0);
         const vec0 = this.m_centerPos.sub(pt0).multiScale(2);
-        const pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(pt0.x + vec0.x, pt0.y + vec0.y, 0);
-        const vecStartArrow = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(pt2.x - pt0.x, pt2.y - pt0.y, 0);
+        const pt2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(pt0.x + vec0.x, pt0.y + vec0.y, 0);
+        const vecStartArrow = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(pt2.x - pt0.x, pt2.y - pt0.y, 0);
         const vec1 = vecStartArrow.normalize();
         // const arrow1Buffer = this.CreateArrowBuffer(pt0, vec1);
         // this.ArrowsData.push(arrow1Buffer)
@@ -69464,7 +69560,7 @@ class YHDisplayConsRadius extends YHDisplayConstraint {
             direction: vec1,
             // buffer:arrow1Buffer
         });
-        const vecEndArrow = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(pt0.x - pt2.x, pt0.y - pt2.y, 0);
+        const vecEndArrow = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(pt0.x - pt2.x, pt0.y - pt2.y, 0);
         const vec2 = vecEndArrow.normalize();
         // const arrow2Buffer = this.CreateArrowBuffer(pt2, vec2);
         // this.ArrowsData.push(arrow2Buffer)
@@ -69473,19 +69569,19 @@ class YHDisplayConsRadius extends YHDisplayConstraint {
             direction: vec2,
             // buffer:arrow2Buffer
         });
-        if (_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.distance_to_point(this.TextPos, this.m_centerPos) > this.m_dRadius) {
+        if (_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.distance_to_point(this.TextPos, this.m_centerPos) > this.m_dRadius) {
             this.Vertices.push(pt1, pt2);
         }
         else {
             this.Vertices.push(pt0, pt2);
         }
-        if (_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.distance_to_point(pt1, this.m_centerPos) < this.m_dRadius) {
+        if (_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.distance_to_point(pt1, this.m_centerPos) < this.m_dRadius) {
             this.TextPos.x = pt1.x;
             pt1.y < pt0.y ? this.TextPos.y = pt1.y - 9 : this.TextPos.y = pt1.y;
         }
-        if (_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.distance_to_point(this.TextPos, this.m_centerPos) > this.m_dRadius) {
+        if (_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.distance_to_point(this.TextPos, this.m_centerPos) > this.m_dRadius) {
             // 延长线
-            const horPt = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(0, pt1.y, 0);
+            const horPt = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(0, pt1.y, 0);
             if (pt0.x < pt1.x) {
                 horPt.x = pt1.x + 8;
             }
@@ -69549,15 +69645,15 @@ class YHDisplayConsLength extends YHDisplayConstraint {
         this.m_negativeIndex = stream.read_bool();
     }
     calcSketchData() {
-        const pSPoint = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
-        const pEPoint = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
+        const pSPoint = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const pEPoint = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
         this.getDrawPositionByIndex(pSPoint, pEPoint);
         const ptText = this.m_TextPt;
         let offsetVect = this.calculateDirectVec(ptText);
         const pt1 = pSPoint.add(offsetVect);
         const pt2 = pEPoint.add(offsetVect);
         let offsetValue = 2;
-        if (!_NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.same_direction(offsetVect, this.m_lineNormalVec, _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESMCH)) {
+        if (!_NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.same_direction(offsetVect, this.m_lineNormalVec, _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESMCH)) {
             offsetValue *= -1;
         }
         this.Vertices.push(pt1.add(this.m_lineNormalVec.multiScale(offsetValue)), ptText.add(this.m_lineNormalVec.multiScale(offsetValue)));
@@ -69591,8 +69687,8 @@ class YHDisplayConsLength extends YHDisplayConstraint {
         });
     }
     getDrawPositionByIndex(o_pt1, o_pt2) {
-        let pt_0 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
-        let pt_1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
+        let pt_0 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        let pt_1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
         if (!this.m_IsDiameterDisplay) {
             o_pt1.set(this.m_startPos);
             o_pt2.set(this.m_endPos);
@@ -69620,7 +69716,7 @@ class YHDisplayConsLength extends YHDisplayConstraint {
         // 垂直向量：垂足Q ->点P
         const nx = x0 - footPt.x;
         const ny = y0 - footPt.y;
-        return new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(nx, ny, 0);
+        return new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(nx, ny, 0);
     }
     getSymmetricPosition(o_pt1, o_pt2, o_pt3) {
         const footPt = this.getFootPointByPosition(o_pt1, o_pt2, o_pt3);
@@ -69628,18 +69724,18 @@ class YHDisplayConsLength extends YHDisplayConstraint {
         //对称点坐标
         const xr = 2 * footPt.x - x0;
         const yr = 2 * footPt.y - y0;
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(xr, yr, 0.0);
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(xr, yr, 0.0);
     }
     getFootPointByPosition(o_pt1, o_pt2, o_pt3) {
         let x0 = o_pt1.x, y0 = o_pt1.y;
         let x1 = o_pt2.x, y1 = o_pt2.y;
         let x2 = o_pt3.x, y2 = o_pt3.y;
         if (x1 === 0 && y1 === 0 && x2 === 0 && y2 === 0) {
-            if (this.sketchObj1 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchXAxis || this.sketchObj2 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchXAxis) {
-                return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(o_pt1.x, 0, 0);
+            if (this.sketchObj1 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchXAxis || this.sketchObj2 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchXAxis) {
+                return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(o_pt1.x, 0, 0);
             }
-            else if (this.sketchObj1 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchYAxis || this.sketchObj2 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchYAxis) {
-                return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(0, o_pt1.y, 0);
+            else if (this.sketchObj1 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchYAxis || this.sketchObj2 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchYAxis) {
+                return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(0, o_pt1.y, 0);
             }
         }
         const dx = x2 - x1;
@@ -69651,24 +69747,29 @@ class YHDisplayConsLength extends YHDisplayConstraint {
         const nx = dx;
         const ny = dy;
         const nz = 0.0;
-        if (lenSq < _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiUtils.NCTI_RESMCH) {
-            return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(x1, y1, nz);
+        if (lenSq < _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.NCTI_RESMCH) {
+            return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(x1, y1, nz);
         }
         // 求垂足
         const t = dot / lenSq;
         const qx = x1 + t * dx;
         const qy = y1 + t * dy;
-        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition(qx, qy, nz);
+        return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(qx, qy, nz);
     }
 }
 class YHDisplayConsCoincide extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
-        lineVertCount += this.m_FloatVecVecVec1.length * 2;
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexCount(this.m_FloatVecVec2);
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexCount(this.m_FloatVecVec3);
+        let lineVertCount = 0;
+        for (const buffer of YHSketchConsPubFun.ConsCoincideIconData) {
+            lineVertCount += buffer.length;
+        }
         return lineVertCount;
+    }
+    get Position() {
+        let vec = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(-1, -1, 0).multiScale(4);
+        this.m_Position1 = this.m_Position1.add(vec);
+        return this.m_Position1;
     }
     get ConstraintType() {
         return ConstraintType.Location;
@@ -69693,61 +69794,31 @@ class YHDisplayConsCoincide extends YHDisplayConstraint {
         this.m_SketchObj2 = stream.readNumber();
         this.m_Index1 = stream.readNumber();
         this.m_Index2 = stream.readNumber();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
-        this.m_FloatVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecData(stream);
-        this.m_FloatVecVec3 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecData(stream);
-    }
-    GetBufferData() {
-        let lineVertCount = 0;
-        let offset = 0;
-        for (const curveVec of this.m_FloatVecVecVec1) {
-            for (const curve of curveVec) {
-                if (curve.length % 3 !== 0) {
-                    console.error("Extract Error");
-                }
-                lineVertCount += ((curve.length / 3) - 1) * 2;
-            }
-        }
-        lineVertCount += this.m_FloatVecVecVec1.length * 2;
-        let bufferData = new Float32Array(lineVertCount * 3);
-        for (let j = 0; j < this.m_FloatVecVecVec1.length; j++) {
-            let elementVec = this.m_FloatVecVecVec1[j];
-            for (const element of elementVec) {
-                for (let i = 0; i < element.length - 3; i += 3) {
-                    const data = element.slice(i, i + 6);
-                    bufferData.set(data, offset);
-                    offset += 6;
-                }
-            }
-            let lastPoint;
-            let nextPoint;
-            if (j === this.m_FloatVecVecVec1.length - 1) {
-                const lastVec = elementVec[elementVec.length - 1];
-                lastPoint = lastVec.slice(-3);
-                const nextVecvec = this.m_FloatVecVecVec1[0];
-                const nextVec = nextVecvec[nextVecvec.length - 1];
-                nextPoint = nextVec.slice(0, 3);
-            }
-            else {
-                const lastVec = elementVec[elementVec.length - 1];
-                lastPoint = lastVec.slice(-3);
-                const nextVecvec = this.m_FloatVecVecVec1[j + 1];
-                const nextVec = nextVecvec[nextVecvec.length - 1];
-                nextPoint = nextVec.slice(0, 3);
-            }
-            bufferData.set(lastPoint, offset);
-            bufferData.set(nextPoint, offset + 3);
-            offset += 6;
-        }
-        return bufferData;
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecData(stream);
+        this.m_FloatVecVec3 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecData(stream);
     }
 }
 class YHDisplayConsParallel extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
+    get Position1() {
+        return this.m_Position1;
+    }
+    get Position2() {
+        return this.m_Position2;
+    }
+    get SketchObj1Index() {
+        return this.m_SketchObj1;
+    }
+    get SketchObj2Index() {
+        return this.m_SketchObj2;
+    }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
-        return lineVertCount;
+        let lineVertCount = 0;
+        for (const buffer of YHSketchConsPubFun.ConsParallelData) {
+            lineVertCount += buffer.length;
+        }
+        return lineVertCount * 2;
     }
     get ConstraintType() {
         return ConstraintType.Location;
@@ -69772,20 +69843,45 @@ class YHDisplayConsParallel extends YHDisplayConstraint {
         this.m_IsShowSize = stream.read_bool();
         this.m_Size = stream.readFloat();
         this.m_textPos = stream.readPosition();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
-        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
     }
-    calcSketchData() {
+    calcPositions() {
+        const lineStart = YHSketchConsPubFun.GetPointBySketchObj(0, this.sketchObj1);
+        const lineEnd = YHSketchConsPubFun.GetPointBySketchObj(1, this.sketchObj1);
+        const referPoint1 = YHSketchConsPubFun.GetPointBySketchObj(0, this.sketchObj2);
+        const referPoint2 = YHSketchConsPubFun.GetPointBySketchObj(1, this.sketchObj2);
+        const textPos1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition((lineStart.x + lineEnd.x) * 0.5, (lineStart.y + lineEnd.y) * 0.5, 0);
+        const textPos2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition((referPoint1.x + referPoint2.x) * 0.5, (referPoint1.y + referPoint2.y) * 0.5, 0);
+        const dOffset = 8;
+        const vNormal = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 0, 1);
+        let vec = vNormal.cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y, lineEnd.z - lineStart.z)).normalize();
+        const ptAncho1 = lineStart.add(textPos1).multi(0.5);
+        const ptAncho2 = referPoint1.add(textPos2).multi(0.5);
+        this.m_Position1 = ptAncho1.add(vec.multiScale(dOffset));
+        this.m_Position2 = ptAncho2.add(vec.multiScale(dOffset));
     }
 }
 class YHDisplayConsVertical extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
+    get Position1() {
+        return this.m_Position1;
+    }
+    get Position2() {
+        return this.m_Position2;
+    }
+    get SketchObj1Index() {
+        return this.m_SketchObj1;
+    }
+    get SketchObj2Index() {
+        return this.m_SketchObj2;
+    }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
-        lineVertCount += this.m_FloatVecVecVec1.length * 2;
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
-        lineVertCount += this.m_FloatVecVecVec2.length * 2;
-        return lineVertCount;
+        let lineVertCount = 0;
+        for (const buffer of YHSketchConsPubFun.ConsVerticalData) {
+            lineVertCount += buffer.length;
+        }
+        return lineVertCount * 2;
     }
     get ConstraintType() {
         return ConstraintType.Location;
@@ -69807,14 +69903,40 @@ class YHDisplayConsVertical extends YHDisplayConstraint {
     ReadVersion_1(stream) {
         this.m_SketchObj1 = stream.readNumber();
         this.m_SketchObj2 = stream.readNumber();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
-        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+    }
+    calcPositions() {
+        if (!this.sketchObj1 || !this.sketchObj2) {
+            return;
+        }
+        if (this.sketchObj1 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchLine && this.sketchObj2 instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchLine) {
+            const ptLine1Start = this.sketchObj1.m_ptF;
+            const ptLine1End = this.sketchObj1.m_ptE;
+            const ptLine2Start = this.sketchObj2.m_ptF;
+            const ptLine2End = this.sketchObj2.m_ptE;
+            const dDist1 = _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.distance_to_point(ptLine1Start, ptLine1End);
+            const dDist2 = _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiUtils.distance_to_point(ptLine2Start, ptLine2End);
+            if (dDist1 < 1e-6 || dDist2 < 1e-6) {
+                return;
+            }
+            const midPt1 = ptLine1Start.add(ptLine1End).multi(0.5);
+            const midPt2 = ptLine2Start.add(ptLine2End).multi(0.5);
+            const dOffset = 8;
+            const vNormal = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 0, 1);
+            let vec1 = vNormal.cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(ptLine1End.x - ptLine1Start.x, ptLine1End.y - ptLine1Start.y, ptLine1End.z - ptLine1Start.z)).normalize();
+            let vec2 = vNormal.cross(new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(ptLine2End.x - ptLine2Start.x, ptLine2End.y - ptLine2Start.y, ptLine2End.z - ptLine2Start.z)).normalize();
+            const ptAncho1 = midPt1.add(ptLine1End).multi(0.5);
+            const ptAncho2 = midPt2.add(ptLine2End).multi(0.5);
+            this.m_Position1 = ptAncho1.add(vec1.multiScale(dOffset));
+            this.m_Position2 = ptAncho2.add(vec2.multiScale(dOffset));
+        }
     }
 }
 class YHDisplayConsTangent extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
+        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
         lineVertCount += this.m_FloatVecVecVec1.length * 2;
         return lineVertCount;
     }
@@ -69839,7 +69961,7 @@ class YHDisplayConsTangent extends YHDisplayConstraint {
         this.m_aPosition = stream.readPosition();
         this.m_SketchObj1 = stream.readNumber();
         this.m_SketchObj2 = stream.readNumber();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
     }
     calcSketchData() {
     }
@@ -69847,9 +69969,9 @@ class YHDisplayConsTangent extends YHDisplayConstraint {
 class YHDisplayConsEqual extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
+        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
         lineVertCount += this.m_FloatVecVecVec1.length * 2;
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
+        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
         lineVertCount += this.m_FloatVecVecVec2.length * 2;
         return lineVertCount;
     }
@@ -69877,18 +69999,30 @@ class YHDisplayConsEqual extends YHDisplayConstraint {
         this.m_textPos1 = stream.readPosition();
         this.m_textPos2 = stream.readPosition();
         this.m_drawType = stream.readNumber();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
-        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
     }
     calcSketchData() {
     }
 }
 class YHDisplayConsXAxis extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
+    get Position1() {
+        return this.m_pos1_S;
+    }
+    get Position2() {
+        return this.m_pos2_S;
+    }
+    get SketchObj1Index() {
+        return this.m_SketchObj1;
+    }
+    get SketchObj2Index() {
+        return this.m_SketchObj2;
+    }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
+        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
         lineVertCount += this.m_FloatVecVecVec1.length * 2;
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
+        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
         lineVertCount += this.m_FloatVecVecVec2.length * 2;
         return lineVertCount;
     }
@@ -69917,16 +70051,53 @@ class YHDisplayConsXAxis extends YHDisplayConstraint {
         this.m_pos1_S = stream.readPosition();
         this.m_pos2_S = stream.readPosition();
         this.m_type_S = stream.readNumber();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
-        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+    }
+    calcPositions() {
+        if (this.m_type_S === 0) {
+            const dR = 1;
+            const dSide = 5;
+            let vec1 = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(0, 1, 0);
+            this.m_pos1_S = this.m_pos1_S.add(vec1.multiScale(5 * dR));
+            this.m_pos2_S = undefined;
+            return;
+        }
+        else {
+            let vec1 = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(1, 1, 0);
+            const dOffset1 = 8;
+            this.m_pos1_S = this.m_pos1_S.add(vec1.multiScale(dOffset1));
+            this.m_pos2_S = this.m_pos2_S.add(vec1.multiScale(dOffset1));
+        }
+        // if (this.sketchObj1 instanceof YHDisplaySketchLine && this.sketchObj2 instanceof YHDisplaySketchLine) {
+        //     const ptLine1Start = this.sketchObj1.m_ptF;
+        //     const ptLine1End = this.sketchObj1.m_ptE;
+        //     const ptLine2Start = this.sketchObj2.m_ptF;
+        //     const ptLine2End = this.sketchObj2.m_ptE;
+        //     const dDist1 = NctiUtils.distance_to_point(ptLine1Start, ptLine1End);
+        //     const dDist2 = NctiUtils.distance_to_point(ptLine2Start, ptLine2End);
+        //     if (dDist1 < 1e-6 || dDist2 < 1e-6) {
+        //         return;
+        //     }
+        //     const midPt1 = ptLine1Start.add(ptLine1End).multi(0.5);
+        //     const midPt2 = ptLine2Start.add(ptLine2End).multi(0.5);
+        //     const dOffset = 8;
+        //     const vNormal = new NctiVector(0, 0, 1);
+        //     let vec1 = vNormal.cross(new NctiVector(ptLine1End.x - ptLine1Start.x, ptLine1End.y - ptLine1Start.y, ptLine1End.z - ptLine1Start.z)).normalize();
+        //     let vec2 = vNormal.cross(new NctiVector(ptLine2End.x - ptLine2Start.x, ptLine2End.y - ptLine2Start.y, ptLine2End.z - ptLine2Start.z)).normalize();
+        //     const ptAncho1 = midPt1.add(ptLine1End).multi(0.5);
+        //     const ptAncho2 = midPt2.add(ptLine2End).multi(0.5);
+        //     this.m_pos1_S = ptAncho1.add(vec1.multiScale(dOffset));
+        //     this.m_pos2_S = ptAncho2.add(vec2.multiScale(dOffset));
+        // }
     }
 }
 class YHDisplayConsYAxis extends YHDisplayConstraint {
     get m_currentVer() { return 1; }
     get VertexCount() {
-        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
+        let lineVertCount = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec1);
         lineVertCount += this.m_FloatVecVecVec1.length * 2;
-        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
+        lineVertCount += _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.GetVertexVectorCount(this.m_FloatVecVecVec2);
         lineVertCount += this.m_FloatVecVecVec2.length * 2;
         return lineVertCount;
     }
@@ -69955,27 +70126,199 @@ class YHDisplayConsYAxis extends YHDisplayConstraint {
         this.m_pos1_S = stream.readPosition();
         this.m_pos2_S = stream.readPosition();
         this.m_type_S = stream.readNumber();
-        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
-        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec1 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
+        this.m_FloatVecVecVec2 = _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHSketchPubFun.ReadFloatVecVecData(stream);
     }
 }
 class YHSketchConsPubFun {
+    static get ConsCoincideIconData() {
+        if (YHSketchConsPubFun.m_ConsCoincideIconData === undefined) {
+            YHSketchConsPubFun.CalcCoincideIconData();
+        }
+        return YHSketchConsPubFun.m_ConsCoincideIconData;
+    }
+    static get ConsParallelData() {
+        if (YHSketchConsPubFun.m_ConsParallelData === undefined) {
+            YHSketchConsPubFun.CalcParallelData();
+        }
+        return YHSketchConsPubFun.m_ConsParallelData;
+    }
+    static get ConsVerticalData() {
+        if (YHSketchConsPubFun.m_ConsVerticalData === undefined) {
+            YHSketchConsPubFun.CalcVerticalData();
+        }
+        return YHSketchConsPubFun.m_ConsVerticalData;
+    }
+    static get ConsYAxisData() {
+        if (YHSketchConsPubFun.m_ConsYAxisData === undefined) {
+            YHSketchConsPubFun.CalcYAxisData();
+        }
+        return YHSketchConsPubFun.m_ConsYAxisData;
+    }
+    static get ConsXAxisData() {
+        if (YHSketchConsPubFun.m_ConsXAxisData === undefined) {
+            YHSketchConsPubFun.CalcXAxisData();
+        }
+        return YHSketchConsPubFun.m_ConsXAxisData;
+    }
+    static CalcXAxisData() {
+        YHSketchConsPubFun.m_ConsXAxisData = [];
+        const center = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const horizLineLineBuffer = YHSketchConsPubFun.GetHorizLineLine();
+        const roundedRectBuffer = YHSketchConsPubFun.GetRoundedRectTess(center);
+        YHSketchConsPubFun.m_ConsXAxisData.push(horizLineLineBuffer, roundedRectBuffer);
+    }
+    static CalcYAxisData() {
+        YHSketchConsPubFun.m_ConsYAxisData = [];
+        const center = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const vertiLineBuffer = YHSketchConsPubFun.GetVertiLine();
+        const roundedRectBuffer = YHSketchConsPubFun.GetRoundedRectTess(center);
+        YHSketchConsPubFun.m_ConsYAxisData.push(vertiLineBuffer, roundedRectBuffer);
+    }
+    static CalcParallelData() {
+        YHSketchConsPubFun.m_ConsParallelData = [];
+        const center = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const parallelLineBuffer = YHSketchConsPubFun.GetParallelLineTess();
+        const roundedRectBuffer = YHSketchConsPubFun.GetRoundedRectTess(center);
+        YHSketchConsPubFun.m_ConsParallelData.push(parallelLineBuffer, roundedRectBuffer);
+    }
+    static CalcCoincideIconData() {
+        YHSketchConsPubFun.m_ConsCoincideIconData = [];
+        const center = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const innerCircleBuffer = YHSketchConsPubFun.GetCircelTess(center, 0.8);
+        const outerCircleBuffer = YHSketchConsPubFun.GetCircelTess(center, 1.6);
+        const roundedRectBuffer = YHSketchConsPubFun.GetRoundedRectTess(center);
+        YHSketchConsPubFun.m_ConsCoincideIconData.push(innerCircleBuffer, outerCircleBuffer, roundedRectBuffer);
+    }
+    static CalcVerticalData() {
+        YHSketchConsPubFun.m_ConsVerticalData = [];
+        const center = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        const innerBuffer = YHSketchConsPubFun.GetVerticalTess();
+        const roundedRectBuffer = YHSketchConsPubFun.GetRoundedRectTess(center);
+        YHSketchConsPubFun.m_ConsVerticalData.push(innerBuffer, roundedRectBuffer);
+    }
+    static GetHorizLineLine() {
+        const dR = 1;
+        const dSide = 5;
+        const midPt1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(2.5, -2.5, 0);
+        let p0 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(midPt1.x - 3.75, midPt1.y + dSide - 1.5 * dR, midPt1.z);
+        let p1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(midPt1.x - 3.75, midPt1.y + 1.5 * dR, midPt1.z);
+        let p2 = p0.add(p1).multi(0.5);
+        let p3 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(midPt1.x - 1.25, midPt1.y + dSide - 1.5 * dR, midPt1.z);
+        let p4 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(midPt1.x - 1.25, midPt1.y + 1.5 * dR, midPt1.z);
+        let p5 = p3.add(p4).multi(0.5);
+        return new Float32Array([
+            p0.x, p0.y, p0.z,
+            p1.x, p1.y, p1.z,
+            p3.x, p3.y, p3.z,
+            p4.x, p4.y, p4.z,
+            p2.x, p2.y, p2.z,
+            p5.x, p5.y, p5.z,
+        ]);
+    }
+    static GetVertiLine() {
+        return new Float32Array();
+    }
+    static GetVerticalTess() {
+        const dOffset1 = 8;
+        let ptSqMid1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        let textPos1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(2.5, -2.5, 0);
+        const dR = 1;
+        const dSide = 5;
+        let p0 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(textPos1.x - 3.75, textPos1.y + dSide - dR, textPos1.z);
+        let p1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(textPos1.x - 3.75, textPos1.y + dR, textPos1.z);
+        let p2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(textPos1.x - 0.75, textPos1.y + dR, textPos1.z);
+        let p3 = p0.add(p1).multi(0.5);
+        let p4 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(p2.x - 1.5, p3.y, p3.z);
+        let p5 = p1.add(p2).multi(0.5);
+        return new Float32Array([
+            p0.x, p0.y, p0.z,
+            p1.x, p1.y, p1.z,
+            p1.x, p1.y, p1.z,
+            p2.x, p2.y, p2.z,
+            p3.x, p3.y, p3.z,
+            p4.x, p4.y, p4.z,
+            p4.x, p4.y, p4.z,
+            p5.x, p5.y, p5.z,
+        ]);
+    }
+    static GetParallelLineTess() {
+        const dR = 1;
+        const dSide = 5;
+        let tagPos1 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(2.5, -2.5, 0);
+        let tagPos2 = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(2.5, -2.5, 0);
+        let ptLine11St = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(tagPos1.x - 3.75, tagPos1.y + dR, tagPos1.z);
+        let ptLine11Ed = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(tagPos1.x - 2.5, tagPos1.y + dSide - dR, tagPos1.z);
+        let ptLine12St = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(tagPos1.x - 2.5, tagPos1.y + dR, tagPos1.z);
+        let ptLine12Ed = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(tagPos1.x - 1.25, tagPos1.y + dSide - dR, tagPos1.z);
+        return new Float32Array([
+            ptLine11St.x, ptLine11St.y, ptLine11St.z,
+            ptLine11Ed.x, ptLine11Ed.y, ptLine11Ed.z,
+            ptLine12St.x, ptLine12St.y, ptLine12St.z,
+            ptLine12Ed.x, ptLine12Ed.y, ptLine12Ed.z,
+        ]);
+    }
+    static GetCircelTess(center, radius) {
+        return src_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].GetCircelTess(center.x, center.y, radius);
+    }
+    static GetRoundedRectTess(center) {
+        const dR = 1;
+        const dSide = 5;
+        const ptPattern = new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
+        ptPattern.x = ptPattern.x + 2.5;
+        ptPattern.y = ptPattern.y - 2.5;
+        const ptArr = [
+            new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(ptPattern.x - dR, ptPattern.y + dR, ptPattern.z),
+            new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(ptPattern.x - dR, ptPattern.y + dSide - dR, ptPattern.z),
+            new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(ptPattern.x - dSide + dR, ptPattern.y + dSide - dR, ptPattern.z),
+            new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition(ptPattern.x - dSide + dR, ptPattern.y + dR, ptPattern.z),
+        ];
+        const vetPosArr = [
+            [ptArr[0].x + dR, ptArr[0].y, ptArr[0].z, ptArr[1].x + dR, ptArr[1].y, ptArr[1].z],
+            [ptArr[1].x, ptArr[1].y + dR, ptArr[1].z, ptArr[2].x, ptArr[2].y + dR, ptArr[2].z],
+            [ptArr[2].x - dR, ptArr[2].y, ptArr[2].z, ptArr[3].x - dR, ptArr[3].y, ptArr[3].z],
+            [ptArr[3].x, ptArr[3].y - dR, ptArr[3].z, ptArr[0].x, ptArr[0].y - dR, ptArr[0].z]
+        ];
+        const angleArr = [
+            [-Math.PI / 2, 0],
+            [0, Math.PI / 2],
+            [Math.PI / 2, Math.PI],
+            [Math.PI, Math.PI * 1.5]
+        ];
+        const cornerArr = [];
+        let bufferCount = vetPosArr.length * 2 * 3;
+        for (let i = 0; i < 4; i++) {
+            const angle = angleArr[i];
+            const corner = src_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].GetCornerTess(ptArr[i].x, ptArr[i].y, dR, angle[0], angle[1], 10);
+            cornerArr.push(corner);
+            bufferCount += corner.length;
+        }
+        let offset = 0;
+        const buffer = new Float32Array(bufferCount);
+        for (let i = 0; i < 4; i++) {
+            buffer.set(cornerArr[i], offset);
+            offset += cornerArr[i].length;
+            buffer.set(vetPosArr[i], offset);
+            offset += vetPosArr[i].length;
+        }
+        return buffer;
+    }
     static GetPointBySketchObj(index, sketchObj) {
         if (sketchObj === null) {
-            return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_1__.NctiPosition();
+            return new _NctiDisplayObject__WEBPACK_IMPORTED_MODULE_2__.NctiPosition();
         }
         return sketchObj.GetPointByIndex(index);
     }
     static GetPointAndVectorBySketchObj(sketchObj, o_pt, o_vec) {
-        if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchXAxis) {
+        if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchXAxis) {
             o_pt.set(0, 0, 0);
             o_vec.set(1, 0, 0);
         }
-        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchYAxis) {
+        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchYAxis) {
             o_pt.set(0, 0, 0);
             o_vec.set(0, 1, 0);
         }
-        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchLine) {
+        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchLine) {
             o_pt.set(sketchObj.m_ptF);
             o_vec.set(sketchObj.m_ptE.sub(sketchObj.m_ptF));
             if (!sketchObj.m_isForward) {
@@ -69983,12 +70326,12 @@ class YHSketchConsPubFun {
                 o_vec.set(sketchObj.m_ptF.sub(sketchObj.m_ptE));
             }
         }
-        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchArc) {
+        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchArc) {
             o_pt.set(sketchObj.Center);
             let startAngleUse = sketchObj.StartAngle;
-            o_vec = new _NctiBase__WEBPACK_IMPORTED_MODULE_0__.NctiVector(Math.cos(startAngleUse), Math.sin(startAngleUse), 0);
+            o_vec = new _NctiBase__WEBPACK_IMPORTED_MODULE_1__.NctiVector(Math.cos(startAngleUse), Math.sin(startAngleUse), 0);
         }
-        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_2__.YHDisplaySketchEllipse) {
+        else if (sketchObj instanceof _YHDisplaySketch__WEBPACK_IMPORTED_MODULE_3__.YHDisplaySketchEllipse) {
             o_pt.set(sketchObj.m_PositionCenterPoint);
             const vectorMajorAxis = sketchObj.m_VectorMajorAxis;
             const vectorMinorAxis = sketchObj.m_VectorMinorAxis;
@@ -70015,9 +70358,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   YHCalculationManager: () => (/* binding */ YHCalculationManager),
 /* harmony export */   YHDisplayCoordinateSystem: () => (/* binding */ YHDisplayCoordinateSystem),
+/* harmony export */   YHDisplayFRRotation: () => (/* binding */ YHDisplayFRRotation),
 /* harmony export */   YHDisplayFRSketch: () => (/* binding */ YHDisplayFRSketch),
 /* harmony export */   YHDisplayFTBody: () => (/* binding */ YHDisplayFTBody),
 /* harmony export */   YHDisplayFTManager: () => (/* binding */ YHDisplayFTManager),
+/* harmony export */   YHDisplayFTRotation: () => (/* binding */ YHDisplayFTRotation),
 /* harmony export */   YHDisplayFTStretch: () => (/* binding */ YHDisplayFTStretch),
 /* harmony export */   YHDisplayFeature: () => (/* binding */ YHDisplayFeature),
 /* harmony export */   YHDisplayFeatureGModel: () => (/* binding */ YHDisplayFeatureGModel),
@@ -70315,6 +70660,44 @@ class YHDisplayFeatureRelation extends _NctiDisplayObject__WEBPACK_IMPORTED_MODU
     ReadVersion_1(stream) {
         this.m_pInputFeature = stream.readNumber();
         this.m_pOutFeature = stream.readNumber();
+    }
+}
+class YHDisplayFRRotation extends YHDisplayFeatureRelation {
+    get m_currentVer() { return 1; }
+    constructor() {
+        super();
+    }
+    restore_data(stream) {
+        super.restore_data(stream);
+        let localVer = stream.readNumber();
+        switch (this.GetReadVersion(localVer, YHDisplayFRRotation.prototype.m_currentVer)) {
+            case 1:
+                YHDisplayFRRotation.prototype.ReadVersion_1.call(this, stream);
+                break;
+            default:
+                break;
+        }
+    }
+    ReadVersion_1(stream) {
+    }
+}
+class YHDisplayFTRotation extends YHDisplayFeatureGModel {
+    get m_currentVer() { return 1; }
+    constructor() {
+        super();
+    }
+    restore_data(stream) {
+        super.restore_data(stream);
+        let localVer = stream.readNumber();
+        switch (this.GetReadVersion(localVer, YHDisplayFTRotation.prototype.m_currentVer)) {
+            case 1:
+                YHDisplayFTRotation.prototype.ReadVersion_1.call(this, stream);
+                break;
+            default:
+                break;
+        }
+    }
+    ReadVersion_1(stream) {
     }
 }
 class YHDisplayFRSketch extends YHDisplayFeatureRelation {

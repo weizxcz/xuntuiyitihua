@@ -15,7 +15,7 @@ from types import SimpleNamespace
 #   SDK_DLL_PATH = "C:/Program Files/NCTI/sdk"
 #
 # 留空则不启用 NCTI SDK 功能（仅用于测试 MCP 连接）
-DLL_PATH = "C:/Users/epro/Downloads/YHCAD/YHCAD_Setup_2026.1.0.57_Beta_Windows_x86-64"
+DLL_PATH = "C:/Users/epro/Downloads/YHCAD/YHCAD_Setup_2026.1.0.59_Beta_Windows_x86-64"
 
 # HTTP 服务器配置
 HTTP_PORT = 8310
