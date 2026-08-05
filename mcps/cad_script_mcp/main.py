@@ -269,7 +269,7 @@ def handle_request(request: dict) -> dict:
                                 },
                                 "need_yh": {
                                     "type": "boolean",
-                                    "description": "是否需要 YH 模块和 yh_doc 对象（草图脚本需要设为 true，建模脚本设为 false）",
+                                    "description": "是否需要 YH 模块（草图脚本设为 true，建模脚本设为 false）",
                                     "default": True
                                 }
                             },
@@ -292,7 +292,7 @@ def handle_request(request: dict) -> dict:
                                 },
                                 "need_yh": {
                                     "type": "boolean",
-                                    "description": "是否需要 YH 模块和 yh_doc 对象（草图脚本需要设为 true，建模脚本设为 false）",
+                                    "description": "是否需要 YH 模块（草图脚本设为 true，建模脚本设为 false）",
                                     "default": True
                                 }
                             },

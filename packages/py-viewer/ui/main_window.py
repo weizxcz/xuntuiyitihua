@@ -235,7 +235,7 @@ class MainWindow(wx.Frame):
             try:
                 global_scope = {
                     "NCTI": self.NCTI, "doc": self.doc,
-                    "YH": self.YH, "yh_doc": self.yh_doc,
+                    "YH": self.YH,
                     "print": print, "len": len, "str": str, "int": int,
                     "float": float, "list": list, "dict": dict, "tuple": tuple,
                 }

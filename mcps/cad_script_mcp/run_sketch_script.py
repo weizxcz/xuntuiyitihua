@@ -355,10 +355,9 @@ def run_script():
             "hasattr": hasattr, "getattr": getattr, "setattr": setattr,
         }}
 
-        # 如果需要 YH，添加到全局作用域
+        # 如果需要 YH，添加到全局作用域（但不注入 yh_doc，脚本自行创建）
         if need_yh and YH:
             global_scope["YH"] = YH
-            global_scope["yh_doc"] = yh_doc
 
         exec(script, global_scope)
 

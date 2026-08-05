@@ -15,13 +15,13 @@ def exec_script(
     此工具将脚本返回给 Frontend，由 Frontend 调用 MCP 执行并展示模型。
 
     使用场景：
-    - 草图脚本：need_yh 设为 true（需要 YH 模块和 yh_doc 对象）
+    - 草图脚本：need_yh 设为 true（需要 YH 模块）
     - 建模脚本：need_yh 设为 false（不需要 YH 模块）
 
     Args:
         script: The Python script content to execute.
         description: Description of what the script does.
-        need_yh: 是否需要 YH 模块和 yh_doc 对象（草图脚本需要设为 true，建模脚本设为 false）
+        need_yh: 是否需要 YH 模块（草图脚本设为 true，建模脚本设为 false）
 
     Returns:
         A dictionary with the script content and metadata.

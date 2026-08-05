@@ -34,8 +34,7 @@ allowed-tools:
 |------|------|------|
 | `NCTI` | module | NCTI Python 模块，提供点、向量、选择管理等基础功能 |
 | `doc` | NCTI.Document | NCTI 文档对象，用于打开/保存/下载 CAD 文件 |
-| `YH` | module | YH Python 模块，提供文档、草图工作平面等核心功能（需要时可用） |
-| `yh_doc` | YH.YHDocument | YH 文档对象，用于创建/打开草图、管理求解开关等（需要时可用） |
+| `YH` | module | YH Python 模块，提供文档、草图工作平面等核心功能（need_yh=true 时可用） |
 
 ### 脚本编写规则
 
@@ -59,7 +58,8 @@ doc.RunCommand("cmd_ncti_xxx", "obj_name", NCTI.Point(0, 0, 0), param1, param2)
 #### 草图脚本模板（need_yh: true）
 
 ```python
-# 草图初始化（如需要）
+# 草图初始化（需要自行创建 yh_doc）
+yh_doc = YH.YHDocument(doc)
 skt = yh_doc.GetActivitySketch()
 if skt is None:
   skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
@@ -69,7 +69,7 @@ circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
 line = skt.AddLine(NCTI.Point(-10, 0, 0), NCTI.Point(10, 0, 0))
 
 # 添加约束
-cons = skt.AddConsRadius(0, circle)
+cons = skt.AddConsRadius(circle)
 cons.EditSize(30.0)
 
 # 关闭草图
@@ -101,18 +101,6 @@ else :
     doc.Zoom()
 ```
 
-### 可选：文档级控制（草图脚本）
-
-如需关闭自动求解等文档级控制：
-
-```python
-yh_doc = YH.YHDocument(doc)
-yh_doc.AutoSolve(False)          # 关闭自动求解
-yh_doc.AutoCalFreeCons(False)    # 关闭自动弱约束
-yh_doc.AutoCalCloseArea(False)   # 关闭自动闭合区域计算
-# ... 绘图与约束编辑 ...
-skt.RunSolve()                   # 手动求解
-```
 
 ---
 
@@ -188,7 +176,7 @@ doc.RunCommand("cmd_ncti_xxx", "obj1", param1, param2)
 ## 注意事项
 
 1. **need_yh 参数设置**：
-   - `true`：草图脚本（需要 YH 模块和 yh_doc 对象）
+   - `true`：草图脚本（需要 YH 模块）
    - `false`：建模脚本（只使用 NCTI 模块）
 2. **脚本格式**：脚本是直接 `exec()` 执行的 Python 代码，不需要 `import` 或 `def main()`
 
@@ -213,7 +201,8 @@ exec_script(
 ### 示例 2：草图脚本执行
 
 ```python
-# 步骤 1：生成脚本
+# 步骤 1：生成脚本（需要自行创建 yh_doc）
+yh_doc = YH.YHDocument(doc)
 skt = yh_doc.GetActivitySketch()
 if skt is None:
   skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
@@ -223,7 +212,7 @@ skt.Close()
 
 # 步骤 2：执行（need_yh: true，因为使用 YH 模块）
 exec_script(
-    script="skt = yh_doc.GetActivitySketch()\nif skt is None:\n  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nskt.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nskt.Close()",
+    script="yh_doc = YH.YHDocument(doc)\nsk = yh_doc.GetActivitySketch()\nif skt is None:\n  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nsk.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nsk.Close()",
     description="创建一个半径为 20 的圆",
     need_yh=true
 )
