@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <!-- DeerFlow Java SDK 依赖配置 -->
+    <!-- 使用 Maven 安装依赖：mvn dependency:copy-dependencies -DoutputDirectory=libs -->
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.deerflow</groupId>
+    <artifactId>java-sdk</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>DeerFlow Java SDK</name>
+    <description>Java SDK for DeerFlow</description>
+
+    <dependencies>
+        <!-- OkHttp - HTTP 客户端 -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
+        </dependency>
+
+        <!-- Okio - OkHttp 的 IO 库（传递依赖） -->
+        <dependency>
+            <groupId>com.squareup.okio</groupId>
+            <artifactId>okio-jvm</artifactId>
+            <version>3.6.0</version>
+        </dependency>
+
+        <!-- Kotlin 标准库（Okio 的传递依赖） -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </repositories>
+</project>

@@ -21,6 +21,14 @@ allowed-tools:
 
 # 草图建模 Skill
 
+## ⚠️ **当前版本规避规则，优先级最高**
+
+**软件为测试版本，以下 API 有问题，生成脚本时避免使用：**
+
+1. **不要对约束对象使用编辑API** — 软件会崩溃退出
+
+---
+
 ## 概述
 
 本技能覆盖模型草图建模的完整工作流：
@@ -33,10 +41,9 @@ allowed-tools:
 
 > **入口类**：草图工作平面 `YH.SketchWorkPlane`、文档管理 `YH.YHDocument`。几何基元为 `NCTI.Point` / `NCTI.Vector`。
 > **无参方法禁用**：所有需要 GUI 手动选对象的无参重载（如 `AddLine()`、`AddCircle()`、`AddConsXpos()`、`AddConsParallel()` 等）agent 不可使用，只调用带显式参数的版本。
->**注意入参**：所有使调用的方法都要查看skill，使用准确的入参格式。
-> **⚠️ 强制命名规则**：**所有生成的对象（几何对象 + 约束对象）必须设置唯一名称**
+> **注意入参**：所有使调用的方法都要查看 skill，使用准确的入参格式。
+> **⚠️ 强制命名规则**：**所有生成的几何对象必须设置唯一名称**
 > - 几何对象创建后立即命名：`circle = skt.AddCircle(NCTI.Point(0,0,0), 10); circle.SetObjectName("circle_1")`
-> - 约束对象创建后立即命名：`cons = skt.AddConsRadius(circle); cons.SetObjectName("radius_cons_1")`
 > - 名称应语义化且唯一，便于后续通过 `GetObject("name")` 获取编辑
 > **⚠️ 返回值检查**：如果调用方法本该返回对象（如 `AddLine()`、`AddCircle()`、`AddConsRadius()` 等），但返回了 `None` / `init` / `0`，代表方法调用内部执行失败。此时应检查：
 > 1. 参数格式是否正确
@@ -232,10 +239,11 @@ yh_doc.AutoSolve(False)          # 关闭自动求解
 
 1. 先绘制几何对象并捕获返回值：`l1 = skt.AddLine(...)`
 2. 用对象变量添加约束并捕获约束变量：`cons1 = skt.AddConsLength(0, l1)`
-3. **立即为几何对象和约束对象设置唯一名称**：`l1.SetObjectName("line_1")`、`cons1.SetObjectName("length_cons_1")`
+3. **立即为几何对象设置唯一名称**：`l1.SetObjectName("line_1")`
 4. **⚠️ 禁止重复添加约束**：如果对象已添加过约束，**不能**再次添加相同类型的约束，必须通过名称获取已有约束对象进行编辑
-5. 需要时编辑约束：`cons1.EditSize(50.0)`；平行约束需先 `cons1.OpenSize()` 再 `EditSize`
-6. 组装并保存执行
+5. **⚠️ 最小化约束原则**：**只添加用户明确要求或设计必需的约束**。不要主动添加额外的约束（如对称、相等、水平/竖直等），除非用户明确说明象。草图应保持"刚好充分"的约束状态，避免过约束导致求解失败。
+6. 需要时编辑约束：`cons1.EditSize(50.0)`；平行约束需先 `cons1.OpenSize()` 再 `EditSize`
+7. 组装并保存执行
 
 **约束添加示例**：
 ```python
@@ -243,12 +251,9 @@ yh_doc.AutoSolve(False)          # 关闭自动求解
 circle = skt.AddCircle(NCTI.Point(0,0,0), 10)
 circle.SetObjectName("circle_1")
 cons = skt.AddConsRadius(circle)
-cons.SetObjectName("radius_cons_1")
-cons.EditSize(20)
 
 # ✅ 编辑已有约束：通过名称获取
-circle = skt.GetObject("circle_1")
-cons = skt.GetObject("radius_cons_1")  # 通过名称获取已有约束
+circle = skt.GetObject("circle_1") # 通过名称获取已有约束
 cons.EditSize(30)  # 修改半径
 
 # ❌ 错误：重复添加约束
@@ -297,10 +302,11 @@ cons.EditSize(20)                    # 通过约束修改半径
 ```
 
 **重要提示**：
-1. **必须**在创建对象时立即调用 `SetObjectName("unique_name")` 设置唯一名称（几何对象和约束对象都要命名）
+1. **必须**在创建对象时立即调用 `SetObjectName("unique_name")` 设置唯一名称
 2. 编辑对象时，使用 `GetObject("unique_name")` 按名称获取
 3. 对象名来自左侧对象树或鼠标悬停查看，不是变量名
 4. **圆没有 `EditRadius()` 方法**，修改半径需要通过 `AddConsRadius()` + `EditSize()` 实现
+5. **⚠️ 不要自动添加约束**：如果用户只是说"画一个圆"或"创建一个圆"，**只创建几何对象即可，不要添加半径约束**。只有当用户明确要求尺寸（如"半径为 10 的圆"）或后续需要编辑时才添加约束。不要在注释中写"以便后续编辑"而自动添加约束，除非用户明确要求。
 
 ### E. 修改已有脚本
 
@@ -350,34 +356,25 @@ skt.RunSolve()                   # 手动求解
 
 **草图脚本特点**：
 - 使用 `YH` 模块，脚本需要自行创建 `yh_doc` 对象
-- 设置 `need_yh: true`
-- **⚠️ 弱约束控制**：脚本开头必须调用 `yh_doc.InitPythonScritp(False)` 禁用软件自动弱约束，由脚本控制；脚本最后恢复 `yh_doc.InitPythonScritp(True)`
+- 设置 `need_yh: true``
 
 **标准脚本模板**：
 ```python
 # 自行创建 yh_doc（执行环境不再注入）
 yh_doc = YH.YHDocument(doc)
 
-# ⚠️ 禁用自动弱约束，由脚本控制
-yh_doc.InitPythonScritp(False)
-
-# ... 草图绘制与约束操作 ...
-
-# ⚠️ 脚本最后恢复自动弱约束
-yh_doc.InitPythonScritp(True)
-
+# ... 草图绘制 ...
 skt = yh_doc.GetActivitySketch()
 if None == skt:
     skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
-
+# 打开草图，如果草图已关闭
+#skt.Open()
 # 绘制几何
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
 line = skt.AddLine(NCTI.Point(-10, 0, 0), NCTI.Point(10, 0, 0))
 
-# 添加约束（注意：AddConsRadius 只传对象，不需要 index！）
-cons = skt.AddConsRadius(circle)  # ✅ 正确
-# cons = skt.AddConsRadius(0, circle)  # ❌ 错误！
-cons.EditSize(30.0)
+#如果用户明确要求关闭草图或者完成草图
+#skt.Close()
 ```
 
 ## 执行方式

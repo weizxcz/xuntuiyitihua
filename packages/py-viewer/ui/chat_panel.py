@@ -43,7 +43,7 @@ class AIChatPanel(wx.Panel):
         panel = wx.Panel(self.notebook)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # 聊天消息显示区域
+        # 聊天消息显示区域 - 使用 TextCtrl 支持富文本
         self.chat_log = wx.TextCtrl(
             panel,
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2
@@ -130,31 +130,51 @@ class AIChatPanel(wx.Panel):
             else:
                 self.append_message('tool', f"脚本执行成功:\n{output}")
 
-    def append_message(self, role: str, content: str):
+    def append_message(self, role: str, content: str, append: bool = False):
         """添加消息到聊天日志
 
         Args:
             role: 消息角色 (user/assistant/tool/error)
             content: 消息内容
+            append: 是否追加到上一条消息（用于流式输出）
         """
         def do_append():
-            style = wx.TextAttr()
-            if role == 'user':
-                style.SetBackgroundColour(wx.Colour(200, 220, 255))
-                msg = content
-            elif role == 'assistant':
-                style.SetBackgroundColour(wx.Colour(240, 240, 240))
-                msg = content  # 流式输出，不自动换行，由内容中的换行符控制
-            elif role == 'tool':
-                style.SetBackgroundColour(wx.Colour(220, 255, 220))
-                msg = f"\n[执行]: {content}"
-            elif role == 'error':
-                style.SetBackgroundColour(wx.Colour(255, 220, 220))
-                msg = f"\n[错误]: {content}"
-            else:
-                msg = content
+            # 定义颜色
+            colors = {
+                'user': (200, 220, 255),      # 浅蓝色
+                'assistant': (245, 245, 245), # 浅灰色
+                'tool': (220, 255, 220),      # 浅绿色
+                'error': (255, 220, 220),     # 浅红色
+            }
 
-            self.chat_log.AppendText(msg)
+            # 根据角色设置样式
+            bg_color = colors.get(role, (255, 255, 255))
+
+            # 设置样式
+            style = wx.TextAttr()
+            style.SetBackgroundColour(wx.Colour(*bg_color))
+            self.chat_log.SetStyle(0, 0, style)
+
+            # 如果是追加模式，直接追加内容；否则添加分隔符和新标签
+            if append:
+                self.chat_log.AppendText(content)
+            else:
+                # 添加消息分隔符
+                self.chat_log.AppendText("\n" + "=" * 40 + "\n")
+
+                # 添加消息内容
+                if role == 'user':
+                    self.chat_log.AppendText(f"你：{content}\n")
+                elif role == 'assistant':
+                    self.chat_log.AppendText(f"AI：{content}\n")
+                elif role == 'tool':
+                    self.chat_log.AppendText(f"工具：{content}\n")
+                elif role == 'error':
+                    self.chat_log.AppendText(f"错误：{content}\n")
+                else:
+                    self.chat_log.AppendText(f"{content}\n")
+
+            # 自动滚动到底部
             self.chat_log.ShowPosition(self.chat_log.GetLastPosition())
 
         wx.CallAfter(do_append)
@@ -242,7 +262,7 @@ class AIChatPanel(wx.Panel):
                             msg_type = msg_chunk.get('type')
                             msg_content = msg_chunk.get('content', '')
                             if msg_type == 'AIMessageChunk' and msg_content:
-                                self.append_message('assistant', msg_content)
+                                self.append_message('assistant', msg_content, append=True)
 
                 # messages-last 模式：解析工具事件并执行
                 if event_type == 'messages-last':

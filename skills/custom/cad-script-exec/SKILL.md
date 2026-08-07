@@ -40,7 +40,7 @@ allowed-tools:
 
 1. **不需要 import 语句** - `NCTI`、`YH`、`doc` 等已全局可用
 2. **不需要 `def main()`** - 直接执行代码
-3. **不需要 `doc.New()`/`doc.Open()`/`doc.Save()`** - MCP 会自动处理文档
+3. **不需要 `doc.New()`/`doc.Save()`** - MCP 会自动处理文档
 4. **不需要询问认为问题** - 按你的理解直接生成脚本
 5. **不需要询问用户参数** - 如果需要用户输入参数，在脚本中使用`doc.ReturnDialogData`
 6. **捕获返回值** - 几何对象和约束的返回值需要捕获，用于后续操作
@@ -60,20 +60,19 @@ doc.RunCommand("cmd_ncti_xxx", "obj_name", NCTI.Point(0, 0, 0), param1, param2)
 ```python
 # 草图初始化（需要自行创建 yh_doc）
 yh_doc = YH.YHDocument(doc)
+
 skt = yh_doc.GetActivitySketch()
 if skt is None:
   skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
+#打开草图，如果草图已关闭
+#skt.Open()
 # 绘制几何
-skt.Open()
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
 line = skt.AddLine(NCTI.Point(-10, 0, 0), NCTI.Point(10, 0, 0))
 
-# 添加约束
-cons = skt.AddConsRadius(circle)
-cons.EditSize(30.0)
 
-# 关闭草图
-skt.Close()
+# 关闭草图，如果用户强调关闭或者完成草图
+#skt.Close()
 ```
 
 #### 参数输入模板
@@ -208,11 +207,10 @@ if skt is None:
   skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 circle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)
-skt.Close()
 
 # 步骤 2：执行（need_yh: true，因为使用 YH 模块）
 exec_script(
-    script="yh_doc = YH.YHDocument(doc)\nsk = yh_doc.GetActivitySketch()\nif skt is None:\n  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nsk.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)\nsk.Close()",
+    script="yh_doc = YH.YHDocument(doc)\nskt = yh_doc.GetActivitySketch()\nif skt is None:\n  skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))\nskt.Open()\ncircle = skt.AddCircle(NCTI.Point(0, 0, 0), 20)",
     description="创建一个半径为 20 的圆",
     need_yh=true
 )

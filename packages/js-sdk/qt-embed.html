@@ -194,18 +194,15 @@
        * 设置 Qt 消息监听器
        */
       setupListener() {
-        if (window.IsCEFEngine) {
-          window.onMessage = (message) => {
-            console.log('[QtComm] 接收消息:', message);
-            this.handleMessage(message);
-          };
-        } else if (window.chrome?.webview) {
+        window.onMessage = (message) => {
+          console.log('[QtComm] 接收消息:', message);
+          this.handleMessage(message);
+        };
+        if (window.chrome?.webview) {
           window.chrome.webview.addEventListener('message', (event) => {
             console.log('[QtComm] 接收消息:', event.data);
             this.handleMessage(event.data);
           });
-        } else {
-          console.warn('[QtComm] 未检测到客户端环境');
         }
       }
 
@@ -505,7 +502,7 @@
       async ensureSdkInitialized() {
         if (this.client) return;
 
-        // 从 window 全局变量获取后端 URL，默认值为 http://172.16.34.129:8310
+        // 从 window 全局变量获取后端 URL，默认值为 http://172.16.37.164:8301
         const baseUrl = window.DEER_FLOW_BACKEND_BASE_URL || 'http://172.16.34.129:8301';
 
         this.client = new DeerFlowClient({ baseUrl, isDebug: true });
@@ -584,9 +581,8 @@
         try {
           for await (const event of stream) {
             if (this.isDebug) {
-              console.log('[QtEmbeddedClient] 收到事件:', event.type, event);
+              console.log('[QtEmbeddedClient] 收到事件:', event.type,event.data);
             }
-
             // 处理 messages-last 模式的事件
             if (event.type === 'messages-last' && event.data && event.data.messages) {
               const messages = event.data.messages;
@@ -596,9 +592,6 @@
                 // 提取内容
                 if (lastMsg.content) {
                   const newContent = typeof lastMsg.content === 'string' ? lastMsg.content : '';
-                  fullResponse += newContent;
-                  // 更新 AI 消息显示
-                  this.updateAIMessageDisplay(aiMessageId, fullResponse);
                 }
 
                 // 处理 tool_calls
