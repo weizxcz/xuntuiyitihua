@@ -40,6 +40,7 @@ def main():
 
         http_server = get_http_server(host=HTTP_SERVER_HOST, port=HTTP_SERVER_PORT)
         http_server.set_script_executor(frame.run_sketch_script_http)
+        http_server.set_status_callback(frame.capture_document_status)
         http_server.start(blocking=False)
         print(f"\nHTTP 服务器已启动：http://{http_server.get_real_host_ip()}:{HTTP_SERVER_PORT}")
         print(f"API 文档：http://{http_server.get_real_host_ip()}:{HTTP_SERVER_PORT}/")

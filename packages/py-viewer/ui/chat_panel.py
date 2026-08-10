@@ -124,11 +124,43 @@ class AIChatPanel(wx.Panel):
         """
         frame = self.GetTopLevelParent()
         if hasattr(frame, 'run_sketch_script'):
-            output, error = frame.run_sketch_script(script, description, show_error=False, output_callback=output_callback)
+            output, error, status = frame.run_sketch_script(script, description, show_error=False, output_callback=output_callback)
             if error:
                 self.append_message('error', f"脚本执行失败:\n{error}")
             else:
-                self.append_message('tool', f"脚本执行成功:\n{output}")
+                msg = f"脚本执行成功:\n{output}"
+                if status:
+                    msg += f"\n\n[文档状态]\n"
+                    msg += f"  对象总数：{status['document']['total_objects']}\n"
+                    msg += f"  对象名称：{status['document']['object_names']}\n"
+                    if status['modeling']['objects']:
+                        msg += f"  建模对象:\n"
+                        for obj in status['modeling']['objects']:
+                            msg += f"    - {obj['name']}: "
+                            if 'topology' in obj:
+                                topo = obj['topology']
+                                msg += f"顶点={topo.get('vertices', 0)}, 边={topo.get('edges', 0)}, 面={topo.get('faces', 0)}"
+                    if status['sketch']['is_open']:
+                        msg += f"\n  草图状态：已打开 [{status['sketch']['active_sketch']}]"
+                        if status['sketch']['geometry_list']:
+                            msg += f"\n    几何元素 ({len(status['sketch']['geometry_list'])} 个):"
+                            for geo in status['sketch']['geometry_list']:
+                                # 兼容不同的属性名
+                                geo_name = geo.get('name') or geo.get('ObjectName') or geo.get('ObjectName()') or '未知'
+                                geo_type = geo.get('type') or geo.get('ObjectType') or geo.get('ObjectType()') or '未知'
+                                msg += f"\n      - {geo_name} ({geo_type})"
+                        if status['sketch']['constraints_list']:
+                            msg += f"\n    约束 ({len(status['sketch']['constraints_list'])} 个):"
+                            for cons in status['sketch']['constraints_list']:
+                                # 兼容不同的属性名
+                                cons_name = cons.get('name') or cons.get('ObjectName') or cons.get('ObjectName()') or '未知'
+                                cons_type = cons.get('type') or cons.get('ObjectType') or cons.get('ObjectType()') or '未知'
+                                msg += f"\n      - {cons_name} ({cons_type})"
+                        if status['sketch']['is_solved']:
+                            msg += f" (已求解)"
+                        if status['sketch']['is_fully_constrained']:
+                            msg += f" (完全约束)"
+                self.append_message('tool', msg)
 
     def append_message(self, role: str, content: str, append: bool = False):
         """添加消息到聊天日志
@@ -347,7 +379,7 @@ class AIChatPanel(wx.Panel):
                 frame = self.GetTopLevelParent()
                 if hasattr(frame, 'run_sketch_script'):
                     # show_error=False 表示不弹窗，output_callback=None 表示不输出到面板
-                    output, error = frame.run_sketch_script(script, description, show_error=False, output_callback=None)
+                    output, error, status = frame.run_sketch_script(script, description, show_error=False, output_callback=None)
                     # 如果有 error，success 设为 False，让 AI 知道需要修正
                     if error:
                         result = {
@@ -360,14 +392,40 @@ class AIChatPanel(wx.Panel):
                             }
                         }
                     else:
+                        # 构建状态摘要
+                        status_summary = None
+                        if status:
+                            status_summary = {
+                                'document': {
+                                    'total_objects': status['document']['total_objects'],
+                                    'object_names': status['document']['object_names']
+                                }
+                            }
+                            # 建模对象
+                            if status['modeling']['objects']:
+                                status_summary['modeling'] = {'objects': status['modeling']['objects']}
+                            # 草图对象（始终包含，即使为空也显示状态）
+                            status_summary['sketch'] = {
+                                'is_open': status['sketch']['is_open'],
+                                'active_sketch': status['sketch']['active_sketch'],
+                                'geometry_count': len(status['sketch']['geometry_list']),
+                                'geometry_list': status['sketch']['geometry_list'],
+                                'constraints_count': len(status['sketch']['constraints_list']),
+                                'constraints_list': status['sketch']['constraints_list'],
+                                'is_solved': status['sketch']['is_solved'],
+                                'is_fully_constrained': status['sketch']['is_fully_constrained']
+                            }
+
                         result = {
                             'success': True,
                             'result': {
                                 'output': output,
                                 'error': error,
-                                'description': description
+                                'description': description,
+                                'status': status_summary
                             }
                         }
+                        self.append_message('tool', f"状态摘要:\n{status_summary}")
             except Exception as e:
                 result = {'success': False, 'error': str(e)}
             finally:

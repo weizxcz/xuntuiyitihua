@@ -15,6 +15,7 @@ class HTTPServer:
         self.host = host
         self.port = port
         self.script_executor: Optional[Callable[[str, str], tuple]] = None
+        self.status_callback: Optional[Callable[[], dict]] = None
         self._server_thread: Optional[Any] = None
         self._running = False
 
@@ -22,10 +23,19 @@ class HTTPServer:
         """设置脚本执行回调函数
 
         Args:
-            executor: 执行函数，签名 (script: str, description: str) -> (output: str, error: str)
+            executor: 执行函数，签名 (script: str, description: str) -> (output: str, error: str, status: dict)
         """
         self.script_executor = executor
         logger.info("脚本执行器已设置")
+
+    def set_status_callback(self, callback: Callable[[], dict]):
+        """设置状态获取回调函数
+
+        Args:
+            callback: 状态获取函数，签名 () -> dict
+        """
+        self.status_callback = callback
+        logger.info("状态获取回调已设置")
 
     def get_real_host_ip(self) -> str:
         """获取真实的本机 IP 地址"""
@@ -88,17 +98,19 @@ class HTTPServer:
                     output: 输出内容
                     error: 错误信息
                     description: 脚本描述
+                    status: 文档状态（执行成功后返回）
                 """
                 if not self.script_executor:
                     raise HTTPException(status_code=500, detail="脚本执行器未配置")
 
                 try:
-                    output, error = self.script_executor(request.script, request.description)
+                    output, error, status = self.script_executor(request.script, request.description)
                     return {
                         "success": not error,
                         "output": output,
                         "error": error,
-                        "description": request.description
+                        "description": request.description,
+                        "status": status
                     }
                 except Exception as e:
                     logger.exception("脚本执行失败")
@@ -106,8 +118,22 @@ class HTTPServer:
                         "success": False,
                         "output": "",
                         "error": str(e),
-                        "description": request.description
+                        "description": request.description,
+                        "status": None
                     }
+
+            @app.get("/api/status")
+            async def get_status():
+                """获取当前文档状态"""
+                if not self.status_callback:
+                    raise HTTPException(status_code=500, detail="状态获取回调未配置")
+
+                try:
+                    status = self.status_callback()
+                    return status
+                except Exception as e:
+                    logger.exception("获取状态失败")
+                    raise HTTPException(status_code=500, detail=str(e))
 
             @app.get("/")
             async def root():
@@ -117,7 +143,8 @@ class HTTPServer:
                     "version": "1.0.0",
                     "endpoints": {
                         "GET /health": "健康检查",
-                        "POST /api/execute": "执行脚本"
+                        "POST /api/execute": "执行脚本",
+                        "GET /api/status": "获取文档状态"
                     },
                     "example_request": 'Body: {"script": "...", "description": "..."}'
                 }
