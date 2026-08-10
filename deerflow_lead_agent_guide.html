@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DeerFlow Lead Agent 全流程深度解析</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1d2130; --line:#2a2f3e;
+    --txt:#e6e9f0; --muted:#9aa3b2; --accent:#5b8cff; --accent2:#37d6a8;
+    --warn:#ffb454; --pink:#ff7eb6; --code:#0b0e14; --green:#37d6a8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 120px}
+  header.hero{background:linear-gradient(135deg,#1b2440,#241b3f);border:1px solid var(--line);
+    border-radius:18px;padding:36px 32px;margin-bottom:32px}
+  header.hero h1{margin:0 0 8px;font-size:30px;letter-spacing:.5px}
+  header.hero p{margin:6px 0;color:var(--muted)}
+  .tag{display:inline-block;background:#22304f;color:#aecbff;border:1px solid #2f4878;
+    border-radius:999px;padding:3px 12px;font-size:12px;margin:4px 6px 0 0}
+  h2{margin-top:48px;padding-bottom:8px;border-bottom:2px solid var(--line);
+    font-size:23px;color:#fff}
+  h2 .num{color:var(--accent);font-weight:700;margin-right:10px}
+  h3{margin-top:30px;color:#cfe0ff;font-size:18px}
+  h4{margin-top:20px;color:var(--accent2);font-size:15px}
+  p{color:#d4d9e4}
+  code{background:var(--code);border:1px solid var(--line);border-radius:6px;
+    padding:1px 6px;font-family:"JetBrains Mono",Consolas,monospace;font-size:13px;color:#ffd9a0}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;overflow:auto;font-size:13px;line-height:1.6;
+    font-family:"JetBrains Mono",Consolas,monospace;color:#d7e2ff}
+  pre .k{color:#ff9d6e} pre .s{color:#9be3a0} pre .c{color:#6b7488}
+  pre .f{color:#7fb4ff} pre .t{color:#ff7eb6}
+  .note{background:#1a2233;border-left:3px solid var(--accent);border-radius:8px;
+    padding:12px 16px;margin:16px 0;color:#c7d2e8;font-size:14px}
+  .warn{border-left-color:var(--warn);background:#2a2418}
+  .ok{border-left-color:var(--green);background:#16271f}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card h4{margin-top:0}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:#cfe0ff}
+  td code{font-size:12px}
+  .flow{display:flex;flex-direction:column;gap:0;margin:22px 0}
+  .step{display:flex;gap:14px;align-items:flex-start}
+  .step .dot{flex:0 0 34px;height:34px;border-radius:50%;background:var(--panel2);
+    border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;
+    justify-content:center;font-weight:700;margin-top:2px}
+  .step .body{flex:1;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:14px 18px;margin-bottom:14px}
+  .step .body h4{margin:0 0 4px;color:#fff}
+  .mw{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:16px 0}
+  .mw .item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .mw .item b{color:var(--accent2)}
+  .mw .item .ord{color:var(--warn);font-size:12px;font-weight:700}
+  .seq{font-family:"JetBrains Mono",monospace;font-size:13px;background:#12161f;
+    border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0;color:#bcd}
+  .seq .hl{color:var(--accent2)}
+  .seq .hl2{color:var(--pink)}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:18px 22px;margin:28px 0}
+  .toc a{display:block;padding:4px 0;color:#c7d2e8}
+  .toc a:hover{color:var(--accent)}
+  .pill{display:inline-block;background:#221a2e;border:1px solid #4a2f63;color:#e0b3ff;
+    border-radius:6px;padding:1px 8px;font-size:12px;margin-left:6px}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px}
+  .file{color:#8fb8ff;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>DeerFlow Lead Agent 全流程深度解析</h1>
+  <p>基于官方文档 <code>deerflow.tech/zh/docs/harness/lead-agent</code> 与 <code>backend/</code> 真实源码</p>
+  <p>覆盖：整体架构 · 中间件注入与调用顺序 · 入参 · 出参 · 状态流转 · 思考/计划模式</p>
+  <div>
+    <span class="tag">LangGraph</span>
+    <span class="tag">LangChain AgentMiddleware</span>
+    <span class="tag">ReAct Loop</span>
+    <span class="tag">SSE 流式</span>
+    <span class="tag">StreamBridge</span>
+    <span class="tag">ThreadState</span>
+  </div>
+</header>
+
+<div class="toc">
+  <b style="color:#fff">目录</b>
+  <a href="#overview">一、整体架构与定位</a>
+  <a href="#entry">二、入口：HTTP 网关与 Run 生命周期</a>
+  <a href="#state">三、ThreadState：Graph 的状态（Schema）</a>
+  <a href="#build">四、中间件链的构建（build_middlewares）</a>
+  <a href="#mwref">五、各中间件职责速查表</a>
+  <a href="#hooks">五·附、中间件触发钩子对照表（before_agent / before_model / wrap_model_call）</a>
+  <a href="#order">六、中间件的"包裹"调用顺序（本/逆序）</a>
+  <a href="#loop">七、核心 ReAct 循环与模型调用</a>
+  <a href="#model">八、模型解析与思考/计划模式</a>
+  <a href="#in">九、入参详解（RunCreateRequest + context）</a>
+  <a href="#out">十、出参详解（SSE 事件流）</a>
+  <a href="#full">十一、一次完整请求的端到端时序</a>
+</div>
+
+<!-- ============ 一 ============ -->
+<h2 id="overview"><span class="num">01</span>整体架构与定位</h2>
+<p>
+DeerFlow 的 Lead Agent 是一个基于 <b>LangGraph + LangChain</b> 的 ReAct 风格 Agent。它不再是手写 <code>while</code> 循环，
+而是用 LangChain 的 <code>create_agent</code> 预构建 ReAct 图，并通过 LangChain 的 <b>AgentMiddleware</b> 机制把"横切关注点"
+（总结、标题、记忆、待办、澄清、图片查看等）以<strong>中间件链</strong>的方式注入到模型调用前后。
+</p>
+<div class="note">
+<strong>核心分层（从外到内）：</strong><br/>
+1. <b>HTTP 网关</b>（FastAPI，<code>app/gateway/routers/thread_runs.py</code>）—— 接收 Run 请求、鉴权、起 Run、把 Graph 事件转成 SSE。<br/>
+2. <b>RunManager / StreamBridge</b>（<code>packages/harness/deerflow/runtime/</code>）—— Run 元数据管理 + 事件总线，解耦生产者（Agent worker）与消费者（SSE endpoint）。<br/>
+3. <b>Lead Agent 图</b>（<code>packages/harness/deerflow/agents/lead_agent/agent.py</code>）—— <code>create_agent(...)</code> 构建的 ReAct 图，挂中间件、工具、system prompt、<code>state_schema=ThreadState</code>。<br/>
+4. <b>Middleware 链</b>（<code>packages/harness/deerflow/agents/middlewares/</code>，26 个文件）—— 包裹模型调用的前置/后置钩子。<br/>
+5. <b>Tools & Model</b> —— 工具集（搜索、代码执行、浏览器、文件、子代理等）与 LLM（<code>create_chat_model</code>）。
+</div>
+
+<!-- ============ 二 ============ -->
+<h2 id="entry"><span class="num">02</span>入口：HTTP 网关与 Run 生命周期</h2>
+<p>DeerFlow 的 API 兼容 LangGraph Platform 协议，前端用 <code>useStream</code> React Hook 消费。关键路由在
+<span class="file">app/gateway/routers/thread_runs.py</span>：</p>
+<table>
+<tr><th>路由</th><th>方法</th><th>作用</th><th>返回</th></tr>
+<tr><td><code>POST /api/threads/{thread_id}/runs/stream</code></td><td>POST</td><td>建 Run 并<strong>流式</strong>返回（主要交互方式）</td><td><code>StreamingResponse</code> (SSE)</td></tr>
+<tr><td><code>POST /api/threads/{thread_id}/runs/wait</code></td><td>POST</td><td>建 Run 并阻塞到结束，返回最终 state</td><td>JSON（最终 channel values）</td></tr>
+<tr><td><code>GET /api/threads/{thread_id}/runs/{run_id}/join</code></td><td>GET</td><td>加入一个<strong>已存在</strong> Run 的 SSE 流（多端同步）</td><td><code>StreamingResponse</code></td></tr>
+<tr><td><code>POST .../runs/{run_id}/cancel</code></td><td>POST</td><td>取消 Run（<code>interrupt</code> / <code>rollback</code>）</td><td>204 / 202</td></tr>
+</table>
+<pre><span class="c"># app/gateway/routers/thread_runs.py:422</span>
+<span class="k">async def</span> <span class="f">stream_run</span>(thread_id, body: RunCreateRequest, request):
+    bridge   = <span class="f">get_stream_bridge</span>(request)
+    run_mgr  = <span class="f">get_run_manager</span>(request)
+    record   = <span class="k">await</span> <span class="f">start_run</span>(body, thread_id, request)      <span class="c"># 创建 RunRecord + 解析 context → RunnableConfig</span>
+    <span class="k">return</span> StreamingResponse(
+        <span class="f">sse_consumer</span>(bridge, record, request, run_mgr),  <span class="c"># 消费 StreamBridge 事件 → SSE</span>
+        media_type=<span class="s">"text/event-stream"</span>,
+        headers={<span class="s">"Content-Location"</span>: <span class="s">f"/api/threads/{thread_id}/runs/{record.run_id}"</span>},
+    )</pre>
+<div class="note ok">
+<strong>关键设计：</strong>网关并不"直接跑 Agent"。它调用 <code>start_run(...)</code> 把 Run 交给后台 worker（生产者），
+worker 把 Graph 产生的事件 <code>publish</code> 到 <code>StreamBridge</code>；<code>sse_consumer</code> 作为消费者订阅同一 <code>run_id</code> 的事件流。
+这实现了 <b>生产者/消费者解耦</b>，并天然支持多端 <code>join</code> 同一 Run、断线重连（<code>Last-Event-ID</code>）。
+</div>
+
+<!-- ============ 三 ============ -->
+<h2 id="state"><span class="num">03</span>ThreadState：Graph 的状态（Schema）</h2>
+<p>Graph 的 state 用 <code>ThreadState</code>（继承 LangChain <code>AgentState</code>）定义，文件
+<span class="file">packages/harness/deerflow/agents/thread_state.py:111</span>。它决定了中间件与节点能读写哪些字段：</p>
+<pre><span class="k">class</span> <span class="t">ThreadState</span>(AgentState):
+    sandbox:        SandboxStateField            <span class="c"># 沙箱 id（有 merge reducer，幂等写）</span>
+    thread_data:    NotRequired[ThreadDataState|None]  <span class="c"># workspace / uploads / outputs 路径</span>
+    title:          NotRequired[str|None]        <span class="c"># 会话标题（TitleMiddleware 写）</span>
+    artifacts:      Annotated[list[str], merge_artifacts]        <span class="c"># 产出物（去重合并）</span>
+    todos:          Annotated[list|None, merge_todos]            <span class="c"># 待办（TodoMiddleware 写）</span>
+    uploaded_files: NotRequired[list[dict]|None]
+    viewed_images:  Annotated[dict[str, ViewedImageData], merge_viewed_images] <span class="c"># 图片(base64)</span>
+    promoted:       Annotated[PromotedTools|None, merge_promoted] <span class="c"># 延迟工具提升</span></pre>
+<div class="note">
+<strong>Reducer 的含义（很重要）：</strong>LangGraph state 在多节点并发更新时靠 reducer 合并。
+<ul style="margin:6px 0">
+<li><code>merge_artifacts</code>：列表追加 + 去重（保留顺序）。</li>
+<li><code>merge_viewed_images</code>：字典合并；<b>空 <code>{}</code> 表示清空</b>（中间件处理完图片后可清掉，避免回灌给模型）。</li>
+<li><code>merge_todos</code>：最后一次非 None 的写覆盖（None 表示"本节点没动"，保留旧值）。</li>
+<li><code>merge_sandbox</code>：幂等，多个沙箱工具同一 step 写同一 id 才允许；冲突则报错。</li>
+</ul>
+<code>AgentState</code> 本身已带 <code>messages: Annotated[list[BaseMessage], add_messages]</code>，这是主对话历史通道。
+</div>
+
+<!-- ============ 四 ============ -->
+<h2 id="build"><span class="num">04</span>中间件链的构建（build_middlewares）</h2>
+<p>所有中间件在 <code>_make_lead_agent</code> 内通过 <code>build_middlewares(...)</code> 组装，再传给 <code>create_agent(middleware=...)</code>。
+文件 <span class="file">agents/lead_agent/agent.py:270</span>。</p>
+<pre><span class="c"># agents/lead_agent/agent.py:534（默认 Lead Agent 构建）</span>
+<span class="k">return</span> <span class="f">create_agent</span>(
+    model=create_chat_model(name=model_name,
+                            thinking_enabled=thinking_enabled,
+                            reasoning_effort=reasoning_effort,
+                            app_config=...),
+    tools=final_tools,                          <span class="c"># 工具集（按 skill 过滤 + 延迟工具）</span>
+    middleware=<span class="f">build_middlewares</span>(                  <span class="c"># ★ 中间件链在这里注入 ★</span>
+        config, model_name=model_name, agent_name=agent_name,
+        available_skills=available_skills, app_config=..., deferred_setup=setup,
+    ),
+    system_prompt=<span class="f">apply_prompt_template</span>(...),
+    state_schema=ThreadState,
+)</pre>
+<p><code>build_middlewares</code> 按<strong>确定顺序</strong> append（顺序直接影响 before/after 的包裹层级）：</p>
+<pre><span class="c"># agents/lead_agent/agent.py:300-391（节选）</span>
+middlewares = build_lead_runtime_middlewares(app_config=..., lazy_init=True)
+middlewares.append(DynamicContextMiddleware(...))   <span class="c"># 注入日期/记忆到首条 HumanMessage</span>
+middlewares.append(SkillActivationMiddleware(...))  <span class="c"># /skill-name 显式激活</span>
+<span class="k">if</span> summarization:   middlewares.append(SummarizationMiddleware(...))
+<span class="k">if</span> is_plan_mode:    middlewares.append(TodoMiddleware(...))   <span class="c"># 仅在计划模式</span>
+<span class="k">if</span> token_usage:     middlewares.append(TokenUsageMiddleware())
+middlewares.append(TitleMiddleware(...))            <span class="c"># 首轮后生成标题</span>
+middlewares.append(MemoryMiddleware(...))           <span class="c"># 排队记忆更新</span>
+<span class="k">if</span> supports_vision: middlewares.append(ViewImageMiddleware(...))
+<span class="k">if</span> deferred:        middlewares.append(DeferredToolFilterMiddleware(...))
+middlewares.append(SystemMessageCoalescingMiddleware()) <span class="c"># 合并 SystemMessage</span>
+<span class="k">if</span> subagent:        middlewares.append(SubagentLimitMiddleware(...))
+<span class="k">if</span> loop_detection:  middlewares.append(LoopDetectionMiddleware(...))
+<span class="k">if</span> token_budget:    middlewares.append(TokenBudgetMiddleware(...))
+<span class="k">if</span> custom:          middlewares.extend(custom_middlewares)   <span class="c"># 自定义注入（在 Clarification 之前）</span>
+<span class="k">if</span> safety:          middlewares.append(SafetyFinishReasonMiddleware(...))
+middlewares.append(ClarificationMiddleware())      <span class="c"># 永远是最后一个</span></pre>
+
+<!-- ============ 五 ============ -->
+<h2 id="mwref"><span class="num">05</span>各中间件职责速查表</h2>
+<div class="mw">
+  <div class="item"><span class="ord">1</span> <b>DynamicContextMiddleware</b><br/>把当前日期/记忆作为 <code>&lt;system-reminder&gt;</code> 注入首条 HumanMessage，保持 system prompt 静态以复用前缀缓存。</div>
+  <div class="item"><span class="ord">2</span> <b>SkillActivationMiddleware</b><br/>用户以 <code>/skill-name</code> 开头时加载完整 SKILL.md。</div>
+  <div class="item"><span class="ord">3</span> <b>SummarizationMiddleware</b><br/>消息超阈值时压缩历史为摘要，触发前可把记忆刷盘（memory_flush_hook）。</div>
+  <div class="item"><span class="ord">4</span> <b>TodoMiddleware</b><br/><b>仅计划模式</b>：注入 <code>write_todos</code> 工具，管理结构化待办（plan）。</div>
+  <div class="item"><span class="ord">5</span> <b>TokenUsageMiddleware</b><br/>统计 token / LLM 调用次数（lead/子代理/中间件维度）。</div>
+  <div class="item"><span class="ord">6</span> <b>TitleMiddleware</b><br/>首轮完整对话后生成会话标题，写入 <code>state["title"]</code>。</div>
+  <div class="item"><span class="ord">7</span> <b>MemoryMiddleware</b><br/>把对话排队，供记忆模块异步更新长期记忆。</div>
+  <div class="item"><span class="ord">8</span> <b>ViewImageMiddleware</b><br/><b>仅视觉模型</b>：把图片路径转 base64 填入 <code>viewed_images</code>。</div>
+  <div class="item"><span class="ord">9</span> <b>DeferredToolFilterMiddleware</b><br/>隐藏延迟工具 schema，直到 tool_search 提升。</div>
+  <div class="item"><span class="ord">10</span> <b>SystemMessageCoalescingMiddleware</b><br/>把多个 SystemMessage 合并成开头一个（兼容严格后端）。</div>
+  <div class="item"><span class="ord">11</span> <b>SubagentLimitMiddleware</b><br/>截断超额并行任务调用。</div>
+  <div class="item"><span class="ord">12</span> <b>LoopDetectionMiddleware</b><br/>检测并打断重复工具调用死循环。</div>
+  <div class="item"><span class="ord">13</span> <b>TokenBudgetMiddleware</b><br/>强制执行单 Run token 上限。</div>
+  <div class="item"><span class="ord">14</span> <b>SafetyFinishReasonMiddleware</b><br/>模型被安全终止时清除 tool_calls，避免误执行工具。</div>
+  <div class="item"><span class="ord">15</span> <b>ClarificationMiddleware</b><br/><b>永远最后</b>：模型需要澄清时拦截，向用户反问而非空转。</div>
+</div>
+
+<!-- ============ 五·附 ============ -->
+<h2 id="hooks">中间件触发钩子对照表（before_agent / before_model / wrap_model_call）</h2>
+<p>上一节的速查表只讲了"中间件干什么"，这一节讲清"中间件在 ReAct 循环的<strong>哪个钩子</strong>被触发"。
+理解这一点很关键：<strong>同一个中间件链，不同中间件挂的钩子不同，触发时机也不同</strong>——有的在整个 Agent 循环启动前只跑一次，有的在每轮模型调用前都跑，有的直接改写发给模型的请求 payload。</p>
+
+<div class="note">
+<strong>三个钩子的语义区分（来自 LangChain <code>AgentMiddleware</code>）：</strong><br/>
+• <code>before_agent(state, runtime)</code>：<b>整个 ReAct 循环开始前</b>触发一次（每轮 Run 一次）。适合"准备性"工作，如注入日期/记忆。<br/>
+• <code>before_model(state, runtime)</code>：<b>每一轮 LLM 推理之前</b>触发（循环里可能跑很多次）。适合"上下文裁剪/压缩/工具过滤"等需要每轮判断的工作。<br/>
+• <code>after_model(state, runtime, result)</code>：<b>每轮 LLM 推理之后、工具执行之前</b>触发。适合"读模型输出、生成标题/todo、反问澄清"。<br/>
+• <code>wrap_model_call(fn, ...)</code>：<b>包裹整次模型调用</b>，能直接改写 <code>request</code>（system_message / messages）和 <code>response</code>。适合"请求级格式调整"，且<strong>不修改持久化 state</strong>。<br/>
+注意：<code>before_agent</code> / <code>before_model</code> / <code>after_model</code> 的返回值会写回 state；<code>wrap_model_call</code> 只在请求 payload 上做手脚，不动 checkpoint。
+</div>
+
+<h3 style="color:#cfe0ff;font-size:17px;margin-top:24px">1. 完整钩子对照表</h3>
+<table>
+<thead>
+<tr><th>中间件（文件）</th><th>构建顺序</th><th>触发钩子</th><th>触发时机</th><th>典型动作</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DynamicContextMiddleware</code></td><td>#1</td><td><b>before_agent</b></td><td>每轮 Run 循环开始前一次</td><td>注入"当前日期 + 记忆"三元组（首次注入后冻结为前缀缓存，跨午夜只补日期）</td></tr>
+<tr><td><code>MemoryMiddleware</code></td><td>#2</td><td>after_agent</td><td>循环结束后</td><td>把本轮对话写入长期记忆</td></tr>
+<tr><td><code>SummarizationMiddleware</code></td><td>#3</td><td><b>before_model</b></td><td>每轮模型调用前</td><td>token 超阈值时生成摘要、清空旧历史、保留最近 keep 条；附带 skill 救援</td></tr>
+<tr><td><code>TokenBudgetMiddleware</code></td><td>#4</td><td>before_agent + after_agent</td><td>循环开始 / 结束后各一次</td><td>单 Run token 硬预算检查，超限熔断</td></tr>
+<tr><td><code>LoopDetectionMiddleware</code></td><td>#5</td><td>before_agent + after_agent</td><td>循环开始 / 结束后各一次</td><td>检测"模型反复调同一工具"的死循环并打断</td></tr>
+<tr><td><code>SubagentLimitMiddleware</code></td><td>#6</td><td>before_model</td><td>每轮模型调用前</td><td>限制并发子 agent 数量</td></tr>
+<tr><td><code>SkillActivationMiddleware</code></td><td>#7</td><td>before_model</td><td>每轮模型调用前</td><td>按需激活 skill 并把 skill 上下文注入</td></tr>
+<tr><td><code>ViewImageMiddleware</code></td><td>#8</td><td>before_model</td><td>每轮模型调用前</td><td>仅当模型为视觉模型时，把图片 URL 转成可识别内容</td></tr>
+<tr><td><code>DeferredToolFilterMiddleware</code></td><td>#9</td><td>before_model</td><td>每轮模型调用前</td><td>按状态延迟隐藏/显示工具（如未就绪的工具先不可见）</td></tr>
+<tr><td><code>SystemMessageCoalescingMiddleware</code></td><td>#10</td><td><b>wrap_model_call</b></td><td>每次模型调用（包裹请求 payload）</td><td>把散落的多个 SystemMessage（静态 prompt + 动态提醒 + 午夜日期）合并成一个 leading 系统消息；去重跨午夜重复日期；<strong>不碰 UserMessage</strong></td></tr>
+<tr><td><code>ToolOutputBudgetMiddleware</code></td><td>#11</td><td>wrap_model_call</td><td>每次模型调用</td><td>截断超长工具输出，防止单条结果撑爆上下文</td></tr>
+<tr><td><code>TokenUsageMiddleware</code></td><td>#12</td><td>after_agent</td><td>循环结束后</td><td>统计 token 用量并上报 tracing</td></tr>
+<tr><td><code>TitleMiddleware</code></td><td>#13</td><td>after_model</td><td>每轮模型调用后</td><td>生成/刷新对话标题</td></tr>
+<tr><td><code>TodoMiddleware</code></td><td>#14</td><td>after_model + wrap_model_call</td><td>每轮模型调用后 / 包裹请求</td><td>仅计划模式：解析模型输出写 Todo 列表；通过 wrap_model_call 注入 completion reminder</td></tr>
+<tr><td><code>SafetyFinishReasonMiddleware</code></td><td>#15</td><td>after_model</td><td>每轮模型调用后</td><td>清掉被厂商安全策略截断残留的 tool_calls，防止误执行</td></tr>
+<tr><td><code>ClarificationMiddleware</code></td><td>#16（永远最后）</td><td>after_model</td><td>每轮模型调用后（最先逆序执行）</td><td>模型输出模糊时反问澄清；挂最后以保证其 after_model 逆序最先跑</td></tr>
+</tbody>
+</table>
+
+<h3 style="color:#cfe0ff;font-size:17px;margin-top:24px">2. 关键观察与易混点</h3>
+<div class="grid">
+  <div class="card">
+    <h4>① 两类"准备型"钩子的区别</h4>
+    <p><code>DynamicContextMiddleware</code> 用 <code>before_agent</code>——它只在 Run 循环前注入一次，且刻意<strong>冻结为前缀缓存</strong>（同天不再动），目的是命中 LLM 的前缀缓存、省 token。
+    而 <code>SummarizationMiddleware</code> 用 <code>before_model</code>——它每轮都要重新算 token 判断是否该压。两者的"频率"差异正是性能取舍的结果。</p>
+  </div>
+  <div class="card">
+    <h4>② SystemMessage 合并在 wrap 层，不动 state</h4>
+    <p><code>SystemMessageCoalescingMiddleware</code> 挂的是 <code>wrap_model_call</code>，只在"发给模型的请求"上合并，<strong>不写回持久化 state</strong>。
+    所以负责扫历史的其它中间件（记忆、摘要）仍能按原始 marker 正常工作——这也是它和 <code>DynamicContextMiddleware</code>（后者改 state）的本质区别。</p>
+  </div>
+  <div class="card">
+    <h4>③ 熔断类都挂 before/after_agent</h4>
+    <p><code>TokenBudgetMiddleware</code>、<code>LoopDetectionMiddleware</code> 把检查放在 <code>before_agent</code>，保证"循环根本启动前"就判断是否放行；<code>after_agent</code> 再兜底统计。它们不进 <code>before_model</code> 是因为不需要每轮细粒度判断。</p>
+  </div>
+  <div class="card">
+    <h4>④ Clarification 为何永远最后</h4>
+    <p>列表最后追加，因此 <code>after_model</code> 逆序执行时它<strong>最先</strong>跑——保证"反问澄清"优先于标题、todo 等其它后处理。这体现"挂最后"是为了控制逆序优先级。</p>
+  </div>
+</div>
+
+<div class="note ok">
+<strong>一句话记忆：</strong>
+<code>before_agent</code> = 循环前准备（日期/记忆/熔断判门）；
+<code>before_model</code> = 每轮裁剪（压缩/工具过滤/子agent/视觉）；
+<code>after_model</code> = 每轮读输出（标题/todo/澄清/安全）；
+<code>wrap_model_call</code> = 请求级格式改写（合并 SystemMessage / 截断工具输出），且<strong>不落盘 state</strong>。
+</div>
+
+<!-- ============ 六 ============ -->
+<h2 id="order"><span class="num">06</span>中间件的"包裹"调用顺序（本/逆序）</h2>
+<p>LangChain 的 <code>AgentMiddleware</code> 把每个中间件看成"包裹"模型调用的一层。每轮模型调用时：</p>
+<ul>
+<li><b>before_model（前缀处理）</b>：按列表<strong>正序</strong>由外到内执行（#1 → #15）。</li>
+<li><b>调用 LLM</b>。</li>
+<li><b>after_model（后缀处理）</b>：按列表<strong>逆序</strong>由内到外执行（#15 → #1）。</li>
+</ul>
+<div class="seq">
+<span class="hl">before</span>  #1 DynamicContext → #2 Skill → ... → #14 Safety → <span class="hl2">#15 Clarification</span>   <span class="c">[外层先]</span>
+        │
+        ▼  <span class="k">★ LLM CALL ★</span>   （模型产出 AIMessage / ToolCall）
+        │
+<span class="hl">after</span>   <span class="hl2">#15 Clarification</span> → #14 Safety → ... → #2 Skill → #1 DynamicContext  <span class="c">[内层先]</span>
+</div>
+<div class="note">
+<strong>钩子方法（你能在源码看到的）：</strong>
+<ul style="margin:6px 0">
+<li><code>before_model(state, runtime) → dict | None</code>：在 LLM 调用前修改 messages / 注入上下文。</li>
+<li><code>after_model(state, runtime) → dict | None</code>：在 LLM 返回后写回 state（如 <code>title</code>、<code>todos</code>）。</li>
+<li>异步版 <code>abefore_model</code> / <code>aafter_model</code>。</li>
+<li>部分中间件还有更细的钩子，如 Summarization 的 <code>before_summarization</code> hook、ToolErrorHandling 的 <code>before_model</code> 转换工具异常为 ToolMessage。</li>
+</ul>
+例如 <code>TitleMiddleware.after_model</code>（title_middleware.py:188）仅在满足"首轮对话已完成且无标题"时生成标题：
+<pre style="margin-top:8px"><span class="c"># title_middleware.py</span>
+<span class="k">def</span> <span class="f">after_model</span>(self, state, runtime):
+    <span class="k">return</span> self._generate_title_result(state)
+<span class="c"># _should_generate_title: 有 &gt;=1 条 human + &gt;=1 条 ai 且 state 还没 title</span></pre>
+</div>
+
+<!-- ============ 七 ============ -->
+<h2 id="loop"><span class="num">07</span>核心 ReAct 循环与模型调用</h2>
+<p><code>create_agent</code>（LangChain 预构建）内部维护标准 ReAct 循环：</p>
+<div class="flow">
+  <div class="step"><div class="dot">1</div><div class="body"><h4>接收输入</h4>Graph 输入 <code>{messages:[HumanMessage(...)]}</code>，与 checkpoint 中的历史合并。</div></div>
+  <div class="step"><div class="dot">2</div><div class="body"><h4>各中间件 before_model</h4>依次注入上下文、激活 skill、压缩历史、注入待办工具、合并 SystemMessage 等。</div></div>
+  <div class="step"><div class="dot">3</div><div class="body"><h4>LLM 推理</h4>模型基于 messages + tools 产出 <code>AIMessageChunk</code>（流式）或 <code>AIMessage</code>（带 <code>tool_calls</code>）。思考模型会先吐 <code>&lt;think&gt;</code> 段（UI 可隐藏）。</div></div>
+  <div class="step"><div class="dot">4</div><div class="body"><h4>各中间件 after_model</h4>逆序执行：Clarification 拦截反问、Safety 清 tool_calls、Title 写标题、Memory 排队……</div></div>
+  <div class="step"><div class="dot">5</div><div class="body"><h4>若有 tool_calls → 执行工具</h4>LangGraph 把工具结果作为 <code>ToolMessage</code> 追加，回到步骤 2（LoopDetection / TokenBudget 在此兜底）。</div></div>
+  <div class="step"><div class="dot">6</div><div class="body"><h4>若没有 tool_calls → 结束</h4>产出最终 AI 回复，Graph 进入 END，StreamBridge 发 <code>end</code> 事件。</div></div>
+</div>
+<div class="note">
+<strong>LoopDetection / TokenBudget / SafetyFinishReason</strong> 都作用在"模型决定调工具"这一刻：
+LoopDetection 打断重复调用、TokenBudget 超预算强制终止、SafetyFinishReason 在供应商安全终止响应时把 <code>tool_calls</code> 清空，避免后续误执行。
+</div>
+
+<!-- ============ 八 ============ -->
+<h2 id="model"><span class="num">08</span>模型解析与思考/计划模式</h2>
+<p>模型名解析优先级（<span class="file">agent.py:429-455</span>）：</p>
+<pre><span class="c"># _make_lead_agent</span>
+cfg = _get_runtime_config(config)
+requested_model_name = cfg.get(<span class="s">"model_name"</span>) <span class="k">or</span> cfg.get(<span class="s">"model"</span>)
+agent_model_name     = agent_config.model <span class="k">if</span> agent_config <span class="k">and</span> agent_config.model <span class="k">else</span> None
+<span class="c"># 优先级：请求 model_name → agent 配置 model → 全局默认（并带未知名 fallback）</span>
+model_name = _resolve_model_name(requested_model_name <span class="k">or</span> agent_model_name, app_config=...)</pre>
+<table>
+<tr><th>模式 / 标志</th><th>来源</th><th>作用</th></tr>
+<tr><td><code>thinking_enabled</code></td><td>context 或 config</td><td>是否开启推理思考。若模型不支持思考则自动降级（<code>agent.py:453</code> 打 warning 并关掉）。</td></tr>
+<tr><td><code>reasoning_effort</code></td><td>context 或 config</td><td>推理强度（传给 <code>create_chat_model</code>）。</td></tr>
+<tr><td><code>is_plan_mode</code></td><td>context 或 config</td><td>为 True 时<strong>才注入 TodoMiddleware</strong>（<code>agent.py:320</code>），启用 <code>write_todos</code> 工具。</td></tr>
+<tr><td><code>subagent_enabled</code> / <code>max_concurrent_subagents</code></td><td>config</td><td>开启子代理并注入 SubagentLimitMiddleware。</td></tr>
+</table>
+<div class="note ok">思考模式、计划模式都不是硬编码在 Agent 里的，而是<strong>从 RunnableConfig 读出来</strong>再决定是否挂载对应中间件 / 是否开启模型 thinking。这意味着同一份 Agent 代码，靠入参即可切换行为。</div>
+
+<!-- ============ 九 ============ -->
+<h2 id="in"><span class="num">09</span>入参详解（RunCreateRequest + context）</h2>
+<p>前端调用 <code>POST /api/threads/{thread_id}/runs/stream</code>，body 是 <code>RunCreateRequest</code>
+（<span class="file">thread_runs.py:58</span>）。关键字段：</p>
+<table>
+<tr><th>字段</th><th>类型</th><th>说明</th></tr>
+<tr><td><code>input</code></td><td><code>dict | None</code></td><td>Graph 输入，通常是 <code>{"messages": [{"role":"user","content":"..."}]}</code>。</td></tr>
+<tr><td><code>context</code></td><td><code>dict | None</code></td><td><b>DeerFlow 扩展</b>：覆盖模型/思考/计划，如 <code>{"model_name":..., "thinking_enabled":..., "is_plan_mode":..., "reasoning_effort":...}</code>。被 <code>start_run</code> 解析进 <code>RunnableConfig["configurable"]</code>。</td></tr>
+<tr><td><code>config</code></td><td><code>dict | None</code></td><td>LangGraph <code>RunnableConfig</code> 覆盖（tags / callbacks / recursion_limit 等）。</td></tr>
+<tr><td><code>command</code></td><td><code>dict | None</code></td><td>LangGraph <code>Command</code>（如 <code>Command(resume=...)</code> 恢复中断）。</td></tr>
+<tr><td><code>stream_mode</code></td><td><code>list[str] | str | None</code></td><td>事件流模式：<code>messages</code> / <code>updates</code> / <code>events</code> / <code>values</code> / <code>debug</code>（传给 Graph 的 <code>astream</code>）。</td></tr>
+<tr><td><code>assistant_id</code></td><td><code>str | None</code></td><td>用哪个 agent / assistant。</td></tr>
+<tr><td><code>checkpoint_id</code></td><td><code>str | None</code></td><td>从指定 checkpoint 恢复。</td></tr>
+<tr><td><code>stream_subgraphs</code></td><td><code>bool</code></td><td>是否包含子图（子代理）事件。</td></tr>
+<tr><td><code>multitask_strategy</code></td><td><code>Literal</code></td><td>并发策略：<code>reject/rollback/interrupt/enqueue</code>。</td></tr>
+<tr><td><code>metadata</code></td><td><code>dict | None</code></td><td>Run 元数据（最终会进 LangSmith trace tag）。</td></tr>
+</table>
+<div class="note">
+<strong>context → config 的流转：</strong><code>start_run</code> 把 <code>context</code> 中的键合并进 <code>RunnableConfig["configurable"]</code>，
+随后 <code>_get_runtime_config(config)</code> 从 <code>configurable</code> 读出 <code>model_name / thinking_enabled / is_plan_mode / subagent_enabled ...</code>，
+<code>_make_lead_agent</code> 据此解析模型、挂载中间件。这就是"入参如何驱动中间件注入"的桥梁。
+</div>
+
+<!-- ============ 十 ============ -->
+<h2 id="out"><span class="num">10</span>出参详解（SSE 事件流）</h2>
+<p>出参是 <strong>SSE（Server-Sent Events）</strong>，由 <code>StreamBridge</code>（<span class="file">runtime/stream_bridge/base.py</span>）统一承载。
+生产者 worker 调 <code>bridge.publish(run_id, event, data)</code>，消费者 <code>sse_consumer</code> 用 <code>bridge.subscribe(run_id)</code> 读事件转成 SSE。</p>
+<pre><span class="c"># runtime/stream_bridge/base.py:16</span>
+<span class="k">@dataclass</span>
+<span class="k">class</span> <span class="t">StreamEvent</span>:
+    id:   str    <span class="c"># 单调递增，用作 SSE "id:" → 支持 Last-Event-ID 重连</span>
+    event: str   <span class="c"># SSE 事件名：metadata / updates / events / error / end ...</span>
+    data: Any    <span class="c"># JSON 可序列化负载</span></pre>
+<p>SSE 报文格式（对齐 LangGraph Platform，前端 <code>useStream</code> 直接消费）：</p>
+<pre><span class="k">event</span>: metadata
+<span class="k">id</span>: 1
+<span class="k">data</span>: {<span class="s">"run_id"</span>:<span class="s">"..."</span>, <span class="s">"thread_id"</span>:<span class="s">"..."</span>}
+
+<span class="k">event</span>: messages          <span class="c"># stream_mode=messages：逐 token 的 AI 输出</span>
+<span class="k">data</span>: {<span class="s">"content"</span>:<span class="s">"你"</span>}
+
+<span class="k">event</span>: events            <span class="c"># 自定义业务事件（phase / plan / title / tool_call / artifact...）</span>
+<span class="k">data</span>: {<span class="s">"type"</span>:<span class="s">"title"</span>, <span class="s">"title"</span>:<span class="s">"如何做X"</span>}
+
+<span class="k">event</span>: updates           <span class="c"># stream_mode=updates：节点/中间件回写的 state 增量</span>
+<span class="k">data</span>: {<span class="s">"title"</span>:<span class="s">"如何做X"</span>, <span class="s">"todos"</span>:[...]}
+
+<span class="k">event</span>: end
+<span class="k">data</span>: {<span class="s">"type"</span>:<span class="s">"end"</span>}</pre>
+<table>
+<tr><th>事件名</th><th>含义</th><th>典型 data</th></tr>
+<tr><td><code>metadata</code></td><td>Run 元信息（run_id、thread_id）</td><td>Run 元数据</td></tr>
+<tr><td><code>messages</code></td><td>LLM 流式文本增量</td><td>增量 <code>AIMessageChunk</code></td></tr>
+<tr><td><code>events</code></td><td>DeerFlow 自定义业务事件</td><td><code>phase / plan / title / artifact / tool_call</code> 等</td></tr>
+<tr><td><code>updates</code></td><td>Graph state 增量（中间件/节点写回）</td><td>如 <code>title</code>、<code>todos</code>、<code>artifacts</code></td></tr>
+<tr><td><code>error</code></td><td>运行期错误</td><td>错误信息</td></tr>
+<tr><td><code>end</code></td><td>流结束（END_SENTINEL 映射）</td><td><code>{"type":"end"}</code></td></tr>
+</table>
+<div class="note">
+<strong>HEARTBEAT / END 哨兵：</strong><code>StreamBridge</code> 定义 <code>HEARTBEAT_SENTINEL</code>（空闲 15s 发心跳保活）和 <code>END_SENTINEL</code>（生产者 <code>publish_end</code> 后发出）。
+<code>sse_consumer</code> 把这两个 sentinel 翻译成 SSE 的 <code>event: __heartbeat__</code> 与 <code>event: end</code>。
+</div>
+<div class="note ok"><strong>隐藏/控制消息：</strong>网关在序列化前会过滤 <code>_is_hidden_or_control_message</code> 的消息（type=<code>remove</code>、name=<code>summary</code>、带 <code>hide_from_ui</code> 的消息），保证 UI 不会看到摘要占位、内部控制消息等。</div>
+
+<!-- ============ 十一 ============ -->
+<h2 id="full"><span class="num">11</span>一次完整请求的端到端时序</h2>
+<pre class="seq">
+<span class="hl">用户/前端</span> ──POST /runs/stream {input, context:{model,thinking,plan}}──▶ <span class="hl">网关</span>
+   │                                                                   │
+   │                                                          start_run()
+   │                                                          context → RunnableConfig
+   │                                                          创建 RunRecord(thread_id)
+   │                                                                   │
+   │                                          ┌────────────────────────┴───────────────┐
+   │                                          │ <span class="hl2">后台 Worker（生产者）</span>                          │
+   │                                          │  make_lead_agent(config)                │
+   │                                          │   └ build_middlewares() → 中间件链       │
+   │                                          │  graph.astream(input, config,           │
+   │                                          │        stream_mode=[messages,events,..])│
+   │                                          │                                         │
+   │                                          │   ReAct loop:                           │
+   │                                          │    before_mw(#1→#15) → LLM →            │
+   │                                          │    after_mw(#15→#1, 写 title/todos/...)  │
+   │                                          │    → 执行 tools → 回到 loop             │
+   │                                          │    → END                                │
+   │                                          │                                         │
+   │                                          │   bridge.publish(run_id, event, data)   │
+   │                                          └────────────────────────┬───────────────┘
+   │                                                                   │
+   │                              <span class="hl">StreamBridge（事件总线）</span> ◀──────────────┘
+   │                                                                   │
+<span class="hl">SSE 流</span> ◀── sse_consumer 订阅 run_id ───────────────────────────────────┘
+   event: metadata → messages(token) → events(plan/title) →
+   updates(title/todos) → end
+</pre>
+<div class="note">
+<strong>一句话总结全流程：</strong>前端用 <code>RunCreateRequest</code>（含 <code>context</code>）发起 SSE Run；网关把 <code>context</code> 解析进
+<code>RunnableConfig</code> 并起后台 Worker；Worker 用 <code>create_agent</code> 构建带 <code>ThreadState</code> 与完整中间件链的 ReAct 图；
+每轮模型调用被 15 个中间件按"正序 before / 逆序 after"包裹；模型产出的 token、业务事件、state 增量都被
+<code>StreamBridge.publish</code> 出去，经 <code>sse_consumer</code> 转成 SSE 回给前端；无 tool_calls 时进入 END，发 <code>end</code> 事件。
+</div>
+
+<footer>
+  本文档根据官方文档 <code>deerflow.tech/zh/docs/harness/lead-agent</code> 与仓库
+  <code>backend/</code> 真实源码（<code>agents/lead_agent/agent.py</code>、<code>agents/thread_state.py</code>、
+  <code>agents/middlewares/*.py</code>、<code>runtime/stream_bridge/base.py</code>、<code>app/gateway/routers/thread_runs.py</code>）整理。
+  行号与函数名以当前代码为准，版本更新后可能略有差异。
+</footer>
+
+</div>
+</body>
+</html>

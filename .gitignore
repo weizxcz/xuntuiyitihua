@@ -1,75 +1,70 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 wheels/
-*.egg-info
-.coverage
-.coverage.*
-.ruff_cache
-agent_history.gif
-static/browser_history/*.gif
-
-log/
-log/*
-
-# Virtual environments
-.venv
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
 venv/
+env/
+ENV/
 
-# User config file
-config.yaml
+# Node / frontend
+node_modules/
+dist/
+build/
+.cache/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Langgraph
-.langgraph_api
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 
-# Sandbox runtime working dir — pre-created and excluded from uvicorn reload
-# (scripts/serve.sh, docker/dev-entrypoint.sh). Anchored so it does not match
-# the source package backend/packages/harness/deerflow/sandbox/.
-/sandbox/
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Claude Code settings
-.claude/settings.local.json
-
-# .deer-flow runtime state (JWT secret, database, sessions)
-# — NOT versioned, except custom agent configs under agents/sketch-agent.
-# NOTE: must ignore directory *contents* (/**) not the directory itself, so the
-# negation (!) rules below can re-include files. Ignoring the bare dir would
-# short-circuit git and skip the negation checks entirely.
-backend/.deer-flow/**
-!backend/.deer-flow/users/
-backend/.deer-flow/users/**
-!backend/.deer-flow/users/*/
-backend/.deer-flow/users/*/**
-!backend/.deer-flow/users/*/agents/
-backend/.deer-flow/users/*/agents/**
-!backend/.deer-flow/users/*/agents/sketch-modeling-agent/
-!backend/.deer-flow/users/*/agents/sketch-modeling-agent/**
-logs/
-
-# --- Local / personal secrets & runtime artifacts (NOT versioned) ---
-# Keep the *.example templates tracked, but never the filled-in configs.
+# Env / secrets
 .env
 .env.*
 !.env.example
-extensions_config.json
+*.local
 
-# Temp/build directories produced by the dev toolchain
-temp/
-pr-build/
-docs/pr-evidence/
+# Logs
+*.log
 
-# Personal study notes (not part of the project)
-docs/notes/
+# Generated screenshots / docs temp (keep the guide html)
+doc/_shoot*.py
+doc/_auto*.py
 
-# OS / editor noise
-.DS_Store
-Thumbs.db
-users
-.vscode
-.claude
-
-mcps/**/storage
-mcps/**/uv.lock
-**/node_modules
+# Model weights / large binaries
+*.onnx
+*.pt
+*.pth
+*.bin
+weights/
