@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ModelViewerPanel } from "@/components/workspace/artifacts/model-viewer";
 import { CodeEditor } from "@/components/workspace/code-editor";
 import { useArtifactContent } from "@/core/artifacts/hooks";
 import {
@@ -87,6 +88,17 @@ export function ArtifactFileDetail({
   const isSkillFile = useMemo(() => {
     return filepath.endsWith(".skill");
   }, [filepath]);
+  const isScriptFile = useMemo(() => {
+    return filepath.startsWith("script:");
+  }, [filepath]);
+  const isExecScript = useMemo(() => {
+    return filepath.startsWith("http");
+  }, [filepath]);
+  const isModelFile = useMemo(() => {
+    // 提取 URL 路径部分（去掉查询参数）
+    const path = filepath?.split("?")[0] ?? "";
+    return path.endsWith(".yha") || path.endsWith(".yhp");
+  }, [filepath]);
   const { isCodeFile, language } = useMemo(() => {
     if (isWriteFile) {
       let language = checkCodeFile(filepath).language;
@@ -97,8 +109,16 @@ export function ArtifactFileDetail({
     if (isSkillFile) {
       return { isCodeFile: true, language: "markdown" };
     }
+    // Script files are Python code
+    if (isScriptFile) {
+      return { isCodeFile: true, language: "python" };
+    }
+    // Model files are not code files - they are 3D model files
+    if (isModelFile) {
+      return { isCodeFile: false, language: "model" };
+    }
     return checkCodeFile(filepath);
-  }, [filepath, isWriteFile, isSkillFile]);
+  }, [filepath, isWriteFile, isSkillFile, isScriptFile, isModelFile]);
   const canPreviewInBrowser = useMemo(() => {
     return canBrowserPreviewFile(filepath);
   }, [filepath]);
@@ -121,13 +141,21 @@ export function ArtifactFileDetail({
     isSupportPreview,
     toolResult,
   });
+  // 脚本文件从 localStorage 读取内容
+  const scriptContent = useMemo(() => {
+    if (isScriptFile) {
+      return sessionStorage.getItem(filepathFromProps) ?? "";
+    }
+    return undefined;
+  }, [isScriptFile, filepathFromProps]);
+
   const { content, url } = useArtifactContent({
     threadId,
     filepath: filepathFromProps,
-    enabled: isCodeFile && !isWriteFile,
+    enabled: isCodeFile && !isWriteFile && !isScriptFile,
   });
 
-  const displayContent = content ?? "";
+  const displayContent = scriptContent ?? content ?? "";
   const isWritingFile = isWriteFile && toolResult === undefined;
   const visibleContent = useThrottledValue(
     displayContent,
@@ -169,8 +197,8 @@ export function ArtifactFileDetail({
       <ArtifactHeader className="px-2">
         <div className="flex items-center gap-2">
           <ArtifactTitle>
-            {isWriteFile ? (
-              <div className="px-2">{getFileName(filepath)}</div>
+            {isWriteFile || isModelFile || isExecScript || isScriptFile ? (
+              <div className="px-2">{isScriptFile ? "脚本代码" : isExecScript ? "3D 模型" : getFileName(filepath)}</div>
             ) : (
               <Select value={filepath} onValueChange={select}>
                 <SelectTrigger className="border-none bg-transparent! shadow-none select-none focus:outline-0 active:outline-0">
@@ -247,7 +275,7 @@ export function ArtifactFileDetail({
               <ArtifactAction
                 icon={CopyIcon}
                 label={t.clipboard.copyToClipboard}
-                disabled={!content}
+                disabled={!visibleContent}
                 onClick={() => {
                   void (async () => {
                     const didCopy = await writeTextToClipboard(
@@ -319,11 +347,17 @@ export function ArtifactFileDetail({
             src={urlOfArtifact({ filepath, threadId, isMock })}
           />
         )}
-        {!isCodeFile && !canPreviewInBrowser && (
+        {!isCodeFile && !canPreviewInBrowser && !isModelFile && !isExecScript && (
           <ArtifactDownloadFallback
             filepath={filepath}
             threadId={threadId}
             isMock={isMock}
+          />
+        )}
+        {/* Model 3D Model Viewer with toolbar */}
+        {(isModelFile || isExecScript) && (
+          <ModelViewerPanel
+            modelUrl={filepath}
           />
         )}
       </ArtifactContent>

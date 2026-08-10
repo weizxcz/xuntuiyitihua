@@ -43,7 +43,7 @@ cons1 = skt.GetObject("constraint_name")
 ### 1. 水平尺寸约束 (SketchConsXPos)
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 cons1 = skt.AddConsXpos(0, a1, 1, a1)
 
@@ -57,7 +57,7 @@ print(cons1.ConsData())                     # 获取关联对象列表
 ### 2. 竖直尺寸约束 (SketchConsYPos)
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 cons1 = skt.AddConsYpos(0, a1, 1, a1)
 cons1.EditSize(60)
@@ -66,7 +66,7 @@ cons1.EditSize(60)
 ### 3. 长度尺寸约束 (SketchConsLength)
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(20, 0, 0))
 cons1 = skt.AddConsLength(0, l1)
 cons1.EditSize(50)        # 修改长度为 50
@@ -76,7 +76,7 @@ print(cons1.Size())
 ### 4. 半径尺寸约束 (SketchConsRadius)
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 cons1 = skt.AddConsRadius(c1)
 cons1.EditSize(60)        # 修改半径约束值为 60
@@ -85,7 +85,7 @@ cons1.EditSize(60)        # 修改半径约束值为 60
 ### 5. 角度尺寸约束 (SketchConsAngle)
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 line1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(10, 10, 0))
 angle1 = skt.AddConsAngle(line1, skt.GetXAxis())   # line1 与 X 轴的夹角
 angle1.EditSize(60)                                 # 修改角度为 60°
@@ -107,7 +107,7 @@ print(angle1.Size())
 | `.ConsData()` | — | 获取关联对象列表 |
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(5, 5, 0), NCTI.Point(15, 15, 0))
 a2 = skt.AddLine(NCTI.Point(20, 5, 0), NCTI.Point(20, 15, 0))
 cons1 = skt.AddConsParallel(a1, a2)
@@ -132,7 +132,7 @@ cons1.CloseSize()                             # 关闭尺寸编辑功能
 
 垂直约束查询：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 l1 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(10, 20, 0))
 l2 = skt.AddLine(NCTI.Point(0, 0, 0), NCTI.Point(-20, 20, 0))
 cons1 = skt.AddConsVertical(l1, l2)
@@ -142,7 +142,7 @@ print(cons1.ConsData())
 
 相切约束查询：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 c1 = skt.AddCircle(NCTI.Point(0, 0, 0), 10)
 l1 = skt.AddLine(NCTI.Point(10, 30, 0), NCTI.Point(40, 20, 0))
 cons1 = skt.AddConsTangent(c1, l1)
@@ -152,7 +152,7 @@ print(cons1.ConsData())
 
 相等约束查询：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 a2 = skt.AddLine(NCTI.Point(21, 20, 0), NCTI.Point(40, 10, 0))
 cons1 = skt.AddConsEqual(a1, a2)
@@ -162,7 +162,7 @@ print(cons1.ConsData())
 
 水平约束查询：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 cons1 = skt.AddConsXAxis(a1)
 print(cons1.ObjectName())
@@ -171,7 +171,7 @@ print(cons1.ConsData())
 
 竖直约束查询：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 cons1 = skt.AddConsYAxis(a1)
 print(cons1.ObjectName())
@@ -180,7 +180,7 @@ print(cons1.ConsData())
 
 重合约束查询：
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 a1 = skt.AddLine(NCTI.Point(10, 10, 0), NCTI.Point(20, 20, 0))
 a2 = skt.AddLine(NCTI.Point(21, 20, 0), NCTI.Point(30, 10, 0))
 cons1 = skt.AddConsCoincide(1, a1, 0, a2)
@@ -214,7 +214,7 @@ print(cons1.ConsData())
 **示例：绘制直线 → 添加长度约束 → 编辑约束值 → 查询**
 
 ```python
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 # 绘制直线
@@ -237,7 +237,7 @@ skt.Close()
 
 ```python
 yh_doc = YH.YHDocument(doc)
-skt = YH.SketchWorkPlane(doc)
+skt = YH.SketchWorkPlane(doc, NCTI.Vector(0, 0, 0), NCTI.Vector(1, 0, 0), NCTI.Vector(0, 1, 0))
 skt.Open()
 
 yh_doc.AutoSolve(False)        # 关闭自动求解，便于观察编辑效果

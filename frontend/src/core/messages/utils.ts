@@ -14,6 +14,10 @@ interface AssistantMessageGroup extends GenericMessageGroup<"assistant"> {}
 
 interface AssistantPresentFilesGroup extends GenericMessageGroup<"assistant:present-files"> {}
 
+interface AssistantPresentModelGroup extends GenericMessageGroup<"assistant:present-model"> {}
+
+interface AssistantExecScriptGroup extends GenericMessageGroup<"assistant:exec-script"> {}
+
 interface AssistantClarificationGroup extends GenericMessageGroup<"assistant:clarification"> {}
 
 interface AssistantSubagentGroup extends GenericMessageGroup<"assistant:subagent"> {}
@@ -23,6 +27,8 @@ export type MessageGroup =
   | AssistantProcessingGroup
   | AssistantMessageGroup
   | AssistantPresentFilesGroup
+  | AssistantPresentModelGroup
+  | AssistantExecScriptGroup
   | AssistantClarificationGroup
   | AssistantSubagentGroup;
 
@@ -94,6 +100,18 @@ export function getMessageGroups(messages: Message[]): MessageGroup[] {
         groups.push({
           id: message.id,
           type: "assistant:present-files",
+          messages: [message],
+        });
+      } else if (hasPresentModel(message)) {
+        groups.push({
+          id: message.id,
+          type: "assistant:present-model",
+          messages: [message],
+        });
+      } else if (hasExecScript(message)) {
+        groups.push({
+          id: message.id,
+          type: "assistant:exec-script",
           messages: [message],
         });
       } else if (hasSubagent(message)) {
@@ -436,6 +454,13 @@ export function hasPresentFiles(message: Message) {
   );
 }
 
+export function hasPresentModel(message: Message) {
+  return (
+    message.type === "ai" &&
+    message.tool_calls?.some((toolCall) => toolCall.name === "present_model")
+  );
+}
+
 export function isClarificationToolMessage(message: Message) {
   return message.type === "tool" && message.name === "ask_clarification";
 }
@@ -463,6 +488,27 @@ export function hasSubagent(message: AIMessage) {
     }
   }
   return false;
+}
+
+export function hasExecScript(message: Message) {
+  return (
+    message.type === "ai" &&
+    message.tool_calls?.some((toolCall) => toolCall.name === "exec_script")
+  );
+}
+
+export function extractExecScriptFromMessage(message: Message) {
+  if (message.type !== "ai" || !hasExecScript(message)) {
+    return null;
+  }
+  const toolCall = message.tool_calls?.find((tc) => tc.name === "exec_script");
+  if (!toolCall) return null;
+
+  return {
+    script: toolCall.args.script as string,
+    description: toolCall.args.description as string | undefined,
+    need_yh: toolCall.args.need_yh as boolean | undefined,
+  };
 }
 
 export function findToolCallResult(toolCallId: string, messages: Message[]) {

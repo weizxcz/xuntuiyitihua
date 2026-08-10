@@ -18,6 +18,9 @@ export default async function RootLayout({
   const locale = await detectLocaleServer();
   return (
     <html lang={locale} suppressContentEditableWarning suppressHydrationWarning>
+      <head>
+        <script src="/nctiwebengine/index.js" defer />
+      </head>
       <body>
         <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
           <I18nProvider initialLocale={locale}>{children}</I18nProvider>

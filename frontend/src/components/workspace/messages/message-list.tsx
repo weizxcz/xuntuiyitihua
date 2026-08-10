@@ -3,6 +3,7 @@ import type { BaseStream } from "@langchain/langgraph-sdk/react";
 import { ChevronUpIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useArtifacts } from "@/components/workspace/artifacts/context";
 import {
   Conversation,
   ConversationContent,
@@ -12,6 +13,15 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getCadScriptMcpBaseURL } from "@/core/config";
 import { useI18n } from "@/core/i18n/hooks";
 import {
   buildTokenDebugSteps,
@@ -19,6 +29,7 @@ import {
 } from "@/core/messages/usage-model";
 import {
   extractContentFromMessage,
+  extractExecScriptFromMessage,
   extractPresentFilesFromMessage,
   extractTextFromMessage,
   getAssistantTurnCopyData,
@@ -26,7 +37,9 @@ import {
   getMessageGroups,
   getStreamingMessageLookup,
   hasContent,
+  hasExecScript,
   hasPresentFiles,
+  hasPresentModel,
   hasReasoning,
   isAssistantMessageGroupStreaming,
 } from "@/core/messages/utils";
@@ -41,6 +54,7 @@ import type { AgentThreadState } from "@/core/threads";
 import { cn } from "@/lib/utils";
 
 import { ArtifactFileList } from "../artifacts/artifact-file-list";
+import { ModelViewerPanel } from "../artifacts/model-viewer";
 import { CopyButton } from "../copy-button";
 import { StreamingIndicator } from "../streaming-indicator";
 import { Tooltip } from "../tooltip";
@@ -191,6 +205,7 @@ export function MessageList({
   canRegenerate?: boolean;
 }) {
   const { t } = useI18n();
+  const { autoOpen, autoSelect, select, setOpen } = useArtifacts();
   const [turnStartTime, setTurnStartTime] = useState<number | null>(null);
   const prevIsLoading = useRef(thread.isLoading);
 
@@ -249,6 +264,31 @@ export function MessageList({
     }
     return null;
   }, [groupedMessages, thread.isLoading]);
+
+  // Auto-open model file when present_model tool is called
+  useEffect(() => {
+    if (!thread.isLoading || !autoOpen || !autoSelect) {
+      return;
+    }
+    // Find the last present-model group
+    for (let i = groupedMessages.length - 1; i >= 0; i--) {
+      const group = groupedMessages[i];
+      if (group?.type === "assistant:present-model") {
+        const aiMessage = group.messages[0];
+        if (
+          aiMessage?.type === "ai" &&
+          aiMessage.tool_calls?.[0]?.args?.filepath
+        ) {
+          const filepath = aiMessage.tool_calls[0].args.filepath as string;
+          setTimeout(() => {
+            select(filepath, true);
+            setOpen(true);
+          }, 100);
+        }
+        break;
+      }
+    }
+  }, [thread.isLoading, groupedMessages, autoOpen, autoSelect, select, setOpen]);
 
   const renderAssistantActions = useCallback(
     (
@@ -470,6 +510,63 @@ export function MessageList({
                 })}
               </div>
             );
+          } else if (group.type === "assistant:present-model") {
+            const models: string[] = [];
+            for (const message of group.messages) {
+              if (hasPresentModel(message) && message.type === "ai") {
+                const filepath = message.tool_calls?.[0]?.args?.filepath;
+                if (filepath) {
+                  models.push(filepath as string);
+                }
+              }
+            }
+            return (
+              <div className="w-full" key={group.id}>
+                {group.messages[0] && hasContent(group.messages[0]) && (
+                  <MarkdownContent
+                    content={extractContentFromMessage(group.messages[0])}
+                    isLoading={thread.isLoading}
+                    rehypePlugins={rehypePlugins}
+                    className="mb-4"
+                  />
+                )}
+                <ArtifactFileList files={models} threadId={threadId} isModel={true} />
+                {renderTokenUsage({
+                  messages: group.messages,
+                  turnUsageMessages,
+                })}
+              </div>
+            );
+          } else if (group.type === "assistant:exec-script") {
+            const firstMessage = group.messages[0];
+            const execScriptInfo = firstMessage ? extractExecScriptFromMessage(firstMessage) : null;
+            if (!execScriptInfo) return null;
+
+            // 获取 exec_script 工具调用的 tool_call_id 作为唯一标识
+            const toolCallId = firstMessage?.tool_calls?.find((tc) => tc.name === "exec_script")?.id;
+
+            return (
+              <div className="w-full" key={group.id}>
+                {firstMessage && hasContent(firstMessage) && (
+                  <MarkdownContent
+                    content={extractContentFromMessage(firstMessage)}
+                    isLoading={thread.isLoading}
+                    rehypePlugins={rehypePlugins}
+                    className="mb-4"
+                  />
+                )}
+                <ExecScriptCard
+                  threadId={threadId}
+                  toolCallId={toolCallId}
+                  script={execScriptInfo.script}
+                  needYh={execScriptInfo.need_yh ?? true}
+                />
+                {renderTokenUsage({
+                  messages: group.messages,
+                  turnUsageMessages,
+                })}
+              </div>
+            );
           } else if (group.type === "assistant:subagent") {
             const tasks = new Set<Subtask>();
             for (const message of group.messages) {
@@ -600,5 +697,193 @@ export function MessageList({
         <div style={{ height: `${paddingBottom}px` }} />
       </ConversationContent>
     </Conversation>
+  );
+}
+
+// 执行脚本卡片组件
+function ExecScriptCard({
+  threadId,
+  toolCallId,
+  script,
+  needYh,
+}: {
+  threadId: string;
+  toolCallId?: string;
+  script: string;
+  needYh: boolean;
+}) {
+  const { select: selectArtifact, setOpen: setArtifactsOpen, setArtifacts } = useArtifacts();
+  const [status, setStatus] = useState<"idle" | "executing" | "success" | "failed">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  // 使用唯一的虚拟文件路径来存储脚本代码
+  const scriptArtifactPath = useMemo(() =>
+    `script:${threadId}:${toolCallId ?? Date.now()}.py`,
+    [threadId, toolCallId]
+  );
+
+  // 初始化脚本代码到 artifacts 系统
+  useEffect(() => {
+    // 将脚本代码作为一个虚拟 artifact 注册
+    setArtifacts((prev = []) => {
+      if (!prev.includes(scriptArtifactPath)) {
+        // 将脚本内容存储到 sessionStorage 以便后续读取
+        sessionStorage.setItem(scriptArtifactPath, script);
+        return [...prev, scriptArtifactPath];
+      }
+      return prev;
+    });
+  }, [scriptArtifactPath, script, setArtifacts]);
+
+  // 执行脚本并获取模型 URL
+  const executeScript = useCallback(async () => {
+    if (status === "executing" || status === "success") {
+      return;
+    }
+
+    setStatus("executing");
+
+    try {
+      // 使用简化的直接 HTTP 接口，无需 MCP 协议
+      const response = await fetch(`${getCadScriptMcpBaseURL()}/api/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scripts: [{
+            script_type: needYh ? "modeling" : "sketch",
+            script_content: script,
+            should_execute: true
+          }],
+          model_path: `${threadId}/model.yha`,
+          need_yh: needYh
+        })
+      });
+
+      const result = await response.json();
+      // 检查返回的 success 字段来判断执行结果
+      if (result.success === false) {
+        // 执行失败
+        const errorMsg = result.error ?? "脚本执行失败";
+        setError(errorMsg);
+        setStatus("failed");
+
+        // 自动将错误信息发送给大模型，让它帮助调试
+        const feedbackMessage = `脚本执行失败，错误信息：${errorMsg}\n\n脚本内容：\n\`\`\`python\n${script}\n\`\`\`\n\n请检查脚本内容并尝试修复。`;
+
+        // 使用 fetch 发送用户消息给大模型
+        const chatResponse = await fetch(`/api/threads/${threadId}/runs/wait`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [{
+              type: "human",
+              content: feedbackMessage
+            }]
+          })
+        });
+
+        // 不阻塞 UI，忽略发送失败的错误
+        if (!chatResponse.ok) {
+          console.error("Failed to send feedback to model:", await chatResponse.text());
+        }
+      } else if (result.file_url) {
+        // 执行成功，直接选中 file_url 作为 artifact
+        setFileUrl(result.file_url);
+        selectArtifact(result.file_url, true);
+        setArtifactsOpen(true);
+        setStatus("success");
+      } else {
+        // 其他情况
+        setError("脚本执行成功但未返回文件 URL");
+        setStatus("failed");
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "执行失败";
+      setError(errorMsg);
+      setStatus("failed");
+
+      // 执行失败时自动发送错误给大模型
+      const feedbackMessage = `脚本执行失败，错误信息：${errorMsg}\n\n脚本内容：\n\`\`\`python\n${script}\n\`\`\`\n\n请检查并尝试修复。`;
+
+      fetch(`/api/threads/${threadId}/runs/wait`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{
+            type: "human",
+            content: feedbackMessage
+          }]
+        })
+      }).catch(() => {
+        // 忽略发送失败
+      });
+    }
+  }, [threadId, needYh, script, status, selectArtifact, setArtifactsOpen]);
+
+  const handleExecuteClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    void executeScript();
+  }, [executeScript]);
+
+  const handleViewCodeClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    selectArtifact(scriptArtifactPath, true);
+    setArtifactsOpen(true);
+  }, [scriptArtifactPath, selectArtifact, setArtifactsOpen]);
+
+  const handleCardClick = useCallback(() => {
+    if (status === "success" && fileUrl) {
+      selectArtifact(fileUrl, true);
+      setArtifactsOpen(true);
+    }
+  }, [status, fileUrl, selectArtifact, setArtifactsOpen]);
+
+  return (
+    <Card className="cursor-pointer" onClick={handleCardClick}>
+      <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 pr-2 pl-1">
+        <div className="flex items-center gap-2">
+          <CardTitle className="min-w-0 leading-tight">
+            <div className="min-w-0">执行脚本</div>
+          </CardTitle>
+          <CardDescription className="text-xs">
+            {status === "executing" && "正在执行..."}
+            {status === "success" && "执行成功"}
+            {status === "failed" && <span className="text-destructive">{error}</span>}
+            {status === "idle" && "点击执行运行脚本"}
+          </CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleViewCodeClick}
+            title="在右侧打开代码"
+          >
+            查看代码
+          </Button>
+          <Button
+            size="sm"
+            variant={status === "success" ? "default" : "secondary"}
+            onClick={handleExecuteClick}
+            disabled={status === "executing" || status === "success"}
+          >
+            {status === "executing" ? (
+              <Loader2Icon className="size-3 animate-spin" />
+            ) : status === "success" ? (
+              "已执行"
+            ) : (
+              "执行"
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <div className="px-4 pb-4">
+        <ScrollArea className="h-[200px]">
+          <pre className="text-xs bg-muted p-4 rounded-md overflow-auto whitespace-pre-wrap break-all">
+            <code>{script}</code>
+          </pre>
+        </ScrollArea>
+      </div>
+    </Card>
   );
 }

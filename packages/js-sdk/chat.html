@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeerFlow Chat</title>
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96.1%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96.1%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 100%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .message.assistant {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .message.tool {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .message-content {
+      padding: 4px 12px;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .message-content-inner {
+      border-radius: 12px;
+      word-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .message.user .message-content-inner {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant .message-content-inner {
+      background: transparent;
+      color: hsl(var(--foreground));
+    }
+
+    .message.tool .message-content-inner {
+      background: hsl(var(--muted));
+      color: hsl(var(--foreground));
+      border-bottom-left-radius: 4px;
+      font-size: 13px;
+    }
+
+    .message.system .message-content-inner {
+      background: transparent;
+      color: hsl(var(--muted-foreground));
+      text-align: center;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    .message.error .message-content-inner {
+      background: hsl(var(--destructive));
+      color: hsl(var(--destructive-foreground));
+      border-bottom-left-radius: 4px;
+    }
+
+    .reasoning-content {
+      background: hsl(var(--muted));
+      border-left: 3px solid hsl(var(--primary));
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .reasoning-content code {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .reasoning-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .reasoning-toggle {
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 4px;
+    }
+
+    .message.user .timestamp {
+      margin-right: 4px;
+    }
+
+    .message.assistant .timestamp {
+      margin-left: 4px;
+    }
+
+    .script-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 10px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .file-list {
+      list-style: none;
+      margin-top: 10px;
+    }
+
+    .file-list li {
+      padding: 6px 10px;
+      background: hsl(var(--muted));
+      border-radius: 4px;
+      margin-bottom: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .tool-info {
+      background: hsl(var(--muted));
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .file-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: hsl(var(--muted));
+      border-radius: 6px;
+      font-size: 12px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    .file-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.6;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+
+    .input-area {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--background));
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .input-area textarea {
+      flex: 1;
+      padding: 8px;
+      padding-right: 50px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      width: 100%;
+      resize: none;
+      min-height: 38px;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+    .input-area textarea:focus {
+      outline: none;
+    }
+    .input-area button {
+      position: absolute;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: #00d9ff;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .input-area button:hover:not(:disabled) {
+      background: #00b8d9;
+    }
+    .input-area button:disabled {
+      background: #ddd;
+      cursor: not-allowed;
+    }
+    .send-icon {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+    .loading {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid hsl(var(--primary-foreground));
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Markdown styles */
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3 {
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .markdown-content h1 { font-size: 1.5em; }
+    .markdown-content h2 { font-size: 1.25em; }
+    .markdown-content h3 { font-size: 1.1em; }
+
+    .markdown-content p {
+      margin-bottom: 0.8em;
+    }
+
+    .markdown-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .markdown-content code {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+      padding: 0.2em 0.4em;
+      background: hsl(var(--muted));
+      border-radius: 4px;
+    }
+
+    .markdown-content pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.8em 0;
+    }
+
+    .markdown-content pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    .markdown-content blockquote {
+      border-left: 3px solid hsl(var(--border));
+      padding-left: 1em;
+      margin: 0.8em 0;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+      padding-left: 1.5em;
+      margin: 0.8em 0;
+    }
+
+    .markdown-content li {
+      margin-bottom: 0.3em;
+    }
+
+    .markdown-content a {
+      color: hsl(var(--primary));
+      text-decoration: none;
+    }
+
+    .markdown-content a:hover {
+      text-decoration: underline;
+    }
+
+    .markdown-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.8em 0;
+    }
+
+    .markdown-content th,
+    .markdown-content td {
+      border: 1px solid hsl(var(--border));
+      padding: 8px;
+      text-align: left;
+    }
+
+    .markdown-content th {
+      background: hsl(var(--muted));
+      font-weight: 600;
+    }
+
+    /* Copy button */
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border));
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .message-content-wrapper:hover .copy-btn {
+      opacity: 0.6;
+    }
+
+    .message-content-wrapper:hover .copy-btn:hover {
+      opacity: 1;
+    }
+
+    /* Markdown code block */
+    .markdown-code-block {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div id="messagesContainer" class="messages-container">
+      <div class="empty-state">
+        <p>暂无消息</p>
+        <p>在下方输入框中输入消息开始聊天</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="messageInput" placeholder="输入消息..." rows="1"></textarea>
+      <button id="sendBtn" disabled>
+        <svg class="send-icon" viewBox="0 0 24 24" id="sendIcon">
+          <path d="M12 2L2 12h6v8h8v-8h6L12 2z"/>
+        </svg>
+        <div class="loading" id="loadingIcon" style="display: none;"></div>
+      </button>
+    </div>
+  </div>
+
+  <script src="./dist/index.global.js"></script>
+
+  <script>
+    let messages = [];
+    let client = null;
+    let threadId = null;
+    let isStreaming = false;
+
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // ==================== Qt 通信模块 ====================
+
+    /**
+     * Qt 消息类型定义
+     */
+    const QtMessageType = {
+      CHAT: 'chat',
+      SCRIPT_REQUEST: 'script_request',
+      SCRIPT_RESULT: 'script_result',
+      ERROR: 'error',
+      END: 'end',
+      INIT: 'init',
+      THREAD_CREATED: 'thread_created',
+      NEW_SESSION: 'new_session',
+    };
+
+    /**
+     * Qt 通信管理器
+     */
+    class QtCommunicationManager {
+      constructor() {
+        this.messageHandler = null;
+        this.isInitialized = false;
+      }
+
+      /**
+       * 设置消息处理器
+       */
+      setHandler(handler) {
+        this.messageHandler = handler;
+      }
+
+      /**
+       * 发送消息到 Qt
+       */
+      sendToQt(message) {
+        const messageStr = JSON.stringify(message);
+        console.log('[QtComm] 发送消息:', messageStr);
+
+        // CEF 引擎 (Windows Qt 客户端)
+        if (window.IsCEFEngine) {
+          const yhNotify = window.yhNotify;
+          if (typeof yhNotify === 'function') {
+            yhNotify(messageStr);
+          }
+        }
+        // WebView2 引擎
+        else if (window.chrome?.webview?.hostObjects?.QWebViewWebView2) {
+          const webview = window.chrome.webview.hostObjects.QWebViewWebView2;
+          const NotifyCPP = webview.NotifyCPP;
+          if (typeof NotifyCPP === 'function') {
+            NotifyCPP(messageStr);
+          }
+        }
+        // 开发环境模拟
+        else {
+          console.warn('[QtComm] 未检测到客户端环境，模拟发送:', message);
+        }
+      }
+
+      /**
+       * 设置 Qt 消息监听器
+       */
+      setupListener() {
+        window.onMessage = (message) => {
+          console.log('[QtComm] 接收消息:', message);
+          this.handleMessage(message);
+        };
+        if (window.chrome?.webview) {
+          window.chrome.webview.addEventListener('message', (event) => {
+            console.log('[QtComm] 接收消息:', event.data);
+            this.handleMessage(event.data);
+          });
+        }
+      }
+
+      /**
+       * 处理来自 Qt 的消息
+       */
+      handleMessage(message) {
+        try {
+          const data = typeof message === 'string' ? JSON.parse(message) : message;
+          console.log('[QtComm] 解析后的消息:', data);
+
+          if (this.messageHandler) {
+            this.messageHandler(data);
+          }
+        } catch (e) {
+          console.error('[QtComm] 解析消息失败:', e);
+        }
+      }
+
+      /**
+       * 发送初始化完成消息
+       */
+      sendInitComplete() {
+        this.sendToQt({
+          type: QtMessageType.INIT,
+          status: 'ready',
+          timestamp: Date.now()
+        });
+      }
+
+      /**
+       * 发送脚本执行请求
+       */
+      sendScriptRequest(scriptInfo) {
+        this.sendToQt({
+          type: QtMessageType.SCRIPT_REQUEST,
+          script_id: scriptInfo.script_id,
+          thread_id: threadId,
+          description: scriptInfo.description,
+          language: scriptInfo.language,
+          script: scriptInfo.script,
+          timestamp: Date.now()
+        });
+      }
+
+      /**
+       * 发送消息结束通知
+       */
+      sendEndNotification(threadId, messageId) {
+        this.sendToQt({
+          type: QtMessageType.END,
+          thread_id: threadId,
+          message_id: messageId,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    // 创建 Qt 通信实例
+    const qtComm = new QtCommunicationManager();
+
+    const MESSAGE_CONFIG = {
+      'human': { role: 'user', className: 'user' },
+      'ai': { role: 'assistant', className: 'assistant' },
+      'tool': { role: 'tool', className: 'tool' },
+      'system': { role: 'system', className: 'system' },
+      'error': { role: 'error', className: 'error' }
+    };
+
+    // Markdown 转 HTML
+    function markdownToHtml(markdown) {
+      if (!markdown) return '';
+
+      let html = markdown;
+
+      // 转义 HTML 特殊字符（除了我们已经处理的 Markdown）
+      html = html
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // 代码块（必须在其他处理之前）
+      html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+        return `<div class="markdown-code-block"><pre><code>${code.trim()}</code></pre></div>`;
+      });
+
+      // 行内代码
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // 标题
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+      // 粗体和斜体
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+      // 链接
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      // 图片
+      html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 4px;">');
+
+      // 无序列表
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+      html = html.replace(/(<ul>.*?<\/ul>)/s, (match) => {
+        return match.replace(/(<ul>.*?<\/ul>)/g, '$1');
+      });
+
+      // 有序列表
+      html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+      // 引用
+      html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+      // 水平线
+      html = html.replace(/^---$/gm, '<hr>');
+
+      // 段落（处理空行分割）
+      html = html.split(/\n\n+/).map(block => {
+        block = block.trim();
+        if (!block) return '';
+        if (block.startsWith('<h') || block.startsWith('<ul') || block.startsWith('<pre') || block.startsWith('<blockquote') || block.startsWith('<hr')) {
+          return block;
+        }
+        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+      }).join('');
+
+      // 清理空的 p 标签
+      html = html.replace(/<p>\s*<\/p>/g, '');
+
+      return html;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 存储正在流式传输的工具调用
+    let pendingToolCalls = {};
+
+    function mergeToolCallChunks(messages) {
+      // 按消息 ID 分组，合并 tool_call_chunks
+      const toolCallData = {};
+
+      for (const msg of messages) {
+        if (!msg.id) continue;
+
+        if (!toolCallData[msg.id]) {
+          toolCallData[msg.id] = {
+            toolCalls: {},
+            hasCompleteToolCall: false
+          };
+        }
+
+        // 处理 tool_call_chunks
+        if (msg.tool_call_chunks && msg.tool_call_chunks.length > 0) {
+          for (const chunk of msg.tool_call_chunks) {
+            const idx = chunk.index || 0;
+            if (!toolCallData[msg.id].toolCalls[idx]) {
+              toolCallData[msg.id].toolCalls[idx] = {
+                name: '',
+                args: '',
+                id: chunk.id
+              };
+            }
+
+            if (chunk.name) {
+              toolCallData[msg.id].toolCalls[idx].name = chunk.name;
+            }
+            if (chunk.args) {
+              toolCallData[msg.id].toolCalls[idx].args += chunk.args;
+            }
+          }
+        }
+
+        // 如果有完整的 tool_calls，使用它
+        if (msg.tool_calls && msg.tool_calls.length > 0) {
+          for (const tc of msg.tool_calls) {
+            if (tc.name && tc.name !== '') {
+              toolCallData[msg.id].hasCompleteToolCall = true;
+              toolCallData[msg.id].toolCalls = {
+                0: tc
+              };
+              break;
+            }
+          }
+        }
+      }
+
+      // 转换为工具调用数组
+      const result = {};
+      for (const [msgId, data] of Object.entries(toolCallData)) {
+        const toolCallsArray = Object.values(data.toolCalls).filter(tc => tc.name && tc.name !== '');
+        if (toolCallsArray.length > 0) {
+          result[msgId] = toolCallsArray;
+        }
+      }
+      return result;
+    }
+
+    function extractContentFromMessage(message) {
+      // 优先从 additional_kwargs 获取完整内容
+      if (message.additional_kwargs && message.additional_kwargs.content) {
+        return message.additional_kwargs.content;
+      }
+
+      // 处理字符串内容
+      if (typeof message.content === 'string') {
+        // 从 <think>...</think> 标签中提取推理内容
+        const reasoningMatch = message.content.match(/<think>([\s\S]*?)<\/think>/i);
+        if (reasoningMatch) {
+          // 存储推理内容，返回不带推理的内容
+          if (!message._reasoningContent) {
+            message._reasoningContent = reasoningMatch[1].trim();
+          }
+          return message.content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        }
+        return message.content.trim();
+      }
+      // 处理数组内容（LangChain 格式）
+      if (Array.isArray(message.content)) {
+        return message.content
+          .map((content) => {
+            if (typeof content === 'string') {
+              return content;
+            }
+            if (content.type === 'text') {
+              return content.text;
+            }
+            if (content.type === 'image_url') {
+              return '![image]';
+            }
+            return '';
+          })
+          .filter(text => text !== '')
+          .join('\n')
+          .trim();
+      }
+      return '';
+    }
+
+    function extractReasoningContentFromMessage(message) {
+      // 优先从 additional_kwargs.reasoning_content 提取
+      if (message.additional_kwargs && message.additional_kwargs.reasoning_content) {
+        return message.additional_kwargs.reasoning_content;
+      }
+      // 从 _reasoningContent（由 extractContentFromMessage 设置）提取
+      if (message._reasoningContent) {
+        return message._reasoningContent;
+      }
+      // 从数组内容的 thinking 字段提取
+      if (Array.isArray(message.content)) {
+        const part = message.content[0];
+        if (part && typeof part === 'object' && part.thinking) {
+          return part.thinking;
+        }
+      }
+      // 从 <think>...</think> 标签提取
+      if (typeof message.content === 'string') {
+        const match = message.content.match(/<think>([\s\S]*?)<\/think>/i);
+        if (match) {
+          return match[1].trim();
+        }
+      }
+      return null;
+    }
+
+    function isHiddenFromUIMessage(message) {
+      // 检查 hide_from_ui 标志
+      if (message.additional_kwargs?.hide_from_ui === true) {
+        return true;
+      }
+      // 检查是否为控制消息
+      if (typeof message.name === 'string') {
+        const hiddenNames = ['summary', 'loop_warning', 'todo_reminder', 'todo_completion_reminder'];
+        if (hiddenNames.includes(message.name)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function getMessageType(message) {
+      // 跳过隐藏的消息
+      if (isHiddenFromUIMessage(message)) {
+        return 'hidden';
+      }
+
+      // 优先检查消息本身的 type 字段
+      if (message.type === 'human') return 'human';
+      if (message.type === 'tool') return 'tool';
+      if (message.type === 'system') return 'system';
+      if (message.type === 'error') return 'error';
+
+      // AI 消息类型检查 - 支持多种格式
+      const isAiMessage = message.type === 'ai' ||
+                          message.role === 'assistant' ||
+                          message.role === 'ai' ||
+                          message._type === 'ai' ||
+                          message.type === 'AIMessageChunk' ||
+                          message.type === 'AIMessage';
+
+      if (isAiMessage) {
+        // 检查完整的 tool_calls
+        if (message.tool_calls && message.tool_calls.length > 0) {
+          const toolCall = message.tool_calls[0];
+          if (toolCall.name === 'exec_script') return 'exec-script';
+          if (toolCall.name === 'present_files') return 'present-files';
+          if (toolCall.name === 'present_model') return 'present-model';
+          if (toolCall.name === 'task') return 'subagent';
+        }
+        // 检查流式的 tool_call_chunks
+        if (message.tool_call_chunks && message.tool_call_chunks.length > 0) {
+          // 累积所有 chunks 来获取完整的工具调用名称
+          const chunksByName = {};
+          for (const chunk of message.tool_call_chunks) {
+            const idx = chunk.index || 0;
+            if (!chunksByName[idx]) {
+              chunksByName[idx] = { name: '', args: '' };
+            }
+            if (chunk.name) chunksByName[idx].name = chunk.name;
+            if (chunk.args) chunksByName[idx].args += chunk.args;
+          }
+          // 检查是否有完整的工具调用名称
+          for (const chunk of Object.values(chunksByName)) {
+            if (chunk.name === 'exec_script') return 'exec-script';
+            if (chunk.name === 'present_files') return 'present-files';
+            if (chunk.name === 'present_model') return 'present-model';
+            if (chunk.name === 'task') return 'subagent';
+          }
+        }
+        return 'ai';
+      }
+
+      // 默认返回 ai
+      return 'ai';
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // 可选：显示提示
+      }).catch(err => {
+        console.error('复制失败:', err);
+      });
+    }
+
+    function renderMessage(message) {
+      const type = getMessageType(message);
+
+      // 跳过隐藏的消息
+      if (type === 'hidden') {
+        return '';
+      }
+
+      const config = MESSAGE_CONFIG[type] || MESSAGE_CONFIG['ai'];
+      const timestamp = formatTime(new Date());
+
+      let contentHtml = '';
+      let extraHtml = '';
+      let showCopyButton = true;
+
+      // 提取推理内容
+      const reasoningContent = extractReasoningContentFromMessage(message);
+
+      // 从 chunks 构建完整的 tool_calls（如果还没有完整的 tool_calls）
+      let toolCalls = message.tool_calls;
+      if (!toolCalls || toolCalls.length === 0) {
+        if (message.tool_call_chunks && message.tool_call_chunks.length > 0) {
+          const toolCallsMap = {};
+          for (const chunk of message.tool_call_chunks) {
+            const idx = chunk.index || 0;
+            if (!toolCallsMap[idx]) {
+              toolCallsMap[idx] = { name: '', args: '', id: chunk.id };
+            }
+            if (chunk.name) toolCallsMap[idx].name = chunk.name;
+            if (chunk.args) toolCallsMap[idx].args += chunk.args;
+          }
+          toolCalls = Object.values(toolCallsMap).filter(tc => tc.name && tc.name !== '');
+        }
+      }
+
+      if (type === 'exec-script') {
+        const toolCall = toolCalls?.find(tc => tc.name === 'exec_script');
+        // 先提取原始文本内容（工具调用前的对话内容）
+        const extractedContent = extractContentFromMessage(message);
+        let scriptContent = '';
+        let scriptDescription = '';
+        try {
+          if (typeof toolCall.args === 'string') {
+            const parsed = JSON.parse(toolCall.args);
+            scriptContent = parsed.script || '';
+            scriptDescription = parsed.description || '';
+          } else if (toolCall.args.script) {
+            scriptContent = toolCall.args.script;
+            scriptDescription = toolCall.args.description || '';
+          }
+        } catch (e) {
+          scriptContent = toolCall.args.script || toolCall.args || '';
+          scriptDescription = toolCall.args.description || '';
+        }
+        // 显示文本内容 + 工具调用信息
+        contentHtml = '';
+        if (extractedContent) {
+          contentHtml = markdownToHtml(extractedContent) + '\n';
+        }
+        if (scriptDescription || scriptContent) {
+          contentHtml += `\n📜 ${scriptDescription || '执行脚本'}\n`;
+          extraHtml = `<div class="script-block"><code>${escapeHtml(scriptContent)}</code></div>`;
+        }
+      } else if (type === 'present-files') {
+        const toolCall = toolCalls?.find(tc => tc.name === 'present_files');
+        if (toolCall && toolCall.args.filepaths) {
+          contentHtml = '📁 展示文件\n';
+          extraHtml = `<ul class="file-list">${toolCall.args.filepaths.map(fp => `<li>📄 ${escapeHtml(fp)}</li>`).join('')}</ul>`;
+        }
+      } else if (type === 'present-model') {
+        const toolCall = toolCalls?.find(tc => tc.name === 'present_model');
+        if (toolCall && toolCall.args.filepath) {
+          contentHtml = '🎮 展示 3D 模型\n';
+          extraHtml = `<div class="file-list"><li>📦 ${escapeHtml(toolCall.args.filepath)}</li></div>`;
+        }
+      } else if (type === 'subagent') {
+        const toolCall = toolCalls?.find(tc => tc.name === 'task');
+        if (toolCall) {
+          contentHtml = `🤖 ${toolCall.args.description || '子代理任务'}\n`;
+          extraHtml = `<div class="tool-info"><strong>提示词:</strong> ${escapeHtml(toolCall.args.prompt || '无')}</div>`;
+        }
+      } else {
+        const extractedContent = extractContentFromMessage(message);
+        // 如果没有主内容但有推理内容，显示"正在思考"样式
+        if (!extractedContent && reasoningContent) {
+          contentHtml = `<em>🤔 正在思考...</em>`;
+        } else {
+          // 使用 Markdown 渲染
+          contentHtml = markdownToHtml(extractedContent || '(消息内容)');
+        }
+      }
+
+      // 如果 contentHtml 为空，显示一个占位符
+      if (!contentHtml && type === 'ai') {
+        contentHtml = '(AI 消息)';
+      }
+
+      // 添加推理内容折叠功能
+      let reasoningHtml = '';
+      // 推理内容在所有 AI 相关消息类型中都显示（包括工具调用类型）
+      if (reasoningContent && (type === 'assistant' || type === 'ai' || type === 'exec-script' || type === 'present-files' || type === 'present-model' || type === 'subagent')) {
+        reasoningHtml = `
+          <div class="reasoning-content">
+            <code>${escapeHtml(reasoningContent)}</code>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="message ${config.className}">
+          <div class="message-content-wrapper">
+            <div class="message-content message-content-inner">${reasoningHtml}${contentHtml}${extraHtml}</div>
+            ${showCopyButton && type !== 'system' ? `<button class="copy-btn" onclick="copyToClipboard(\`${escapeHtml(extractContentFromMessage(message)).replace(/`/g, '\\`')}\`)">复制</button>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMessages() {
+      if (messages.length === 0) {
+        messagesContainer.innerHTML = `
+          <div class="empty-state">
+            <p>暂无消息</p>
+            <p>在下方输入框中输入消息开始聊天</p>
+          </div>
+        `;
+        return;
+      }
+      messagesContainer.innerHTML = messages.map((msg, idx) => renderMessage(msg, idx)).join('');
+      scrollToBottom();
+    }
+
+    function addMessage(message) {
+      messages.push(message);
+      renderMessages();
+    }
+
+    function updateLastAIMessage(content, toolCalls) {
+      // 找到最后一条 AI 消息并更新它
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].type === 'ai') {
+          messages[i].content = content || messages[i].content;
+          if (toolCalls) {
+            messages[i].tool_calls = toolCalls;
+          }
+          renderMessages();
+          return;
+        }
+      }
+    }
+
+    function clearMessages() {
+      messages = [];
+      renderMessages();
+    }
+
+    function scrollToBottom() {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function autoResizeTextarea() {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+    }
+
+    // 初始化 DeerFlow 客户端
+    async function initClient() {
+      const DeerFlowClient = window.DeerFlow?.DeerFlowClient;
+      if (!DeerFlowClient) {
+        return null;
+      }
+
+      const baseUrl = window.DEER_FLOW_BACKEND_BASE_URL || 'http://172.16.34.129:8301';
+      client = new DeerFlowClient({ baseUrl, isDebug: true });
+      return client;
+    }
+
+    // 发送消息到服务器
+    async function sendMessageToServer(content) {
+      if (!client) {
+        client = await initClient();
+      }
+
+      if (!client) {
+        addMessage({ type: 'error', content: '无法初始化客户端' });
+        return;
+      }
+
+      if (!threadId) {
+        try {
+          const thread = await client.threads.create({ assistant_id: 'lead_agent' });
+          threadId = thread.thread_id;
+        } catch (e) {
+          addMessage({ type: 'error', content: '创建线程失败，请检查后端服务是否运行' });
+          return;
+        }
+      }
+
+      isStreaming = true;
+      updateSendButton();
+
+      // 添加用户消息
+      addMessage({ type: 'human', content });
+
+      // 用于跟踪已处理的 tool call，避免重复
+      const processedToolCallIds = new Set();
+
+      try {
+        // 同时使用 messages-tuple（展示聊天）和 messages-last（解析工具调用）
+        const stream = client.threads.stream(threadId, {
+          messages: [{ type: 'human', content }],
+          config: {
+            recursion_limit: 1000,
+            configurable: { assistant_id: 'lead_agent' }
+          },
+          streamModes: ['messages-tuple', 'messages-last']
+        });
+
+        for await (const event of stream) {
+          // 处理不同格式的事件
+          let message = null;
+          let eventType = null;
+
+          // 格式 1: messages-tuple 模式 - data 是 Message 数组
+          if (event && typeof event === 'object' && event.type === 'messages-tuple' && Array.isArray(event.data)) {
+            for (const msg of event.data) {
+              if (msg.type === 'AIMessageChunk' || msg.type === 'ai') {
+                message = msg;
+                eventType = 'ai';
+              }
+            }
+          }
+          // 格式 2: messages 模式 - data 是 [message, metadata] 元组
+          else if (event && typeof event === 'object' && event.type === 'messages' && Array.isArray(event.data)) {
+            const [msgChunk, metadata] = event.data;
+            message = msgChunk;
+            if (metadata && metadata.langgraph_node) {
+              const nodeType = metadata.langgraph_node;
+              if (nodeType === 'model' || nodeType === 'agent' || nodeType === 'ai') {
+                eventType = 'ai';
+              } else if (nodeType === 'tool_node' || nodeType === 'tool') {
+                eventType = 'tool';
+              } else if (nodeType === 'human') {
+                eventType = 'human';
+              } else {
+                eventType = nodeType;
+              }
+            } else if (message && message.type) {
+              if (message.type === 'AIMessageChunk' || message.type === 'AIMessage') {
+                eventType = 'ai';
+              } else if (message.type === 'ToolMessageChunk' || message.type === 'ToolMessage') {
+                eventType = 'tool';
+              } else if (message.type === 'HumanMessageChunk' || message.type === 'HumanMessage') {
+                eventType = 'human';
+              }
+            }
+          }
+          // 格式 3: [eventType, message] 元组
+          else if (Array.isArray(event)) {
+            const [type, msg] = event;
+            eventType = type;
+            message = msg;
+          }
+          // 格式 4: 直接是消息对象（包含 type 字段）
+          else if (event && typeof event === 'object' && event.type) {
+            message = event;
+            if (event.type === 'AIMessageChunk' || event.type === 'AIMessage' || event.role === 'assistant') {
+              eventType = 'ai';
+            } else if (event.type === 'ToolMessageChunk' || event.type === 'ToolMessage') {
+              eventType = 'tool';
+            } else if (event.type === 'HumanMessageChunk' || event.type === 'HumanMessage') {
+              eventType = 'human';
+            }
+          }
+          // 格式 5: 直接是 AI 消息内容（delta 格式）
+          else if (event && typeof event === 'object' && event.content) {
+            if (event.role === 'assistant' || event.type === 'ai') {
+              eventType = 'ai';
+              message = event;
+            }
+          }
+
+          // 跳过空消息
+          if (!message) continue;
+
+          // 确保消息有 id 字段
+          if (!message.id) {
+            message.id = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+          }
+
+          if (eventType === 'ai' && message) {
+            // 检查是否已存在该消息
+            const existingIdx = messages.findIndex(m => m.id === message.id);
+            if (existingIdx === -1) {
+              // 新消息，添加
+              addMessage({ ...message });
+            } else {
+              // 已存在，更新
+              const existingMsg = messages[existingIdx];
+              // 合并内容：如果是字符串则累加，如果是数组则替换
+              if (typeof message.content === 'string' && message.content) {
+                if (typeof existingMsg.content === 'string') {
+                  existingMsg.content += message.content;
+                } else {
+                  existingMsg.content = message.content;
+                }
+              }
+              // 合并 tool_call_chunks（流式工具调用）
+              if (message.tool_call_chunks && message.tool_call_chunks.length > 0) {
+                if (!existingMsg.tool_call_chunks) {
+                  existingMsg.tool_call_chunks = [];
+                }
+                // 累加 tool_call_chunks
+                for (const chunk of message.tool_call_chunks) {
+                  const existingChunkIdx = existingMsg.tool_call_chunks.findIndex(
+                    c => c.index === chunk.index
+                  );
+                  if (existingChunkIdx === -1) {
+                    existingMsg.tool_call_chunks.push(chunk);
+                  } else {
+                    // 合并 chunk
+                    if (chunk.name) {
+                      existingMsg.tool_call_chunks[existingChunkIdx].name = chunk.name;
+                    }
+                    if (chunk.args) {
+                      existingMsg.tool_call_chunks[existingChunkIdx].args += chunk.args;
+                    }
+                  }
+                }
+
+                // 从 chunks 构建完整的 tool_calls
+                const toolCallsMap = {};
+                for (const chunk of existingMsg.tool_call_chunks) {
+                  const idx = chunk.index || 0;
+                  if (!toolCallsMap[idx]) {
+                    toolCallsMap[idx] = {
+                      name: '',
+                      args: '',
+                      id: chunk.id
+                    };
+                  }
+                  if (chunk.name) {
+                    toolCallsMap[idx].name = chunk.name;
+                  }
+                  if (chunk.args) {
+                    toolCallsMap[idx].args += chunk.args;
+                  }
+                }
+
+                // 转换为数组，过滤掉不完整的调用
+                const completeToolCalls = Object.values(toolCallsMap).filter(
+                  tc => tc.name && tc.name !== '' && tc.args
+                );
+                if (completeToolCalls.length > 0) {
+                  existingMsg.tool_calls = completeToolCalls;
+                }
+              }
+              // 合并直接的 tool_calls（如果不是空的）
+              if (message.tool_calls && message.tool_calls.length > 0) {
+                const nonEmptyCalls = message.tool_calls.filter(tc => tc.name && tc.name !== '');
+                if (nonEmptyCalls.length > 0) {
+                  existingMsg.tool_calls = message.tool_calls;
+                }
+              }
+              // 合并 additional_kwargs（包括 reasoning_content）
+              if (message.additional_kwargs) {
+                if (!existingMsg.additional_kwargs) {
+                  existingMsg.additional_kwargs = {};
+                }
+                // 累加 reasoning_content（流式增量）
+                if (message.additional_kwargs.reasoning_content) {
+                  const existingReasoning = existingMsg.additional_kwargs.reasoning_content || '';
+                  const newReasoning = message.additional_kwargs.reasoning_content;
+                  // 直接累加，因为流式传输的 reasoning_content 是增量
+                  existingMsg.additional_kwargs.reasoning_content = existingReasoning + newReasoning;
+                }
+                // 合并其他 additional_kwargs
+                for (const key of Object.keys(message.additional_kwargs)) {
+                  if (key !== 'reasoning_content') {
+                    existingMsg.additional_kwargs[key] = message.additional_kwargs[key];
+                  }
+                }
+              }
+              renderMessages();
+            }
+          } else if (eventType === 'tool' && message) {
+            // 工具消息
+            const existingIdx = messages.findIndex(m => m.id === message.id);
+            if (existingIdx === -1) {
+              addMessage({ ...message });
+            }
+          }
+
+          // messages-last 模式：解析工具调用并执行
+          if (event && typeof event === 'object' && event.type === 'messages-last' && event.data && event.data.messages) {
+            const msgList = event.data.messages;
+            if (msgList.length > 0) {
+              const lastMsg = msgList[0];
+              const toolCalls = lastMsg.tool_calls || [];
+              for (const toolCall of toolCalls) {
+                const toolId = toolCall.id;
+                const toolName = toolCall.name || '';
+                const toolArgs = toolCall.args || {};
+
+                if (!toolId || processedToolCallIds.has(toolId)) {
+                  continue;
+                }
+                processedToolCallIds.add(toolId);
+
+                // 处理 exec_script tool call
+                if (toolName === 'exec_script') {
+                  const scriptInfo = toolArgs;
+                  const desc = scriptInfo.description || 'AI 自动执行的脚本';
+                  const scriptCode = scriptInfo.script || '';
+
+                  addMessage({
+                    type: 'tool',
+                    content: `📜 发送脚本到客户端执行：${desc}`
+                  });
+
+                  // 发送脚本请求给 Qt，不等待返回
+                  sendScriptRequestToQt(scriptCode, desc);
+                }
+              }
+            }
+          }
+        }
+
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          addMessage({ type: 'error', content: '发送失败：' + e.message });
+        }
+      } finally {
+        isStreaming = false;
+        updateSendButton();
+        processedToolCallIds.clear();
+      }
+    }
+
+    /**
+     * 发送脚本请求给 Qt，不等待返回
+     */
+    function sendScriptRequestToQt(script, description) {
+      const scriptId = `script-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      qtComm.sendToQt({
+        type: QtMessageType.SCRIPT_REQUEST,
+        script_id: scriptId,
+        thread_id: threadId,
+        description: description,
+        language: 'python',
+        script: script,
+        timestamp: Date.now()
+      });
+
+      console.log('[message-viewer] 已发送脚本请求给 Qt:', scriptId);
+    }
+
+    function updateSendButton() {
+      sendBtn.disabled = isStreaming;
+      if (isStreaming) {
+        sendBtn.innerHTML = '<span class="loading"></span>';
+      } else {
+        sendBtn.innerHTML = `
+          <svg class="send-icon" viewBox="0 0 24 24" id="sendIcon">
+            <path d="M12 2L2 12h6v8h8v-8h6L12 2z"/>
+          </svg>
+          <div class="loading" id="loadingIcon" style="display: none;"></div>
+        `;
+      }
+    }
+
+    // 事件绑定
+    messageInput.addEventListener('input', function() {
+      autoResizeTextarea();
+    });
+
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    sendBtn.addEventListener('click', handleSend);
+
+    function handleSend() {
+      const content = messageInput.value.trim();
+      if (!content || isStreaming) return;
+
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+
+      // 直接调用 sendMessageToServer，它内部会处理 client 和 threadId 的创建
+      if (client) {
+        sendMessageToServer(content);
+      } else {
+        // 客户端未初始化，先初始化再发送
+        (async () => {
+          client = await initClient();
+          if (client) {
+            sendMessageToServer(content);
+          } else {
+            addMessage({ type: 'error', content: '无法初始化客户端' });
+          }
+        })();
+      }
+    }
+
+    // 初始化
+    (async () => {
+      // 设置 Qt 通信监听器
+      qtComm.setupListener();
+
+      // 设置消息处理器
+      qtComm.setHandler((message) => handleQtMessage(message));
+
+      // 发送初始化完成消息
+      qtComm.sendInitComplete();
+
+      // 初始化客户端
+      await initClient();
+    })();
+
+    /**
+     * 处理来自 Qt 的消息
+     */
+    async function handleQtMessage(message) {
+      console.log('[message-viewer] 处理 Qt 消息:', message);
+
+      switch (message.type) {
+        case QtMessageType.INIT:
+          // Qt 初始化完成
+          console.log('[message-viewer] Qt 已连接');
+          break;
+
+        case QtMessageType.CHAT:
+          // 处理聊天消息
+          await handleQtChatMessage(message);
+          break;
+
+        case QtMessageType.SCRIPT_RESULT:
+          // 处理脚本执行结果
+          await handleQtScriptResult(message);
+          break;
+
+        case QtMessageType.ERROR:
+          // 处理错误消息
+          await handleQtError(message);
+          break;
+
+        case QtMessageType.END:
+          // 消息结束
+          console.log('[message-viewer] 消息结束');
+          break;
+
+        case QtMessageType.NEW_SESSION:
+          // 开启新会话
+          await handleQtNewSession(message);
+          break;
+      }
+    }
+
+    /**
+     * 处理 Qt 聊天消息
+     */
+    async function handleQtChatMessage(message) {
+      const { content, thread_id, message_id } = message;
+
+      if (thread_id) {
+        threadId = thread_id;
+      }
+
+      // 添加用户消息
+      addMessage({ type: 'human', content });
+
+      // 发送消息到服务器
+      await sendMessageToServer(content);
+    }
+
+    /**
+     * 处理来自 Qt 的脚本执行结果
+     * 将结果回填到输入框，由用户手动发送
+     */
+    async function handleQtScriptResult(message) {
+      const { script_id, success, result, error } = message;
+
+      if (success) {
+        // 脚本执行成功，将结果回填到输入框
+        messageInput.value = `脚本执行成功:\n${JSON.stringify(result, null, 2)}`;
+      } else {
+        // 脚本执行失败，将错误信息回填到输入框
+        messageInput.value = `脚本执行错误:\n${error}`;
+      }
+      autoResizeTextarea();
+    }
+
+    /**
+     * 处理 Qt 错误消息
+     */
+    async function handleQtError(message) {
+      const { error, context } = message;
+      // 将错误信息回填到输入框
+      messageInput.value = `脚本执行错误：${error}\n上下文：${JSON.stringify(context)}`;
+      addMessage({ type: 'error', content: `脚本执行错误：${error}` });
+      autoResizeTextarea();
+    }
+
+    /**
+     * 处理 Qt 新会话请求
+     */
+    async function handleQtNewSession(message) {
+      console.log('[message-viewer] 收到新会话请求');
+
+      try {
+        // 如果有旧线程，删除它
+        if (threadId && client) {
+          try {
+            await client.threads.delete(threadId);
+            console.log('[message-viewer] 已删除旧线程:', threadId);
+          } catch (e) {
+            console.warn('[message-viewer] 删除旧线程失败:', e);
+          }
+        }
+
+        // 创建新线程
+        if (!client) {
+          client = await initClient();
+        }
+
+        if (client) {
+          const thread = await client.threads.create({
+            assistant_id: 'lead_agent'
+          });
+          threadId = thread.thread_id;
+          console.log('[message-viewer] 创建新线程:', threadId);
+
+          // 通知 Qt 线程创建成功
+          qtComm.sendToQt({
+            type: QtMessageType.THREAD_CREATED,
+            thread_id: threadId,
+            timestamp: Date.now()
+          });
+        }
+      } catch (e) {
+        console.error('[message-viewer] 创建新线程失败:', e);
+        addMessage({ type: 'error', content: `创建新会话失败：${e.message}` });
+      }
+    }
+  </script>
+</body>
+</html>

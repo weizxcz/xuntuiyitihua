@@ -17,6 +17,7 @@ import {
   getFileExtensionDisplayName,
   getFileIcon,
   getFileName,
+  isModelFile,
 } from "@/core/utils/files";
 import { cn } from "@/lib/utils";
 
@@ -26,10 +27,12 @@ export function ArtifactFileList({
   className,
   files,
   threadId,
+  isModel = false,
 }: {
   className?: string;
   files: string[];
   threadId: string;
+  isModel?: boolean;
 }) {
   const { t } = useI18n();
   const { select: selectArtifact, setOpen } = useArtifacts();
@@ -73,56 +76,59 @@ export function ArtifactFileList({
 
   return (
     <ul className={cn("flex w-full flex-col gap-4", className)}>
-      {files.map((file) => (
-        <Card
-          key={file}
-          className="relative cursor-pointer p-3"
-          onClick={() => handleClick(file)}
-        >
-          <CardHeader className="grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 pr-2 pl-1">
-            <CardTitle className="relative min-w-0 pl-8 leading-tight [overflow-wrap:anywhere] break-words">
-              <div className="min-w-0">{getFileName(file)}</div>
-              <div className="absolute top-2 -left-0.5">
-                {getFileIcon(file, "size-6")}
-              </div>
-            </CardTitle>
-            <CardDescription className="min-w-0 pl-8 text-xs">
-              {getFileExtensionDisplayName(file)} file
-            </CardDescription>
-            <CardAction className="row-span-1 self-center">
-              {file.endsWith(".skill") && (
-                <Button
-                  variant="ghost"
-                  disabled={installingFile === file}
-                  onClick={(e) => handleInstallSkill(e, file)}
-                >
-                  {installingFile === file ? (
-                    <LoaderIcon className="size-4 animate-spin" />
-                  ) : (
-                    <PackageIcon className="size-4" />
-                  )}
-                  {t.common.install}
+      {files.map((file) => {
+        const isModel = isModelFile(file);
+        return (
+          <Card
+            key={file}
+            className="relative cursor-pointer p-3"
+            onClick={() => handleClick(file)}
+          >
+            <CardHeader className="grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 pr-2 pl-1">
+              <CardTitle className="relative min-w-0 pl-8 leading-tight [overflow-wrap:anywhere] break-words">
+                <div className="min-w-0">{getFileName(file)}</div>
+                <div className="absolute top-2 -left-0.5">
+                  {getFileIcon(file, "size-6")}
+                </div>
+              </CardTitle>
+              <CardDescription className="min-w-0 pl-8 text-xs">
+                {isModel ? "3D model" : getFileExtensionDisplayName(file)} file
+              </CardDescription>
+              <CardAction className="row-span-1 self-center">
+                {file.endsWith(".skill") && (
+                  <Button
+                    variant="ghost"
+                    disabled={installingFile === file}
+                    onClick={(e) => handleInstallSkill(e, file)}
+                  >
+                    {installingFile === file ? (
+                      <LoaderIcon className="size-4 animate-spin" />
+                    ) : (
+                      <PackageIcon className="size-4" />
+                    )}
+                    {t.common.install}
+                  </Button>
+                )}
+                <Button variant="ghost" asChild>
+                  <a
+                    href={urlOfArtifact({
+                      filepath: file,
+                      threadId: threadId,
+                      download: true,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DownloadIcon className="size-4" />
+                    {t.common.download}
+                  </a>
                 </Button>
-              )}
-              <Button variant="ghost" asChild>
-                <a
-                  href={urlOfArtifact({
-                    filepath: file,
-                    threadId: threadId,
-                    download: true,
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <DownloadIcon className="size-4" />
-                  {t.common.download}
-                </a>
-              </Button>
-            </CardAction>
-          </CardHeader>
-        </Card>
-      ))}
+              </CardAction>
+            </CardHeader>
+          </Card>
+        );
+      })}
     </ul>
   );
 }

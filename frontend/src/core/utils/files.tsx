@@ -167,10 +167,33 @@ const browserPreviewExtensions = new Set([
 ]);
 
 export function getFileName(filepath: string) {
+  // 如果是完整 URL，提取 URL 路径中的文件名
+  if (/^https?:\/\//.test(filepath)) {
+    try {
+      const url = new URL(filepath);
+      const pathname = url.pathname;
+      return pathname.split("/").pop() || filepath;
+    } catch {
+      // 如果 URL 解析失败，回退到原始逻辑
+    }
+  }
   return filepath.split("/").pop()!;
 }
 
 export function getFileExtension(filepath: string) {
+  // 如果是完整 URL，提取 URL 路径中的文件扩展名
+  if (/^https?:\/\//.test(filepath)) {
+    try {
+      const url = new URL(filepath);
+      const pathname = url.pathname;
+      // 处理查询参数，如 file.txt?download=true
+      const fileName = pathname.split("/").pop() || pathname;
+      const withoutQuery = fileName.split("?")[0];
+      return withoutQuery.split(".").pop()!.toLocaleLowerCase();
+    } catch {
+      // 如果 URL 解析失败，回退到原始逻辑
+    }
+  }
   return filepath.split(".").pop()!.toLocaleLowerCase();
 }
 
@@ -222,6 +245,10 @@ export function getFileExtensionDisplayName(filepath: string) {
 export function getFileIcon(filepath: string, className?: string) {
   const extension = getFileExtension(filepath);
   const { isCodeFile } = checkCodeFile(filepath);
+  // 模型 3D 文件
+  if (extension === "yha" || extension === "yhp") {
+    return <FileCogIcon className={className} />;
+  }
   switch (extension) {
     case "skill":
       return <FileCogIcon className={className} />;
@@ -260,4 +287,9 @@ export function getFileIcon(filepath: string, className?: string) {
       }
       return <FileTextIcon className={className} />;
   }
+}
+
+export function isModelFile(filepath: string) {
+  const extension = getFileExtension(filepath);
+  return extension === "yha" || extension === "yhp";
 }

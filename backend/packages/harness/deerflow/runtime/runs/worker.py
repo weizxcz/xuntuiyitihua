@@ -41,6 +41,9 @@ logger = logging.getLogger(__name__)
 # Valid stream_mode values for LangGraph's graph.astream()
 _VALID_LG_MODES = {"values", "updates", "checkpoints", "tasks", "debug", "messages", "custom"}
 
+# Custom stream modes (handled by DeerFlow, not LangGraph)
+_CUSTOM_MODES = {"messages-last"}  # Only return the last message from values snapshot
+
 
 def _build_runtime_context(
     thread_id: str,
@@ -279,6 +282,12 @@ async def run_agent(
         # 6. Build LangGraph stream_mode list
         #    "events" is NOT a valid astream mode — skip it
         #    "messages-tuple" maps to LangGraph's "messages" mode
+        #    "messages-last" is a custom mode that uses "values" internally but only returns the last message
+        has_messages_last = "messages-last" in requested_modes
+        if has_messages_last:
+            # Replace "messages-last" with "values" internally, we'll post-process the output
+            requested_modes = [m if m != "messages-last" else "values" for m in requested_modes]
+
         lg_modes: list[str] = []
         for m in requested_modes:
             if m == "messages-tuple":
@@ -312,7 +321,11 @@ async def run_agent(
                     break
                 llm_error_fallback_message = llm_error_fallback_message or _extract_llm_error_fallback_message(chunk)
                 sse_event = _lg_mode_to_sse_event(single_mode)
-                await bridge.publish(run_id, sse_event, serialize(chunk, mode=single_mode))
+                # Handle "messages-last" mode: post-process values to only return last message
+                if has_messages_last and single_mode == "values":
+                    await bridge.publish(run_id, "messages-last", serialize(chunk, mode="messages-last"))
+                else:
+                    await bridge.publish(run_id, sse_event, serialize(chunk, mode=single_mode))
         else:
             # Multiple modes or subgraphs: astream yields tuples
             async for item in agent.astream(
@@ -331,7 +344,11 @@ async def run_agent(
 
                 llm_error_fallback_message = llm_error_fallback_message or _extract_llm_error_fallback_message(chunk)
                 sse_event = _lg_mode_to_sse_event(mode)
-                await bridge.publish(run_id, sse_event, serialize(chunk, mode=mode))
+                # Handle "messages-last" mode: post-process values to only return last message
+                if has_messages_last and mode == "values":
+                    await bridge.publish(run_id, "messages-last", serialize(chunk, mode="messages-last"))
+                else:
+                    await bridge.publish(run_id, sse_event, serialize(chunk, mode=mode))
 
         # 8. Final status
         if record.abort_event.is_set():
