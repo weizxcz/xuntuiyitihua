@@ -8,7 +8,7 @@ import importlib
 DEERFLOW_BASE_URL = os.environ.get('DEERFLOW_BASE_URL', 'http://172.16.34.129:8301')
 DEERFLOW_ASSISTANT_ID = 'lead_agent'
 
-DEFAULT_DLL_PATH = 'C:/Users/epro/Downloads/YHCAD/YHCAD_Setup_2026.1.0.61_Beta_Windows_x86-64'
+DEFAULT_DLL_PATH = 'C:/Users/epro/Downloads/YHCAD/YHCAD_Setup_2026.1.0.62_Beta_Windows_x86-64'
 
 # HTTP 服务器配置
 HTTP_SERVER_HOST = os.environ.get('HTTP_SERVER_HOST', '0.0.0.0')
