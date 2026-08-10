@@ -1,0 +1,8 @@
+FeatureFox 环境依赖
+
+pip install xgboost numpy networkx scikit-learn
+
+  xgboost       ≥1.7     边/实例两级分类器
+  numpy         ≥1.21    特征矩阵运算
+  networkx      ≥2.6     AAG 图构建 + 连通分量剪枝
+  scikit-learn  ≥1.0     等渗回归校准器、train_test_split

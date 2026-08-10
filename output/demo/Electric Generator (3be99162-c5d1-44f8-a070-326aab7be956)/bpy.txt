@@ -1,0 +1,401 @@
+```python
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_torus(name, major_radius, minor_radius, location=(0,0,0), rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_union(target, cutter):
+    """Performs boolean union of cutter into target and removes cutter."""
+    target.select_set(True)
+    cutter.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.boolean_modifier(operator='UNION', object=cutter)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    target.select_set(False)
+
+def align_center_to_center(obj_src, obj_tgt):
+    """Aligns source object center to target object center."""
+    obj_src.location = obj_tgt.location
+
+def align_bottom_face_to_bottom_face(obj_src, obj_tgt):
+    """Aligns source object bottom face to target object bottom face."""
+    # Calculate height of target
+    # Note: For rotated objects, we need to be careful. Assuming Z-up cylinders/cubes.
+    # We align the Z coordinate of the bottom of src to the Z coordinate of the bottom of tgt.
+    
+    # Get world bounds
+    def get_world_bounds(obj):
+        # Transform vertices to world space
+        verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        zs = [v[2] for v in verts_world]
+        return min(zs), max(zs)
+    
+    tgt_min_z, tgt_max_z = get_world_bounds(obj_tgt)
+    src_min_z, src_max_z = get_world_bounds(obj_src)
+    
+    # We want src_min_z to equal tgt_min_z
+    current_src_min_z = obj_src.location[2] + (src_min_z - obj_src.location[2]) # This is just obj_src.location[2] if origin is center
+    # Actually, simpler:
+    # Current bottom of src is obj_src.location[2] - (height/2)
+    # Target bottom is tgt_min_z
+    
+    # Let's just move the object so its local bottom matches target's world bottom
+    # Height of src
+    src_height = src_max_z - src_min_z
+    # Current bottom Z
+    current_bottom_z = obj_src.location[2] - (src_height / 2)
+    
+    delta_z = tgt_min_z - current_bottom_z
+    obj_src.location[2] += delta_z
+
+def align_bottom_face_to_top_face(obj_src, obj_tgt):
+    """Aligns source object bottom face to target object top face."""
+    def get_world_bounds(obj):
+        verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        zs = [v[2] for v in verts_world]
+        return min(zs), max(zs)
+    
+    tgt_min_z, tgt_max_z = get_world_bounds(obj_tgt)
+    src_min_z, src_max_z = get_world_bounds(obj_src)
+    
+    src_height = src_max_z - src_min_z
+    current_bottom_z = obj_src.location[2] - (src_height / 2)
+    
+    # We want src_bottom to equal tgt_top
+    delta_z = tgt_max_z - current_bottom_z
+    obj_src.location[2] += delta_z
+
+def offset_object(obj, offset_vec):
+    """Applies offset vector to object location."""
+    obj.location += offset_vec
+
+def polar_position(obj, angle_deg, dr, anchor_obj):
+    """Positions object at polar coordinates relative to anchor."""
+    angle_rad = math.radians(angle_deg)
+    x = anchor_obj.location[0] + dr * math.cos(angle_rad)
+    y = anchor_obj.location[1] + dr * math.sin(angle_rad)
+    obj.location[0] = x
+    obj.location[1] = y
+
+def create_materials():
+    make_material("copper_wire", (0.87, 0.27, 0.09))
+    make_material("electrical_insulation", (0.1, 0.1, 0.1))
+    make_material("magnet_neodymium", (0.2, 0.2, 0.25))
+    make_material("steel_core", (0.4, 0.4, 0.45))
+
+def reset_scene():
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    bpy.context.scene.unit_settings.scale_length = 1
+
+def main():
+    reset_scene()
+    create_materials()
+
+    # --- SECTION 1 – Create housing ---
+    
+    # Create housing_cylinder
+    housing_cyl = add_cylinder("housing_cylinder", radius=0.100, depth=0.150, location=(0,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (already default)
+    # Move to (0,0,0) (already default)
+    
+    # Create mounting_flange
+    mounting_flange = add_cylinder("mounting_flange", radius=0.110, depth=0.010, location=(0,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (already default)
+    
+    # Align mounting_flange.center to housing_cylinder.center
+    align_center_to_center(mounting_flange, housing_cyl)
+    
+    # Align mounting_flange.bottom_face to housing_cylinder.bottom_face
+    align_bottom_face_to_bottom_face(mounting_flange, housing_cyl)
+    
+    # Offset(0,0,-0.005)
+    offset_object(mounting_flange, Vector((0, 0, -0.005)))
+    
+    # Boolean-union mounting_flange into housing_cylinder
+    boolean_union(housing_cyl, mounting_flange)
+    
+    # Rename
+    housing_cyl.name = "housing"
+    
+    # --- SECTION 2 – Create stator_assembly ---
+    
+    # Create stator_core
+    stator_core = add_torus("stator_core", major_radius=0.090, minor_radius=0.015, location=(0,0,0), rotation=(0,0,0))
+    # Note: Torus default normal is Z. The prompt says "outer radius 0.090, inner radius 0.070".
+    # In Blender Torus: major_radius is distance from center to tube center. minor_radius is tube radius.
+    # If major=0.090 and minor=0.015, then outer radius = 0.090+0.015=0.105, inner=0.090-0.015=0.075.
+    # The prompt says "outer radius 0.090, inner radius 0.070". This implies a mean radius of 0.080 and tube radius 0.010.
+    # However, it also says "tube radius 0.015". This is contradictory.
+    # "outer radius 0.090 m, inner radius 0.070 m" -> Mean R = 0.080, Tube R = 0.010.
+    # "tube radius 0.015 m" -> Tube R = 0.015.
+    # I will follow the explicit "tube radius 0.015" and "outer radius 0.090" implies Major = 0.090 - 0.015 = 0.075?
+    # Or does it mean the resulting object has those bounds?
+    # Let's assume the user wants a torus that fits within 0.070-0.090 radial bounds.
+    # Mean Radius = 0.080. Tube Radius = 0.010.
+    # But the prompt explicitly says "tube radius 0.015".
+    # If Tube Radius is 0.015, and Inner Radius is 0.070, then Major Radius = 0.070 + 0.015 = 0.085.
+    # Then Outer Radius = 0.085 + 0.015 = 0.100.
+    # This contradicts "outer radius 0.090".
+    # Let's look at the numbers: 0.090 - 0.070 = 0.020 width. Half is 0.010.
+    # So Tube Radius should be 0.010.
+    # The prompt says "tube radius 0.015". This is likely a mistake in the prompt's consistency.
+    # I will prioritize the explicit "tube radius 0.015" and "outer radius 0.090" might be a typo for mean radius?
+    # Or "inner radius 0.070" is the typo?
+    # Let's try to interpret "outer radius 0.090" as the Major Radius (distance to tube center).
+    # If Major=0.090, Minor=0.015 -> Outer=0.105, Inner=0.075.
+    # Let's try to interpret "outer radius 0.090" as the max extent.
+    # If Max=0.090, Min=0.070, then Major=0.080, Minor=0.010.
+    # Given "tube radius 0.015" is explicit, I will use Major=0.085, Minor=0.015.
+    # This gives Inner=0.070, Outer=0.100.
+    # I will stick to the explicit parameters: Major=0.085, Minor=0.015.
+    # Wait, re-reading: "outer radius 0.090 m, inner radius 0.070 m, and tube radius 0.015 m".
+    # This is physically impossible for a torus (Tube radius must be (Outer-Inner)/2 = 0.010).
+    # I will assume the "tube radius 0.015" is the intended geometry parameter for Blender, and the radii are approximate descriptions.
+    # I will use Major=0.085, Minor=0.015.
+    
+    # Rotate stator_core so its +Z axis aligns +Z (world). (Default)
+    
+    # Create coil_former_0
+    coil_former_0 = add_cylinder("coil_former_0", radius=0.015, depth=0.040, location=(0.080,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (world). (Default)
+    
+    # Create copper_coil_0
+    copper_coil_0 = add_cylinder("copper_coil_0", radius=0.010, depth=0.035, location=(0.080,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (world). (Default)
+    
+    # Align copper_coil_0.center to coil_former_0.center
+    align_center_to_center(copper_coil_0, coil_former_0)
+    
+    # Align copper_coil_0.bottom_face to coil_former_0.bottom_face
+    align_bottom_face_to_bottom_face(copper_coil_0, coil_former_0)
+    
+    # Offset(0,0,0.002)
+    offset_object(copper_coil_0, Vector((0, 0, 0.002)))
+    
+    # Boolean-union copper_coil_0 into coil_former_0
+    boolean_union(coil_former_0, copper_coil_0)
+    
+    # Rename
+    coil_former_0.name = "coil_group_0"
+    
+    # Loop i in 0..3
+    # Note: coil_group_0 is already created. The loop says "For i in 0...3: Create... coil_former_i".
+    # This implies creating 4 objects: coil_former_0, coil_former_1, coil_former_2, coil_former_3.
+    # But coil_former_0 was already created manually above.
+    # The manual creation of coil_former_0 was at (0.080, 0, 0).
+    # The loop says "Align coil_former_i.center to stator_core.center... position at polar(0 + i*90; dr=0.080)".
+    # For i=0, polar(0, 0.080) is (0.080, 0, 0). So it matches.
+    # I will create coil_former_1, 2, 3 in the loop.
+    
+    coil_groups = {"coil_group_0": coil_former_0}
+    
+    for i in range(1, 4):
+        name_former = f"coil_former_{i}"
+        name_coil = f"copper_coil_{i}"
+        name_group = f"coil_group_{i}"
+        
+        # Create coil_former_i
+        cf = add_cylinder(name_former, radius=0.015, depth=0.040, location=(0,0,0), rotation=(0,0,0))
+        # Rotate so +Z aligns +Z (world). (Default)
+        
+        # Align coil_former_i.center to stator_core.center
+        align_center_to_center(cf, stator_core)
+        
+        # Align coil_former_i.bottom_face to stator_core.bottom_face
+        align_bottom_face_to_bottom_face(cf, stator_core)
+        
+        # Position at polar(0 + i*90; dr=0.080)
+        angle = 0 + i * 90
+        polar_position(cf, angle, 0.080, stator_core)
+        
+        # Create copper_coil_i
+        cc = add_cylinder(name_coil, radius=0.010, depth=0.035, location=cf.location, rotation=(0,0,0))
+        # Rotate so +Z aligns +Z (world). (Default)
+        
+        # Align copper_coil_i.center to coil_former_i.center
+        align_center_to_center(cc, cf)
+        
+        # Align copper_coil_i.bottom_face to coil_former_i.bottom_face
+        align_bottom_face_to_bottom_face(cc, cf)
+        
+        # Offset(0,0,0.002)
+        offset_object(cc, Vector((0, 0, 0.002)))
+        
+        # Boolean-union copper_coil_i into coil_former_i
+        boolean_union(cf, cc)
+        
+        # Rename
+        cf.name = name_group
+        coil_groups[name_group] = cf
+
+    # Boolean-union coil_group_0 into stator_core
+    boolean_union(stator_core, coil_groups["coil_group_0"])
+    boolean_union(stator_core, coil_groups["coil_group_1"])
+    boolean_union(stator_core, coil_groups["coil_group_2"])
+    boolean_union(stator_core, coil_groups["coil_group_3"])
+    
+    # Rename
+    stator_core.name = "stator_assembly"
+    
+    # --- SECTION 3 – Create rotor_assembly ---
+    
+    # Create rotor_shaft
+    rotor_shaft = add_cylinder("rotor_shaft", radius=0.010, depth=0.160, location=(0,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (world). (Default)
+    
+    # Create rotor_core
+    rotor_core = add_cylinder("rotor_core", radius=0.030, depth=0.040, location=(0,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (world). (Default)
+    
+    # Align rotor_core.center to rotor_shaft.center
+    align_center_to_center(rotor_core, rotor_shaft)
+    
+    # Align rotor_core.bottom_face to rotor_shaft.top_face
+    align_bottom_face_to_top_face(rotor_core, rotor_shaft)
+    
+    # Offset(0,0,0.001)
+    offset_object(rotor_core, Vector((0, 0, 0.001)))
+    
+    # Boolean-union rotor_core into rotor_shaft
+    boolean_union(rotor_shaft, rotor_core)
+    
+    # Rename
+    rotor_shaft.name = "rotor_assembly"
+    
+    # Create magnet_block_0
+    magnet_block_0 = add_cube("magnet_block_0", size=0.015, location=(0.030, 0.020, 0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (world). (Default)
+    # Move to (0.030, 0, 0.020)
+    magnet_block_0.location = Vector((0.030, 0, 0.020))
+    
+    # Loop i in 0..3 for magnet blocks
+    # Note: magnet_block_0 was created manually.
+    # The loop says "For i in 0...3: Create... magnet_block_i".
+    # This implies creating 4 objects.
+    # I will create magnet_block_1, 2, 3 in the loop.
+    
+    for i in range(1, 4):
+        name_mag = f"magnet_block_{i}"
+        
+        # Create magnet_block_i
+        mb = add_cube(name_mag, size=0.015, location=(0,0,0), rotation=(0,0,0))
+        # Rotate so +Z aligns +Z (world). (Default)
+        
+        # Align magnet_block_i.center to rotor_core.center
+        # Note: rotor_core was removed in boolean union.
+        # The object is now "rotor_assembly".
+        # We need to align to the center of the rotor_core part.
+        # Since rotor_core is merged, we align to rotor_assembly center?
+        # The prompt says "Align magnet_block_i.center to rotor_core.center".
+        # Since rotor_core is gone, we use rotor_assembly.
+        align_center_to_center(mb, rotor_assembly)
+        
+        # Align magnet_block_i.bottom_face to rotor_core.top_face
+        # Again, rotor_core is gone. We align to rotor_assembly top face?
+        # Or do we need to calculate the old top face of rotor_core?
+        # Rotor_core was at Z=0.080 (bottom) to Z=0.120 (top) roughly?
+        # Rotor_shaft: Z -0.080 to 0.080.
+        # Rotor_core: Bottom aligned to Shaft Top (0.080). Height 0.040.
+        # So Rotor_core Z: 0.080 to 0.120.
+        # Top face Z = 0.120.
+        # We align magnet bottom to 0.120.
+        
+        # Get world bounds of rotor_assembly to find top?
+        # No, the magnet is on the side?
+        # "Align magnet_block_i.bottom_face to rotor_core.top_face"
+        # If the magnet is placed at polar(0+i*90; dr=0.030), it is on the side of the shaft.
+        # But rotor_core is on top of the shaft.
+        # If the magnet is aligned to rotor_core.top_face, it is on the top surface of the rotor core.
+        # But polar positioning places it at Z=0 (center of stator/rotor).
+        # This is a contradiction in the prompt's geometry logic if "bottom_face" refers to Z-bottom.
+        # However, "Align ... bottom_face to ... top_face" usually implies Z-alignment.
+        # If the magnet is at polar position, its Z is determined by the anchor.
+        # If anchor is rotor_core.center (Z=0.100), and we align bottom to top (Z=0.120), the magnet will be at Z=0.120 - height/2.
+        # This places the magnet on top of the rotor core.
+        # But polar positioning sets X/Y.
+        # So the magnet is on the top face of the rotor core, at radius 0.030.
+        
+        # Let's execute the alignment steps as written.
+        
+        # Align bottom face to rotor_assembly top face (since rotor_core is gone)
+        # We need the Z of the top of the rotor assembly.
+        # Rotor assembly consists of shaft (0.160 high, centered at 0? No, moved?)
+        # Rotor_shaft was at (0,0,0). Height 0.160. Z: -0.080 to 0.080.
+        # Rotor_core was aligned to shaft top (0.080). Height 0.040. Z: 0.080 to 0.120.
+        # Offset 0.001 applied to rotor_core. Z: 0.081 to 0.121.
+        # So Top Z is approx 0.121.
+        
+        # To be robust, we calculate the top Z of the rotor_assembly.
+        def get_world_top_z(obj):
+            verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+            return max(v[2] for v in verts_world)
+            
+        rotor_top_z = get_world_top_z(rotor_assembly)
+        
+        # Align magnet bottom to rotor_top_z
+        mb_height = 0.010
+        current_mb_bottom = mb.location[2] - (mb_height / 2)
+        delta_z = rotor_top_z - current_mb_bottom
+        mb.location[2] += delta_z
+        
+        # Position at polar(0 + i*90; dr=0.030)
+        angle = 0 + i * 90
+        polar_position(mb, angle, 0.030, rotor_assembly)
+        
+        # Boolean-union magnet_block_i into rotor_assembly
+        boolean_union(rotor_assembly, mb)
+
+    # Boolean-union magnet_block_0 into rotor_assembly
+    boolean_union(rotor_assembly, magnet_block_0)
+    
+    # --- SECTION 4 – Final Assembly ---
+    
+    # Align rotor_assembly.center to stator_assembly.center
+    align_center_to_center(rotor_assembly, stator_assembly)
+    
+    # Align rotor_assembly.bottom_face to stator_assembly.bottom_face
+    align_bottom_face_to_bottom_face(rotor_assembly, stator_assembly)
+    
+    # Offset(0,0,0.005)
+    offset_object(rotor_assembly, Vector((0, 0, 0.005)))
+    
+    # Boolean-union rotor_assembly into housing
+    boolean_union(housing, rotor_assembly)
+    
+    # Boolean-union stator_assembly into housing
+    boolean_union(housing, stator_assembly)
+    
+    # Rename
+    housing.name = "generator_assembly"
+
+if __name__ == "__main__":
+    main()
+```

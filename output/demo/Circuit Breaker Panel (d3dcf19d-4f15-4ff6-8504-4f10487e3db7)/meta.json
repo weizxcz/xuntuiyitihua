@@ -1,0 +1,48 @@
+{
+  "id": "d3dcf19d-4f15-4ff6-8504-4f10487e3db7",
+  "name": "Circuit Breaker Panel",
+  "instruction": "Create a 3D model of a circuit breaker panel. The panel should be rectangular with a door that opens to reveal multiple circuit breakers inside. Each breaker should have a switch to turn it on or off. Include labels for each breaker to indicate its function.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a circuit breaker panel.",
+        "The panel is rectangular in shape.",
+        "The panel features a door that opens."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the door is proportionate to the overall panel.",
+        "The circuit breakers are evenly spaced within the panel."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The door is hinged correctly for opening and closing.",
+        "The circuit breakers are positioned securely within the panel.",
+        "The switches are easily accessible for operation."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the door and the circuit breakers when the door is closed.",
+        "The circuit breakers are mounted firmly to the panel.",
+        "The labels are positioned clearly next to their respective breakers."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The door functions as described, opening to reveal the breakers.",
+        "Each breaker has a switch and is labeled correctly."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

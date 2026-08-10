@@ -1,0 +1,38 @@
+-- MATERIAL LIBRARY --
+car_body_paint | diffuse_color=(0.15,0.15,0.2,1.0)
+charging_port_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+chrome_trim | diffuse_color=(0.8,0.8,0.8,1.0)
+glass | diffuse_color=(0.2,0.3,0.4,0.3)
+metal_chassis | diffuse_color=(0.3,0.3,0.3,1.0)
+rubber_tire | diffuse_color=(0.05,0.05,0.05,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| car_root | Composite of chassis + body + wheels + details | assembly_order=[chassis_group, body_group, wheel_group, detail_group]; mat=metal_chassis |
+
+Layer 1 – Primary Structure (Chassis & Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| chassis_base | Main structural platform | Align(XY) chassis_base.center to car_root.center; Align(Z) chassis_base.bottom_face to car_root.bottom_face; size=1.8×4.8×0.15; mat=metal_chassis; create_method=primitive |
+| body_shell | Aerodynamic car body | Align(XY) body_shell.center to chassis_base.center; Align(Z) body_shell.bottom_face to chassis_base.top_face; size=1.9×4.9×0.8; mat=car_body_paint; create_method=primitive |
+| cabin_volume | Passenger compartment cutout | Align(XY) cabin_volume.center to body_shell.center; Align(Z) cabin_volume.center to body_shell.center; size=1.5×2.5×0.6; mat=-; create_method=boolean_subtract; constraint=depth 0.6 from top; tool_id=cabin_cutter |
+| cabin_cutter | Temporary cutter for cabin | Align(XY) cabin_cutter.center to body_shell.center; Align(Z) cabin_cutter.center to body_shell.center; size=1.5×2.5×0.65; mat=-; create_method=primitive |
+
+Layer 2 – Wheel Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_FL | Front Left Wheel | Align(XY) wheel_FL.center to chassis_base.center; offset(-0.8, 1.8, -0.3); size=0.35×0.25; mat=rubber_tire; create_method=primitive |
+| wheel_FR | Front Right Wheel | Align(XY) wheel_FR.center to chassis_base.center; offset(0.8, 1.8, -0.3); size=0.35×0.25; mat=rubber_tire; create_method=primitive |
+| wheel_RL | Rear Left Wheel | Align(XY) wheel_RL.center to chassis_base.center; offset(-0.8, -1.8, -0.3); size=0.35×0.25; mat=rubber_tire; create_method=primitive |
+| wheel_RR | Rear Right Wheel | Align(XY) wheel_RR.center to chassis_base.center; offset(0.8, -1.8, -0.3); size=0.35×0.25; mat=rubber_tire; create_method=primitive |
+
+Layer 3 – Details (Grille & Charging Port)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| front_grille | Front grille opening | Align(XY) front_grille.center to body_shell.front_face.center; Align(Z) front_grille.center to body_shell.front_face.center; size=1.2×0.4; mat=chrome_trim; create_method=primitive |
+| charging_port | Charging port housing | Align(XY) charging_port.center to body_shell.left_face.center; offset(0, 0, 0.1); size=0.2×0.15; mat=charging_port_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,26 @@
+-- MATERIAL LIBRARY --
+mat_acrylic | diffuse_color=(0.9,0.9,0.95,0.3)
+mat_inner_wall | diffuse_color=(0.8,0.8,0.85,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly of the pencil holder | assembly_order=[outer_shell, inner_dividers] |
+
+Layer 1 – Primary Structure (Outer Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| outer_shell | Composite of base_plate + cylindrical_wall | Composite of base_plate + cylindrical_wall; forms the main container. |
+| base_plate | Cylinder Ø0.1016×0.005 m (Ø4"×0.2") | Align(XY) base_plate.center to root.center; orientation=axis:+Z; mat=mat_acrylic; create_method=primitive; size=cylinder(0.0508, 0.005) |
+| cylindrical_wall | Cylinder Ø0.1016×0.1524 m (Ø4"×6") with boolean_subtract for compartments | Align(XY) cylindrical_wall.center to base_plate.center; Align(Z) cylindrical_wall.bottom_face to base_plate.top_face; orientation=axis:+Z; mat=mat_acrylic; create_method=boolean_subtract; size=cylinder(0.0508, 0.1524); tool_id=inner_dividers |
+
+Layer 2 – Internal Organization (Dividers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| inner_dividers | Composite of 3 radial divider plates | Composite of divider_1 + divider_2 + divider_3; arranged in a polar pattern to create 3 compartments. |
+| divider_1 | Rectangular plate 0.002×0.1524×0.1016 m (thickness×height×diameter) | Align(XY) divider_1.center to root.center; Align(Z) divider_1.bottom_face to base_plate.top_face; orientation=axis:+Z; mat=mat_inner_wall; create_method=primitive; size=cuboid(0.002, 0.1524, 0.1016); rotation=axis:Z,0° |
+| divider_2 | Rectangular plate 0.002×0.1524×0.1016 m | Align(XY) divider_2.center to root.center; Align(Z) divider_2.bottom_face to base_plate.top_face; orientation=axis:+Z; mat=mat_inner_wall; create_method=primitive; size=cuboid(0.002, 0.1524, 0.1016); rotation=axis:Z,120° |
+| divider_3 | Rectangular plate 0.002×0.1524×0.1016 m | Align(XY) divider_3.center to root.center; Align(Z) divider_3.bottom_face to base_plate.top_face; orientation=axis:+Z; mat=mat_inner_wall; create_method=primitive; size=cuboid(0.002, 0.1524, 0.1016); rotation=axis:Z,240° |
+# ----------  END_GRAPH  ----------

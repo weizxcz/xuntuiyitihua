@@ -1,0 +1,31 @@
+-- MATERIAL LIBRARY --
+mat_black | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of logo_group + symbol_group + base_plate | A. Composite of logo_group + symbol_group + base_plate; assembly_order=[base_plate], [logo_group], [symbol_group]; mat=-; create_method=union |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Flat rectangular base Ø0.400×0.002 m (W×H×T) | cylinder Ø0.400×0.002; Align(XY) base_plate.center to (0,0); orientation=axis:+Z; mat=mat_white; create_method=primitive |
+| logo_group | Composite of text_block + graphic_element | A. Composite of text_block + graphic_element; assembly_order=[graphic_element], [text_block]; mat=-; create_method=union |
+| symbol_group | Composite of icon_base + icon_core | A. Composite of icon_base + icon_core; assembly_order=[icon_core], [icon_base]; mat=-; create_method=union |
+
+Layer 2 – Logo Components
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| graphic_element | Stylized 'L' shape block 0.080×0.060×0.005 m (W×H×T) | cube 0.080×0.060×0.005; Align(XY) graphic_element.center to (-0.10, 0.02); orientation=axis:+Z; mat=mat_black; create_method=primitive |
+| text_block | Text representation block 0.120×0.020×0.005 m (W×H×T) | cube 0.120×0.020×0.005; Align(XY) text_block.center to (-0.10, -0.04); orientation=axis:+Z; mat=mat_black; create_method=primitive |
+
+Layer 3 – Symbol Components
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| icon_base | Circular base disc Ø0.100×0.005 m (D×T) | cylinder Ø0.100×0.005; Align(XY) icon_base.center to (0.10, 0.02); orientation=axis:+Z; mat=mat_black; create_method=primitive |
+| icon_core | Inner star polygon 0.040×0.040×0.005 m (W×H×T) | cube 0.040×0.040×0.005; Align(XY) icon_core.center to (0.10, 0.02); orientation=axis:+Z; mat=mat_white; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

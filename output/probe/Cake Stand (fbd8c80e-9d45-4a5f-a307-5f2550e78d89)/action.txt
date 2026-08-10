@@ -1,0 +1,32 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material ceramic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material wood_oak; diffuse_color = (0.65,0.45,0.25,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base pillar  ---
+Create primitive cylinder with radius 0.075 m and height 0.200 m and name it base_pillar.
+Rotate base_pillar so its +Z axis aligns +Z (world).
+Anchor base_pillar to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create top plate  ---
+Create primitive cylinder with radius 0.150 m and height 0.015 m and name it top_plate.
+Rotate top_plate so its +Z axis aligns +Z (world).
+Align top_plate.bottom_face to base_pillar.top_face.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+All stages complete.

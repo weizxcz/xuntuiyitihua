@@ -1,0 +1,50 @@
+{
+  "id": "280f069d-306b-452c-926b-feee4bef9319",
+  "name": "Chef's Apron",
+  "instruction": "Create a chef's apron designed for professional use. It should have a full-body coverage with an adjustable neck strap. Include two large front pockets and a waist tie. The apron should be knee-length.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a chef's apron.",
+        "The apron provides full-body coverage.",
+        "The design includes an adjustable neck strap.",
+        "The apron features two large front pockets.",
+        "The waist tie is included in the design."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the pockets is appropriate for functionality.",
+        "The neck strap and waist tie are proportionate to the apron size."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The apron covers the front of the body adequately.",
+        "The neck strap is positioned correctly for comfort.",
+        "The pockets are placed at an accessible height.",
+        "The waist tie allows for adjustment and secure fit."
+      ],
+      "Object distance and contact": [
+        "The apron does not interfere with the movement of the wearer.",
+        "The pockets are securely attached without gaps.",
+        "The waist tie is properly integrated into the apron design."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the requirement for professional use."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

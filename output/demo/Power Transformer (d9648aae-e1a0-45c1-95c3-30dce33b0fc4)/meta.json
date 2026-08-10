@@ -1,0 +1,53 @@
+{
+  "id": "d9648aae-e1a0-45c1-95c3-30dce33b0fc4",
+  "name": "Power Transformer",
+  "instruction": "Design a power transformer. Start with a large, rectangular core. Add coils around the core, with primary and secondary windings on opposite sides. Include terminals for electrical connections at the top. Surround the core and coils with a protective casing, and add cooling fins on the sides.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a power transformer.",
+        "The core is large and rectangular.",
+        "Coils are wrapped around the core.",
+        "Primary and secondary windings are located on opposite sides of the core.",
+        "The terminals for electrical connections are positioned at the top."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the coils is proportionate to the core.",
+        "The terminals are adequately sized for functionality.",
+        "The cooling fins are proportionate to the size of the transformer."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The coils are correctly positioned around the core.",
+        "The primary and secondary windings are placed on opposite sides without interference.",
+        "The terminals are accessible at the top of the transformer.",
+        "The cooling fins are symmetrically placed on the sides of the casing."
+      ],
+      "Object distance and contact": [
+        "The coils do not overlap with the core.",
+        "There is no gap between the coils and the core.",
+        "The terminals are securely attached to the top of the casing.",
+        "The cooling fins are firmly attached to the sides of the casing."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "The design follows the instruction without deviations.",
+        "The arrangement of coils, core, terminals, and cooling fins is as instructed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

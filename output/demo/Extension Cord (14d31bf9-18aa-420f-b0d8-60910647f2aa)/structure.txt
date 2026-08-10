@@ -1,0 +1,27 @@
+-- MATERIAL LIBRARY --
+cable_black | diffuse_color=(0.10,0.10,0.10,1.00)
+cord_white | diffuse_color=(0.95,0.95,0.95,1.00)
+outlet_white | diffuse_color=(0.90,0.90,0.90,1.00)
+plug_black | diffuse_color=(0.15,0.15,0.15,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly for the extension cord system | assembly_order=[cable_coil, plug, outlets] |
+
+Layer 1 – Cable Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cable_coil | Composite of coiled cable segments forming a spring-like shape | A. Composite of multiple cable segments arranged in a helix; B. Total length approx 3.0 m, coil diameter 0.15 m; C. Positioned centrally; D. mat=cable_black; E. create_method=pattern_polar; F. constraint=pattern=polar(count:20, radius:0.075, start_angle:0°, angle_step:18°) with offset(0,0,0.15) per step to form helix; G. orientation=axis:+Z |
+| plug | Standard 3-prong power plug | A. Cylinder Ø0.04×0.06 m with rectangular base; B. Positioned at one end of the cable coil; C. mat=plug_black; D. create_method=primitive_union; E. Align(Z) plug.bottom_face to cable_coil.end_face; F. orientation=axis:+Z |
+
+Layer 2 – Outlet Strip
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| outlet_strip | Main housing for the multi-outlet strip | A. Rectangular box 0.30×0.05×0.04 m; B. Positioned at the other end of the cable coil; C. mat=outlet_white; D. create_method=primitive; E. Align(Z) outlet_strip.top_face to cable_coil.start_face; F. orientation=axis:+Z |
+| outlets | Array of electrical sockets | A. 4 individual socket units; B. Embedded in the front face of the outlet strip; C. mat=outlet_white; D. create_method=pattern_grid; E. constraint=pattern=grid(rows:1, cols:4, x_spacing:0.06, y_spacing:0, start_offset:(-0.09, 0)); F. Align(XY) outlets[i].back_face to outlet_strip.front_face; G. orientation=axis:+Z |
+| indicator_light | Small LED indicator for power status | A. Small cylinder Ø0.01×0.005 m; B. Positioned on the side of the outlet strip; C. mat=cord_white; D. create_method=primitive; E. Align(XY) indicator_light.center to outlet_strip.side_at(0°); F. orientation=axis:+X |
+
+# ----------  END_GRAPH  ----------

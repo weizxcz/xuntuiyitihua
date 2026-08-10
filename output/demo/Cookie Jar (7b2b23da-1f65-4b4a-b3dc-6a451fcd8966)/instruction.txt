@@ -1,0 +1,1 @@
+Create a 3D model of a cookie jar. The jar should have a cylindrical shape with a lid that fits on top. The jar should be large enough to hold a good number of cookies.

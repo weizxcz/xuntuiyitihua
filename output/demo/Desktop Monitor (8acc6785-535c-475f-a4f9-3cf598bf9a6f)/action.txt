@@ -1,0 +1,112 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_glass_screen; diffuse_color = (0.1,0.1,0.15,0.3).
+Define material mat_led_backlight; diffuse_color = (0.9,0.9,0.9,1.0).
+Define material mat_stand_base; diffuse_color = (0.08,0.08,0.08,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Stand Base  ---
+Create primitive cuboid with size 0.120×0.080×0.005 m and name it stand_base.
+Rotate stand_base so its +Z axis aligns +Z (world).
+Anchor stand_base to world origin.
+Then move by offset(0, -0.225, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Stand Neck  ---
+Create primitive cylinder with diameter 0.040 m and height 0.150 m and name it stand_neck.
+Rotate stand_neck so its +Z axis aligns +Z (world).
+Anchor stand_neck to world origin.
+Then move by offset(0, -0.15, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Assemble Stand Group  ---
+Align stand_neck.Z_face to stand_base.Z_face.
+Then move by offset(0, 0, 0.0025).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create LED Backlight  ---
+Create primitive cuboid with size 0.531×0.300×0.002 m and name it led_backlight.
+Rotate led_backlight so its +Z axis aligns +Z (world).
+Anchor led_backlight to world origin.
+Then move by offset(0, 0, -0.001).
+Stage 4 complete.
+
+---  SECTION 5 – Create Glass Screen  ---
+Create primitive cuboid with size 0.531×0.300×0.002 m and name it glass_screen.
+Rotate glass_screen so its +Z axis aligns +Z (world).
+Anchor glass_screen to world origin.
+Then move by offset(0, 0, 0).
+Stage 5 complete.
+
+---  SECTION 6 – Assemble Panel Unit  ---
+Align glass_screen.Z_face to led_backlight.Z_face.
+Then move by offset(0, 0, 0.001).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Create Top Bezel  ---
+Create primitive cuboid with size 0.531×0.015×0.005 m and name it frame_top.
+Rotate frame_top so its +Z axis aligns +Z (world).
+Anchor frame_top to world origin.
+Then move by offset(0, 0.157, 0.002).
+Stage 7 complete.
+
+---  SECTION 8 – Create Bottom Bezel  ---
+Create primitive cuboid with size 0.531×0.020×0.005 m and name it frame_bottom.
+Rotate frame_bottom so its +Z axis aligns +Z (world).
+Anchor frame_bottom to world origin.
+Then move by offset(0, -0.160, 0.002).
+Stage 8 complete.
+
+---  SECTION 9 – Create Left Bezel  ---
+Create primitive cuboid with size 0.015×0.300×0.005 m and name it frame_left.
+Rotate frame_left so its +Z axis aligns +Z (world).
+Anchor frame_left to world origin.
+Then move by offset(-0.273, 0, 0.002).
+Stage 9 complete.
+
+---  SECTION 10 – Create Right Bezel  ---
+Create primitive cuboid with size 0.015×0.300×0.005 m and name it frame_right.
+Rotate frame_right so its +Z axis aligns +Z (world).
+Anchor frame_right to world origin.
+Then move by offset(0.273, 0, 0.002).
+Stage 10 complete.
+
+---  SECTION 11 – Assemble Bezel Frame  ---
+Align frame_top.Z_face to glass_screen.Z_face.
+Then move by offset(0, 0, 0).
+Align frame_bottom.Z_face to glass_screen.Z_face.
+Then move by offset(0, 0, 0).
+Align frame_left.Z_face to glass_screen.Z_face.
+Then move by offset(0, 0, 0).
+Align frame_right.Z_face to glass_screen.Z_face.
+Then move by offset(0, 0, 0).
+Assembly guideline satisfied.
+Stage 11 complete.
+
+---  SECTION 12 – Assemble Screen Group  ---
+Align panel_unit.Z_face to bezel_frame.Z_face.
+Then move by offset(0, 0, 0).
+Assembly guideline satisfied.
+Stage 12 complete.
+
+---  SECTION 13 – Assemble Monitor Root  ---
+Align screen_group.Z_face to stand_neck.Z_face.
+Then move by offset(0, 0, 0.075).
+Assembly guideline satisfied.
+Stage 13 complete.
+
+All stages complete.

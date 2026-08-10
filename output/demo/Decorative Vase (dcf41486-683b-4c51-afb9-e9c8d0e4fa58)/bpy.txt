@@ -1,0 +1,312 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0), roughness=0.5, metallic=0.0):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_disc(radius, segments=32, name="Disc"):
+    """Add a flat disc oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='NGON', segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, segments=32, name="Cone"):
+    """Add a cone/tapered cylinder oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_uvsphere(radius, width_seg=32, height_seg=16, name="UVSphere"):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_torus(major_radius, minor_radius, major_segments=32, minor_segments=16, name="Torus"):
+    """Add a torus oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=major_segments, minor_segments=minor_segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_bevel(obj, width=0.01, segments=4, name_prefix="Bevel"):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name=f"{name_prefix}_{obj.name}", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def boolean_subtract(target, cutter, name="BooleanSubtract"):
+    """Perform a boolean subtract operation."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name=name, type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    return mod
+
+def boolean_union(target, cutter, name="BooleanUnion"):
+    """Perform a boolean union operation."""
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name=name, type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    return mod
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    vec = mathutils.Vector(vector).normalized()
+    if axis == 'X':
+        local_axis = mathutils.Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = mathutils.Vector((0, 1, 0))
+    else: # Z
+        local_axis = mathutils.Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vec)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find specific points on an object's geometry."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.mesh = obj.data
+        self.has_calc = False
+        self.verts = []
+        self.faces = []
+        self._calculate()
+
+    def _calculate(self):
+        """Calculate vertex and face centers in world space."""
+        self.verts = []
+        self.faces = []
+        for v in self.mesh.vertices:
+            self.verts.append(v.co.copy())
+        for f in self.mesh.polygons:
+            center = average([self.verts[i] for i in f.vertices])
+            self.faces.append(center)
+        self.has_calc = True
+
+    def center_world(self):
+        """Return the world-space center of the object."""
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, face_index=0):
+        """Return the world-space center of a specific face."""
+        if not self.has_calc:
+            self._calculate()
+        if face_index < len(self.faces):
+            return self.obj.matrix_world @ self.faces[face_index]
+        return self.center_world()
+
+    def radial_point_world(self, direction='UP', radius=None):
+        """Return a point on the radial boundary."""
+        # Simplified: returns center for now, as radial depends on specific geometry
+        return self.center_world()
+
+def get_face_normal(obj, face_index=0):
+    """Get the normal of a specific face in world space."""
+    mesh = obj.data
+    if face_index < len(mesh.polygons):
+        poly = mesh.polygons[face_index]
+        # Get normal in local space
+        normal_local = poly.normal
+        # Transform to world space
+        normal_world = obj.matrix_world.to_3x3() @ normal_local
+        return normal_world.normalized()
+    return Vector((0, 0, 1))
+
+def get_top_face_index(obj):
+    """Heuristic to find the top face (highest Z in local space)."""
+    mesh = obj.data
+    max_z = -float('inf')
+    top_idx = 0
+    for i, poly in enumerate(mesh.polygons):
+        # Average Z of vertices
+        avg_z = sum([v.co.z for v in mesh.vertices[pv] for pv in poly.vertices]) / len(poly.vertices)
+        if avg_z > max_z:
+            max_z = avg_z
+            top_idx = i
+    return top_idx
+
+def get_bottom_face_index(obj):
+    """Heuristic to find the bottom face (lowest Z in local space)."""
+    mesh = obj.data
+    min_z = float('inf')
+    bottom_idx = 0
+    for i, poly in enumerate(mesh.polygons):
+        avg_z = sum([v.co.z for v in mesh.vertices[pv] for pv in poly.vertices]) / len(poly.vertices)
+        if avg_z < min_z:
+            min_z = avg_z
+            bottom_idx = i
+    return bottom_idx
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_ceramic_white = make_material(
+    name="ceramic_white",
+    diffuse_color=(0.95, 0.95, 0.95, 1.0),
+    roughness=0.2,
+    metallic=0.0
+)
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create vase_base ---
+# Create primitive cylinder with diameter 0.16 m and height 0.02 m and name it vase_base.
+# Radius = 0.16 / 2 = 0.08
+vase_base = add_cylinder(radius=0.08, depth=0.02, name="vase_base")
+vase_base.data.materials.append(mat_ceramic_white)
+
+# Rotate vase_base so its +Z axis aligns +Z (world).
+# Default cylinder is already aligned to Z, but we ensure it.
+align_axis_to_vector(vase_base, axis='Z', vector=(0, 0, 1))
+
+# Anchor vase_base to vase.center.
+# Since vase.center doesn't exist yet, we assume it refers to the world origin (0,0,0)
+# or the center of the scene. We place it at (0,0,0).
+vase_base.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+vase_base.location += Vector((0, 0, 0))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create vase_body ---
+# Create primitive cylinder with base diameter 0.15 m, top diameter 0.05 m, and height 0.25 m and name it vase_body.
+vase_body = add_cone(radius_bottom=0.075, radius_top=0.025, depth=0.25, name="vase_body")
+vase_body.data.materials.append(mat_ceramic_white)
+
+# Rotate vase_body so its +Z axis aligns +Z (world).
+align_axis_to_vector(vase_body, axis='Z', vector=(0, 0, 1))
+
+# Align vase_body.bottom_face to vase_base.top_face.
+# We need to find the top face of vase_base and bottom face of vase_body.
+loc_base = Locator(vase_base)
+loc_body = Locator(vase_body)
+
+# Get top face of vase_base
+top_face_idx_base = get_top_face_index(vase_base)
+top_face_center_base = loc_base.face_center_world(top_face_idx_base)
+
+# Get bottom face of vase_body
+bottom_face_idx_body = get_bottom_face_index(vase_body)
+bottom_face_center_body = loc_body.face_center_world(bottom_face_idx_body)
+
+# Calculate offset to align bottom of body to top of base
+# Target location for body center:
+# We want bottom_face_center_body to move to top_face_center_base.
+# Current bottom_face_center_body is relative to body's origin.
+# Let's calculate the shift needed.
+shift = top_face_center_base - bottom_face_center_body
+vase_body.location += shift
+
+# Align vase_body.bottom_face to vase_base.top_face (already done by position, but ensure normal alignment)
+# Since both are Z-aligned, normals match.
+
+# Then move by offset(0,0,0).
+vase_body.location += Vector((0, 0, 0))
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create vase_lip ---
+# Create primitive torus with major diameter 0.05 m and minor diameter 0.005 m and name it vase_lip.
+# Major radius = 0.05 / 2 = 0.025
+# Minor radius = 0.005 / 2 = 0.0025
+vase_lip = add_torus(major_radius=0.025, minor_radius=0.0025, name="vase_lip")
+vase_lip.data.materials.append(mat_ceramic_white)
+
+# Rotate vase_lip so its +Z axis aligns +Z (world).
+align_axis_to_vector(vase_lip, axis='Z', vector=(0, 0, 1))
+
+# Align vase_lip.center to vase_body.top_face.
+loc_body_top = Locator(vase_body)
+top_face_idx_body = get_top_face_index(vase_body)
+top_face_center_body = loc_body_top.face_center_world(top_face_idx_body)
+
+# Set vase_lip center to top_face_center_body
+vase_lip.location = top_face_center_body
+
+# Align vase_lip.bottom_face to vase_body.top_face.
+# This is tricky for a torus. A torus doesn't have a clear "bottom face" in the same way.
+# However, the instruction says "Align vase_lip.bottom_face to vase_body.top_face".
+# Assuming this means the lowest point of the torus should touch the top face of the body.
+# The torus is centered at the top face. The lowest point is center - minor_radius in Z.
+# To align the bottom face (lowest point) to the top face (z=top_z), we need to shift UP by minor_radius.
+# Current center Z = top_face_center_body.z
+# Lowest point Z = center_z - minor_radius
+# We want lowest point Z = top_face_center_body.z
+# So new center Z = top_face_center_body.z + minor_radius
+vase_lip.location.z += 0.0025
+
+# Then move by offset(0,0,0.002).
+vase_lip.location += Vector((0, 0, 0.002))
+
+# Stage 3 complete.
+
+# All stages complete.
+```

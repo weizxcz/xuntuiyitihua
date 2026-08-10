@@ -1,0 +1,114 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.8,0.8,0.85,1.0).
+Define material mat_hardshell; diffuse_color = (0.1,0.1,0.15,1.0).
+Define material mat_polyurethane; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_rubber; diffuse_color = (0.15,0.15,0.15,1.0).
+Define material mat_zinc; diffuse_color = (0.6,0.6,0.65,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main shell and outer casing  ---
+Create primitive cuboid with size 0.65×0.45×0.28 m and name it main_shell.
+Rotate main_shell so its +Z axis aligns +Y (world).
+Anchor main_shell to world origin.
+Move main_shell by offset(0,0,0).
+
+Create primitive cuboid with size 0.65×0.45×0.28 m and name it outer_shell.
+Rotate outer_shell so its +Z axis aligns +Y (world).
+Align outer_shell.center to main_shell.center.
+Move outer_shell by offset(0,0,0).
+
+---  SECTION 2 – Create inner lining  ---
+Create primitive cuboid with size 0.63×0.43×0.26 m and name it inner_lining.
+Rotate inner_lining so its +Z axis aligns +Y (world).
+Align inner_lining.center to main_shell.center.
+Move inner_lining by offset(0,0,0).
+
+---  SECTION 3 – Create zipper track  ---
+Create primitive cuboid with size 0.66×0.01×0.29 m and name it zipper_track.
+Rotate zipper_track so its +Z axis aligns +Y (world).
+Align zipper_track.center to main_shell.center.
+Move zipper_track by offset(0,0,0).
+
+---  SECTION 4 – Create handle base  ---
+Create primitive cuboid with size 0.1×0.02×0.05 m and name it handle_base.
+Rotate handle_base so its +Z axis aligns +Y (world).
+Align handle_base.center to main_shell.center.
+Move handle_base by offset(0, 0.225, -0.14).
+
+---  SECTION 5 – Create telescopic tube 1  ---
+Create primitive cylinder with diameter 0.015 m and length 0.3 m and name it telescopic_tube_1.
+Rotate telescopic_tube_1 so its +Z axis aligns +Y (world).
+Align telescopic_tube_1.center to handle_base.center.
+Move telescopic_tube_1 by offset(0, 0.01, 0).
+
+---  SECTION 6 – Create telescopic tube 2  ---
+Create primitive cylinder with diameter 0.012 m and length 0.3 m and name it telescopic_tube_2.
+Rotate telescopic_tube_2 so its +Z axis aligns +Y (world).
+Align telescopic_tube_2.center to telescopic_tube_1.center.
+Move telescopic_tube_2 by offset(0, 0.15, 0).
+
+---  SECTION 7 – Create handle grip  ---
+Create primitive cylinder with diameter 0.02 m and length 0.15 m and name it handle_grip.
+Rotate handle_grip so its +Z axis aligns +Y (world).
+Align handle_grip.center to telescopic_tube_2.center.
+Move handle_grip by offset(0, 0.15, 0).
+
+---  SECTION 8 – Create wheel mounts  ---
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it wheel_mount_fl.
+Rotate wheel_mount_fl so its +Z axis aligns +Y (world).
+Align wheel_mount_fl.center to main_shell.center.
+Move wheel_mount_fl by offset(-0.25, -0.225, 0.12).
+
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it wheel_mount_fr.
+Rotate wheel_mount_fr so its +Z axis aligns +Y (world).
+Align wheel_mount_fr.center to main_shell.center.
+Move wheel_mount_fr by offset(0.25, -0.225, 0.12).
+
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it wheel_mount_rl.
+Rotate wheel_mount_rl so its +Z axis aligns +Y (world).
+Align wheel_mount_rl.center to main_shell.center.
+Move wheel_mount_rl by offset(-0.25, -0.225, -0.12).
+
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it wheel_mount_rr.
+Rotate wheel_mount_rr so its +Z axis aligns +Y (world).
+Align wheel_mount_rr.center to main_shell.center.
+Move wheel_mount_rr by offset(0.25, -0.225, -0.12).
+
+---  SECTION 9 – Create front-left wheel  ---
+Create primitive cylinder with diameter 0.02 m and length 0.02 m and name it wheel_fl.
+Rotate wheel_fl so its +Z axis aligns +X (world).
+Align wheel_fl.center to wheel_mount_fl.center.
+Move wheel_fl by offset(0, -0.025, 0).
+
+---  SECTION 10 – Create front-right wheel  ---
+Create primitive cylinder with diameter 0.02 m and length 0.02 m and name it wheel_fr.
+Rotate wheel_fr so its +Z axis aligns +X (world).
+Align wheel_fr.center to wheel_mount_fr.center.
+Move wheel_fr by offset(0, -0.025, 0).
+
+---  SECTION 11 – Create rear-left wheel  ---
+Create primitive cylinder with diameter 0.02 m and length 0.02 m and name it wheel_rl.
+Rotate wheel_rl so its +Z axis aligns +X (world).
+Align wheel_rl.center to wheel_mount_rl.center.
+Move wheel_rl by offset(0, -0.025, 0).
+
+---  SECTION 12 – Create rear-right wheel  ---
+Create primitive cylinder with diameter 0.02 m and length 0.02 m and name it wheel_rr.
+Rotate wheel_rr so its +Z axis aligns +X (world).
+Align wheel_rr.center to wheel_mount_rr.center.
+Move wheel_rr by offset(0, -0.025, 0).
+
+Stage 12 complete.
+All stages complete.

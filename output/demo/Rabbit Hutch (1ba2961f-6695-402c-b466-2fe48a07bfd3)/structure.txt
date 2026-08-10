@@ -1,0 +1,63 @@
+-- MATERIAL LIBRARY --
+mat_wood_frame | diffuse_color=(0.55,0.35,0.15,1.0)
+mat_wire_mesh | diffuse_color=(0.6,0.6,0.6,0.8)
+mat_roof_shingles | diffuse_color=(0.2,0.2,0.2,1.0)
+mat_door_panel | diffuse_color=(0.55,0.35,0.15,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hutch_root | Composite of base_frame, run_enclosure, sleeping_chamber, ramp, roof, door | assembly_order=[base_frame, run_enclosure, sleeping_chamber, ramp, roof, door]; mat=-> |
+
+Layer 1 – Primary Structure (Base & Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_frame | Composite of 4 corner posts and bottom rails | assembly_order=[corner_post_LF, corner_post_RF, corner_post_LB, corner_post_RB, bottom_rail_front, bottom_rail_back, bottom_rail_left, bottom_rail_right]; mat=mat_wood_frame |
+| corner_post_LF | Cube 0.05×0.3×0.05 m | pos=(-0.5, -0.5, 0); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| corner_post_RF | Cube 0.05×0.3×0.05 m | pos=(0.5, -0.5, 0); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| corner_post_LB | Cube 0.05×0.3×0.05 m | pos=(-0.5, 0.5, 0); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| corner_post_RB | Cube 0.05×0.3×0.05 m | pos=(0.5, 0.5, 0); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| bottom_rail_front | Cube 1.0×0.05×0.05 m | Align(Z) bottom_rail_front.bottom_face to Avg(corner_post_LF.bottom_face, corner_post_RF.bottom_face); offset(0,0,0.025); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| bottom_rail_back | Cube 1.0×0.05×0.05 m | Align(Z) bottom_rail_back.bottom_face to Avg(corner_post_LB.bottom_face, corner_post_RB.bottom_face); offset(0,0,0.025); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| bottom_rail_left | Cube 0.05×0.05×1.0 m | Align(Z) bottom_rail_left.bottom_face to Avg(corner_post_LF.bottom_face, corner_post_LB.bottom_face); offset(0,0,0.025); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| bottom_rail_right | Cube 0.05×0.05×1.0 m | Align(Z) bottom_rail_right.bottom_face to Avg(corner_post_RF.bottom_face, corner_post_RB.bottom_face); offset(0,0,0.025); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+
+Layer 2 – Run Enclosure (Bottom Level)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| run_enclosure | Composite of wire mesh walls and floor | assembly_order=[mesh_front, mesh_back, mesh_left, mesh_right, floor_grate]; mat=mat_wire_mesh |
+| mesh_front | Cylinder Ø1.0×0.25 m (approximated as mesh panel) | Align(XY) mesh_front.center to Avg(corner_post_LF.center, corner_post_RF.center); offset(0,0,0.125); orientation=axis:+Z; mat=mat_wire_mesh; create_method=primitive |
+| mesh_back | Cylinder Ø1.0×0.25 m (approximated as mesh panel) | Align(XY) mesh_back.center to Avg(corner_post_LB.center, corner_post_RB.center); offset(0,0,0.125); orientation=axis:+Z; mat=mat_wire_mesh; create_method=primitive |
+| mesh_left | Cylinder Ø1.0×0.25 m (approximated as mesh panel) | Align(XY) mesh_left.center to Avg(corner_post_LF.center, corner_post_LB.center); offset(0,0,0.125); orientation=axis:+Z; mat=mat_wire_mesh; create_method=primitive |
+| mesh_right | Cylinder Ø1.0×0.25 m (approximated as mesh panel) | Align(XY) mesh_right.center to Avg(corner_post_RF.center, corner_post_RB.center); offset(0,0,0.125); orientation=axis:+Z; mat=mat_wire_mesh; create_method=primitive |
+| floor_grate | Cube 1.0×0.01×1.0 m | Align(XY) floor_grate.center to Avg(corner_post_LF.center, corner_post_RF.center, corner_post_LB.center, corner_post_RB.center); offset(0,0,0.01); orientation=axis:+Z; mat=mat_wire_mesh; create_method=primitive |
+
+Layer 3 – Sleeping Chamber (Top Level)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sleeping_chamber | Composite of walls, floor, and back panel | assembly_order=[chamber_floor, chamber_back, chamber_left, chamber_right, chamber_ceiling]; mat=mat_wood_frame |
+| chamber_floor | Cube 1.0×0.02×1.0 m | Align(XY) chamber_floor.center to Avg(corner_post_LF.center, corner_post_RF.center, corner_post_LB.center, corner_post_RB.center); offset(0,0,0.3); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| chamber_back | Cube 1.0×0.4×0.02 m | Align(XY) chamber_back.center to Avg(corner_post_LB.center, corner_post_RB.center); offset(0,0,0.5); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| chamber_left | Cube 0.02×0.4×1.0 m | Align(XY) chamber_left.center to Avg(corner_post_LF.center, corner_post_LB.center); offset(0,0,0.5); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| chamber_right | Cube 0.02×0.4×1.0 m | Align(XY) chamber_right.center to Avg(corner_post_RF.center, corner_post_RB.center); offset(0,0,0.5); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+| chamber_ceiling | Cube 1.0×0.02×1.0 m | Align(XY) chamber_ceiling.center to Avg(corner_post_LF.center, corner_post_RF.center, corner_post_LB.center, corner_post_RB.center); offset(0,0,0.7); orientation=axis:+Z; mat=mat_wood_frame; create_method=primitive |
+
+Layer 4 – Roof
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| roof | Composite of two sloped planes | assembly_order=[roof_left, roof_right]; mat=mat_roof_shingles |
+| roof_left | Cube 0.55×0.02×1.05 m | Align(XY) roof_left.center to Avg(corner_post_LF.center, corner_post_LB.center); offset(0,0,0.71); orientation=axis:+Z; rotation=axis:Y,10°; mat=mat_roof_shingles; create_method=primitive |
+| roof_right | Cube 0.55×0.02×1.05 m | Align(XY) roof_right.center to Avg(corner_post_RF.center, corner_post_RB.center); offset(0,0,0.71); orientation=axis:+Z; rotation=axis:Y,-10°; mat=mat_roof_shingles; create_method=primitive |
+
+Layer 5 – Ramp
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| ramp | Cube 0.8×0.02×1.0 m | Align(XY) ramp.center to Avg(corner_post_LF.center, corner_post_RF.center); offset(0,0,0.15); orientation=axis:+Z; rotation=axis:X,-15°; mat=mat_wood_frame; create_method=primitive |
+
+Layer 6 – Door
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door | Cube 0.4×0.3×0.02 m | Align(XY) door.center to Avg(corner_post_LF.center, corner_post_RF.center); offset(0,0,0.5); orientation=axis:+Z; mat=mat_door_panel; create_method=primitive |
+# ----------  END_GRAPH  ----------

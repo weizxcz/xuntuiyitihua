@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+mat_black_plastic | diffuse_color=(0.10,0.10,0.10,1.00)
+mat_grey_plastic | diffuse_color=(0.50,0.50,0.50,1.00)
+mat_screen_blue | diffuse_color=(0.05,0.10,0.20,1.00)
+mat_white_plastic | diffuse_color=(0.90,0.90,0.90,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| desk_surface | Composite of monitor + CPU + keyboard + mouse on a virtual plane | assembly_order=[monitor_group, cpu_group, input_group]; constraint=flat_surface; pos=(0,0,0) |
+
+Layer 1 – Primary Structure (Monitor Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| monitor_screen | Flat rectangular panel 0.50×0.30×0.005 m | Align(XY) monitor_screen.center to monitor_stand.top_face; orientation=axis:+Z; mat=mat_screen_blue; create_method=primitive(cuboid) |
+| monitor_frame | Rectangular bezel surrounding screen 0.52×0.32×0.01 m | Align(XY) monitor_frame.center to monitor_screen.center; offset(0,0,0.002); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive(cuboid) |
+| monitor_stand_base | Flat rectangular base 0.20×0.15×0.01 m | Align(XY) monitor_stand_base.center to monitor_stand.bottom_face; orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive(cuboid) |
+| monitor_stand_neck | Vertical support 0.05×0.05×0.15 m | Align(XY) monitor_stand_neck.center to monitor_stand_base.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive(cuboid) |
+| monitor_stand | Composite of stand_neck + stand_base | assembly_order=[monitor_stand_neck, monitor_stand_base]; constraint=vertical_support; pos=(0,0,0) |
+
+Layer 2 – Primary Structure (CPU Tower Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cpu_tower_body | Main chassis 0.20×0.45×0.40 m | Align(XY) cpu_tower_body.center to desk_surface.center; offset(0.4,0,0.225); orientation=axis:+Z; mat=mat_grey_plastic; create_method=primitive(cuboid) |
+| cpu_front_panel | Front face with buttons/ports 0.20×0.45×0.01 m | Align(XY) cpu_front_panel.center to cpu_tower_body.front_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive(cuboid) |
+| cpu_power_button | Small circular button Ø0.01 m | Align(XY) cpu_power_button.center to cpu_front_panel.center; offset(0,0.1,0.006); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive(cylinder) |
+| cpu_usb_port | Small rectangular port 0.02×0.01 m | Align(XY) cpu_usb_port.center to cpu_front_panel.center; offset(0,-0.1,0.006); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive(cuboid) |
+| cpu_tower | Composite of body + front_panel + buttons | assembly_order=[cpu_tower_body, cpu_front_panel, cpu_power_button, cpu_usb_port]; constraint=vertical_chassis; pos=(0,0,0) |
+
+Layer 3 – Primary Structure (Input Devices)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| keyboard_base | Flat rectangular base 0.45×0.15×0.02 m | Align(XY) keyboard_base.center to desk_surface.center; offset(0,0.3,0.01); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive(cuboid) |
+| keyboard_keys | Array of key caps 0.40×0.10×0.005 m | Align(XY) keyboard_keys.center to keyboard_base.top_face; offset(0,0,0.012); orientation=axis:+Z; mat=mat_grey_plastic; create_method=primitive(cuboid) |
+| mouse_body | Ergonomic curved body 0.10×0.06×0.04 m | Align(XY) mouse_body.center to desk_surface.center; offset(0.25,0.3,0.02); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive(cuboid) |
+| mouse_button | Left click button 0.05×0.06×0.01 m | Align(XY) mouse_button.center to mouse_body.top_face; offset(0,0,0.025); orientation=axis:+Z; mat=mat_grey_plastic; create_method=primitive(cuboid) |
+| input_group | Composite of keyboard + mouse | assembly_order=[keyboard_base, keyboard_keys, mouse_body, mouse_button]; constraint=input_devices; pos=(0,0,0) |
+
+# ----------  END_GRAPH  ----------

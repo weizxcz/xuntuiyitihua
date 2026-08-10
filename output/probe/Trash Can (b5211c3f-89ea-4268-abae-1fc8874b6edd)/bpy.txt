@@ -1,0 +1,348 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, radians
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color=(0.4, 0.4, 0.4, 1.0)):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to the first material slot of an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(radius, depth, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder, defaulting to Z-axis up."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_plane(size, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a plane."""
+    bpy.ops.mesh.primitive_plane_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform Boolean Subtract using the modifier stack."""
+    # Ensure target is active for modifier addition if needed, but we'll add to target
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply Modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Clean up cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def align_to_vector(obj, vector, origin=None):
+    """Rotate object so its local Z axis aligns with the given world vector."""
+    if origin is None:
+        origin = obj.location
+    
+    # Current Z axis
+    current_z = Vector((0, 0, 1))
+    
+    # Calculate rotation matrix
+    rot_mat = current_z.rotation_difference(vector).to_matrix().to_4x4()
+    
+    # Apply rotation relative to origin
+    # We need to rotate the object's data or transform. 
+    # Easier: Set rotation_euler from quaternion.
+    obj.rotation_euler = current_z.rotation_difference(vector).to_euler()
+
+def get_face_center(obj, face_type='top'):
+    """
+    Helper to get the world location of a specific face center.
+    Assumes standard primitives aligned to axes.
+    face_type: 'top' (+Z), 'bottom' (-Z), 'left' (-X), 'right' (+X), 'center'
+    """
+    # Get object matrix
+    mat = obj.matrix_world
+    
+    # Get dimensions
+    dims = obj.dimensions
+    
+    if face_type == 'center':
+        return mat @ Vector((0, 0, 0))
+    
+    elif face_type == 'top':
+        # Top face is at +Z half height
+        return mat @ Vector((0, 0, dims[2]/2))
+    
+    elif face_type == 'bottom':
+        # Bottom face is at -Z half height
+        return mat @ Vector((0, 0, -dims[2]/2))
+    
+    elif face_type == 'left':
+        # Left face is at -X half width
+        return mat @ Vector((-dims[0]/2, 0, 0))
+    
+    elif face_type == 'right':
+        # Right face is at +X half width
+        return mat @ Vector((dims[0]/2, 0, 0))
+        
+    return mat @ Vector((0,0,0))
+
+def average_vectors(vectors):
+    """Calculate the average of a list of Vector objects."""
+    if not vectors:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for v in vectors:
+        avg += v
+    return avg / len(vectors)
+
+def set_world_origin(obj):
+    """Move object to world origin (0,0,0)."""
+    obj.location = (0, 0, 0)
+
+def offset_location(obj, offset_vec):
+    """Add offset vector to object's current location."""
+    obj.location += offset_vec
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    if mesh.users == 0:
+        bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_plastic_grey = make_material("mat_plastic_grey", diffuse_color=(0.4, 0.4, 0.4, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: Create body shell ---
+# Create primitive cylinder with radius 0.150 m and height 0.400 m and name it body_shell.
+body_shell = add_cylinder(radius=0.150, depth=0.400, name="body_shell", location=(0,0,0), rotation=(0,0,0))
+apply_material(body_shell, mat_plastic_grey)
+
+# Rotate body_shell so its +Z axis aligns +Z (world).
+# Default cylinder is Z-up, so no rotation needed, but explicit step:
+align_to_vector(body_shell, Vector((0, 0, 1)))
+
+# Anchor body_shell to world origin.
+set_world_origin(body_shell)
+
+# Then move by offset(0,0,0).
+offset_location(body_shell, Vector((0, 0, 0)))
+
+# --- SECTION 2: Create base plate ---
+# Create primitive cylinder with radius 0.150 m and height 0.005 m and name it base_plate.
+base_plate = add_cylinder(radius=0.150, depth=0.005, name="base_plate", location=(0,0,0), rotation=(0,0,0))
+apply_material(base_plate, mat_plastic_grey)
+
+# Rotate base_plate so its +Z axis aligns +Z (world).
+align_to_vector(base_plate, Vector((0, 0, 1)))
+
+# Align base_plate.top_face to body_shell.bottom_face.
+# Get locations
+body_bottom = get_face_center(body_shell, 'bottom')
+base_top = get_face_center(base_plate, 'top')
+
+# Calculate offset to align top of base_plate to bottom of body_shell
+# Target location for base_plate center:
+# base_plate.location.z + (base_plate.height/2) = body_shell.location.z - (body_shell.height/2)
+# base_plate.location.z = body_shell.location.z - (body_shell.height/2) - (base_plate.height/2)
+# Since body_shell is at 0,0,0:
+target_z = body_shell.location.z - (body_shell.dimensions[2]/2) - (base_plate.dimensions[2]/2)
+target_x = body_shell.location.x # Assuming center-to-center X/Y alignment
+target_y = body_shell.location.y
+
+base_plate.location = Vector((target_x, target_y, target_z))
+
+# Then move by offset(0,0,-0.002).
+offset_location(base_plate, Vector((0, 0, -0.002)))
+
+# --- SECTION 3: Create lid dome ---
+# Create full_sphere and name it lid_dome_raw with radius 0.150 m.
+lid_dome_raw = add_uvsphere(radius=0.150, name="lid_dome_raw", location=(0,0,0), rotation=(0,0,0))
+apply_material(lid_dome_raw, mat_plastic_grey)
+
+# Rotate lid_dome_raw so its +Z axis aligns +Z (world).
+# Spheres are symmetric, but explicit step:
+align_to_vector(lid_dome_raw, Vector((0, 0, 1)))
+
+# Create plane_cutter and name it lid_dome_cut with size 0.300×0.300 m; orientation=axis:+Z.
+# Plane default size is 2m. We need 0.3m.
+# bpy.ops.mesh.primitive_plane_add(size=0.3, ...) creates a plane of size 0.3 (radius 0.15)
+# To get 0.3x0.3 extent, we can scale or set size appropriately. 
+# In Blender, 'size' is half-width. So size=0.15 gives 0.3x0.3.
+lid_dome_cut = add_plane(size=0.15, name="lid_dome_cut", location=(0,0,0), rotation=(0,0,0))
+apply_material(lid_dome_cut, mat_plastic_grey)
+
+# Orientation is +Z, which is default for plane (normal is +Z).
+
+# Boolean-subtract lid_dome_cut from lid_dome_raw; keep lid_dome_raw.
+# To cut the sphere in half, the plane needs to be at Z=0.
+# The sphere is at Z=0. The plane is at Z=0.
+# This will cut the sphere in half.
+boolean_subtract(lid_dome_cut, lid_dome_raw)
+
+# Rotate lid_dome_raw so its curved face points +Z.
+# After subtracting the bottom half (assuming plane cuts at Z=0 and we keep the top),
+# the flat face is at Z=0 (bottom) and curved face is at Z=0.15 (top).
+# However, boolean operations can be tricky with normals.
+# Let's assume the result is the top hemisphere.
+# If the flat face is at the bottom, we are good.
+# If the flat face is at the top, we need to rotate 180 degrees around X.
+# Let's check the bounding box or just assume standard behavior.
+# Standard boolean difference with plane at Z=0 usually keeps the part where Z>0 if the cutter is infinite?
+# No, plane is finite. It cuts a disk out of the sphere.
+# To get a hemisphere, we usually need an infinite plane or a large enough cutter.
+# The cutter is 0.3x0.3, sphere radius 0.15. Diameter is 0.3. So it cuts exactly the equator.
+# The result will be two halves if we separate them, but boolean keeps the mesh.
+# Actually, boolean difference removes the volume of the cutter.
+# A plane has no volume. We need a box or a thick plane to cut.
+# Correction: The prompt says "plane_cutter". In Blender boolean, a plane has no thickness.
+# It might not cut anything unless it's a "solid" plane or we use a different method.
+# However, standard practice in these prompts implies a "cutting volume".
+# Let's assume the cutter is a thin box or we treat it as a slicing plane.
+# Since I used add_plane, it has no thickness.
+# Let's replace the plane with a thin box to ensure the boolean works.
+# But the prompt said "plane_cutter".
+# Let's assume the user implies a slicing operation.
+# I will re-create the cutter as a thin box to ensure boolean works, or use a mesh boolean with a thick plane.
+# Let's make the cutter a box of size 0.3x0.3x0.001.
+# But I already called boolean_subtract.
+# Let's restart Section 3 logic to be robust.
+
+# Re-do Section 3 with a thick cutter for reliability
+bpy.ops.object.select_all(action='DESELECT')
+bpy.data.objects.remove(lid_dome_raw, do_unlink=True) if "lid_dome_raw" in bpy.data.objects else None
+
+# Create full_sphere
+lid_dome_raw = add_uvsphere(radius=0.150, name="lid_dome_raw", location=(0,0,0), rotation=(0,0,0))
+apply_material(lid_dome_raw, mat_plastic_grey)
+align_to_vector(lid_dome_raw, Vector((0, 0, 1)))
+
+# Create cutter as a thin box to ensure boolean subtraction works
+# Size 0.3x0.3x0.001
+lid_dome_cut = add_cube(size=0.3, name="lid_dome_cut", location=(0,0,0), rotation=(0,0,0))
+# Scale to make it thin in Z
+lid_dome_cut.scale = (1, 1, 0.01)
+apply_material(lid_dome_cut, mat_plastic_grey)
+
+# Position cutter at Z=0 to split sphere
+lid_dome_cut.location = (0, 0, 0)
+
+# Boolean subtract
+boolean_subtract(lid_dome_cut, lid_dome_raw)
+
+# Rotate lid_dome_raw so its curved face points +Z.
+# The remaining mesh is the top hemisphere (Z > 0).
+# The flat face is at Z=0. The curved face is at Z=0.15.
+# This is already correct.
+
+# Rename lid_dome_raw to lid_dome
+lid_dome_raw.name = "lid_dome"
+lid_dome = lid_dome_raw
+
+# Align lid_dome.bottom_face to body_shell.top_face.
+body_top = get_face_center(body_shell, 'top')
+lid_bottom = get_face_center(lid_dome, 'bottom')
+
+# Target location for lid_dome center:
+# lid_dome.location.z - (lid_dome.height/2) = body_shell.location.z + (body_shell.height/2)
+# lid_dome.location.z = body_shell.location.z + (body_shell.height/2) + (lid_dome.height/2)
+# Note: lid_dome is a hemisphere, its bounding box height is radius (0.15).
+# Its bottom face is at its local Z=0 (if created at origin and cut).
+# Actually, the sphere was at 0,0,0. The cut removed Z<0.
+# So the mesh exists from Z=0 to Z=0.15.
+# The "bottom face" is the flat circle at Z=0.
+# So we want lid_dome.location.z = body_top.z.
+# But wait, get_face_center for 'bottom' on a hemisphere might be tricky if the mesh doesn't have a face there?
+# It does have a face (the cut surface).
+# Let's calculate manually.
+# body_top.z = 0.2
+# We want lid_dome bottom (Z=0 relative to object) to be at 0.2.
+# So lid_dome.location.z = 0.2.
+
+lid_dome.location = Vector((body_shell.location.x, body_shell.location.y, body_top.z))
+
+# Then move by offset(0,0,0.002).
+offset_location(lid_dome, Vector((0, 0, 0.002)))
+
+# --- SECTION 4: Create hinge pin ---
+# Create primitive cylinder with radius 0.005 m and height 0.020 m and name it hinge_pin.
+hinge_pin = add_cylinder(radius=0.005, depth=0.020, name="hinge_pin", location=(0,0,0), rotation=(0,0,0))
+apply_material(hinge_pin, mat_plastic_grey)
+
+# Rotate hinge_pin so its +Z axis aligns +Z (world).
+align_to_vector(hinge_pin, Vector((0, 0, 1)))
+
+# Align hinge_pin.center to Avg(body_shell.left_face, body_shell.right_face).
+body_left = get_face_center(body_shell, 'left')
+body_right = get_face_center(body_shell, 'right')
+avg_center = average_vectors([body_left, body_right])
+
+# hinge_pin.center is currently at (0,0,0) relative to its location.
+# We want hinge_pin.location = avg_center.
+hinge_pin.location = avg_center
+
+# Align hinge_pin.bottom_face to body_shell.top_face.
+# This is a bit ambiguous. Does it mean the bottom of the pin should touch the top of the body?
+# Or the center of the pin should be at the top of the body?
+# "Align hinge_pin.bottom_face to body_shell.top_face" usually means Z-bottom of pin = Z-top of body.
+body_top_z = body_top.z
+pin_bottom_z = hinge_pin.location.z - (hinge_pin.dimensions[2]/2)
+
+# We want pin_bottom_z = body_top_z
+# So hinge_pin.location.z = body_top_z + (hinge_pin.dimensions[2]/2)
+hinge_pin.location.z = body_top_z + (hinge_pin.dimensions[2]/2)
+
+# Then move by offset(0,0,0.002).
+offset_location(hinge_pin, Vector((0, 0, 0.002)))
+
+# Stage 4 complete.
+# All stages complete.
+```

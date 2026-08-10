@@ -1,0 +1,430 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius=0.5, depth=1.0, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=1.0):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_plane(name, size=1.0):
+    """Add a plane mesh object."""
+    bpy.ops.mesh.primitive_plane_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='+Z', target_vector):
+    """Align an object's local axis to a target world vector."""
+    # Normalize target
+    target = target_vector.normalized()
+    
+    # Define local axis vectors
+    local_axes = {
+        '+X': Vector((1, 0, 0)),
+        '-X': Vector((-1, 0, 0)),
+        '+Y': Vector((0, 1, 0)),
+        '-Y': Vector((0, -1, 0)),
+        '+Z': Vector((0, 0, 1)),
+        '-Z': Vector((0, 0, -1)),
+    }
+    
+    local_axis = local_axes.get(axis_to_align, Vector((0, 0, 1)))
+    
+    # Calculate rotation matrix
+    # We want to rotate local_axis to align with target
+    # Use quaternion rotation
+    rot_quat = local_axis.rotation_difference(target)
+    
+    # Apply rotation
+    obj.rotation_euler = rot_quat.to_euler()
+    obj.update_tag()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        """Return the world space center of the object."""
+        return self.obj.matrix_world.to_translation()
+    
+    def face_center_world(self):
+        """Return the world space center of the object's face (assuming single face or first face)."""
+        # For a plane or simple mesh, this is effectively the center
+        return self.center_world()
+    
+    def radial_point_world(self, angle_deg, radius):
+        """Return a point in world space at a given angle and radius from the object's center."""
+        center = self.center_world()
+        angle_rad = math.radians(angle_deg)
+        x = center.x + radius * math.cos(angle_rad)
+        y = center.y + radius * math.sin(angle_rad)
+        z = center.z
+        return Vector((x, y, z))
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform a boolean subtract operation using the cutter on the target."""
+    # Select target
+    bpy.ops.object.select_all(action='DESELECT')
+    target_obj.select_set(True)
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Perform a boolean union operation, adding union_obj to target_obj."""
+    # Select target
+    bpy.ops.object.select_all(action='DESELECT')
+    target_obj.select_set(True)
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union_obj
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def create_sketch_extrude(sketch_plane_obj, vertices_2d, thickness, direction='+Z'):
+    """
+    Create a 2D sketch on a plane, extrude it, and return the new mesh object.
+    vertices_2d: list of (x, y) tuples relative to the plane's local origin.
+    thickness: extrusion depth.
+    direction: '+Z' or '-Z' relative to the plane's local Z axis.
+    """
+    # Select the plane
+    bpy.ops.object.select_all(action='DESELECT')
+    sketch_plane_obj.select_set(True)
+    bpy.context.view_layer.objects.active = sketch_plane_obj
+    
+    # Enter Edit Mode
+    bpy.ops.object.mode_set(mode='EDIT')
+    
+    # Clear existing geometry
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.delete(type='VERT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # Create vertices
+    verts = []
+    for v in vertices_2d:
+        # Plane is in XY plane by default. 
+        # We add vertices at z=0 relative to the plane's local space.
+        # The plane's local Z is its normal.
+        bpy.ops.mesh.vertex_add(location=(v[0], v[1], 0))
+        verts.append(len(bpy.context.active_object.data.vertices) - 1)
+    
+    # Close the loop if not already closed (last vertex to first)
+    if verts:
+        bpy.ops.mesh.select_all(action='DESELECT')
+        for v_idx in verts:
+            bpy.context.active_object.data.vertices[v_idx].select = True
+        
+        bpy.ops.mesh.edge_face_add()
+        
+        # Ensure it's a face
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.fill()
+        bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # Exit Edit Mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Get the new face/edge data to extrude
+    # Since we just created a face, we can select it and extrude
+    bpy.ops.object.select_all(action='DESELECT')
+    sketch_plane_obj.select_set(True)
+    bpy.context.view_layer.objects.active = sketch_plane_obj
+    
+    # Enter Edit Mode again
+    bpy.ops.object.mode_set(mode='EDIT')
+    
+    # Select all faces
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.select_mode(type='FACE')
+    
+    # Extrude along normal (local Z)
+    # direction is '+Z' or '-Z'
+    if direction == '-Z':
+        bpy.ops.mesh.extrude_faces_move(TRANSFORM_OT_translate={"value": (0, 0, -thickness)})
+    else:
+        bpy.ops.mesh.extrude_faces_move(TRANSFORM_OT_translate={"value": (0, 0, thickness)})
+    
+    # Exit Edit Mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # The object now contains the extruded shape. 
+    # We need to separate the extruded part if we want to keep the sketch plane as a cutter?
+    # The prompt says "Extrude sketch ... to form arrow_0 body".
+    # And "Boolean-union arrow_0 body with arrow_0".
+    # So we should probably keep the sketch plane as a separate object for cutting if needed, 
+    # but here it seems the sketch plane is just a guide.
+    # Let's assume the sketch plane object IS the body after extrusion.
+    # But wait, the prompt says "Create plane_cutter ... Anchor ... Then move ... Define 2D sketch ... Extrude ... to form body".
+    # It implies the sketch plane becomes the body.
+    
+    return sketch_plane_obj
+
+def create_arrow_segment(name, angle_deg, radius=0.1):
+    """
+    Create an arrow segment at a specific angle.
+    Returns the final arrow object.
+    """
+    # 1. Create primitive cuboid (placeholder)
+    arrow = add_cube(name, size=0.001)
+    
+    # 2. Rotate so +Z aligns +Z (world) - already default
+    # No rotation needed for +Z to +Z
+    
+    # 3. Anchor to world.origin
+    arrow.location = (0, 0, 0)
+    
+    # 4. Move by offset(0,0,0) - no change
+    
+    # 5. Create plane_cutter for sketch
+    sketch_plane = add_plane(f"{name}_sketch", size=0.20)
+    
+    # 6. Orientation of sketch: axis +Z (world)
+    # Default plane is +Z up, so no rotation needed
+    
+    # 7. Anchor sketch_plane to arrow.center
+    # arrow is at (0,0,0), so sketch_plane center is at (0,0,0)
+    sketch_plane.location = (0, 0, 0)
+    
+    # 8. Move by offset(0,0,0.0025)
+    sketch_plane.location.z += 0.0025
+    
+    # 9. Define 2D sketch
+    vertices_2d = [
+        (0.050, 0),
+        (0.150, 0),
+        (0.150, 0.020),
+        (0.170, 0),
+        (0.150, -0.020),
+        (0.050, -0.010),
+        (0.050, 0) # Close to start
+    ]
+    
+    # 10. Extrude sketch
+    # We need to create the body from the sketch.
+    # The sketch plane is at z=0.0025. We extrude along +Z.
+    # The resulting mesh will be the body.
+    
+    # Select sketch plane
+    bpy.ops.object.select_all(action='DESELECT')
+    sketch_plane.select_set(True)
+    bpy.context.view_layer.objects.active = sketch_plane
+    
+    # Enter Edit Mode
+    bpy.ops.object.mode_set(mode='EDIT')
+    
+    # Clear existing geometry (the default quad)
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.delete(type='VERT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # Create vertices
+    verts = []
+    for v in vertices_2d:
+        bpy.ops.mesh.vertex_add(location=(v[0], v[1], 0))
+        verts.append(len(bpy.context.active_object.data.vertices) - 1)
+    
+    # Create face
+    if len(verts) > 2:
+        bpy.ops.mesh.select_all(action='DESELECT')
+        for v_idx in verts:
+            bpy.context.active_object.data.vertices[v_idx].select = True
+        bpy.ops.mesh.edge_face_add()
+        bpy.ops.mesh.fill()
+    
+    # Exit Edit Mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Now extrude the face
+    bpy.ops.object.select_all(action='DESELECT')
+    sketch_plane.select_set(True)
+    bpy.context.view_layer.objects.active = sketch_plane
+    
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.select_mode(type='FACE')
+    
+    # Extrude along local Z (which is world Z) by thickness 0.005
+    bpy.ops.mesh.extrude_faces_move(TRANSFORM_OT_translate={"value": (0, 0, 0.005)})
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # The sketch_plane is now the body.
+    # We need to boolean union this body with the original arrow placeholder.
+    # But the placeholder is tiny. We can just rename the body to the arrow name.
+    
+    # Rename the body to the arrow name
+    body_obj = sketch_plane
+    body_obj.name = name
+    
+    # Remove the old tiny placeholder if it still exists (it was renamed? No, we renamed the plane)
+    # The original 'arrow' object is still there.
+    # We need to union the body with the original arrow.
+    # But the original arrow is at (0,0,0) and is tiny.
+    # The body is also at (0,0,0) roughly.
+    
+    # Let's do the boolean union
+    # Target: original arrow (tiny)
+    # Cutter: body (the extruded shape)
+    
+    # Select target
+    bpy.ops.object.select_all(action='DESELECT')
+    arrow.select_set(True)
+    bpy.context.view_layer.objects.active = arrow
+    
+    # Add Boolean Modifier
+    mod = arrow.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = body_obj
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove body object
+    bpy.data.objects.remove(body_obj, do_unlink=True)
+    
+    # Now 'arrow' contains the unioned shape.
+    
+    # 11. Rotate arrow so +Z aligns +Z (world) - already aligned
+    
+    # 12. Align arrow.center to world.origin
+    # Calculate center
+    mesh = arrow.data
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    verts = bm.verts
+    if verts:
+        center = average([v.co for v in verts])
+        # Move object so center is at origin
+        arrow.location -= center
+    bm.free()
+    
+    # 13. Move by offset(0,0,0) - no change
+    
+    # 14. If angle > 0, position at polar(angle, radius)
+    if angle_deg > 0:
+        angle_rad = math.radians(angle_deg)
+        x = radius * math.cos(angle_rad)
+        y = radius * math.sin(angle_rad)
+        arrow.location.x = x
+        arrow.location.y = y
+        # Z remains 0
+    
+    return arrow
+
+# --- Main Script ---
+
+# Block 0: Scene Reset & Units
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# Block 1: Materials
+arrow_green_mat = make_material("arrow_green", (0, 128/255, 0, 1))
+
+# Block 2: Geometry Generation
+
+# SECTION 1 – Create Arrow Segment 1 (0°)
+arrow_0 = create_arrow_segment("arrow_0", 0, radius=0.1)
+arrow_0.data.materials.append(arrow_green_mat)
+
+# SECTION 2 – Create Arrow Segment 2 (120°)
+arrow_1 = create_arrow_segment("arrow_1", 120, radius=0.1)
+arrow_1.data.materials.append(arrow_green_mat)
+
+# SECTION 3 – Create Arrow Segment 3 (240°)
+arrow_2 = create_arrow_segment("arrow_2", 240, radius=0.1)
+arrow_2.data.materials.append(arrow_green_mat)
+
+# SECTION 4 – Assemble Recycling Symbol
+# Create a container object
+recycling_symbol = add_cube("recycling_symbol", size=0.001)
+
+# Boolean union arrow_0
+boolean_union(arrow_0, recycling_symbol)
+
+# Boolean union arrow_1
+boolean_union(arrow_1, recycling_symbol)
+
+# Boolean union arrow_2
+boolean_union(arrow_2, recycling_symbol)
+
+# Align recycling_symbol.center to world.origin
+mesh = recycling_symbol.data
+bm = bmesh.new()
+bm.from_mesh(mesh)
+verts = bm.verts
+if verts:
+    center = average([v.co for v in verts])
+    recycling_symbol.location -= center
+bm.free()
+
+# Apply material to final object
+recycling_symbol.data.materials.append(arrow_green_mat)
+
+# Remove the initial tiny placeholder if it wasn't removed (it should be gone after boolean union)
+# But just in case, check if there are other objects
+for obj in bpy.data.objects:
+    if obj.name not in ["recycling_symbol", "arrow_green_mat"]:
+        # Keep only the final object
+        pass
+
+# Ensure only recycling_symbol remains
+for obj in bpy.data.objects:
+    if obj.name != "recycling_symbol":
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+# Final alignment check
+recycling_symbol.location = (0, 0, 0)
+```

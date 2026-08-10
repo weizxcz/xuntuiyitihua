@@ -1,0 +1,105 @@
+{
+  "python": "3.11.15 | packaged by Anaconda, Inc. | (main, Mar 11 2026, 17:12:15) [MSC v.1942 64 bit (AMD64)]",
+  "python_supported": true,
+  "dll_level": "geom",
+  "steps": [
+    {
+      "name": "1. NCTI.Init + import ncti_python（无头 DLL 加载）",
+      "ok": true,
+      "detail": "level=geom",
+      "error": null
+    },
+    {
+      "name": "2. NCTI.Document() 创建",
+      "ok": true,
+      "detail": "ok",
+      "error": null
+    },
+    {
+      "name": "3. RunCommand(cmd_ncti_import_file) 导入（决定性）",
+      "ok": true,
+      "detail": {
+        "return_bool": true,
+        "objects": [
+          "testbox"
+        ],
+        "verdict": "EXECUTED（RunCommand 无头可用）"
+      },
+      "error": null
+    },
+    {
+      "name": "4. 识别：FindAllFaces + FindFillets（纯内核 API）",
+      "ok": true,
+      "detail": {
+        "object": "testbox",
+        "total_faces": 136,
+        "fillet_count": 63,
+        "fillet_sample": [
+          [
+            "testbox",
+            0
+          ],
+          [
+            "testbox",
+            5
+          ],
+          [
+            "testbox",
+            6
+          ],
+          [
+            "testbox",
+            8
+          ],
+          [
+            "testbox",
+            9
+          ],
+          [
+            "testbox",
+            10
+          ],
+          [
+            "testbox",
+            12
+          ],
+          [
+            "testbox",
+            13
+          ],
+          [
+            "testbox",
+            14
+          ],
+          [
+            "testbox",
+            15
+          ]
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "5. RunCommand(cmd_ncti_remove_features) 真实清理一个圆角（testbox，非源文件）",
+      "ok": true,
+      "detail": {
+        "removed_cell": 0,
+        "return_bool": false,
+        "faces_before": 136,
+        "faces_after": 135,
+        "removed_ok": true
+      },
+      "error": null
+    },
+    {
+      "name": "6. RunCommand(cmd_ncti_export_file) 导出",
+      "ok": true,
+      "detail": {
+        "target": "C:\\Users\\admin\\AppData\\Local\\Temp\\spike_export_probe.step",
+        "return_bool": false,
+        "file_exists": true
+      },
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,447 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location, rotation, material=None):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location, rotation, material=None):
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_face_to_face(obj_target, obj_source, target_axis='Z', source_axis='Z'):
+    """Aligns the center of obj_source's face (defined by source_axis) to obj_target's face (defined by target_axis).
+    Assumes both objects are oriented such that their local Z is up, or handles generic axis alignment."""
+    # Get world matrix of target
+    tm = obj_target.matrix_world
+    sm = obj_source.matrix_world
+    
+    # Define target face normal in world space
+    if target_axis == 'Z':
+        target_normal = tm.col[2].to_3d()
+        target_center = tm.to_translation()
+    elif target_axis == 'X':
+        target_normal = tm.col[0].to_3d()
+        target_center = tm.to_translation()
+    elif target_axis == 'Y':
+        target_normal = tm.col[1].to_3d()
+        target_center = tm.to_translation()
+    else:
+        target_normal = tm.col[2].to_3d()
+        target_center = tm.to_translation()
+
+    # Define source face normal in world space
+    if source_axis == 'Z':
+        source_normal = sm.col[2].to_3d()
+    elif source_axis == 'X':
+        source_normal = sm.col[0].to_3d()
+    elif source_axis == 'Y':
+        source_normal = sm.col[1].to_3d()
+    else:
+        source_normal = sm.col[2].to_3d()
+
+    # Calculate rotation to align source normal to target normal
+    rot_quat = source_normal.rotation_difference(target_normal)
+    
+    # Apply rotation to source object
+    obj_source.rotation_euler = rot_quat.to_euler()
+    obj_source.rotation_mode = 'QUATERNION' # Reset mode to avoid gimbal lock issues during calc
+    
+    # Recalculate matrix after rotation
+    sm_new = obj_source.matrix_world
+    
+    # Calculate translation to align centers along the normal
+    # We want the source face center to touch the target face center.
+    # Source face center is offset from object center by half depth/size along source axis.
+    # However, for simple primitives like cylinders/cubes, we often just want the geometric centers aligned 
+    # if the "face" implies the flat end.
+    
+    # Let's assume "Align XY_face" means aligning the Z-axis position.
+    # If target is deck_main (flat on XY), its top face is at Z + height/2.
+    # If source is stem_tube (standing on Z), its bottom face is at Z - height/2.
+    
+    # Simplified approach for standard primitives:
+    # 1. Align rotation.
+    # 2. Calculate offset vector.
+    
+    # Get half-extents
+    if obj_target.type == 'MESH':
+        # Approximate half-size based on dimensions
+        tb = obj_target.dimensions
+        if target_axis == 'Z':
+            target_face_z = tm.to_translation().z + tb[2]/2
+        elif target_axis == 'X':
+            target_face_x = tm.to_translation().x + tb[0]/2
+        elif target_axis == 'Y':
+            target_face_y = tm.to_translation().y + tb[1]/2
+    else:
+        target_face_z = tm.to_translation().z
+
+    if obj_source.type == 'MESH':
+        sb = obj_source.dimensions
+        if source_axis == 'Z':
+            source_face_z = sm_new.to_translation().z - sb[2]/2
+        elif source_axis == 'X':
+            source_face_x = sm_new.to_translation().x - sb[0]/2
+        elif source_axis == 'Y':
+            source_face_y = sm_new.to_translation().y - sb[1]/2
+            
+    # For this specific script, we will use a more robust locator-based alignment or direct vector math
+    # But given the strict transform order, we will do:
+    # 1. Rotate object to correct orientation.
+    # 2. Move object so its face center matches target face center.
+    
+    # Re-evaluating based on "Align stem_tube.XY_face to deck_main.XY_face"
+    # deck_main is a cube. stem_tube is a cylinder.
+    # deck_main.XY_face likely refers to the top surface (normal +Z).
+    # stem_tube.XY_face likely refers to its bottom circular face (normal -Z in local, but aligned to world +Z after rotation).
+    
+    # Let's use a generic align function that snaps the source object's "bottom" to the target object's "top"
+    # assuming Z-up orientation.
+    
+    # Target Top Face Center
+    t_loc = tm.to_translation()
+    t_half = obj_target.dimensions[2] / 2 if target_axis == 'Z' else 0
+    t_face_loc = Vector((t_loc.x, t_loc.y, t_loc.z + t_half))
+    
+    # Source Bottom Face Center (before translation, after rotation)
+    # The source object's local origin is at its center.
+    # Its bottom face is at local Z = -height/2.
+    s_half = obj_source.dimensions[2] / 2 if source_axis == 'Z' else 0
+    
+    # We need to move the source object so that its bottom face center lands on t_face_loc.
+    # Current source center is sm_new.to_translation().
+    # New source center should be t_face_loc - (rotated offset vector).
+    # Rotated offset vector for bottom face is (0,0,-s_half) rotated by rot_quat.
+    
+    offset_vec = Vector((0, 0, -s_half))
+    offset_vec.rotate(rot_quat)
+    
+    new_loc = t_face_loc - offset_vec
+    obj_source.location = new_loc
+
+def boolean_union(objects, name):
+    """Performs a boolean union on a list of objects and keeps the first one as the result."""
+    if not objects:
+        return None
+    
+    target = objects[0]
+    target.name = name
+    
+    # Select all
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    for obj in objects[1:]:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+    
+    bpy.context.view_layer.objects.active = target
+    
+    # Apply modifiers
+    # We need to add a Boolean modifier to the target for each other object
+    for obj in objects[1:]:
+        mod = target.modifiers.new(name=f"Bool_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        
+    # Apply all boolean modifiers
+    for mod in target.modifiers:
+        if mod.type == 'BOOLEAN':
+            bpy.ops.object.modifier_apply(modifier=mod.name)
+            
+    # Deselect others
+    for obj in objects[1:]:
+        obj.select_set(False)
+        
+    return target
+
+def boolean_subtract(target, cutter):
+    """Subtracts cutter from target using boolean modifier."""
+    mod = target.modifiers.new(name=f"Bool_{cutter.name}", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return target
+
+# --- Main Script ---
+
+# 1. Scene Reset & Units
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# 2. Materials
+mat_aluminum = make_material("mat_aluminum", (0.8, 0.8, 0.8, 1.0))
+mat_black_rubber = make_material("mat_black_rubber", (0.1, 0.1, 0.1, 1.0))
+mat_chrome = make_material("mat_chrome", (0.9, 0.9, 0.95, 1.0))
+mat_red_paint = make_material("mat_red_paint", (0.8, 0.1, 0.1, 1.0))
+
+# 3. Geometry Generation
+
+# --- SECTION 1 – Create Deck Plate ---
+# Create primitive cuboid with size 0.15×0.05×0.005 m and name it deck_main.
+# Rotate deck_main so its +Z axis aligns +Z (world).
+# Anchor deck_main to world origin (0,0,0).
+deck_main = add_cube("deck_main", size=0.05, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_aluminum)
+# Note: add_cube creates a cube of 'size' which is the total width. 
+# The prompt asks for size 0.15x0.05x0.005. 
+# Blender's primitive_cube_add 'size' parameter is the total length of an edge.
+# To get specific dimensions, we scale or use dimensions.
+# Let's use scale for precision or just set dimensions after creation.
+deck_main.scale = (0.15, 0.05, 0.005)
+deck_main.rotation_euler = (0, 0, 0) # +Z aligns +Z
+deck_main.location = (0, 0, 0)
+
+# --- SECTION 2 – Create Steering Column ---
+# Create primitive cylinder with diameter 0.02 m and length 0.4 m and name it stem_tube.
+# Rotate stem_tube so its +Z axis aligns +Z (world).
+# Align stem_tube.XY_face to deck_main.XY_face.
+# Then move by offset(0, 0.15, 0.0025).
+stem_tube = add_cylinder("stem_tube", radius=0.01, depth=0.4, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_chrome)
+stem_tube.rotation_euler = (0, 0, 0) # +Z aligns +Z
+
+# Align stem_tube bottom face to deck_main top face
+# deck_main top face Z = 0 + 0.005/2 = 0.0025
+# stem_tube bottom face Z = stem_tube.location.z - 0.4/2
+# We want stem_tube.bottom_face_Z == deck_main.top_face_Z
+# stem_tube.location.z - 0.2 = 0.0025 => stem_tube.location.z = 0.2025
+# However, the prompt says "Align ... Then move by offset".
+# So we align first (which sets position relative to anchor), then apply offset.
+
+# Align logic:
+# Target: deck_main top face center.
+# Target Z = 0.0025. Target X,Y = 0.
+# Source: stem_tube bottom face center.
+# Source Z relative to center = -0.2.
+# To align, stem_tube center Z must be 0.0025 + 0.2 = 0.2025.
+# Stem_tube center X,Y must be 0.
+stem_tube.location = (0, 0, 0.2025)
+
+# Apply offset(0, 0.15, 0.0025)
+stem_tube.location += Vector((0, 0.15, 0.0025))
+
+# --- SECTION 3 – Create Handlebar Assembly ---
+# Create primitive cylinder with diameter 0.02 m and length 0.05 m and name it handlebar_stem.
+# Rotate handlebar_stem so its +Z axis aligns +Z (world).
+# Align handlebar_stem.XY_face to stem_tube.XY_face.
+# Then move by offset(0, 0, 0.2).
+handlebar_stem = add_cylinder("handlebar_stem", radius=0.01, depth=0.05, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_chrome)
+handlebar_stem.rotation_euler = (0, 0, 0)
+
+# Align handlebar_stem bottom face to stem_tube top face
+# stem_tube top face Z = stem_tube.location.z + 0.4/2
+# stem_tube bottom face Z = stem_tube.location.z - 0.4/2
+# stem_tube top face Z = (0 + 0.0025 + 0.2025) + 0.2 = 0.405
+# handlebar_stem bottom face Z = handlebar_stem.location.z - 0.05/2 = handlebar_stem.location.z - 0.025
+# Align: handlebar_stem.location.z - 0.025 = 0.405 => handlebar_stem.location.z = 0.43
+# X,Y alignment: stem_tube is at X=0, Y=0.15.
+# handlebar_stem X,Y = 0, 0.15.
+handlebar_stem.location = (0, 0.15, 0.43)
+
+# Apply offset(0, 0, 0.2)
+handlebar_stem.location += Vector((0, 0, 0.2))
+
+# Create primitive cylinder with diameter 0.02 m and length 0.4 m and name it handlebar_bar.
+# Rotate handlebar_bar so its +Z axis aligns +X (world).
+# Align handlebar_bar.XZ_face to handlebar_stem.XZ_face.
+# Then move by offset(0, 0, 0.025).
+handlebar_bar = add_cylinder("handlebar_bar", radius=0.01, depth=0.4, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_chrome)
+# Rotate so +Z aligns +X
+handlebar_bar.rotation_euler = (0, 0, math.radians(90)) # Local Z becomes World X
+
+# Align handlebar_bar "XZ_face" to handlebar_stem "XZ_face".
+# This phrasing is tricky. "XZ_face" usually implies the face normal to Y.
+# For handlebar_bar (rotated Z->X), its local Y axis is World Y.
+# Its "XZ_face" would be the face with normal along Local Y (World Y).
+# For handlebar_stem (Z up), its "XZ_face" would be the face with normal along Local Y (World Y).
+# So we are aligning the Y-faces.
+# handlebar_stem Y-face center:
+# handlebar_stem is at Y=0.15. Length 0.05.
+# Top Y face (Local +Y) is at Y = 0.15 + 0.025 = 0.175.
+# Bottom Y face (Local -Y) is at Y = 0.15 - 0.025 = 0.125.
+# Which face? "Align ... to ..." usually implies touching.
+# Let's assume we align the centers of the faces.
+# handlebar_bar is oriented along X. Its Y-center is its geometric center Y.
+# Its Y-face center is at its geometric center Y.
+# So we align Y centers? No, that's not a face alignment.
+# If we align faces, we align the surface.
+# Let's assume we align the "side" of the stem to the "side" of the bar.
+# handlebar_stem Y-extent: [0.125, 0.175].
+# handlebar_bar Y-extent: [Y_bar - 0.01, Y_bar + 0.01] (radius is 0.01).
+# If we align the faces, we might mean aligning the Y-coordinates of the surfaces.
+# Let's assume we align the center of the handlebar_bar's Y-face to the center of the handlebar_stem's Y-face.
+# This effectively means aligning their Y coordinates.
+# handlebar_stem center Y = 0.15.
+# handlebar_bar center Y = 0.15.
+# So handlebar_bar.location.y = 0.15.
+
+# Now for X and Z.
+# handlebar_bar is along X.
+# handlebar_stem is at X=0.
+# handlebar_bar length is 0.4.
+# "Align handlebar_bar.XZ_face to handlebar_stem.XZ_face"
+# If this means aligning the XZ planes (Y=const), we already did Y.
+# What about X and Z?
+# Usually, a handlebar is centered on the stem.
+# So handlebar_bar center X = handlebar_stem center X = 0.
+# handlebar_bar center Z = handlebar_stem center Z.
+# handlebar_stem center Z = 0.43 + 0.2 = 0.63.
+# So handlebar_bar location = (0, 0.15, 0.63).
+
+handlebar_bar.location = (0, 0.15, 0.63)
+
+# Apply offset(0, 0, 0.025)
+handlebar_bar.location += Vector((0, 0, 0.025))
+
+# --- SECTION 4 – Create Front Wheel and Axle ---
+# Create primitive cylinder with diameter 0.01 m and length 0.1 m and name it axle_front.
+# Rotate axle_front so its +Z axis aligns +X (world).
+# Align axle_front.XY_face to stem_tube.XY_face.
+# Then move by offset(0, 0.4, 0).
+axle_front = add_cylinder("axle_front", radius=0.005, depth=0.1, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_chrome)
+axle_front.rotation_euler = (0, 0, math.radians(90)) # Local Z -> World X
+
+# Align axle_front.XY_face to stem_tube.XY_face.
+# axle_front is along X. Its XY face is at Local Z = +depth/2 or -depth/2?
+# Local Z is World X. So XY face is perpendicular to X.
+# stem_tube.XY_face is perpendicular to Z.
+# This alignment instruction seems geometrically inconsistent if taken literally as "face to face" in 3D space unless it means "projected alignment" or "center alignment on that axis".
+# However, "Align XY_face" for a cylinder along X usually means aligning the circular face.
+# But stem_tube's XY face is a flat top/bottom.
+# Let's look at the offset: offset(0, 0.4, 0).
+# stem_tube is at Y=0.15. Offset Y=0.4 -> Y=0.55.
+# axle_front is the front axle. It should be at the front of the stem.
+# Stem length 0.4. Stem center Y=0.15. Stem front Y = 0.15 + 0.2 = 0.35.
+# Offset 0.4 from stem_tube face?
+# If we align axle_front face to stem_tube face, and then offset...
+# Let's assume "Align XY_face" means aligning the Y-coordinates of the face centers.
+# stem_tube top face (XY) center Y = 0.15.
+# axle_front XY face center Y = axle_front.location.y.
+# So axle_front.location.y = 0.15.
+# Then offset(0, 0.4, 0) -> axle_front.location.y = 0.55.
+# This places the axle at Y=0.55.
+# Stem front is at Y=0.35. 0.55 is 0.2m in front of the stem center.
+# This seems plausible for a scooter fork length.
+
+# Z alignment:
+# axle_front is along X. Its Z position is its center Z.
+# stem_tube center Z = 0.405 (before offset) -> 0.405 + 0.0025 = 0.4075.
+# Let's assume we align Z centers too.
+# axle_front.location.z = stem_tube.location.z = 0.4075.
+
+# X alignment:
+# axle_front is along X. Its X center is its center X.
+# stem_tube center X = 0.
+# axle_front.location.x = 0.
+
+axle_front.location = (0, 0.15, 0.4075)
+axle_front.location += Vector((0, 0.4, 0))
+
+# Create primitive cylinder with diameter 0.02 m and length 0.08 m and name it wheel_front.
+# Rotate wheel_front so its +Z axis aligns +X (world).
+# Align wheel_front.XY_face to axle_front.XY_face.
+# Then move by offset(0, 0.4, 0.045).
+wheel_front = add_cylinder("wheel_front", radius=0.01, depth=0.08, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_black_rubber)
+wheel_front.rotation_euler = (0, 0, math.radians(90)) # Local Z -> World X
+
+# Align wheel_front.XY_face to axle_front.XY_face.
+# Both are along X. Their XY faces are perpendicular to X.
+# Aligning faces means aligning their X positions.
+# axle_front length 0.1. Center X=0. Extent X: [-0.05, 0.05].
+# wheel_front length 0.08. Center X = X_w. Extent X: [X_w - 0.04, X_w + 0.04].
+# "Align face to face" usually means touching.
+# Which face? Front face of axle to front face of wheel?
+# axle_front front face (Local +Z -> World +X) is at X = 0.05.
+# wheel_front front face (Local +Z -> World +X) is at X = X_w + 0.04.
+# If we align them: X_w + 0.04 = 0.05 => X_w = 0.01.
+# Or maybe center to center?
+# Let's assume center alignment for simplicity unless "face" implies surface contact.
+# Given the offset, let's calculate based on face contact.
+# axle_front center X = 0.
+# wheel_front center X = 0.01 (if touching front faces).
+
+# Y and Z alignment:
+# axle_front center Y = 0.55.
+# axle_front center Z = 0.4075.
+# wheel_front center Y = 0.55.
+# wheel_front center Z = 0.4075.
+
+wheel_front.location = (0.01, 0.55, 0.4075)
+
+# Apply offset(0, 0.4, 0.045)
+wheel_front.location += Vector((0, 0.4, 0.045))
+
+# --- SECTION 5 – Create Rear Wheel and Axle ---
+# Create primitive cylinder with diameter 0.01 m and length 0.1 m and name it axle_rear.
+# Rotate axle_rear so its +Z axis aligns +X (world).
+# Align axle_rear.XY_face to deck_main.XY_face.
+# Then move by offset(0, -0.2, 0.0025).
+axle_rear = add_cylinder("axle_rear", radius=0.005, depth=0.1, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_chrome)
+axle_rear.rotation_euler = (0, 0, math.radians(90))
+
+# Align axle_rear.XY_face to deck_main.XY_face.
+# deck_main is at Z=0. Top face Z=0.0025.
+# axle_rear is along X. Its XY face is perpendicular to X.
+# This alignment instruction is again weird. "XY_face" of a cylinder along X is the circular face.
+# "XY_face" of deck_main is the flat top.
+# Aligning a circular face to a flat top?
+# Maybe it means aligning the Y and Z coordinates of the face center.
+# deck_main top face center: (0, 0, 0.0025).
+# axle_rear XY face center: (axle_rear.location.x, axle_rear.location.y, axle_rear.location.z).
+# So axle_rear.location.y = 0.
+# axle_rear.location.z = 0.0025.
+# axle_rear.location.x = 0 (aligned to deck center).
+
+axle_rear.location = (0, 0, 0.0025)
+
+# Apply offset(0, -0.2, 0.0025)
+axle_rear.location += Vector((0, -0.2, 0.0025))
+
+# Create primitive cylinder with diameter 0.02 m and length 0.08 m and name it wheel_rear.
+# Rotate wheel_rear so its +Z axis aligns +X (world).
+# Align wheel_rear.XY_face to axle_rear.XY_face.
+# Then move by offset(0, -0.2, 0.045).
+wheel_rear = add_cylinder("wheel_rear", radius=0.01, depth=0.08, location=(0, 0, 0), rotation=(0, 0, 0), material=mat_black_rubber)
+wheel_rear.rotation_euler = (0, 0, math.radians(90))
+
+# Align wheel_rear.XY_face to axle_rear.XY_face.
+# Both along X. Align X positions.
+# axle_rear center X = 0.
+# axle_rear front face (World +X) is at X = 0.05.
+# wheel_rear front face (World +X) is at X = X_wr + 0.04.
+# Align: X_wr + 0.04 = 0.05 => X_wr = 0.01.
+
+# Y and Z alignment:
+# axle_rear center Y = -0.2.
+# axle_rear center Z = 0.0025 + 0.0025 = 0.005.
+# wheel_rear center Y = -0.2.
+# wheel_rear center Z = 0.005.
+
+wheel_rear.location = (0.01, -0.2, 0.005)
+
+# Apply offset(0, -0.2, 0.045)
+wheel_rear.location += Vector((0, -0.2, 0.045))
+
+# --- SECTION 6 – Final Assembly ---
+# Boolean-union deck_main, stem_tube, handlebar_stem, handlebar_bar, axle_front, wheel_front, axle_rear, wheel_rear into scooter_root.
+parts = [deck_main, stem_tube, handlebar_stem, handlebar_bar, axle_front, wheel_front, axle_rear, wheel_rear]
+scooter_root = boolean_union(parts, "scooter_root")

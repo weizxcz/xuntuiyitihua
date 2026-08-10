@@ -1,0 +1,45 @@
+{
+  "id": "c7ad4e00-5d85-4bbf-a790-dc9a0fdf531a",
+  "name": "Winter Boots",
+  "instruction": "Hello! I'd like you to create a 3D model of a pair of winter boots. The boots should have a tall shaft that reaches up to the mid-calf. The sole should be thick and rugged, suitable for walking on snow and ice. Include laces that run up the front of the boots for a secure fit. The overall design should be practical for cold weather.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pair of winter boots.",
+        "The boots have a tall shaft that reaches mid-calf.",
+        "The sole is thick and rugged."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The shaft is proportionate to the boots."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The shaft of the boots is proportionate to the sole.",
+        "The laces are properly integrated into the design.",
+        "The thickness of the sole is adequate for rugged terrain."
+      ],
+      "Object distance and contact": [
+        "The sole is in direct contact with the ground.",
+        "The shaft does not overlap with the sole."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the practical requirements for cold weather."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

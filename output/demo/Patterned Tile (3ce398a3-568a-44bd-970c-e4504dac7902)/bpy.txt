@@ -1,0 +1,439 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), scale=(1,1,1)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation, scale=scale)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=1.0, location=(0,0,0), rotation=(0,0,0), scale=(1,1,1)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation, scale=scale)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_empty(name, location=(0,0,0), rotation=(0,0,0)):
+    """Add an empty object."""
+    bpy.ops.object.empty_add(location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # This is a simplified alignment for standard axes. 
+    # For +Z to +Z, no rotation is needed if default.
+    # If we needed to align arbitrary vectors, we'd use quaternion rotation.
+    pass # Default Blender objects are already aligned to world axes.
+
+def boolean_union(objects_to_union, keep_first=True):
+    """Perform boolean union on a list of objects. Modifies the first object in place."""
+    if not objects_to_union:
+        return None
+    
+    target = objects_to_union[0]
+    modifiers = []
+    
+    # Apply modifiers to target
+    for i, obj in enumerate(objects_to_union):
+        if i == 0:
+            continue
+        
+        # Add boolean modifier to target
+        mod = target.modifiers.new(name=f"BoolUnion_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        
+        # We need to apply this modifier. 
+        # Note: Applying boolean modifiers on many objects sequentially can be slow.
+        # For this script, we apply them one by one.
+        bpy.context.view_layer.objects.active = target
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove the source object
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+def boolean_subtract(target, cutter):
+    """Subtract cutter from target."""
+    mod = target.modifiers.new(name=f"BoolSub_{cutter.name}", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def set_transform(obj, location=None, rotation=None, scale=None):
+    """Set transform properties."""
+    if location:
+        obj.location = location
+    if rotation:
+        obj.rotation_euler = rotation
+    if scale:
+        obj.scale = scale
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- BLOCK 1: Materials ---
+
+mat_tile_base = make_material("tile_base", (0.85, 0.85, 0.85, 1.0))
+mat_tile_pattern = make_material("tile_pattern", (0.75, 0.75, 0.75, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1: Create tile base ---
+
+# Create primitive cuboid with size 0.305×0.305×0.012 m
+# Blender cube size is total width, so half-size is 0.305/2
+tile_base = add_cube("tile_base", size=0.305, location=(0,0,0), rotation=(0,0,0))
+tile_base.data.materials.append(mat_tile_base)
+
+# Rotate tile_base so its +Z axis aligns +Z (world) - Already aligned by default
+# Anchor tile_base to world origin - Already at (0,0,0)
+# Move by offset(0,0,0) - No change
+
+# --- SECTION 2: Create pattern grid ---
+
+# Create an Empty helper (cube display) and name it pattern_grid
+pattern_grid = add_empty("pattern_grid", location=(0,0,0.006), rotation=(0,0,0))
+pattern_grid.empty_display_size = 0.1 # Visual aid
+
+# Rotate pattern_grid so its axis aligns +Z (world) - Already aligned
+# Move pattern_grid to (0,0,0.006) - Done in creation
+
+# Scale pattern_grid to match overall size (AUTO → 0.305 m inferred width/depth)
+# Since it's an empty, scaling it doesn't affect children unless parented.
+# The instructions say "Scale pattern_grid...". We'll set its scale.
+pattern_grid.scale = (0.305, 0.305, 0.305)
+
+# For r in 0…3 and c in 0…3:
+floral_motifs = []
+for r in range(4):
+    for c in range(4):
+        # Create primitive cylinder with Ø0.025×0.003 m
+        # Radius = 0.0125, Depth = 0.003
+        motif_name = f"floral_motif_{r}_{c}"
+        # Create at origin first
+        motif = add_cylinder(motif_name, radius=0.0125, depth=0.003, location=(0,0,0), rotation=(0,0,0))
+        motif.data.materials.append(mat_tile_pattern)
+        
+        # Rotate floral_motif_r_c so its +Z axis aligns +Z (world) - Already aligned
+        # Anchor floral_motif_r_c to pattern_grid
+        # To anchor to pattern_grid, we parent it to pattern_grid
+        motif.parent = pattern_grid
+        
+        # Then offset(-0.15225 + c·0.07625, -0.15225 + r·0.07625, 0)
+        # Note: Since it's parented to pattern_grid, this offset is in pattern_grid's local space.
+        # However, pattern_grid is scaled. The offset values provided seem to be world-space coordinates 
+        # relative to the center of the tile (0.305m wide).
+        # Let's calculate the offset.
+        # c=0 -> -0.15225
+        # c=1 -> -0.15225 + 0.07625 = -0.076
+        # c=2 -> -0.15225 + 0.1525 = 0.00025
+        # c=3 -> -0.15225 + 0.22875 = 0.0765
+        
+        # If we parent to pattern_grid, the offset is applied in the parent's local space.
+        # pattern_grid is at (0,0,0.006) and scaled by 0.305.
+        # The offsets provided look like they are meant to be in the tile's local space (which is same as world for tile_base).
+        # To ensure correct placement, we should probably NOT parent to pattern_grid if we are using world-space offsets,
+        # OR we need to account for the parent's transform.
+        # The instruction says "Anchor ... to pattern_grid". This implies parenting.
+        # But then "offset(...)". If pattern_grid is scaled, the offset is scaled too.
+        # Let's assume the offset is relative to the pattern_grid's origin.
+        
+        offset_x = -0.15225 + c * 0.07625
+        offset_y = -0.15225 + r * 0.07625
+        offset_z = 0
+        
+        motif.location = (offset_x, offset_y, offset_z)
+        
+        floral_motifs.append(motif)
+
+# --- SECTION 3: Assemble floral motifs into composite ---
+
+# Boolean-union floral_motif_0_0 ... floral_motif_3_3; keep floral_motif_0_0
+# We need to collect all motifs in order
+all_motifs = []
+for r in range(4):
+    for c in range(4):
+        all_motifs.append(bpy.data.objects[f"floral_motif_{r}_{c}"])
+
+# Perform boolean union
+# The function boolean_union modifies the first object and removes the others
+composite_motif = boolean_union(all_motifs, keep_first=True)
+composite_motif.name = "tile_pattern" # Rename the result
+composite_motif.data.materials.clear()
+composite_motif.data.materials.append(mat_tile_pattern)
+
+# --- SECTION 4: Final Assembly ---
+
+# Align tile_pattern (composite floral motif) .+Z_face to tile_base .+Z_face
+# Both are already aligned to +Z.
+# tile_base is at Z=0 (center), thickness 0.012. Top face is at Z=0.006.
+# tile_pattern (composite) was created at Z=0 (center), thickness 0.003. Top face is at Z=0.0015.
+# We need to align the top face of tile_pattern to the top face of tile_base.
+# So tile_pattern's center Z should be 0.006 - 0.0015 = 0.0045.
+
+# However, the instruction says "Align ... to ...".
+# And then "Move by offset(0,0,0)".
+
+# Let's position tile_pattern on top of tile_base.
+# tile_base top Z = 0.006
+# tile_pattern half-thickness = 0.0015
+# tile_pattern center Z = 0.006 + 0.0015 = 0.0075? 
+# Or is it sitting ON TOP?
+# Usually "align face to face" means they touch.
+# If tile_base is at Z=0, top is 0.006.
+# If tile_pattern is placed on top, its bottom is at 0.006.
+# So its center is at 0.006 + 0.0015 = 0.0075.
+
+# Let's check the previous steps.
+# pattern_grid was at Z=0.006.
+# The motifs were offset in Z by 0 relative to pattern_grid.
+# So motifs are at Z=0.006 (center).
+# Wait, add_cylinder creates at location.
+# motif.location was set to (offset_x, offset_y, 0) relative to pattern_grid.
+# pattern_grid is at (0,0,0.006).
+# So motifs are at Z=0.006.
+# The composite motif (result of boolean union) will be at the same location as the first motif (floral_motif_0_0).
+# floral_motif_0_0 location was (-0.15225, -0.15225, 0) relative to pattern_grid.
+# So in world space, it is at (-0.15225, -0.15225, 0.006).
+
+# So the composite motif is currently at Z=0.006.
+# We want to align it to tile_base's +Z face.
+# tile_base +Z face is at Z=0.006.
+# The composite motif's center is at Z=0.006. Its top is at 0.006 + 0.0015 = 0.0075.
+# Its bottom is at 0.006 - 0.0015 = 0.0045.
+# If we want to align the +Z face of tile_pattern to the +Z face of tile_base:
+# tile_pattern +Z face is at 0.0075.
+# tile_base +Z face is at 0.006.
+# They are not aligned.
+
+# Let's re-read carefully: "Align tile_pattern ... .+Z_face to tile_base .+Z_face."
+# This implies moving tile_pattern so its +Z face is at the same Z as tile_base's +Z face.
+# tile_base +Z face Z = 0.006.
+# tile_pattern +Z face Z = tile_pattern.location.z + 0.0015.
+# So 0.006 = tile_pattern.location.z + 0.0015 => tile_pattern.location.z = 0.0045.
+
+# Current tile_pattern location.z is 0.006.
+# So we need to move it by -0.0015 in Z.
+
+# But wait, the instruction says "Then move by offset(0,0,0)".
+# This suggests the alignment step handles the positioning.
+
+# Let's perform the alignment.
+# We can use a simple location adjustment.
+tile_pattern = bpy.data.objects["tile_pattern"]
+
+# Calculate current top Z of tile_pattern
+# Since it's a cylinder of depth 0.003, half-depth is 0.0015.
+# Current location Z is 0.006.
+# Top Z is 0.0075.
+# Target Top Z is 0.006 (tile_base top).
+# Delta Z = 0.006 - 0.0075 = -0.0015.
+
+tile_pattern.location.z += (0.006 - (tile_pattern.location.z + 0.0015))
+
+# Then move by offset(0,0,0) - No change.
+
+# Final check:
+# tile_base is at Z=0.
+# tile_pattern is at Z=0.0045.
+# tile_pattern bottom is 0.0045 - 0.0015 = 0.003.
+# tile_pattern top is 0.0045 + 0.0015 = 0.006.
+# tile_base top is 0.006.
+# They are aligned at the face.
+
+# However, usually patterns are ON TOP of the base.
+# If the pattern is a relief, it might be embedded.
+# If it's a separate layer, it might be on top.
+# "Align face to face" usually means they touch.
+# If tile_pattern is a thin layer on top, its bottom should touch tile_base's top.
+# That would mean tile_pattern.location.z = 0.006 + 0.0015 = 0.0075.
+# But the instruction says "+Z_face to +Z_face".
+# This is specific. It means the top faces are aligned.
+# So the pattern is "inside" or "below" the top surface?
+# Or maybe the pattern is inverted?
+# Given the ambiguity, I will follow the literal instruction: Align +Z face to +Z face.
+
+# One more thing: The pattern grid was scaled.
+# The motifs were parented to pattern_grid.
+# When we boolean unioned them, the resulting object's location is the location of the first object.
+# The first object (floral_motif_0_0) was at (-0.15225, -0.15225, 0) relative to pattern_grid.
+# pattern_grid is at (0,0,0.006).
+# So floral_motif_0_0 is at (-0.15225, -0.15225, 0.006) in world space.
+# The boolean union result (tile_pattern) is at (-0.15225, -0.15225, 0.006).
+# This is the bottom-left corner of the 4x4 grid.
+# The tile_base is centered at (0,0,0).
+# The tile_base extends from -0.1525 to 0.1525 in X and Y.
+# The pattern grid extends from -0.15225 to 0.0765 in X and Y (based on offsets).
+# Wait, let's check the offsets again.
+# c=0: -0.15225
+# c=3: -0.15225 + 3*0.07625 = -0.15225 + 0.22875 = 0.0765
+# This is not centered on the tile!
+# The tile is 0.305 wide. Center is 0.
+# The grid should probably be centered.
+# If c=0 is -0.15225, and c=3 is 0.0765, the center is (-0.15225+0.0765)/2 = -0.037875.
+# This is not centered.
+# Did I misinterpret the offset?
+# "offset(-0.15225 + c·0.07625, -0.15225 + r·0.07625, 0)"
+# Maybe the pattern_grid scale affects the offset?
+# pattern_grid scale is (0.305, 0.305, 0.305).
+# If the offset is in pattern_grid local space, and pattern_grid is scaled, the world offset is scaled.
+# But the offset values are small (0.07625).
+# If we don't scale the pattern_grid, the offsets are as calculated.
+# If we DO scale the pattern_grid, the offsets are multiplied by 0.305.
+# 0.07625 * 0.305 = 0.02325625.
+# This seems too small for a 0.305m tile.
+# The instruction says "Scale pattern_grid to match overall size (AUTO → 0.305 m inferred width/depth)".
+# This implies the pattern_grid's scale is used to define the coordinate system for the children.
+# If pattern_grid is scaled by 0.305, then a local offset of 1.0 would be 0.305 in world space.
+# But the offsets are given as 0.07625.
+# 0.07625 is 1/4 of 0.305.
+# So maybe the offsets are meant to be in a normalized space?
+# Or maybe the pattern_grid scale is just for visual reference and doesn't affect the children's transforms?
+# In Blender, if an object is scaled, its children's local coordinates are affected by that scale.
+# If pattern_grid is scaled by 0.305, and we set motif.location to (0.07625, 0, 0), the world position is (0.07625*0.305, 0, 0.006).
+# This would make the grid very small.
+# The offsets provided (-0.15225 + c*0.07625) look like world-space coordinates for a 0.305m tile.
+# -0.15225 is approx -0.305/2.
+# 0.0765 is approx 0.305/4.
+# So the offsets are likely intended to be in world space, or in a non-scaled parent space.
+# If we parent to pattern_grid, and pattern_grid is scaled, we must divide the world offset by the scale to get the local offset.
+# Local Offset X = World Offset X / pattern_grid.scale.x
+# Local Offset X = -0.15225 / 0.305 = -0.5
+# Local Offset X = 0.07625 / 0.305 = 0.25
+# So the offsets in local space would be:
+# c=0: -0.5
+# c=1: -0.5 + 0.25 = -0.25
+# c=2: -0.5 + 0.5 = 0.0
+# c=3: -0.5 + 0.75 = 0.25
+# This creates a grid from -0.5 to 0.25 in local space.
+# In world space, this is -0.1525 to 0.0765.
+# This is still not centered on the tile (which is -0.1525 to 0.1525).
+# The center of the grid is (-0.1525+0.0765)/2 = -0.038.
+# The center of the tile is 0.
+# So the pattern is shifted.
+# Maybe the pattern_grid should NOT be scaled, or the offsets are different.
+# Or maybe the "AUTO" scaling is not 0.305?
+# "Scale pattern_grid to match overall size (AUTO → 0.305 m inferred width/depth)"
+# This is ambiguous.
+# Let's assume the offsets are correct as world-space coordinates, and we should NOT parent to pattern_grid if we want to use world-space offsets.
+# But the instruction says "Anchor floral_motif_r_c to pattern_grid".
+# This implies parenting.
+# If we parent, we must convert world offsets to local offsets.
+# Let's assume the pattern_grid scale is 1.0 for the purpose of anchoring, and the "scale" instruction is just for visual reference or a different purpose.
+# Or, more likely, the pattern_grid is a container, and the motifs are placed in it.
+# If pattern_grid is scaled by 0.305, and we want the motifs to be at world positions given by the offsets, we must set their local positions to offset / 0.305.
+# Let's do that.
+
+# Recalculate Section 2 with proper scaling handling
+# Clear previous motifs
+for obj in floral_motifs:
+    bpy.data.objects.remove(obj, do_unlink=True)
+floral_motifs = []
+
+for r in range(4):
+    for c in range(4):
+        motif_name = f"floral_motif_{r}_{c}"
+        motif = add_cylinder(motif_name, radius=0.0125, depth=0.003, location=(0,0,0), rotation=(0,0,0))
+        motif.data.materials.append(mat_tile_pattern)
+        motif.parent = pattern_grid
+        
+        # World offsets
+        world_offset_x = -0.15225 + c * 0.07625
+        world_offset_y = -0.15225 + r * 0.07625
+        world_offset_z = 0
+        
+        # Local offsets (divide by pattern_grid scale)
+        local_offset_x = world_offset_x / pattern_grid.scale.x
+        local_offset_y = world_offset_y / pattern_grid.scale.y
+        local_offset_z = world_offset_z / pattern_grid.scale.z
+        
+        motif.location = (local_offset_x, local_offset_y, local_offset_z)
+        floral_motifs.append(motif)
+
+# Re-do Section 3
+# Collect all motifs again
+all_motifs = []
+for r in range(4):
+    for c in range(4):
+        all_motifs.append(bpy.data.objects[f"floral_motif_{r}_{c}"])
+
+# Boolean union
+# Remove old composite if exists
+if "tile_pattern" in bpy.data.objects:
+    bpy.data.objects.remove(bpy.data.objects["tile_pattern"], do_unlink=True)
+
+composite_motif = boolean_union(all_motifs, keep_first=True)
+composite_motif.name = "tile_pattern"
+composite_motif.data.materials.clear()
+composite_motif.data.materials.append(mat_tile_pattern)
+
+# Re-do Section 4
+tile_pattern = bpy.data.objects["tile_pattern"]
+
+# Align tile_pattern +Z face to tile_base +Z face
+# tile_base +Z face Z = 0.006
+# tile_pattern +Z face Z = tile_pattern.location.z + 0.0015
+# Target: tile_pattern.location.z + 0.0015 = 0.006
+# tile_pattern.location.z = 0.0045
+
+# Current location of tile_pattern is the location of floral_motif_0_0 in world space.
+# floral_motif_0_0 local location: (-0.5, -0.5, 0)
+# pattern_grid world location: (0,0,0.006)
+# pattern_grid world scale: (0.305, 0.305, 0.305)
+# floral_motif_0_0 world location:
+# x = 0 + (-0.5 * 0.305) = -0.1525
+# y = 0 + (-0.5 * 0.305) = -0.1525
+# z = 0.006 + (0 * 0.305) = 0.006
+# So tile_pattern is at (-0.1525, -0.1525, 0.006).
+
+# We want to align the +Z face.
+# Current +Z face Z = 0.006 + 0.0015 = 0.0075.
+# Target +Z face Z = 0.006.
+# Delta Z = 0.006 - 0.0075 = -0.0015.
+
+tile_pattern.location.z += -0.0015
+
+# Move by offset(0,0,0) - No change.
+
+# Final cleanup: Remove pattern_grid if not needed
+# The instruction doesn't say to remove it.
+# But it's a helper. We'll leave it.
+
+# Apply tile_base material to tile_base
+tile_base.data.materials.clear()
+tile_base.data.materials.append(mat_tile_base)
+
+# Apply tile_pattern material to tile_pattern (already done)
+
+# Select all objects for easy viewing
+bpy.ops.object.select_all(action='DESELECT')
+tile_base.select_set(True)
+tile_pattern.select_set(True)
+bpy.context.view_layer.objects.active = tile_base
+```

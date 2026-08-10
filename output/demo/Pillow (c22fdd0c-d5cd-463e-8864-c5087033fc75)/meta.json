@@ -1,0 +1,45 @@
+{
+  "id": "c22fdd0c-d5cd-463e-8864-c5087033fc75",
+  "name": "Pillow",
+  "instruction": "How does resting your head on a pillow make you feel? Create a 3D model of a pillow that captures the sense of relaxation and comfort.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pillow has a rectangular shape.",
+        "The edges of the pillow are rounded for comfort.",
+        "The pillow has a slightly raised center."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The dimensions of the pillow are appropriate for resting one's head, typically around 50cm x 30cm."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The surface of the pillow appears plush and inviting.",
+        "The fabric texture suggests a soft, cozy material, like cotton or microfiber."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pillow is positioned at a slight angle to suggest usability.",
+        "The pillow's thickness is consistent throughout to imply comfort."
+      ],
+      "Object distance and contact": [
+        "The pillow is shown resting on a flat surface, indicating readiness for use.",
+        "There is no overlap with other objects, emphasizing its standalone comfort."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The model captures the essence of relaxation and comfort through its design elements.",
+        "All specified attributes related to comfort and relaxation are accurately represented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

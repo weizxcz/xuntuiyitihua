@@ -1,0 +1,36 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_cotton; diffuse_color = (0.95, 0.95, 0.92, 1.0).
+Define material foam_memory; diffuse_color = (0.90, 0.90, 0.88, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create foam core  ---
+Create primitive cuboid with size 0.65×0.45×0.12 m and name it foam_core.
+Rotate foam_core so its +Z axis aligns +Z (world).
+Anchor foam_core to pillow_root.center.
+Then move by offset(0,0,0).
+Bevel foam_core.edges with radius 0.05 m, segments 8.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create fabric shell  ---
+Create primitive cuboid with size 0.68×0.48×0.13 m and name it fabric_shell.
+Rotate fabric_shell so its +Z axis aligns +Z (world).
+Anchor fabric_shell to pillow_root.center.
+Then move by offset(0,0,0).
+Boolean-subtract foam_core from fabric_shell; keep fabric_shell.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+All stages complete.

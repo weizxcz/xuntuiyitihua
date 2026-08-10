@@ -1,0 +1,38 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_green; diffuse_color = (0.05, 0.25, 0.05, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create beanie body  ---
+Create primitive cylinder with size Ø0.220×0.200 m and name it beanie_body.
+Rotate beanie_body so its +Z axis aligns +Z (world).
+Align beanie_body.center to world.origin.
+Stage 1 complete.
+
+---  SECTION 2 – Create beanie top (hemisphere)  ---
+Create full_sphere and name it beanie_top.
+Rotate beanie_top so its +Z axis aligns +Z (world).
+Create plane_cutter and name it beanie_top_cut with size Ø0.220×0.220 m; orientation=axis:+Z.
+Boolean-subtract beanie_top_cut from beanie_top; keep beanie_top.  // produces hemisphere
+Rotate beanie_top so its curved face points +Z.
+Align beanie_top.center to beanie_body.top_face.center.
+Stage 2 complete.
+
+---  SECTION 3 – Create beanie fold  ---
+Create primitive cylinder with size Ø0.220×0.040 m and name it beanie_fold.
+Rotate beanie_fold so its +Z axis aligns +Z (world).
+Align beanie_fold.center to beanie_body.top_face.center.
+Stage 3 complete.
+
+All stages complete.

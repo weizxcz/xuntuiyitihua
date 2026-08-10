@@ -1,0 +1,1 @@
+Design a wallet with multiple compartments. The wallet should have a section for bills, a few slots for cards, and a small coin pocket with a snap closure.

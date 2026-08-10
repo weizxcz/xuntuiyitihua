@@ -1,0 +1,48 @@
+{
+  "id": "a6636215-624e-4f7c-abe9-51cad707f164",
+  "name": "Recliner Chair",
+  "instruction": "Let's design a recliner chair. The chair should have a high backrest and a footrest that extends when the chair reclines. The armrests should be wide and comfortable. The chair should have a lever on the side to adjust the reclining position.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a recliner chair.",
+        "The chair has a high backrest.",
+        "The chair features a footrest that extends when reclined.",
+        "The armrests are wide and comfortable."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The backrest is proportionate to the seat.",
+        "The armrests are wide relative to the seat."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The backrest is positioned correctly for support.",
+        "The footrest extends outward when the chair reclines.",
+        "The armrests are positioned at a comfortable height."
+      ],
+      "Object distance and contact": [
+        "The footrest does not overlap with the seat when extended.",
+        "The backrest connects with the seat at the edge.",
+        "The armrests are fixed to the sides of the chair."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a lever for adjusting the reclining position."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

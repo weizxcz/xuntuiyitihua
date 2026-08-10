@@ -1,0 +1,125 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material copper; diffuse_color = (0.87, 0.27, 0.09, 1.0).
+Define material insulation; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+Define material steel_core; diffuse_color = (0.3, 0.3, 0.35, 1.0).
+Define material steel_casing; diffuse_color = (0.4, 0.4, 0.45, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create core block  ---
+Create primitive cuboid with size 0.4×0.2×0.3 m and name it core_block.
+Rotate core_block so its +Z axis aligns +Z (world).
+Anchor core_block to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create coils and insulation layers  ---
+Create primitive cuboid with size 0.42×0.22×0.15 m and name it primary_coil.
+Rotate primary_coil so its +Z axis aligns +Z (world).
+Align primary_coil.center to core_block.center using axes XY.
+Then move by offset(0,0,0.1).
+
+Create primitive cuboid with size 0.42×0.22×0.15 m and name it secondary_coil.
+Rotate secondary_coil so its +Z axis aligns +Z (world).
+Align secondary_coil.center to core_block.center using axes XY.
+Then move by offset(0,0,-0.1).
+
+Create primitive cuboid with size 0.43×0.23×0.16 m and name it primary_insulation.
+Rotate primary_insulation so its +Z axis aligns +Z (world).
+Align primary_insulation.center to core_block.center using axes XY.
+Then move by offset(0,0,0.1).
+
+Create primitive cuboid with size 0.43×0.23×0.16 m and name it secondary_insulation.
+Rotate secondary_insulation so its +Z axis aligns +Z (world).
+Align secondary_insulation.center to core_block.center using axes XY.
+Then move by offset(0,0,-0.1).
+Stage 2 complete.
+
+---  SECTION 3 – Create terminal blocks  ---
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it primary_terminal.
+Rotate primary_terminal so its +Z axis aligns +Z (world).
+Align primary_terminal.center to primary_coil.top_face using axes XY.
+Then move by offset(0,0,0.025).
+
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it secondary_terminal.
+Rotate secondary_terminal so its +Z axis aligns +Z (world).
+Align secondary_terminal.center to secondary_coil.top_face using axes XY.
+Then move by offset(0,0,0.025).
+Stage 3 complete.
+
+---  SECTION 4 – Create casing plates and panels  ---
+Create primitive cuboid with size 0.5×0.3×0.02 m and name it casing_bottom.
+Rotate casing_bottom so its +Z axis aligns +Z (world).
+Align casing_bottom.center to core_block.center using axes XY.
+Then move by offset(0,0,-0.16).
+
+Create primitive cuboid with size 0.5×0.3×0.02 m and name it casing_top.
+Rotate casing_top so its +Z axis aligns +Z (world).
+Align casing_top.center to core_block.center using axes XY.
+Then move by offset(0,0,0.16).
+
+Create primitive cuboid with size 0.02×0.3×0.34 m and name it casing_left.
+Rotate casing_left so its +Z axis aligns +Z (world).
+Align casing_left.center to core_block.center using axes XY.
+Then move by offset(-0.26,0,0).
+
+Create primitive cuboid with size 0.02×0.3×0.34 m and name it casing_right.
+Rotate casing_right so its +Z axis aligns +Z (world).
+Align casing_right.center to core_block.center using axes XY.
+Then move by offset(0.26,0,0).
+
+Create primitive cuboid with size 0.5×0.02×0.34 m and name it casing_front.
+Rotate casing_front so its +Z axis aligns +Z (world).
+Align casing_front.center to core_block.center using axes XY.
+Then move by offset(0,0.16,0).
+
+Create primitive cuboid with size 0.5×0.02×0.34 m and name it casing_back.
+Rotate casing_back so its +Z axis aligns +Z (world).
+Align casing_back.center to core_block.center using axes XY.
+Then move by offset(0,-0.16,0).
+Stage 4 complete.
+
+---  SECTION 5 – Create cooling fins  ---
+Create primitive cuboid with size 0.01×0.2×0.1 m and name it fin_left_1.
+Rotate fin_left_1 so its +Z axis aligns +Z (world).
+Align fin_left_1.center to casing_left.left_face using axes XY.
+Then move by offset(-0.01,0,0).
+
+Create primitive cuboid with size 0.01×0.2×0.1 m and name it fin_left_2.
+Rotate fin_left_2 so its +Z axis aligns +Z (world).
+Align fin_left_2.center to casing_left.left_face using axes XY.
+Then move by offset(-0.01,0,0.1).
+
+Create primitive cuboid with size 0.01×0.2×0.1 m and name it fin_left_3.
+Rotate fin_left_3 so its +Z axis aligns +Z (world).
+Align fin_left_3.center to casing_left.left_face using axes XY.
+Then move by offset(-0.01,0,-0.1).
+
+Create primitive cuboid with size 0.01×0.2×0.1 m and name it fin_right_1.
+Rotate fin_right_1 so its +Z axis aligns +Z (world).
+Align fin_right_1.center to casing_right.right_face using axes XY.
+Then move by offset(0.01,0,0).
+
+Create primitive cuboid with size 0.01×0.2×0.1 m and name it fin_right_2.
+Rotate fin_right_2 so its +Z axis aligns +Z (world).
+Align fin_right_2.center to casing_right.right_face using axes XY.
+Then move by offset(0.01,0,0.1).
+
+Create primitive cuboid with size 0.01×0.2×0.1 m and name it fin_right_3.
+Rotate fin_right_3 so its +Z axis aligns +Z (world).
+Align fin_right_3.center to casing_right.right_face using axes XY.
+Then move by offset(0.01,0,-0.1).
+Stage 5 complete.
+
+All stages complete.

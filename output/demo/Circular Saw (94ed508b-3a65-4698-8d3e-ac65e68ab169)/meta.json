@@ -1,0 +1,59 @@
+{
+  "id": "94ed508b-3a65-4698-8d3e-ac65e68ab169",
+  "name": "Circular Saw",
+  "instruction": "Let's create a circular saw. The saw should have a round blade with sharp teeth, a handle on top for grip, and a guard to cover the blade when not in use. Include a small motor housing on the side. The base of the saw should be flat to allow for smooth cutting.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a circular saw.",
+        "The saw features a round blade.",
+        "The blade has sharp teeth around its edge.",
+        "There is a handle positioned on top of the saw.",
+        "The saw includes a guard that covers the blade.",
+        "The motor housing is located on the side of the saw.",
+        "The base of the saw is flat."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blade size is proportionate to the overall size of the saw.",
+        "The handle is proportionate to the blade and motor housing.",
+        "The guard is appropriately sized to cover the blade."
+      ],
+      "Texture and surface detail": [
+        "The blade has a smooth metallic surface with sharp teeth."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blade is positioned correctly for cutting.",
+        "The handle is securely mounted on top of the saw.",
+        "The guard is positioned to effectively cover the blade.",
+        "The motor housing is attached to the side without obstruction.",
+        "The flat base allows for stable placement on surfaces."
+      ],
+      "Object distance and contact": [
+        "The blade does not overlap with the guard.",
+        "The handle is positioned away from the blade for safety.",
+        "The motor housing is placed without interfering with the blade's operation.",
+        "The base makes full contact with the surface for stability."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a round blade with sharp teeth.",
+        "The handle is correctly placed on top.",
+        "The guard is included as specified.",
+        "The motor housing is present on the side.",
+        "The flat base is designed for smooth cutting."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

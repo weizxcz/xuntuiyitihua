@@ -1,0 +1,47 @@
+{
+  "id": "81ae0da5-d649-42a7-8986-3341eb4420a4",
+  "name": "Trumpet",
+  "instruction": "Let's create a trumpet. The trumpet has a long, cylindrical body with a flared bell at one end. The main body consists of three valves and a mouthpiece at the other end. The valves are positioned in a row and are connected to the body with small tubes. The bell gradually widens from the main body, creating a funnel shape.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a trumpet.",
+        "The trumpet has a long, cylindrical body.",
+        "The bell is flared at one end.",
+        "The main body features three valves.",
+        "The mouthpiece is located at the opposite end of the bell."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The body and the bell is proportionate to the entire trumpet."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical body is correctly proportioned to the bell.",
+        "The valves are appropriately spaced along the body.",
+        "The mouthpiece is aligned with the body."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the valves and the body.",
+        "The tubes connecting the valves to the body are correctly positioned."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the trumpet are accurately represented.",
+        "There are no deviations from the provided instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

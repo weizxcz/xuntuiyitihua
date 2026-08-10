@@ -1,0 +1,48 @@
+{
+  "id": "c22b1cc6-e21e-4fa5-909c-431743cf1b1f",
+  "name": "Bedside Table",
+  "instruction": "Could you create a 3D model of a bedside table?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a bedside table.",
+        "The bedside table has a rectangular top.",
+        "The table has four straight legs.",
+        "The table includes one or more drawers."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The legs should be proportionate to the tabletop.",
+        "The drawers should be proportionate to the overall size of the table."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The legs are positioned correctly for stability.",
+        "The tabletop is properly supported by the legs.",
+        "The drawers are accessible and do not obstruct the legs."
+      ],
+      "Object distance and contact": [
+        "The legs do not overlap with the tabletop.",
+        "There is no gap between the tabletop and the legs.",
+        "The drawers fit within the confines of the table structure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The instruction to create a bedside table is understood.",
+        "The model should accurately reflect a typical bedside table design."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

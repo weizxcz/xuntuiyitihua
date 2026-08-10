@@ -1,0 +1,65 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base_plate  ---
+Create primitive cylinder with diameter 0.400 m and height 0.002 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Align base_plate.XY_face to (0,0).
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create graphic_element  ---
+Create primitive cube with size 0.080×0.060×0.005 m and name it graphic_element.
+Rotate graphic_element so its +Z axis aligns +Z (world).
+Align graphic_element.XY_face to (-0.10, 0.02).
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create text_block  ---
+Create primitive cube with size 0.120×0.020×0.005 m and name it text_block.
+Rotate text_block so its +Z axis aligns +Z (world).
+Align text_block.XY_face to (-0.10, -0.04).
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create icon_base  ---
+Create primitive cylinder with diameter 0.100 m and height 0.005 m and name it icon_base.
+Rotate icon_base so its +Z axis aligns +Z (world).
+Align icon_base.XY_face to (0.10, 0.02).
+Then move by offset(0,0,0).
+Stage 4 complete.
+
+---  SECTION 5 – Create icon_core  ---
+Create primitive cube with size 0.040×0.040×0.005 m and name it icon_core.
+Rotate icon_core so its +Z axis aligns +Z (world).
+Align icon_core.XY_face to (0.10, 0.02).
+Then move by offset(0,0,0).
+Stage 5 complete.
+
+---  SECTION 6 – Assemble logo_group  ---
+Boolean-union graphic_element and text_block; keep graphic_element.
+Stage 6 complete.
+
+---  SECTION 7 – Assemble symbol_group  ---
+Boolean-union icon_core and icon_base; keep icon_base.
+Stage 7 complete.
+
+---  SECTION 8 – Assemble root  ---
+Boolean-union base_plate, logo_group, and symbol_group; keep base_plate.
+Stage 8 complete.
+
+All stages complete.

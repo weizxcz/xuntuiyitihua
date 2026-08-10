@@ -1,0 +1,50 @@
+{
+  "id": "273711ef-74f8-44bd-ac20-c16d1ceff6a0",
+  "name": "Bed Frame",
+  "instruction": "Create a 3D model of a bed frame. It should have a rectangular shape with four legs. Include a headboard and a footboard. Show the bed frame from different angles. Compare the height and design of the headboard and footboard.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a bed frame.",
+        "The bed frame has a rectangular shape.",
+        "The bed frame includes a headboard.",
+        "The bed frame includes a footboard.",
+        "The bed frame has four legs."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The legs are at a reasonable height relative to the bed."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The legs are positioned at each corner of the bed frame for stability.",
+        "The headboard is attached to the back of the bed frame.",
+        "The footboard is attached to the front of the bed frame.",
+        "The bed frame maintains a balanced structure from all angles."
+      ],
+      "Object distance and contact": [
+        "The headboard does not overlap with the bed frame.",
+        "The footboard is securely connected to the bed frame.",
+        "There is no gap between the legs and the bed frame."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the bed frame are accurately represented.",
+        "The model shows the bed frame from different angles as instructed.",
+        "The height and design comparison between the headboard and footboard is clearly illustrated."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

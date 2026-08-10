@@ -1,0 +1,45 @@
+{
+  "id": "955c9866-61a9-4546-9dc0-9c1b3817a573",
+  "name": "Cat Feeder",
+  "instruction": "Could you design a cat feeder for me? Ensure it has a bowl and a compartment for storing food.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a cat feeder.",
+        "The feeder includes a bowl.",
+        "The feeder has a compartment for storing food."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The base is proportionate to the entire bowl"
+      ],
+      "Texture and surface detail": [
+        "The bowl should be made of a material safe for pets, such as ceramic or stainless steel.",
+        "The storage compartment should be made of durable plastic or similar material."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bowl is positioned at a height suitable for a cat to eat comfortably.",
+        "The storage compartment is located below or beside the bowl for easy access."
+      ],
+      "Object distance and contact": [
+        "The bowl is securely attached to the feeder to prevent tipping.",
+        "The storage compartment does not obstruct access to the bowl."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (bowl and storage compartment) are included.",
+        "The design adheres to the request for a cat feeder."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+glass_transparent | diffuse_color=(0.8,0.9,1.0,0.3)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| test_tube | Composite of glass\_body + glass\_bottom\_cap; a narrow cylindrical test tube | assembly_order=[glass\_body, glass\_bottom\_cap] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| glass\_body | Cylinder Ø0.020×0.150 m (radius 0.010 m, height 0.150 m) | pos=(0,0,0); orientation=axis:+Z; mat=glass\_transparent; create\_method=primitive |
+| glass\_bottom\_cap | Hemisphere Ø0.020×0.010 m (radius 0.010 m) | Align(XY) glass\_bottom\_cap.center to glass\_body.bottom\_face; Align(Z) glass\_bottom\_cap.bottom\_face to glass\_body.bottom\_face; offset(0,0,-0.010); orientation=axis:+Z; mat=glass\_transparent; create\_method=boolean_subtract |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,46 @@
+{
+  "id": "cb2c4f7c-5c39-4a43-bb0d-622d7435f554",
+  "name": "Hammer",
+  "instruction": "Create a hammer with a straight handle and a solid head.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a hammer.",
+        "The handle is straight.",
+        "The head of the hammer is solid."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head is proportionate to the length of the handle.",
+        "The overall dimensions of the hammer are balanced."
+      ],
+      "Texture and surface detail": [
+        "The head has a smooth metallic surface."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is correctly aligned with the head.",
+        "The head is securely attached to the handle.",
+        "The hammer maintains a stable structure."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the head and the handle.",
+        "The handle does not overlap with the head."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The hammer design adheres to the instruction of having a straight handle and solid head."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

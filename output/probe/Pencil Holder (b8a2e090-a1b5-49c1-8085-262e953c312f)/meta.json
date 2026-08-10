@@ -1,0 +1,44 @@
+{
+  "id": "b8a2e090-a1b5-49c1-8085-262e953c312f",
+  "name": "Pencil Holder",
+  "instruction": "Create a pencil holder with a cylindrical shape, 4 inches in diameter and 6 inches tall. Add three evenly spaced compartments inside to organize the pencils.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cylindrical pencil holder."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The diameter measurement is accurate at 4 inches.",
+        "The height measurement is accurate at 6 inches."
+      ],
+      "Proportion": [
+        "There are three evenly spaced compartments inside the pencil holder.",
+        "The compartments are designed to organize pencils effectively."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical shape is maintained throughout the height.",
+        "The compartments are evenly distributed within the cylinder."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the compartments.",
+        "The compartments are properly contained within the cylindrical shape."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the dimensions provided."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

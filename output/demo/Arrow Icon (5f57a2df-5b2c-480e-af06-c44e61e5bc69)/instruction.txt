@@ -1,0 +1,1 @@
+Create a simple arrow icon pointing to the right. The arrow should have a straight shaft and a triangular head.

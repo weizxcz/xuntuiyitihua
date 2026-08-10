@@ -1,0 +1,33 @@
+-- MATERIAL LIBRARY --
+mat_wood_brown | diffuse_color=(0.55,0.27,0.15,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| birdhouse | Composite of walls, roof, floor, entrance hole, and perch | assembly_order=[walls_union, roof, floor, entrance_hole, perch] |
+
+Layer 1 – Primary Structure (Walls & Floor)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| walls_union | Composite union of back, left, right, and front panels | (1) execute 'back': Align(XZ) walls_union.back_face to back.back_face; offset(0,0,0); (2) execute 'left': Align(YZ) walls_union.left_face to left.left_face; offset(0,0,0); (3) execute 'right': Align(YZ) walls_union.right_face to right.right_face; offset(0,0,0); (4) execute 'front': Align(YZ) walls_union.front_face to front.front_face; offset(0,0,0); orientation=axis:+Z; mat=mat_wood_brown; create_method=boolean_union |
+| back | Rectangular panel 0.300×0.400×0.015 m | Align(XZ) back.center to (0, -0.150, 0.200); orientation=axis:+Z; mat=mat_wood_brown; create_method=primitive |
+| left | Rectangular panel 0.200×0.400×0.015 m | Align(YZ) left.center to (-0.150, 0, 0.200); orientation=axis:+Z; mat=mat_wood_brown; create_method=primitive |
+| right | Rectangular panel 0.200×0.400×0.015 m | Align(YZ) right.center to (0.150, 0, 0.200); orientation=axis:+Z; mat=mat_wood_brown; create_method=primitive |
+| front | Rectangular panel 0.300×0.400×0.015 m | Align(YZ) front.center to (0, 0.150, 0.200); orientation=axis:+Z; mat=mat_wood_brown; create_method=primitive |
+| floor | Rectangular panel 0.300×0.200×0.015 m | Align(XY) floor.center to (0, 0, 0); orientation=axis:+Z; mat=mat_wood_brown; create_method=primitive |
+
+Layer 2 – Roof
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| roof | Composite of two sloped panels forming a gable | assembly_order=[roof_left, roof_right] |
+| roof_left | Rectangular panel 0.250×0.300×0.015 m | Align(XZ) roof_left.bottom_edge to back.top_edge; orientation=axis:+Y; mat=mat_wood_brown; create_method=primitive |
+| roof_right | Rectangular panel 0.250×0.300×0.015 m | Align(XZ) roof_right.bottom_edge to back.top_edge; orientation=axis:+Y; mat=mat_wood_brown; create_method=primitive |
+
+Layer 3 – Entrance & Perch
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| entrance_hole | Circular hole Ø0.050 m drilled into front panel | Align(XZ) entrance_hole.center to (0, 0.1575, 0.250); orientation=axis:+Y; mat=-; create_method=boolean_subtract; constraint=pierce 0.015 m |
+| perch | Small cylindrical perch Ø0.010×0.040 m | Align(XZ) perch.center to (0, 0.1575, 0.225); orientation=axis:+Y; mat=mat_wood_brown; create_method=primitive |
+# ----------  END_GRAPH  ----------

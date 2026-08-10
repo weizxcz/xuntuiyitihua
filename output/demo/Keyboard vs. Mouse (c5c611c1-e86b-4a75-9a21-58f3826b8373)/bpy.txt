@@ -1,0 +1,266 @@
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size=(1,1,1), location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    if material:
+        if name not in [mat.name for mat in obj.data.materials]:
+            obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        if name not in [mat.name for mat in obj.data.materials]:
+            obj.data.materials.append(material)
+    return obj
+
+def add_disc(name, radius=0.5, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_circle_add(radius=radius, location=location, fill_type='TRIFAN', rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        if name not in [mat.name for mat in obj.data.materials]:
+            obj.data.materials.append(material)
+    return obj
+
+def add_cone(name, radius_top=0, radius_bottom=1, depth=2, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        if name not in [mat.name for mat in obj.data.materials]:
+            obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius=1, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        if name not in [mat.name for mat in obj.data.materials]:
+            obj.data.materials.append(material)
+    return obj
+
+def add_text_object(name, text="Text", size=1, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.object.text_add(location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.size = size
+    obj.data.body = text
+    if material:
+        if name not in [mat.name for mat in obj.data.materials]:
+            obj.data.materials.append(material)
+    return obj
+
+def add_bevel(obj, width=0.01, segments=5):
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else:
+        local_axis = Vector((0, 0, 1))
+    
+    target = vector.normalized()
+    if local_axis.normalized().dot(target) < 0.9999:
+        rot_quat = local_axis.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    return sum(points, Vector()) / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        return self.obj.location
+    
+    def face_center_world(self, face_index=0):
+        # Approximate face center by averaging vertices of the face
+        # Note: This assumes the face is defined in local space and transformed
+        # For simplicity in this script, we assume standard primitives where top face is Z+
+        # A robust implementation would require mesh data access and matrix transformation
+        # Here we use a simplified approach for standard orientations
+        if self.obj.type == 'MESH':
+            # Get vertices of the face (simplified: assume face 0 is top for cubes/cylinders if oriented correctly)
+            # This is a placeholder for complex face logic. 
+            # For the specific use case in the prompt (aligning +Z faces), we rely on orientation.
+            return self.center_world() + Vector((0,0,0.5)) # Approximation
+        return self.center_world()
+
+    def radial_point_world(self, angle=0):
+        # Returns a point on the radial edge
+        return self.center_world() + Vector((math.cos(angle), math.sin(angle), 0))
+
+def boolean_subtract(cutter_obj, target_obj):
+    # Ensure target has a modifier stack
+    if not hasattr(target_obj, 'modifiers'):
+        return
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Remove cutter if desired, but usually kept for reference or further operations
+    # bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, union_obj):
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def create_anchor_locator(obj_name, location, rotation=(0,0,0)):
+    """Creates an empty object to serve as an anchor."""
+    bpy.ops.object.empty_add(location=location)
+    anchor = bpy.context.active_object
+    anchor.name = obj_name
+    anchor.rotation_euler = rotation
+    return anchor
+
+def align_to_face(target_obj, anchor_obj, target_axis='Z', anchor_axis='Z', offset_z=0):
+    """
+    Aligns target_obj to the face of anchor_obj.
+    Assumes standard orientation where +Z is up.
+    """
+    # Get anchor's world location
+    anchor_loc = anchor_obj.location
+    
+    # Calculate target location based on anchor's top face
+    # Assuming anchor is a primitive like a cube or cylinder, its top face is at local Z + height/2
+    # We need to transform this local offset to world space
+    anchor_mat = anchor_obj.matrix_world
+    anchor_half_h = anchor_obj.dimensions[2] / 2 if anchor_obj.type == 'MESH' else 0
+    
+    # Simple approach: Place target on top of anchor
+    # Vector from anchor center to anchor top face in world space
+    anchor_top_world = anchor_mat @ Vector((0, 0, anchor_half_h))
+    
+    # Set target location to anchor top
+    target_obj.location = anchor_top_world
+    
+    # Align orientations
+    # If both are aligned to +Z, no rotation change needed for alignment
+    # If specific face alignment is needed, we'd rotate target to match anchor's face normal
+    
+    # Apply Z offset
+    target_obj.location.z += offset_z
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_key_cap = make_material("key_cap", (0.94, 0.94, 0.94, 1))
+mat_mouse_body = make_material("mouse_body", (0.78, 0.78, 0.78, 1))
+mat_pcb = make_material("pcb", (0.12, 0.47, 0.12, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Desk Surface ---
+desk_surface = add_cube("desk_surface", size=(1.2, 0.6, 0.02), location=(0, 0, 0), rotation=(0, 0, 0), material=mat_mouse_body)
+# Rotate so +Z aligns +Z (already default)
+align_axis_to_vector(desk_surface, 'Z', (0, 0, 1))
+# Offset (0, 0, 0)
+desk_surface.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create Keyboard Base ---
+kb_base = add_cube("kb_base", size=(0.44, 0.14, 0.004), location=(-0.3, 0.15, 0.022), rotation=(0, 0, 0), material=mat_mouse_body)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(kb_base, 'Z', (0, 0, 1))
+# Offset (-0.3, 0.15, 0.022) - already set in creation
+
+# --- SECTION 3 – Create Keyboard PCB ---
+kb_pcb = add_cube("kb_pcb", size=(0.42, 0.12, 0.002), location=(0, 0, 0), rotation=(0, 0, 0), material=mat_pcb)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(kb_pcb, 'Z', (0, 0, 1))
+# Anchor to kb_base.top_face
+# Align kb_pcb.+Z_face to kb_base.+Z_face
+# Offset (0, 0, 0.002)
+align_to_face(kb_pcb, kb_base, target_axis='Z', anchor_axis='Z', offset_z=0.002)
+
+# --- SECTION 4 – Create Keyboard Top Plate ---
+kb_top_plate = add_cube("kb_top_plate", size=(0.43, 0.13, 0.003), location=(0, 0, 0), rotation=(0, 0, 0), material=mat_mouse_body)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(kb_top_plate, 'Z', (0, 0, 1))
+# Anchor to kb_base.top_face
+# Align kb_top_plate.+Z_face to kb_base.+Z_face
+# Offset (0, 0, 0.006)
+align_to_face(kb_top_plate, kb_base, target_axis='Z', anchor_axis='Z', offset_z=0.006)
+
+# --- SECTION 5 – Create Keycap Grid (Rows 1-5) ---
+# Create Empty helper
+key_grid_anchor = create_anchor_locator("key_grid_anchor", location=(-0.48, 0.19, 0.030), rotation=(0, 0, 0))
+# Rotate so axis aligns +Z
+align_axis_to_vector(key_grid_anchor, 'Z', (0, 0, 1))
+
+# Loop for keycaps
+for r in range(5):
+    for c in range(20):
+        key_name = f"key_{r+1}_{c+1}"
+        # Create primitive cuboid
+        key_obj = add_cube(key_name, size=(0.015, 0.015, 0.004), location=(0, 0, 0), rotation=(0, 0, 0), material=mat_key_cap)
+        # Rotate so +Z aligns +Z
+        align_axis_to_vector(key_obj, 'Z', (0, 0, 1))
+        # Anchor to key_grid_anchor.top_face
+        # Align key_obj.+Z_face to key_grid_anchor.+Z_face
+        # Offset (c * 0.02, -r * 0.02, 0)
+        
+        # Calculate anchor position relative to key_grid_anchor
+        # Since key_grid_anchor is an empty, its "top face" is effectively its location
+        # We place the keycap on top of the anchor and apply offsets
+        anchor_loc = key_grid_anchor.location
+        key_obj.location = anchor_loc + Vector((c * 0.02, -r * 0.02, 0))
+        # Add a small Z offset to sit on top if needed, but prompt says offset(0,0,0) for Z
+        # Assuming the anchor is at the surface level, we might need to adjust Z
+        # However, the prompt says "Anchor ... to top_face" then "offset(0,0,0)".
+        # If the anchor is at Z=0.030, and the key is 0.004 high, placing it at Z=0.030 puts its center at 0.030.
+        # To sit on top, center should be at 0.030 + 0.002 = 0.032.
+        # Let's assume the anchor represents the surface point.
+        key_obj.location.z += 0.002 # Half height to sit on surface
+
+# All stages complete.

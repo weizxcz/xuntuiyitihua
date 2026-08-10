@@ -1,0 +1,46 @@
+{
+  "id": "e8ace28d-7c4f-4ab3-902a-a91b476d2eef",
+  "name": "Bread Loaf",
+  "instruction": "How would you use a loaf of bread for making sandwiches?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The loaf of bread is rectangular.",
+        "The bread has a uniform thickness throughout."
+      ],
+      "Color representation": [
+        "The crust of the bread is golden brown.",
+        "The inside of the bread is a light beige color."
+      ],
+      "Size": [
+        "The loaf is of standard sandwich size, typically around 30cm in length.",
+        "The thickness of each slice is approximately 1.5cm."
+      ],
+      "Proportion": [
+        "The loaf of the bread is proportionate to the sandwiches."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The slices can be stacked neatly.",
+        "The loaf can be positioned upright for slicing.",
+        "Each slice maintains its shape when removed from the loaf."
+      ],
+      "Object distance and contact": [
+        "The slices are evenly spaced when cut.",
+        "There is no crumbling or breaking of the slices during handling."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The loaf can be sliced evenly for making sandwiches.",
+        "The instruction implies using the slices for sandwich assembly."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

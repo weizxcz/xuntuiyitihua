@@ -1,0 +1,20 @@
+{
+  "ncti_path_config": {
+    "dllpath": "../Linux_NCTI",
+    "Ncti_api_path": "../Linux_NCTI"
+  },
+  "linux_libraries": [
+    "libncti_base.so",
+    "libncti_object.so",
+    "libncti_pubfun.so",
+    "libncti_command.so",
+    "libncti_occ_plugin.so",
+    "libncti.so"
+  ],
+  "windows_libraries": [
+    "ncti_command.dll",
+    "ncti_doc_occ.dll",
+    "ncti_occ_plugin.dll",
+    "ncti_window.dll"
+  ]
+}

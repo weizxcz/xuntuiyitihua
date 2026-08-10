@@ -1,0 +1,44 @@
+{
+  "id": "21c848a0-72e6-4a73-8aa2-b3b2e293efb8",
+  "name": "Strawberry",
+  "instruction": "What does a strawberry look like?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The strawberry has a conical shape.",
+        "The surface is slightly bumpy due to its seeds."
+      ],
+      "Color representation": [
+        "The primary color of the strawberry is bright red.",
+        "The green leaves at the top are a vibrant green."
+      ],
+      "Size": [
+        "The average size of a strawberry is approximately 5 to 7 cm in length."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The leaves are positioned at the top of the strawberry.",
+        "The seeds are evenly distributed across the surface."
+      ],
+      "Object distance and contact": [
+        "The leaves do not overlap with the body of the strawberry.",
+        "The seeds are clearly visible and do not obscure the surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The description accurately reflects the appearance of a strawberry.",
+        "All relevant visual characteristics are covered."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

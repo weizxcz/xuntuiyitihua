@@ -1,0 +1,50 @@
+{
+  "id": "591a9a68-188c-45dc-ae89-09a1ff369bdb",
+  "name": "Microwave Oven",
+  "instruction": "Create a 3D model of a microwave oven. The body is rectangular with a door on the front that has a transparent window. The control panel is on the right side of the door, featuring a numeric keypad and a few buttons. Inside, there is a turntable.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a microwave oven.",
+        "The body of the microwave is rectangular.",
+        "The door is located on the front of the microwave.",
+        "The door features a transparent window.",
+        "The control panel is positioned on the right side of the door.",
+        "The control panel includes a numeric keypad and additional buttons."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The door size is proportionate to the body of the microwave.",
+        "The control panel is appropriately sized relative to the door."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The door is correctly positioned on the front of the microwave.",
+        "The control panel is properly aligned with the door.",
+        "The turntable is located inside the microwave and is centered."
+      ],
+      "Object distance and contact": [
+        "The door does not overlap with the body of the microwave.",
+        "The control panel is flush against the side of the microwave.",
+        "The turntable is adequately supported within the microwave cavity."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres closely to the provided instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

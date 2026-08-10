@@ -1,0 +1,43 @@
+{
+  "id": "a4e280b9-a6f0-4ddb-85e9-aecdf94d541b",
+  "name": "Power Substation",
+  "instruction": "Hello! I need a 3D model of a power substation. The substation should include transformers, circuit breakers, and busbars. There should be high-voltage transmission lines entering and exiting the substation. The layout should be realistic and functional for distributing electricity.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The shape of the power substation is not specified in the instruction but the components in the substation should be similar to the reality."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The components of the power substation are proportioante to the entire substation."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The transformers are spaced adequately for maintenance.",
+        "The circuit breakers are positioned for easy access.",
+        "The busbars are aligned with the transformers and circuit breakers."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the transformers and circuit breakers.",
+        "The transmission lines are appropriately elevated above the substation components."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (transformers, circuit breakers, busbars) are included.",
+        "The layout is functional for electricity distribution as requested."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

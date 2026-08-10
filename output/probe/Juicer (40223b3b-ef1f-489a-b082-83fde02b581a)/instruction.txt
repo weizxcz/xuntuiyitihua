@@ -1,0 +1,1 @@
+Create a juicer that can handle both soft and hard fruits. Include a pulp collector and an easy-to-clean design.

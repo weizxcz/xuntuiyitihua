@@ -1,0 +1,68 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material glass_clear; diffuse_color = (0.9,0.95,1.0,0.1).
+Define material metal_steel; diffuse_color = (0.6,0.6,0.65,1.0).
+Define material specimen_organic; diffuse_color = (0.2,0.4,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create slide_base (glass_plate)  ---
+Create primitive cuboid with size 0.076×0.026×0.001 m and name it glass_plate.
+Rotate glass_plate so its +Z axis aligns +Z (world).
+Move glass_plate to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create slide_base (metal_frame)  ---
+Create primitive cylinder with diameter 0.002 m and length 0.076 m and name it left_rail.
+Rotate left_rail so its +Z axis aligns +Y (world).
+Align left_rail.XZ_face to glass_plate.left_face.
+Then move by offset(0,0,0.0005).
+
+Create primitive cylinder with diameter 0.002 m and length 0.076 m and name it right_rail.
+Rotate right_rail so its +Z axis aligns +Y (world).
+Align right_rail.XZ_face to glass_plate.right_face.
+Then move by offset(0,0,0.0005).
+
+Create primitive cylinder with diameter 0.002 m and length 0.026 m and name it top_rail.
+Rotate top_rail so its +Z axis aligns +X (world).
+Align top_rail.YZ_face to glass_plate.top_face.
+Then move by offset(0,0,0.0005).
+
+Create primitive cylinder with diameter 0.002 m and length 0.026 m and name it bottom_rail.
+Rotate bottom_rail so its +Z axis aligns +X (world).
+Align bottom_rail.YZ_face to glass_plate.bottom_face.
+Then move by offset(0,0,0.0005).
+Stage 2 complete.
+
+---  SECTION 3 – Create specimen (organic_sample)  ---
+Create primitive cuboid with size 0.010×0.010×0.0001 m and name it organic_sample.
+Rotate organic_sample so its +Z axis aligns +Z (world).
+Align organic_sample.XY_face to glass_plate.top_face.
+Then move by offset(0,0,0.0001).
+Stage 3 complete.
+
+---  SECTION 4 – Create specimen (mounting_medium)  ---
+Create primitive cuboid with size 0.012×0.012×0.00005 m and name it mounting_medium.
+Rotate mounting_medium so its +Z axis aligns +Z (world).
+Align mounting_medium.XY_face to organic_sample.XY_face.
+Then move by offset(0,0,0.00015).
+Stage 4 complete.
+
+---  SECTION 5 – Create cover_slip  ---
+Create primitive cuboid with size 0.022×0.022×0.0001 m and name it cover_slip.
+Rotate cover_slip so its +Z axis aligns +Z (world).
+Align cover_slip.bottom_face to mounting_medium.top_face.
+Then move by offset(0,0,0.00005).
+Stage 5 complete.
+
+All stages complete.

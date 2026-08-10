@@ -1,0 +1,215 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix, Euler
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to size (x, y, z)
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        if len(obj.data.materials) == 0:
+            obj.data.materials.append(material)
+        else:
+            obj.data.materials[0] = material
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Align a specific axis of an object to a target vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.copy()
+    
+    # We need to find the rotation that maps 'axis_to_align' to 'target_vector'
+    # axis_to_align is a local axis (e.g., 'Z' -> (0,0,1))
+    # target_vector is in world space
+    
+    # Create a matrix that rotates the local axis to the target
+    # This is a simplified approach for standard axes
+    
+    local_axis_map = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    local_axis = local_axis_map.get(axis_to_align, Vector((0,0,1)))
+    
+    # Calculate rotation matrix
+    # We want to rotate local_axis to target_vector
+    # Use quaternion rotation
+    q = local_axis.rotation_difference(target_vector.normalized())
+    
+    # Apply this rotation to the object's current orientation
+    # Note: Blender's rotation_euler is Z-Y-X. We need to be careful with order.
+    # A robust way is to set the rotation directly using the quaternion
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = q
+    
+    # Convert back to Euler if needed for consistency, though Quat is fine
+    # obj.rotation_mode = 'XYZ' # or whatever default
+    
+    return obj
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract using the modifier stack."""
+    target = bpy.data.objects.get(target_name)
+    cutter = bpy.data.objects.get(cutter_name)
+    
+    if not target or not cutter:
+        print(f"Error: Object {target_name} or {cutter_name} not found for boolean.")
+        return
+
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    mod.use_self = False
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_union(target_name, union_name):
+    """Perform a boolean union."""
+    target = bpy.data.objects.get(target_name)
+    union = bpy.data.objects.get(union_name)
+    
+    if not target or not union:
+        print(f"Error: Object {target_name} or {union_name} not found for boolean.")
+        return
+
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_wood_dark = make_material("mat_wood_dark", (0.35, 0.20, 0.15, 1.0))
+mat_wood_light = make_material("mat_wood_light", (0.80, 0.65, 0.50, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create Left Side Panel
+# Size: 0.300 (X) x 1.200 (Y) x 0.020 (Z)
+# Rotate +Z to +Z (World) -> No rotation needed if default is +Z up
+# Anchor to world origin -> Location (0,0,0)
+# Offset: (-0.300, 0.600, 0.000)
+obj_side_L = add_cube("side_panel_L", (0.300, 1.200, 0.020), (0, 0, 0), (0, 0, 0), mat_wood_dark)
+# Align +Z to +Z (already done by default cube orientation)
+# Anchor to origin (already at 0,0,0)
+# Apply Offset
+obj_side_L.location = Vector((-0.300, 0.600, 0.000))
+
+# SECTION 2 – Create Right Side Panel
+# Size: 0.300 (X) x 1.200 (Y) x 0.020 (Z)
+# Rotate +Z to +Z (World)
+# Anchor to world origin
+# Offset: (0.300, 0.600, 0.000)
+obj_side_R = add_cube("side_panel_R", (0.300, 1.200, 0.020), (0, 0, 0), (0, 0, 0), mat_wood_dark)
+obj_side_R.location = Vector((0.300, 0.600, 0.000))
+
+# SECTION 3 – Create Top Rail
+# Size: 0.600 (X) x 0.020 (Y) x 0.020 (Z)
+# Rotate +Z to +X (World)
+# Anchor to world origin
+# Offset: (0.000, 1.190, 0.000)
+obj_top_rail = add_cube("top_rail", (0.600, 0.020, 0.020), (0, 0, 0), (0, 0, 0), mat_wood_light)
+# Align +Z to +X
+# Local Z (0,0,1) to World X (1,0,0)
+# Rotation around Y axis by -90 degrees (or 270)
+# Euler (0, -pi/2, 0) or (0, 1.5708, 0) depending on direction.
+# Let's use align_axis helper for clarity
+align_axis_to_vector(obj_top_rail, 'Z', Vector((1, 0, 0)))
+# Anchor to origin (already at 0,0,0)
+# Apply Offset
+obj_top_rail.location = Vector((0.000, 1.190, 0.000))
+
+# SECTION 4 – Create Bottom Rail
+# Size: 0.600 (X) x 0.020 (Y) x 0.020 (Z)
+# Rotate +Z to +X (World)
+# Anchor to world origin
+# Offset: (0.000, 0.010, 0.000)
+obj_bottom_rail = add_cube("bottom_rail", (0.600, 0.020, 0.020), (0, 0, 0), (0, 0, 0), mat_wood_light)
+align_axis_to_vector(obj_bottom_rail, 'Z', Vector((1, 0, 0)))
+# Anchor to origin
+# Apply Offset
+obj_bottom_rail.location = Vector((0.000, 0.010, 0.000))
+
+# SECTION 5 – Create Bottom Shelf
+# Size: 0.560 (X) x 0.020 (Y) x 0.250 (Z)
+# Rotate +Z to +Z (World)
+# Anchor to world origin
+# Offset: (0.000, 0.300, 0.000)
+obj_shelf_L1 = add_cube("shelf_L1", (0.560, 0.020, 0.250), (0, 0, 0), (0, 0, 0), mat_wood_light)
+# Align +Z to +Z (no change)
+# Anchor to origin
+# Apply Offset
+obj_shelf_L1.location = Vector((0.000, 0.300, 0.000))
+
+# SECTION 6 – Create Middle Shelf
+# Size: 0.560 (X) x 0.020 (Y) x 0.250 (Z)
+# Rotate +Z to +Z (World)
+# Anchor to world origin
+# Offset: (0.000, 0.600, 0.000)
+obj_shelf_L2 = add_cube("shelf_L2", (0.560, 0.020, 0.250), (0, 0, 0), (0, 0, 0), mat_wood_light)
+# Align +Z to +Z
+# Anchor to origin
+# Apply Offset
+obj_shelf_L2.location = Vector((0.000, 0.600, 0.000))
+
+# SECTION 7 – Create Top Shelf
+# Size: 0.560 (X) x 0.020 (Y) x 0.250 (Z)
+# Rotate +Z to +Z (World)
+# Anchor to world origin
+# Offset: (0.000, 0.900, 0.000)
+obj_shelf_L3 = add_cube("shelf_L3", (0.560, 0.020, 0.250), (0, 0, 0), (0, 0, 0), mat_wood_light)
+# Align +Z to +Z
+# Anchor to origin
+# Apply Offset
+obj_shelf_L3.location = Vector((0.000, 0.900, 0.000))
+
+print("Stage 1 complete.")
+print("Stage 2 complete.")
+print("Stage 3 complete.")
+print("Stage 4 complete.")
+print("Stage 5 complete.")
+print("Stage 6 complete.")
+print("Stage 7 complete.")
+print("All stages complete.")
+```

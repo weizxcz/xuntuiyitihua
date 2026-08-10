@@ -1,0 +1,44 @@
+{
+  "id": "bb05ccd2-a075-4433-b15e-f343c9ba4229",
+  "name": "Stapler",
+  "instruction": "Create a 3D model of a stapler. It should be compact and fit comfortably in one hand. The top part should be able to pivot open for refilling staples.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a stapler.",
+        "The stapler has a compact design.",
+        "The top part of the stapler is designed to pivot open."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The dimensions of the stapler are proportionate for hand-held use."
+      ],
+      "Texture and surface detail": [
+        "The stapler appears to be made of a durable material suitable for office use."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pivot mechanism is correctly positioned for easy access.",
+        "The stapler maintains stability when the top part is opened."
+      ],
+      "Object distance and contact": [
+        "There are no gaps between the top part and the base when closed.",
+        "The pivot point allows for smooth opening without obstruction."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the instruction of being compact and hand-held."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

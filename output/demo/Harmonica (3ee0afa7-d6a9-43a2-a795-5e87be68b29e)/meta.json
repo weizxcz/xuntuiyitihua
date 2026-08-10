@@ -1,0 +1,44 @@
+{
+  "id": "3ee0afa7-d6a9-43a2-a795-5e87be68b29e",
+  "name": "Harmonica",
+  "instruction": "Design a harmonica for me. It should have a rectangular shape with evenly spaced holes along one of the long edges. Include a mouthpiece and ensure the harmonica is compact and portable.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a harmonica.",
+        "The harmonica has a rectangular shape.",
+        "The holes are evenly spaced along one of the long edges."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the mouthpiece is proportionate to the body of the harmonica."
+      ],
+      "Texture and surface detail": [
+        "The harmonica could be made from metal and plastic for durability and sound quality."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The holes are correctly aligned along the long edge.",
+        "The mouthpiece is positioned at one end of the harmonica."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the holes and the body of the harmonica.",
+        "The mouthpiece connects seamlessly with the body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design meets the requirement of being compact and portable."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

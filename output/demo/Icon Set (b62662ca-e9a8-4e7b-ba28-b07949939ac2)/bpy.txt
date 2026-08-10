@@ -1,0 +1,286 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, radians
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to the first material slot of an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder centered at origin, aligned to Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    # size is a tuple (x, y, z)
+    half_size = [s / 2.0 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0)) # size=1 creates a 2x2x2 cube
+    obj = bpy.context.active_object
+    obj.scale = half_size
+    obj.name = name
+    return obj
+
+def add_cone(name, base_radius, height, segments=32):
+    """Add a cone centered at origin, aligned to Z (tip at +Z/2, base at -Z/2)."""
+    bpy.ops.mesh.primitive_cone_add(radius1=base_radius, radius2=0, depth=height, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """
+    Rotate object so its local axis aligns with target_vector.
+    axis_to_align: 'X', 'Y', or 'Z'
+    target_vector: Vector in world space
+    """
+    # Get current rotation as quaternion
+    rot = obj.rotation_euler.to_quaternion()
+    
+    # Define local axis vector
+    local_axis = Vector((1, 0, 0))
+    if axis_to_align == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis_to_align == 'Z':
+        local_axis = Vector((0, 0, 1))
+        
+    # Calculate rotation needed to align local_axis to target_vector
+    # We want to rotate the object such that local_axis becomes target_vector
+    # The rotation quaternion is from local_axis to target_vector
+    rot_quat = local_axis.rotation_difference(target_vector)
+    
+    # Apply this rotation to the object's current rotation
+    new_rot = rot_quat * rot
+    obj.rotation_euler = new_rot.to_euler()
+
+def get_face_center(obj, face_type='top'):
+    """
+    Get the world location of a specific face center.
+    Assumes object is axis-aligned or has been oriented.
+    'top' usually means max Z face.
+    'bottom' usually means min Z face.
+    """
+    # Transform vertices to world space
+    world_verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    
+    if face_type == 'top':
+        # Find vertex with max Z
+        max_z = max(world_verts, key=lambda v: v.z)
+        return max_z
+    elif face_type == 'bottom':
+        # Find vertex with min Z
+        min_z = min(world_verts, key=lambda v: v.z)
+        return min_z
+    else:
+        # Default to center
+        return obj.matrix_world.to_translation()
+
+def align_bottom_to_top(obj_target, obj_source):
+    """
+    Align obj_source.bottom_face to obj_target.top_face.
+    Assumes both are roughly Z-aligned.
+    """
+    target_top = get_face_center(obj_target, 'top')
+    source_bottom = get_face_center(obj_source, 'bottom')
+    
+    # Calculate offset needed to move source bottom to target top
+    offset = target_top - source_bottom
+    
+    # Apply offset to source location
+    obj_source.location += offset
+
+def add_text_object(name, text, size=1.0):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.scale = (size, size, size)
+    return obj
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Clear orphan data blocks if necessary (optional but clean)
+    bpy.ops.outliner.orphans_purge()
+
+    scene = bpy.context.scene
+    scene.unit_settings.scale_length = 1.0
+    scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_calc_body = make_material("calc_body", (0.784, 0.784, 0.784, 1))
+    mat_calc_screen = make_material("calc_screen", (0.196, 0.235, 0.275, 1))
+    mat_notepad_cover = make_material("notepad_cover", (0.118, 0.118, 0.118, 1))
+    mat_notepad_paper = make_material("notepad_paper", (0.941, 0.941, 0.941, 1))
+    mat_pen_barrel = make_material("pen_barrel", (1.0, 0.843, 0.0, 1))
+    mat_pen_cap = make_material("pen_cap", (1.0, 0.843, 0.0, 1))
+    mat_pen_nib = make_material("pen_nib", (0.753, 0.753, 0.753, 1))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create calculator body ---
+    # Create primitive cuboid with size 0.120×0.060×0.015 m and name it calculator_body.
+    calculator_body = add_cube("calculator_body", (0.120, 0.060, 0.015))
+    apply_material(calculator_body, mat_calc_body)
+    
+    # Rotate calculator_body so its +Z axis aligns +Z (world).
+    # Default cube is Z-aligned, so no rotation needed if default orientation is assumed.
+    # However, to be explicit:
+    align_axis_to_vector(calculator_body, 'Z', Vector((0, 0, 1)))
+    
+    # Move calculator_body to pos=(0.15, 0, 0).
+    calculator_body.location = (0.15, 0, 0)
+
+    # --- SECTION 2 – Create calculator screen ---
+    # Create primitive cuboid with size 0.080×0.030×0.002 m and name it calculator_screen.
+    calculator_screen = add_cube("calculator_screen", (0.080, 0.030, 0.002))
+    apply_material(calculator_screen, mat_calc_screen)
+    
+    # Rotate calculator_screen so its +Z axis aligns +Z (world).
+    align_axis_to_vector(calculator_screen, 'Z', Vector((0, 0, 1)))
+    
+    # Align calculator_screen.bottom_face to calculator_body.top_face.
+    align_bottom_to_top(calculator_body, calculator_screen)
+    
+    # Then move by offset(0, 0, 0.0075).
+    calculator_screen.location += Vector((0, 0, 0.0075))
+
+    # --- SECTION 3 – Create notepad cover ---
+    # Create primitive cuboid with size 0.100×0.140×0.005 m and name it notepad_cover.
+    notepad_cover = add_cube("notepad_cover", (0.100, 0.140, 0.005))
+    apply_material(notepad_cover, mat_notepad_cover)
+    
+    # Rotate notepad_cover so its +Z axis aligns +Z (world).
+    align_axis_to_vector(notepad_cover, 'Z', Vector((0, 0, 1)))
+    
+    # Move notepad_cover to pos=(-0.15, 0, 0).
+    notepad_cover.location = (-0.15, 0, 0)
+
+    # --- SECTION 4 – Create notepad paper ---
+    # Create primitive cuboid with size 0.095×0.135×0.004 m and name it notepad_paper.
+    notepad_paper = add_cube("notepad_paper", (0.095, 0.135, 0.004))
+    apply_material(notepad_paper, mat_notepad_paper)
+    
+    # Rotate notepad_paper so its +Z axis aligns +Z (world).
+    align_axis_to_vector(notepad_paper, 'Z', Vector((0, 0, 1)))
+    
+    # Align notepad_paper.bottom_face to notepad_cover.top_face.
+    align_bottom_to_top(notepad_cover, notepad_paper)
+    
+    # Then move by offset(0, 0, 0.0005).
+    notepad_paper.location += Vector((0, 0, 0.0005))
+
+    # --- SECTION 5 – Create pen barrel ---
+    # Create primitive cylinder with diameter 0.010 m and height 0.100 m and name it pen_barrel.
+    # Radius = 0.005
+    pen_barrel = add_cylinder("pen_barrel", 0.005, 0.100)
+    apply_material(pen_barrel, mat_pen_barrel)
+    
+    # Rotate pen_barrel so its +Z axis aligns +Z (world).
+    # Default cylinder is Z-aligned.
+    align_axis_to_vector(pen_barrel, 'Z', Vector((0, 0, 1)))
+    
+    # Move pen_barrel to pos=(0, 0.20, 0).
+    pen_barrel.location = (0, 0.20, 0)
+
+    # --- SECTION 6 – Create pen cap ---
+    # Create primitive cylinder with diameter 0.010 m and height 0.020 m and name it pen_cap.
+    pen_cap = add_cylinder("pen_cap", 0.005, 0.020)
+    apply_material(pen_cap, mat_pen_cap)
+    
+    # Rotate pen_cap so its +Z axis aligns +Z (world).
+    align_axis_to_vector(pen_cap, 'Z', Vector((0, 0, 1)))
+    
+    # Align pen_cap.bottom_face to pen_barrel.top_face.
+    align_bottom_to_top(pen_barrel, pen_cap)
+    
+    # Then move by offset(0, 0, 0.010).
+    pen_cap.location += Vector((0, 0, 0.010))
+
+    # --- SECTION 7 – Create pen nib ---
+    # Create primitive cone with base diameter 0.004 m and height 0.010 m and name it pen_nib.
+    # Base radius = 0.002
+    pen_nib = add_cone("pen_nib", 0.002, 0.010)
+    apply_material(pen_nib, mat_pen_nib)
+    
+    # Rotate pen_nib so its +Z axis aligns -Z (world).
+    # Default cone tip is at +Z/2, base at -Z/2.
+    # We want the local +Z axis to point to world -Z.
+    # This is a 180 degree rotation around X or Y.
+    align_axis_to_vector(pen_nib, 'Z', Vector((0, 0, -1)))
+    
+    # Align pen_nib.bottom_face to pen_barrel.bottom_face.
+    # Note: After rotation, the "bottom" face of the cone (geometrically the base) 
+    # might be at the tip or base depending on how add_cone creates it.
+    # Blender's add_cone creates radius1 at bottom (-Z) and radius2=0 at top (+Z).
+    # So "bottom_face" is the base.
+    # However, we rotated the object. Let's rely on the helper which finds min/max Z vertices.
+    # Since we aligned local Z to world -Z, the local +Z (tip) is now at world -Z.
+    # The local -Z (base) is now at world +Z.
+    # So "bottom_face" (min Z) is now the tip. "top_face" (max Z) is now the base.
+    # The instruction says "Align pen_nib.bottom_face to pen_barrel.bottom_face".
+    # If we interpret "bottom_face" as the face with the minimum Z coordinate in world space:
+    # pen_barrel.bottom_face is at min Z of barrel.
+    # pen_nib.bottom_face (min Z) is the tip.
+    # So we align the tip of the nib to the bottom of the barrel.
+    
+    # Let's re-evaluate "bottom_face" definition in helper.
+    # get_face_center(obj, 'bottom') returns min Z vertex.
+    # After align_axis_to_vector(pen_nib, 'Z', Vector((0, 0, -1))):
+    # The local Z axis points to world -Z.
+    # The local -Z axis points to world +Z.
+    # The cone geometry: Base is at local -Z, Tip is at local +Z.
+    # So Base is at world +Z, Tip is at world -Z.
+    # Min Z vertex is the Tip.
+    # So align_bottom_to_top(pen_barrel, pen_nib) will align the Tip of the nib to the Top of the barrel.
+    # This is likely NOT what is intended. Usually, you align the base of the nib to the bottom of the barrel.
+    
+    # Let's adjust the interpretation.
+    # If the instruction implies "the face that was originally the bottom of the cone object before rotation",
+    # that would be the base.
+    # But the helper uses world coordinates.
+    # Let's manually handle this specific case to ensure correct placement.
+    
+    # Get world location of pen_barrel bottom face (min Z)
+    barrel_bottom_z = get_face_center(pen_barrel, 'bottom').z
+    barrel_bottom_loc = get_face_center(pen_barrel, 'bottom')
+    
+    # Get world location of pen_nib base face.
+    # Since we rotated the nib, we need to find which face is the base.
+    # The base is the flat circular face.
+    # In the rotated nib, the base is at the world +Z end (max Z).
+    nib_base_loc = get_face_center(pen_nib, 'top') # 'top' returns max Z
+    
+    # We want to align nib_base_loc to barrel_bottom_loc.
+    # Offset = barrel_bottom_loc - nib_base_loc
+    offset = barrel_bottom_loc - nib_base_loc
+    pen_nib.location += offset
+    
+    # Then move by offset(0, 0, -0.005).
+    pen_nib.location += Vector((0, 0, -0.005))
+
+if __name__ == "__main__":
+    main()
+```

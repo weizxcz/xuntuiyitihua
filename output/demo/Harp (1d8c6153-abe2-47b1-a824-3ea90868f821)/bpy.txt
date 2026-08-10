@@ -1,0 +1,288 @@
+```python
+import bpy
+import math
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object's first material slot."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, end_fill_type='TRIFAN')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_cube(name, size_x, size_y, size_z):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=1) # Size 1, then scale
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size_x/2, size_y/2, size_z/2)
+    obj.location = (0, 0, 0)
+    return obj
+
+def align_axis_to_vector(obj, target_vector):
+    """Rotate object so its local +Z aligns with target_vector."""
+    # Current Z is (0,0,1)
+    current_z = Vector((0, 0, 1))
+    if current_z.normalized().dot(target_vector.normalized()) > 0.999:
+        return # Already aligned
+    
+    # Calculate rotation matrix to align Z to target
+    # We need to handle the roll (rotation around Z) arbitrarily, usually keeping X or Y as close as possible to world X/Y
+    # Simple approach: Align Z, then align X to world X projected onto plane perpendicular to Z
+    
+    rot_mat = current_z.rotation_difference(target_vector.normalized()).to_matrix()
+    # Construct full rotation matrix
+    rot_quat = current_z.rotation_difference(target_vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_world_center(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_index):
+    """Get world location of a specific face center."""
+    # Note: This assumes the object is not rotated/scaled in a complex way relative to its local space for simple primitives
+    # For robustness, we transform the local face center to world space
+    if face_index < len(obj.data.polygons):
+        poly = obj.data.polygons[face_index]
+        # Get local center of the face
+        local_center = Vector((0,0,0))
+        for vi in poly.vertices:
+            local_center += obj.data.vertices[vi].co
+        local_center /= len(poly.vertices)
+        
+        # Transform to world
+        return obj.matrix_world @ local_center
+    return get_world_center(obj)
+
+def get_face_normal(obj, face_index):
+    """Get world normal of a face."""
+    if face_index < len(obj.data.polygons):
+        poly = obj.data.polygons[face_index]
+        # Local normal
+        local_normal = poly.normal
+        # Transform to world
+        world_normal = obj.matrix_world.to_3x3() @ local_normal
+        return world_normal.normalized()
+    return Vector((0,0,1))
+
+def anchor_to_object_center(target_obj, source_obj):
+    """Move source_obj so its center matches target_obj's center."""
+    target_center = get_world_center(target_obj)
+    source_obj.location = target_center
+
+def anchor_to_face(target_obj, source_obj, face_index):
+    """Move source_obj so its center matches target_obj's face center."""
+    target_center = get_face_center(target_obj, face_index)
+    source_obj.location = target_center
+
+def offset_object(obj, dx, dy, dz):
+    """Apply offset in the object's local coordinate system."""
+    offset_vec = Vector((dx, dy, dz))
+    # Transform local offset to world space using object's rotation
+    world_offset = obj.matrix_world.to_3x3() @ offset_vec
+    obj.location += world_offset
+
+def polar_position(obj, angle_deg, radius):
+    """Position object in XY plane based on polar coordinates. 
+    Assumes object is at origin before this call."""
+    angle_rad = math.radians(angle_deg)
+    x = radius * math.cos(angle_rad)
+    y = radius * math.sin(angle_rad)
+    obj.location = (x, y, obj.location.z)
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- BLOCK 1: Materials ---
+
+mat_brass_polished = make_material("brass_polished", (0.9, 0.75, 0.2, 1.0))
+mat_maple_wood = make_material("maple_wood", (0.85, 0.75, 0.55, 1.0))
+mat_nylon_strings = make_material("nylon_strings", (0.95, 0.95, 0.95, 1.0))
+mat_steel_pedals = make_material("steel_pedals", (0.6, 0.6, 0.65, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Frame Group ---
+
+# 1.1 Pillar
+pillar = add_cube("pillar", 0.15, 1.80, 0.15)
+# Rotate so +Z aligns +Z (already aligned by default cube creation if we consider Z up, but let's be explicit)
+# Cube default is Z-up. Align +Z to +Z is identity.
+align_axis_to_vector(pillar, Vector((0, 0, 1)))
+# Anchor to world origin
+anchor_to_object_center(bpy.context.scene.objects["World"], pillar) # World object doesn't exist, use (0,0,0)
+pillar.location = (0, 0, 0)
+# Offset
+offset_object(pillar, 0, 0, 0.90)
+apply_material(pillar, mat_maple_wood)
+
+# 1.2 Soundboard
+soundboard = add_cube("soundboard", 0.60, 1.20, 0.05)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(soundboard, Vector((0, 1, 0)))
+# Anchor to world origin
+soundboard.location = (0, 0, 0)
+# Offset
+offset_object(soundboard, 0, 0.30, 0.60)
+apply_material(soundboard, mat_maple_wood)
+
+# 1.3 Neck
+neck = add_cube("neck", 0.15, 0.80, 0.15)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(neck, Vector((0, 1, 0)))
+# Anchor to world origin
+neck.location = (0, 0, 0)
+# Offset
+offset_object(neck, 0, 0.70, 1.50)
+apply_material(neck, mat_maple_wood)
+
+# 1.4 Base
+base = add_cube("base", 0.80, 0.10, 0.40)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(base, Vector((0, 0, 1)))
+# Anchor to world origin
+base.location = (0, 0, 0)
+# Offset
+offset_object(base, 0, 0, 0.05)
+apply_material(base, mat_maple_wood)
+
+# --- SECTION 2 – Create String Group (1000 Nylon Strings) ---
+
+# Create a single string mesh data block to reuse, or just create them all. 
+# Given 1000 objects, creating them individually is fine for this script.
+# Optimization: Use a single mesh object with instances? 
+# The prompt asks for "name it string_i", implying individual objects.
+
+for i in range(1, 1001):
+    string_name = f"string_{i}"
+    string_obj = add_cylinder(string_name, 0.001, 1.80, segments=8) # Low poly for performance
+    # Rotate so +Z aligns +Z (default)
+    align_axis_to_vector(string_obj, Vector((0, 0, 1)))
+    # Anchor to world origin
+    string_obj.location = (0, 0, 0)
+    
+    # Polar position
+    # dr = 0.001 * (i - 500.5)
+    dr = 0.001 * (i - 500.5)
+    polar_position(string_obj, 0, dr) # Angle 0 degrees
+    
+    # Offset
+    offset_object(string_obj, 0, 0, 0.90)
+    
+    apply_material(string_obj, mat_nylon_strings)
+
+# --- SECTION 3 – Create Peg Group (Tuning Pegs) ---
+
+# Helper to find face index for "pillar.top"
+# Pillar is a cube. Local Z+ is top.
+# In Blender cube, Z+ face is usually index 5 (if created with default orientation)
+# Let's verify or use a robust method.
+# Default cube faces: 0: -X, 1: +X, 2: -Y, 3: +Y, 4: -Z, 5: +Z
+pillar_top_face_index = 5
+
+# 3.1 Peg 1
+peg_1 = add_cylinder("peg_1", 0.02, 0.05, segments=16)
+# Rotate so +Z aligns +X
+align_axis_to_vector(peg_1, Vector((1, 0, 0)))
+# Anchor to pillar.top
+anchor_to_face(pillar, peg_1, pillar_top_face_index)
+# Offset
+offset_object(peg_1, 0.08, 0, 0.85)
+apply_material(peg_1, mat_brass_polished)
+
+# 3.2 Peg 2
+peg_2 = add_cylinder("peg_2", 0.02, 0.05, segments=16)
+align_axis_to_vector(peg_2, Vector((1, 0, 0)))
+anchor_to_face(pillar, peg_2, pillar_top_face_index)
+offset_object(peg_2, 0.08, 0, 0.80)
+apply_material(peg_2, mat_brass_polished)
+
+# 3.3 Peg 3
+peg_3 = add_cylinder("peg_3", 0.02, 0.05, segments=16)
+align_axis_to_vector(peg_3, Vector((1, 0, 0)))
+anchor_to_face(pillar, peg_3, pillar_top_face_index)
+offset_object(peg_3, 0.08, 0, 0.75)
+apply_material(peg_3, mat_brass_polished)
+
+# 3.4 Peg 4
+peg_4 = add_cylinder("peg_4", 0.02, 0.05, segments=16)
+align_axis_to_vector(peg_4, Vector((1, 0, 0)))
+anchor_to_face(pillar, peg_4, pillar_top_face_index)
+offset_object(peg_4, 0.08, 0, 0.70)
+apply_material(peg_4, mat_brass_polished)
+
+# 3.5 Peg 5
+peg_5 = add_cylinder("peg_5", 0.02, 0.05, segments=16)
+align_axis_to_vector(peg_5, Vector((1, 0, 0)))
+anchor_to_face(pillar, peg_5, pillar_top_face_index)
+offset_object(peg_5, 0.08, 0, 0.65)
+apply_material(peg_5, mat_brass_polished)
+
+# --- SECTION 4 – Create Pedal Group ---
+
+# Helper to find face index for "base.front"
+# Base is a cube. "Front" usually implies +Y or -Y depending on convention.
+# In Blender, +Y is often "front" in camera view if Z is up.
+# Let's assume +Y face is index 3.
+base_front_face_index = 3
+
+# 4.1 Pedal 1
+pedal_1 = add_cube("pedal_1", 0.10, 0.05, 0.02)
+# Rotate so +Z aligns +Z (default)
+align_axis_to_vector(pedal_1, Vector((0, 0, 1)))
+# Anchor to base.front
+anchor_to_face(base, pedal_1, base_front_face_index)
+# Offset
+offset_object(pedal_1, 0.2, 0, 0.01)
+apply_material(pedal_1, mat_steel_pedals)
+
+# 4.2 Pedal 2
+pedal_2 = add_cube("pedal_2", 0.10, 0.05, 0.02)
+align_axis_to_vector(pedal_2, Vector((0, 0, 1)))
+anchor_to_face(base, pedal_2, base_front_face_index)
+offset_object(pedal_2, 0.0, 0, 0.01)
+apply_material(pedal_2, mat_steel_pedals)
+
+# 4.3 Pedal 3
+pedal_3 = add_cube("pedal_3", 0.10, 0.05, 0.02)
+align_axis_to_vector(pedal_3, Vector((0, 0, 1)))
+anchor_to_face(base, pedal_3, base_front_face_index)
+offset_object(pedal_3, -0.2, 0, 0.01)
+apply_material(pedal_3, mat_steel_pedals)
+
+print("All stages complete.")
+```

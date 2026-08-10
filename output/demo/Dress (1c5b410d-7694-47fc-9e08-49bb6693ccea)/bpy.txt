@@ -1,0 +1,360 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name="Cube"):
+    # size is (x, y, z)
+    x, y, z = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.scale = (x/2, y/2, z/2)
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, resx=32, resy=16, name="UVSphere"):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=resx, ring_count=resy, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(top_radius, bottom_radius, depth, segments=32, name="Cone"):
+    bpy.ops.mesh.primitive_cone_add(vertices=segments, radius1=bottom_radius, radius2=top_radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis (0=X, 1=Y, 2=Z) to a world vector."""
+    if axis == 0: local_axis = obj.matrix_world.to_3x3().col[0]
+    elif axis == 1: local_axis = obj.matrix_world.to_3x3().col[1]
+    else: local_axis = obj.matrix_world.to_3x3().col[2]
+    
+    # Calculate rotation to align local_axis to target vector
+    rot_quat = local_axis.rotation_difference(vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='center'):
+    """Get world location of a specific face center."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.transform(bm, matrix=obj.matrix_world, verts=bm.verts)
+    
+    center_loc = Vector((0,0,0))
+    count = 0
+    
+    if face_type == 'center':
+        # Use object center
+        return obj.location.copy()
+    elif face_type == 'top_face':
+        # Find max Z face
+        max_z = -float('inf')
+        best_face = None
+        for f in bm.faces:
+            avg_z = sum(v.co.z for v in f.verts) / len(f.verts)
+            if avg_z > max_z:
+                max_z = avg_z
+                best_face = f
+        if best_face:
+            center_loc = sum(v.co for v in best_face.verts) / len(best_face.verts)
+    elif face_type == 'bottom_face':
+        min_z = float('inf')
+        best_face = None
+        for f in bm.faces:
+            avg_z = sum(v.co for v in f.verts) / len(f.verts)
+            if avg_z < min_z:
+                min_z = avg_z
+                best_face = f
+        if best_face:
+            center_loc = sum(v.co for v in best_face.verts) / len(best_face.verts)
+    elif face_type == 'back_face':
+        # Assuming +Y is front, -Y is back. Find min Y face.
+        min_y = float('inf')
+        best_face = None
+        for f in bm.faces:
+            avg_y = sum(v.co.y for v in f.verts) / len(f.verts)
+            if avg_y < min_y:
+                min_y = avg_y
+                best_face = f
+        if best_face:
+            center_loc = sum(v.co for v in best_face.verts) / len(best_face.verts)
+    elif face_type == 'front_face':
+        max_y = -float('inf')
+        best_face = None
+        for f in bm.faces:
+            avg_y = sum(v.co.y for v in f.verts) / len(f.verts)
+            if avg_y > max_y:
+                max_y = avg_y
+                best_face = f
+        if best_face:
+            center_loc = sum(v.co for v in best_face.verts) / len(best_face.verts)
+            
+    bm.free()
+    return center_loc
+
+def boolean_subtract(cutter, target):
+    """Perform boolean subtract using modifier stack."""
+    # Ensure target is active for modifier addition if needed, but we add to target
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_obj, target):
+    """Perform boolean union using modifier stack."""
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_to_face(obj, ref_obj, ref_face_type, obj_face_type='bottom_face'):
+    """Align obj's face to ref_obj's face."""
+    ref_loc = get_face_center(ref_obj, ref_face_type)
+    obj_loc = get_face_center(obj, obj_face_type)
+    
+    # Move object so its face is at reference face location
+    # Note: This assumes simple translation along the normal. 
+    # For robustness, we just move the center.
+    offset = ref_loc - obj_loc
+    obj.location += offset
+
+def align_center_to_center(obj, ref_obj):
+    """Align object center to reference object center."""
+    obj.location = ref_obj.location.copy()
+
+def get_side_point(obj, angle_deg):
+    """Get a point on the side of a cylinder at a specific angle (degrees from +X)."""
+    # Cylinder is aligned to Z. Side points are in XY plane.
+    angle_rad = math.radians(angle_deg)
+    # Get radius from object data
+    r = obj.data.radius if hasattr(obj.data, 'radius') else 0.18 # Fallback
+    # For non-cylinders, this might need adjustment, but here we assume cylindrical bodies
+    # Actually, let's read the scale or radius from the mesh if possible.
+    # Since we created them, we know the radius.
+    # bodice_shell radius 0.18.
+    
+    x = r * math.cos(angle_rad)
+    y = r * math.sin(angle_rad)
+    # Z is the center Z of the object
+    z = obj.location.z
+    return Vector((x, y, z))
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_fabric_black = make_material("fabric_black", (0.05, 0.05, 0.05, 1.0))
+mat_metal_silver = make_material("metal_silver", (0.75, 0.75, 0.8, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create Bodice Group
+bodice_shell = add_cylinder(radius=0.18, depth=0.40, name="bodice_shell")
+# Rotate so +Z aligns +Z (already default)
+align_axis_to_vector(bodice_shell, 2, Vector((0, 0, 1)))
+
+# Create waist_seam
+waist_seam = add_cylinder(radius=0.18, depth=0.02, name="waist_seam")
+align_axis_to_vector(waist_seam, 2, Vector((0, 0, 1)))
+
+# Align waist_seam.center to bodice_shell.center
+align_center_to_center(waist_seam, bodice_shell)
+
+# Align waist_seam.top_face to bodice_shell.bottom_face
+# bodice_shell bottom is at z - 0.20. waist_seam top is at z + 0.01.
+# We want waist_seam top to touch bodice_shell bottom.
+# Current: waist_seam center at bodice_shell center.
+# Target: waist_seam top face at bodice_shell bottom face.
+# Distance to move: (bodice_shell_bottom - waist_seam_top_current)
+# bodice_shell_bottom = bodice_shell.z - 0.20
+# waist_seam_top_current = waist_seam.z + 0.01
+# offset_z = (bodice_shell.z - 0.20) - (waist_seam.z + 0.01)
+# Since centers are aligned, bodice_shell.z == waist_seam.z
+# offset_z = -0.21
+waist_seam.location.z -= 0.21
+
+# Boolean union waist_seam into bodice_shell
+boolean_union(waist_seam, bodice_shell)
+
+# SECTION 2 – Create Skirt Group
+skirt_shell = add_cone(top_radius=0.18, bottom_radius=0.36, depth=0.40, name="skirt_shell")
+align_axis_to_vector(skirt_shell, 2, Vector((0, 0, 1)))
+
+# Align skirt_shell.center to waist_seam.center
+# Note: waist_seam was discarded in union, but bodice_shell now contains it.
+# We use bodice_shell as the reference for the waist level.
+# The "waist_seam" geometry is now part of bodice_shell.
+# The bottom of bodice_shell is at z = -0.20 (relative to its center).
+# We want skirt_shell top to align with bodice_shell bottom.
+# skirt_shell top face is at z + 0.20 (since depth is 0.40, half is 0.20).
+# bodice_shell bottom face is at z - 0.20.
+# Align centers first
+align_center_to_center(skirt_shell, bodice_shell)
+# Then align top face of skirt to bottom face of bodice
+# skirt_top = skirt.z + 0.20
+# bodice_bottom = bodice.z - 0.20
+# offset = (bodice.z - 0.20) - (skirt.z + 0.20) = -0.40
+skirt_shell.location.z -= 0.40
+
+# Boolean union skirt_shell into bodice_shell
+boolean_union(skirt_shell, bodice_shell)
+
+# SECTION 3 – Create Sleeve Group
+# Sleeve L
+sleeve_L = add_uvsphere(radius=0.10, name="sleeve_L")
+align_axis_to_vector(sleeve_L, 2, Vector((0, 0, 1)))
+
+# Create cutter for sleeve_L
+sleeve_L_cut = add_cube(size=(0.20, 0.20, 0.001), name="sleeve_L_cut")
+align_axis_to_vector(sleeve_L_cut, 2, Vector((0, 0, 1)))
+# Position cutter to slice sphere in half
+# Sphere center at (0,0,0). We want to cut off the bottom half (or top).
+# To get a hemisphere with curved face pointing +Z, we need to cut off the bottom.
+# So cutter should be at z=0, slicing through equator.
+sleeve_L_cut.location.z = 0
+
+# Boolean subtract
+boolean_subtract(sleeve_L_cut, sleeve_L)
+
+# Rotate sleeve_L so curved face points +Z
+# The hemisphere created by cutting z=0 plane has flat face at z=0 and curved part at z>0.
+# This is already pointing +Z.
+# However, the instruction says "Rotate sleeve_L so its curved face points +Z".
+# If the cut removed z<0, the remaining is z>=0. Curved face is at top.
+# So no rotation needed if we cut bottom.
+# Let's verify: add_uvsphere creates sphere. Cutter at z=0 removes bottom.
+# Result: Hemisphere sitting on z=0 plane, dome up.
+# This matches "curved face points +Z".
+
+# Align sleeve_L.center to bodice_shell.side_at(135°)
+# bodice_shell radius is 0.18.
+# 135 degrees is in second quadrant.
+# x = 0.18 * cos(135) = -0.1272
+# y = 0.18 * sin(135) = 0.1272
+# z = bodice_shell.z
+side_L = get_side_point(bodice_shell, 135)
+sleeve_L.location.x = side_L.x
+sleeve_L.location.y = side_L.y
+sleeve_L.location.z = side_L.z
+
+# Align sleeve_L.bottom_face to bodice_shell.top_face
+# sleeve_L is a hemisphere. Its "bottom" is the flat face at z=0 relative to its local origin?
+# No, the object origin is at the center of the original sphere.
+# After cutting, the mesh is the top half. The lowest vertex is at z=0 (local).
+# So sleeve_L.bottom_face is at local z=0.
+# bodice_shell.top_face is at bodice_shell.z + 0.20.
+# We want sleeve_L.local_z=0 to be at bodice_shell.z + 0.20.
+# Current sleeve_L.z is set to side_L.z (which is bodice_shell.z).
+# So we need to move sleeve_L up by 0.20.
+sleeve_L.location.z += 0.20
+
+# Sleeve R
+sleeve_R = add_uvsphere(radius=0.10, name="sleeve_R")
+align_axis_to_vector(sleeve_R, 2, Vector((0, 0, 1)))
+
+sleeve_R_cut = add_cube(size=(0.20, 0.20, 0.001), name="sleeve_R_cut")
+align_axis_to_vector(sleeve_R_cut, 2, Vector((0, 0, 1)))
+sleeve_R_cut.location.z = 0
+
+boolean_subtract(sleeve_R_cut, sleeve_R)
+
+# Align sleeve_R.center to bodice_shell.side_at(45°)
+side_R = get_side_point(bodice_shell, 45)
+sleeve_R.location.x = side_R.x
+sleeve_R.location.y = side_R.y
+sleeve_R.location.z = side_R.z
+
+# Align sleeve_R.bottom_face to bodice_shell.top_face
+sleeve_R.location.z += 0.20
+
+# Boolean union sleeves into bodice_shell
+boolean_union(sleeve_L, bodice_shell)
+boolean_union(sleeve_R, bodice_shell)
+
+# SECTION 4 – Create Zipper Group
+zipper_track = add_cube(size=(0.02, 0.30, 0.002), name="zipper_track")
+align_axis_to_vector(zipper_track, 2, Vector((0, 0, 1)))
+
+# Align zipper_track.center to bodice_shell.back_face.center
+# Back face is -Y. Center of back face is at (0, -0.18, bodice_shell.z)
+# zipper_track center is currently at (0,0,0) relative to its location.
+# We want zipper_track center to be at bodice_shell back face center.
+back_face_center = Vector((0, -0.18, bodice_shell.location.z))
+zipper_track.location = back_face_center
+
+# Align zipper_track.front_face to bodice_shell.back_face
+# zipper_track front face is +Y side.
+# zipper_track size Y is 0.30. Half is 0.15.
+# Front face is at local z=0.15 (if aligned to Y? No, aligned to Z).
+# Wait, zipper_track is a cuboid.
+# Size 0.02 (X) x 0.30 (Y) x 0.002 (Z).
+# Aligned +Z to +Z.
+# So Y axis is horizontal.
+# Front face is +Y face.
+# Center of front face is at (0, 0.15, 0) local.
+# We want this to touch bodice_shell back face.
+# bodice_shell back face is at Y = -0.18.
+# zipper_track center is at Y = -0.18.
+# zipper_track front face is at Y = -0.18 + 0.15 = -0.03.
+# This is inside the bodice.
+# We want zipper_track to be ON the back face.
+# So zipper_track should be positioned such that its front face is at Y = -0.18.
+# zipper_track center Y should be -0.18 - 0.15 = -0.33.
+zipper_track.location.y = -0.33
+
+# Create zipper_slider
+zipper_slider = add_cube(size=(0.01, 0.02, 0.005), name="zipper_slider")
+align_axis_to_vector(zipper_slider, 2, Vector((0, 0, 1)))
+
+# Align zipper_slider.center to zipper_track.top_face.center
+# zipper_track top face is +Z face.
+# zipper_track center Z is bodice_shell.z.
+# zipper_track half Z is 0.001.
+# Top face Z is bodice_shell.z + 0.001.
+# zipper_slider center should be at this Z.
+zipper_slider.location.z = bodice_shell.location.z + 0.001
+
+# Align zipper_slider.bottom_face to zipper_track.top_face
+# zipper_slider bottom face is -Z face.
+# zipper_slider half Z is 0.0025.
+# Bottom face is at local Z -0.0025.
+# We want this to touch zipper_track top face (Z = bodice_shell.z + 0.001).
+# So zipper_slider center Z should be (bodice_shell.z + 0.001) + 0.0025 = bodice_shell.z + 0.0035.
+zipper_slider.location.z = bodice_shell.location.z + 0.0035
+
+# Align X/Y of slider to track center
+zipper_slider.location.x = zipper_track.location.x
+zipper_slider.location.y = zipper_track.location.y
+
+# Boolean union zipper_track into bodice_shell
+boolean_union(zipper_track, bodice_shell)
+
+# Boolean union zipper_slider into bodice_shell
+boolean_union(zipper_slider, bodice_shell)

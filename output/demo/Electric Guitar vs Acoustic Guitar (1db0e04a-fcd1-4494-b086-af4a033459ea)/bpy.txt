@@ -1,0 +1,297 @@
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_path_sweep(name, length, radius=0.001, location=(0,0,0), rotation_euler=(0,0,0)):
+    """Creates a thin cylinder to represent a string"""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=length, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def get_face_normal(obj, face_type='center'):
+    """
+    Returns the world-space location of the center of the +Z face of an object.
+    Assumes object is axis-aligned for simplicity in this specific script context,
+    but uses matrix transformation for robustness.
+    """
+    # Local center of +Z face (assuming default cube/cylinder orientation where +Z is up/depth)
+    # For a cube of size S, +Z face center is at (0, 0, S/2)
+    # For a cylinder of depth D, +Z face center is at (0, 0, D/2)
+    # We need to transform this local point by the object's world matrix.
+    
+    # Determine half-size/depth based on type
+    # Note: This helper assumes standard primitives created by our helpers.
+    # A more robust way is to use mesh data, but for these simple aligned objects:
+    
+    loc = obj.matrix_world.copy()
+    
+    # Get dimensions
+    if obj.type == 'MESH':
+        # Approximate bounding box for +Z face
+        # We assume the object's local Z axis is the one we care about.
+        # The +Z face is at local Z = max(Z)
+        min_z = min(v.co.z for v in obj.data.vertices)
+        max_z = max(v.co.z for v in obj.data.vertices)
+        center_z_local = max_z
+        
+        # Center of the face in local X/Y
+        min_x = min(v.co.x for v in obj.data.vertices if abs(v.co.z - max_z) < 0.001)
+        max_x = max(v.co.x for v in obj.data.vertices if abs(v.co.z - max_z) < 0.001)
+        min_y = min(v.co.y for v in obj.data.vertices if abs(v.co.z - max_z) < 0.001)
+        max_y = max(v.co.y for v in obj.data.vertices if abs(v.co.z - max_z) < 0.001)
+        
+        local_center = Vector((min_x + max_x)/2, (min_y + max_y)/2, center_z_local)
+        return loc @ local_center
+    return obj.location
+
+def align_to_face(obj, target_obj, target_face_type='center'):
+    """
+    Aligns the +Z face of 'obj' to the +Z face of 'target_obj'.
+    This sets the location of 'obj' such that its +Z face center coincides with target's +Z face center.
+    """
+    target_face_loc = get_face_normal(target_obj, target_face_type)
+    
+    # We need to place 'obj' so that its +Z face is at target_face_loc.
+    # obj.matrix_world @ local_face_center = target_face_loc
+    # local_face_center is (0,0, max_z_local)
+    
+    # Get obj's local max Z
+    max_z_local = max(v.co.z for v in obj.data.vertices)
+    
+    # Calculate required world location for obj's origin
+    # world_loc = target_face_loc - (obj.matrix_world.to_quaternion() @ Vector(0,0,max_z_local))
+    
+    # Since we are aligning axes first (rotation is already set to align +Z to +Z),
+    # we can simplify.
+    # If obj is rotated such that its local Z is world Z:
+    # world_loc = target_face_loc - Vector(0,0,max_z_local)
+    
+    # However, to be generic with rotation:
+    rot = obj.matrix_world.to_quaternion()
+    local_offset = Vector(0, 0, max_z_local)
+    world_offset = rot @ local_offset
+    
+    obj.location = target_face_loc - world_offset
+
+def connect_faces(obj, target_obj):
+    """
+    Connects the +Z face of 'obj' to the +Z face of 'target_obj'.
+    Similar to align_to_face but ensures they touch or are very close.
+    Usually implies placing obj's +Z face at target's +Z face.
+    """
+    align_to_face(obj, target_obj, 'center')
+
+def apply_material(obj, mat_name):
+    if obj.data.materials:
+        obj.data.materials[0] = bpy.data.materials[mat_name]
+    else:
+        obj.data.materials.append(bpy.data.materials[mat_name])
+
+# --- Block 0: Scene Reset & Units ---
+
+# Clear existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_acoustic_wood = make_material("acoustic_wood", (0.65, 0.45, 0.25, 1.0))
+mat_electric_body_paint = make_material("electric_body_paint", (0.1, 0.1, 0.9, 1.0))
+mat_fretboard_wood = make_material("fretboard_wood", (0.15, 0.08, 0.05, 1.0))
+mat_metal_strings = make_material("metal_strings", (0.8, 0.8, 0.8, 1.0))
+mat_metal_hardware = make_material("metal_hardware", (0.7, 0.7, 0.7, 1.0))
+mat_pearl_inlay = make_material("pearl_inlay", (0.95, 0.95, 0.9, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Electric Guitar Body ---
+electric_body = add_cube("electric_body", (0.5, 0.15, 0.05), (-0.2, 0, 0), (0, 0, 0))
+apply_material(electric_body, "electric_body_paint")
+
+# --- SECTION 2 – Create Electric Neck Assembly ---
+electric_neck = add_cube("electric_neck", (0.05, 0.4, 0.03), (0, 0, 0), (0, 0, 0))
+apply_material(electric_neck, "fretboard_wood")
+
+# Anchor electric_neck to electric_body.+Z_face
+# electric_body +Z face is at Z = 0.025 (half of 0.05)
+# electric_neck +Z face is at Z = 0.015 (half of 0.03)
+# Align faces: electric_neck center Z should be electric_body center Z + 0.025 - 0.015
+# But we use helper
+align_to_face(electric_neck, electric_body, 'center')
+
+# Offset (0, 0.25, 0)
+electric_neck.location += Vector((0, 0.25, 0))
+
+electric_fretboard = add_cube("electric_fretboard", (0.04, 0.35, 0.005), (0, 0, 0), (0, 0, 0))
+apply_material(electric_fretboard, "fretboard_wood")
+
+# Align electric_fretboard.+Z_face to electric_neck.+Z_face
+align_to_face(electric_fretboard, electric_neck, 'center')
+
+# Offset (0, 0, 0.0125)
+electric_fretboard.location += Vector((0, 0, 0.0125))
+
+electric_headstock = add_cube("electric_headstock", (0.06, 0.1, 0.02), (0, 0, 0), (0, 0, 0))
+apply_material(electric_headstock, "fretboard_wood")
+
+# Align electric_headstock.+Z_face to electric_neck.+Z_face
+align_to_face(electric_headstock, electric_neck, 'center')
+
+# Offset (0, 0.4, 0)
+electric_headstock.location += Vector((0, 0.4, 0))
+
+# --- SECTION 3 – Create Electric Hardware ---
+
+def create_pickup(name, offset_x):
+    obj = add_cube(name, (0.02, 0.01, 0.005), (0, 0, 0), (0, 0, 0))
+    apply_material(obj, "metal_hardware")
+    align_to_face(obj, electric_body, 'center')
+    obj.location += Vector((offset_x, 0, 0.025))
+    return obj
+
+electric_pickup_1 = create_pickup("electric_pickup_1", -0.1)
+electric_pickup_2 = create_pickup("electric_pickup_2", 0.1)
+
+electric_bridge = add_cube("electric_bridge", (0.05, 0.02, 0.01), (0, 0, 0), (0, 0, 0))
+apply_material(electric_bridge, "metal_hardware")
+align_to_face(electric_bridge, electric_body, 'center')
+electric_bridge.location += Vector((0, -0.05, 0.025))
+
+def create_tuning_peg(name, offset_x, offset_y):
+    obj = add_cube(name, (0.01, 0.01, 0.01), (0, 0, 0), (0, 0, 0))
+    apply_material(obj, "metal_hardware")
+    align_to_face(obj, electric_headstock, 'center')
+    obj.location += Vector((offset_x, offset_y, 0.01))
+    return obj
+
+electric_tuning_peg_1 = create_tuning_peg("electric_tuning_peg_1", -0.02, 0.05)
+electric_tuning_peg_2 = create_tuning_peg("electric_tuning_peg_2", 0.02, 0.05)
+electric_tuning_peg_3 = create_tuning_peg("electric_tuning_peg_3", -0.02, 0.0)
+electric_tuning_peg_4 = create_tuning_peg("electric_tuning_peg_4", 0.02, 0.0)
+electric_tuning_peg_5 = create_tuning_peg("electric_tuning_peg_5", -0.02, -0.05)
+electric_tuning_peg_6 = create_tuning_peg("electric_tuning_peg_6", 0.02, -0.05)
+
+# --- SECTION 4 – Create Electric Strings ---
+
+def create_string(name, offset_x):
+    # Connect to electric_bridge.+Z_face
+    # Bridge +Z face is at Z = 0.005 (half of 0.01)
+    # String length 0.6. String is a cylinder along Z.
+    # We want the bottom of the string (Z=-0.3) or top?
+    # "Connect electric_string_1.+Z_face to electric_bridge.+Z_face"
+    # This implies the +Z face of the string touches the +Z face of the bridge.
+    # String +Z face is at local Z = 0.3.
+    # So string origin Z should be Bridge_Z_face - 0.3.
+    
+    obj = add_path_sweep(name, 0.6, radius=0.0005, location=(0,0,0), rotation_euler=(0,0,0))
+    apply_material(obj, "metal_strings")
+    
+    # Align +Z face of string to +Z face of bridge
+    align_to_face(obj, electric_bridge, 'center')
+    
+    # Offset
+    obj.location += Vector((offset_x, 0, 0))
+    return obj
+
+electric_string_1 = create_string("electric_string_1", -0.02)
+electric_string_2 = create_string("electric_string_2", -0.01)
+electric_string_3 = create_string("electric_string_3", 0)
+electric_string_4 = create_string("electric_string_4", 0.01)
+electric_string_5 = create_string("electric_string_5", 0.02)
+electric_string_6 = create_string("electric_string_6", 0.03)
+
+# --- SECTION 5 – Create Electric Inlays ---
+
+def create_inlay(name, offset_y):
+    obj = add_cube(name, (0.005, 0.005, 0.001), (0, 0, 0), (0, 0, 0))
+    apply_material(obj, "pearl_inlay")
+    align_to_face(obj, electric_fretboard, 'center')
+    obj.location += Vector((0, offset_y, 0.0025))
+    return obj
+
+electric_inlay_1 = create_inlay("electric_inlay_1", 0.1)
+electric_inlay_2 = create_inlay("electric_inlay_2", 0.2)
+electric_inlay_3 = create_inlay("electric_inlay_3", 0.3)
+
+# --- SECTION 6 – Create Acoustic Guitar Body ---
+acoustic_body = add_cube("acoustic_body", (0.5, 0.2, 0.1), (0.2, 0, 0), (0, 0, 0))
+apply_material(acoustic_body, "acoustic_wood")
+
+# --- SECTION 7 – Create Acoustic Neck Assembly ---
+acoustic_neck = add_cube("acoustic_neck", (0.05, 0.4, 0.03), (0, 0, 0), (0, 0, 0))
+apply_material(acoustic_neck, "fretboard_wood")
+
+align_to_face(acoustic_neck, acoustic_body, 'center')
+acoustic_neck.location += Vector((0, 0.25, 0))
+
+acoustic_fretboard = add_cube("acoustic_fretboard", (0.04, 0.35, 0.005), (0, 0, 0), (0, 0, 0))
+apply_material(acoustic_fretboard, "fretboard_wood")
+
+align_to_face(acoustic_fretboard, acoustic_neck, 'center')
+acoustic_fretboard.location += Vector((0, 0, 0.0125))
+
+acoustic_headstock = add_cube("acoustic_headstock", (0.06, 0.1, 0.02), (0, 0, 0), (0, 0, 0))
+apply_material(acoustic_headstock, "fretboard_wood")
+
+align_to_face(acoustic_headstock, acoustic_neck, 'center')
+acoustic_headstock.location += Vector((0, 0.4, 0))
+
+# --- SECTION 8 – Create Acoustic Hardware ---
+
+acoustic_bridge = add_cube("acoustic_bridge", (0.05, 0.02, 0.01), (0, 0, 0), (0, 0, 0))
+apply_material(acoustic_bridge, "metal_hardware")
+align_to_face(acoustic_bridge, acoustic_body, 'center')
+acoustic_bridge.location += Vector((0, -0.05, 0.05))
+
+acoustic_tuning_peg_1 = create_tuning_peg("acoustic_tuning_peg_1", -0.02, 0.05)
+acoustic_tuning_peg_2 = create_tuning_peg("acoustic_tuning_peg_2", 0.02, 0.05)
+acoustic_tuning_peg_3 = create_tuning_peg("acoustic_tuning_peg_3", -0.02, 0.0)
+acoustic_tuning_peg_4 = create_tuning_peg("acoustic_tuning_peg_4", 0.02, 0.0)
+acoustic_tuning_peg_5 = create_tuning_peg("acoustic_tuning_peg_5", -0.02, -0.05)
+acoustic_tuning_peg_6 = create_tuning_peg("acoustic_tuning_peg_6", 0.02, -0.05)
+
+# --- SECTION 9 – Create Acoustic Strings ---
+
+acoustic_string_1 = create_string("acoustic_string_1", -0.02)
+acoustic_string_2 = create_string("acoustic_string_2", -0.01)
+acoustic_string_3 = create_string("acoustic_string_3", 0)
+acoustic_string_4 = create_string("acoustic_string_4", 0.01)
+acoustic_string_5 = create_string("acoustic_string_5", 0.02)
+acoustic_string_6 = create_string("acoustic_string_6", 0.03)
+
+# --- SECTION 10 – Create Acoustic Inlays ---
+
+acoustic_inlay_1 = create_inlay("acoustic_inlay_1", 0.1)
+acoustic_inlay_2 = create_inlay("acoustic_inlay_2", 0.2)
+acoustic_inlay_3 = create_inlay("acoustic_inlay_3", 0.3)

@@ -1,0 +1,49 @@
+{
+  "id": "e561ea37-c5bd-488e-956e-e7c87693ad8c",
+  "name": "Wheeled Carry-On Bag",
+  "instruction": "Please create a 3D model of a wheeled carry-on bag. The bag should have a telescopic handle and a front pocket with a zipper. It needs to have two wheels at the bottom for easy maneuvering. The design should be compact and suitable for air travel.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a wheeled carry-on bag.",
+        "The bag has a rectangular body.",
+        "The bag features a telescopic handle.",
+        "There is a front pocket with a zipper."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The wheels are proportionate to the size of the bag.",
+        "The front pocket is appropriately sized for easy access."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The wheels are positioned at the bottom for stability.",
+        "The telescopic handle is correctly positioned for easy grip.",
+        "The front pocket is accessible without obstructing the main compartment."
+      ],
+      "Object distance and contact": [
+        "The wheels do not overlap with the body of the bag.",
+        "The front pocket is securely attached to the main body of the bag.",
+        "The telescopic handle retracts into the bag without interference."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design is compact and suitable for air travel.",
+        "The presence of two wheels is confirmed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,57 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_house_body; diffuse_color = (0.85, 0.85, 0.85, 1.0).
+Define material mat_house_roof; diffuse_color = (0.6, 0.2, 0.2, 1.0).
+Define material mat_house_door; diffuse_color = (0.4, 0.2, 0.1, 1.0).
+Define material mat_house_window; diffuse_color = (0.2, 0.4, 0.8, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base body  ---
+Create primitive cuboid with size 0.6×0.5×0.4 m and name it base_body.
+Rotate base_body so its +Z axis aligns +Z (world).
+Anchor base_body to world origin.
+Then move by offset(0, 0.25, 0).
+
+---  SECTION 2 – Create roof prism  ---
+Create primitive triangular_prism with size 0.7×0.3×0.4 m and name it roof_prism.
+Rotate roof_prism so its +Z axis aligns +Z (world).
+Align roof_prism.bottom_face to base_body.top_face.
+Then move by offset(0, 0.15, 0).
+
+---  SECTION 3 – Create door panel  ---
+Create primitive cuboid with size 0.2×0.35×0.02 m and name it door_panel.
+Rotate door_panel so its +Z axis aligns +Z (world).
+Align door_panel.back_face to base_body.front_face.
+Then move by offset(0, -0.15, 0.21).
+
+---  SECTION 4 – Create doorknob  ---
+Create primitive sphere with diameter 0.02 m and name it doorknob.
+Rotate doorknob so its +Z axis aligns +Z (world).
+Align doorknob.center to door_panel.right_face.
+Then move by offset(0.08, -0.05, 0.01).
+
+---  SECTION 5 – Create left window  ---
+Create primitive cuboid with size 0.15×0.15×0.02 m and name it window_left.
+Rotate window_left so its +Z axis aligns +Z (world).
+Align window_left.back_face to base_body.front_face.
+Then move by offset(-0.15, 0.15, 0.21).
+
+---  SECTION 6 – Create right window  ---
+Create primitive cuboid with size 0.15×0.15×0.02 m and name it window_right.
+Rotate window_right so its +Z axis aligns +Z (world).
+Align window_right.back_face to base_body.front_face.
+Then move by offset(0.15, 0.15, 0.21).
+
+Stage 6 complete.
+All stages complete.

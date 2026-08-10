@@ -1,0 +1,47 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_main; diffuse_color = (0.8,0.1,0.1,1.0).
+Define material pom_pom_fur; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create hat_base (Main Crown)  ---
+Create primitive cylinder with radius 0.110 m and height 0.250 m and name it hat_base.
+Rotate hat_base so its +Z axis aligns +Z (world).
+Anchor hat_base to world.origin.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create ear_flap_L and ear_flap_R  ---
+Create primitive cylinder with radius 0.050 m and height 0.150 m and name it ear_flap_L.
+Rotate ear_flap_L so its +Z axis aligns +Z (world).
+Align ear_flap_L.XY_face to hat_base.left_face.
+Then move by offset(0, 0, -0.075).
+Assembly guideline satisfied.
+
+Create primitive cylinder with radius 0.050 m and height 0.150 m and name it ear_flap_R.
+Rotate ear_flap_R so its +Z axis aligns +Z (world).
+Align ear_flap_R.XY_face to hat_base.right_face.
+Then move by offset(0, 0, -0.075).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create pom_pom  ---
+Create primitive sphere with radius 0.060 m and name it pom_pom.
+Rotate pom_pom so its +Z axis aligns +Z (world).
+Align pom_pom.center to hat_base.top_face.
+Then move by offset(0, 0, 0.050).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

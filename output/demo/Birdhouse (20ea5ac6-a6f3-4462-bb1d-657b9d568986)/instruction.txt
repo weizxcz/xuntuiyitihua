@@ -1,0 +1,1 @@
+Design a birdhouse with a simple rectangular shape. Include a circular entrance hole and a small perch below the entrance.

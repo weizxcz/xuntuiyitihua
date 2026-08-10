@@ -1,0 +1,47 @@
+{
+  "id": "f43fb682-e599-45fa-8381-a440e3f61aeb",
+  "name": "Kitchen Island",
+  "instruction": "Please create a 3D model of a kitchen island. It should have a rectangular shape with a flat countertop and storage cabinets underneath. Include a couple of drawers and a built-in sink on one side. The island should be designed to be placed in the center of a kitchen.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a kitchen island.",
+        "The kitchen island has a rectangular shape.",
+        "The countertop is flat."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the countertop is proportionate to the base of the island.",
+        "The height of the cabinets is proportionate to the overall height of the island."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The island is designed to be placed in the center of the kitchen.",
+        "The drawers are accessible from the front of the island.",
+        "The built-in sink is positioned on one side for easy access."
+      ],
+      "Object distance and contact": [
+        "The cabinets are properly aligned under the countertop.",
+        "The drawers do not obstruct the sink or each other.",
+        "There is enough space around the island for movement."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a rectangular shape, flat countertop, storage cabinets, drawers, and a built-in sink."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

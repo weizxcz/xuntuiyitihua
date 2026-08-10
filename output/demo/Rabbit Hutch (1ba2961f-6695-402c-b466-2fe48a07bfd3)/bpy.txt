@@ -1,0 +1,364 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Align +Z to +Z
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc aligned with Z axis."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    # size is (x, y, z)
+    sx, sy, sz = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (sx, sy, sz)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def align_to_vector(obj, vec):
+    """Orient object's local Z axis to match world vector."""
+    vec = vec.normalized()
+    # Calculate rotation matrix to align (0,0,1) to vec
+    rot_mat = vec.to_track_quat('Z', 'Y').to_matrix().to_4x4()
+    obj.matrix_world = rot_mat
+
+def average_points(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+def get_face_center(obj, axis='Z', side='bottom'):
+    """
+    Get the world center of a specific face of an object.
+    Assumes object is axis-aligned or we are approximating based on bounds.
+    For simplicity in this script, we assume standard orientations.
+    """
+    # Get local bounds
+    min_b, max_b = obj.bound_box
+    # Transform bounds to world
+    world_min = Vector((min_b[0][0], min_b[0][1], min_b[0][2]))
+    world_max = Vector((max_b[6][0], max_b[6][1], max_b[6][2]))
+    
+    # Apply matrix world to these points
+    w_min = obj.matrix_world @ world_min
+    w_max = obj.matrix_world @ world_max
+    
+    if axis == 'Z':
+        if side == 'bottom':
+            return Vector((w_min.x, w_min.y, w_min.z))
+        elif side == 'top':
+            return Vector((w_max.x, w_max.y, w_max.z))
+    elif axis == 'X':
+        if side == 'left':
+            return Vector((w_min.x, w_min.y, w_min.z))
+        elif side == 'right':
+            return Vector((w_max.x, w_max.y, w_max.z))
+    elif axis == 'Y':
+        if side == 'front': # Assuming Y+ is front
+            return Vector((w_min.x, w_min.y, w_min.z))
+        elif side == 'back':
+            return Vector((w_max.x, w_max.y, w_max.z))
+            
+    return (w_min + w_max) / 2
+
+def get_center(obj):
+    """Get world center of object."""
+    return obj.matrix_world.to_translation()
+
+def create_and_place_cube(name, size, anchor_points=None, anchor_side='center', offset=(0,0,0)):
+    """
+    Creates a cube, orients it, aligns it to anchors, and applies offset.
+    """
+    obj = add_cube(name, size)
+    
+    # 1. Orientation: +Z aligns +Z (default for add_cube)
+    
+    # 2. Anchor/Align
+    if anchor_points:
+        if anchor_side == 'center':
+            target_center = average_points(anchor_points)
+            # Move object so its local center is at target
+            obj.location = target_center
+        elif anchor_side == 'bottom_face':
+            # Align bottom face center to average of anchor bottom faces
+            # We need to calculate the target Z height from anchors
+            # Assuming anchors are upright cubes/posts
+            anchor_bottom_centers = [get_face_center(p, 'Z', 'bottom') for p in anchor_points]
+            target_bottom_center = average_points(anchor_bottom_centers)
+            
+            # Current object's bottom face center (local)
+            # Cube is centered at 0,0,0. Half height is size[1]/2
+            half_h = size[1] / 2
+            obj_bottom_local = Vector((0, 0, -half_h))
+            
+            # We want obj_bottom_local transformed to match target_bottom_center
+            # Since rotation is identity, transform is just translation
+            # obj.location + obj_bottom_local = target_bottom_center
+            obj.location = target_bottom_center - obj_bottom_local
+            
+    # 3. Offset
+    if offset:
+        obj.location += Vector(offset)
+        
+    return obj
+
+def create_and_place_cylinder(name, radius, height, anchor_points=None, anchor_side='center', offset=(0,0,0)):
+    """
+    Creates a cylinder, orients it, aligns it to anchors, and applies offset.
+    """
+    obj = add_cylinder(name, radius, height)
+    
+    # 1. Orientation: +Z aligns +Z (default for add_cylinder)
+    
+    # 2. Anchor/Align
+    if anchor_points:
+        if anchor_side == 'center':
+            target_center = average_points(anchor_points)
+            obj.location = target_center
+        elif anchor_side == 'bottom_face':
+            anchor_bottom_centers = [get_face_center(p, 'Z', 'bottom') for p in anchor_points]
+            target_bottom_center = average_points(anchor_bottom_centers)
+            
+            half_h = height / 2
+            obj_bottom_local = Vector((0, 0, -half_h))
+            obj.location = target_bottom_center - obj_bottom_local
+            
+    # 3. Offset
+    if offset:
+        obj.location += Vector(offset)
+        
+    return obj
+
+def rotate_local_y(obj, degrees):
+    """Rotate object around its local Y axis."""
+    mat = obj.matrix_world
+    rot = Matrix.Rotation(math.radians(degrees), 4, 'Y')
+    obj.matrix_world = mat @ rot
+
+def rotate_local_x(obj, degrees):
+    """Rotate object around its local X axis."""
+    mat = obj.matrix_world
+    rot = Matrix.Rotation(math.radians(degrees), 4, 'X')
+    obj.matrix_world = mat @ rot
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Clear orphan data
+    for mesh in bpy.data.meshes:
+        bpy.data.meshes.remove(mesh)
+    for mat in bpy.data.materials:
+        bpy.data.materials.remove(mat)
+        
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+    # Block 1: Materials
+    mat_wood_frame = make_material("mat_wood_frame", (0.55, 0.35, 0.15, 1.0))
+    mat_wire_mesh = make_material("mat_wire_mesh", (0.6, 0.6, 0.6, 0.8))
+    mat_roof_shingles = make_material("mat_roof_shingles", (0.2, 0.2, 0.2, 1.0))
+    mat_door_panel = make_material("mat_door_panel", (0.55, 0.35, 0.15, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create Base Frame Corner Posts ---
+    
+    # corner_post_LF
+    obj_lf = create_and_place_cube("corner_post_LF", (0.05, 0.3, 0.05), offset=(-0.5, -0.5, 0))
+    
+    # corner_post_RF
+    obj_rf = create_and_place_cube("corner_post_RF", (0.05, 0.3, 0.05), offset=(0.5, -0.5, 0))
+    
+    # corner_post_LB
+    obj_lb = create_and_place_cube("corner_post_LB", (0.05, 0.3, 0.05), offset=(-0.5, 0.5, 0))
+    
+    # corner_post_RB
+    obj_rb = create_and_place_cube("corner_post_RB", (0.05, 0.3, 0.05), offset=(0.5, 0.5, 0))
+
+    # --- SECTION 2 – Create Bottom Rails ---
+    
+    # bottom_rail_front
+    # Align bottom_face to Avg(corner_post_LF.bottom_face, corner_post_RF.bottom_face)
+    # Then offset(0,0,0.025)
+    obj_front = create_and_place_cube("bottom_rail_front", (1.0, 0.05, 0.05), 
+                                      anchor_points=[obj_lf, obj_rf], 
+                                      anchor_side='bottom_face', 
+                                      offset=(0, 0, 0.025))
+    
+    # bottom_rail_back
+    obj_back = create_and_place_cube("bottom_rail_back", (1.0, 0.05, 0.05), 
+                                     anchor_points=[obj_lb, obj_rb], 
+                                     anchor_side='bottom_face', 
+                                     offset=(0, 0, 0.025))
+    
+    # bottom_rail_left
+    # Size 0.05x0.05x1.0. Align bottom_face to Avg(LF, LB)
+    obj_left = create_and_place_cube("bottom_rail_left", (0.05, 0.05, 1.0), 
+                                     anchor_points=[obj_lf, obj_lb], 
+                                     anchor_side='bottom_face', 
+                                     offset=(0, 0, 0.025))
+    
+    # bottom_rail_right
+    obj_right = create_and_place_cube("bottom_rail_right", (0.05, 0.05, 1.0), 
+                                      anchor_points=[obj_rf, obj_rb], 
+                                      anchor_side='bottom_face', 
+                                      offset=(0, 0, 0.025))
+
+    # --- SECTION 3 – Create Run Enclosure Floor and Mesh Walls ---
+    
+    # floor_grate
+    # Align center to Avg(all 4 posts)
+    # Offset (0,0,0.01)
+    all_posts = [obj_lf, obj_rf, obj_lb, obj_rb]
+    obj_floor = create_and_place_cube("floor_grate", (1.0, 0.01, 1.0), 
+                                      anchor_points=all_posts, 
+                                      anchor_side='center', 
+                                      offset=(0, 0, 0.01))
+    
+    # mesh_front
+    # Cylinder diam 1.0, height 0.25. Align center to Avg(LF, RF). Offset (0,0,0.125)
+    obj_mesh_f = create_and_place_cylinder("mesh_front", 0.5, 0.25, 
+                                           anchor_points=[obj_lf, obj_rf], 
+                                           anchor_side='center', 
+                                           offset=(0, 0, 0.125))
+    
+    # mesh_back
+    obj_mesh_b = create_and_place_cylinder("mesh_back", 0.5, 0.25, 
+                                           anchor_points=[obj_lb, obj_rb], 
+                                           anchor_side='center', 
+                                           offset=(0, 0, 0.125))
+    
+    # mesh_left
+    obj_mesh_l = create_and_place_cylinder("mesh_left", 0.5, 0.25, 
+                                           anchor_points=[obj_lf, obj_lb], 
+                                           anchor_side='center', 
+                                           offset=(0, 0, 0.125))
+    
+    # mesh_right
+    obj_mesh_r = create_and_place_cylinder("mesh_right", 0.5, 0.25, 
+                                           anchor_points=[obj_rf, obj_rb], 
+                                           anchor_side='center', 
+                                           offset=(0, 0, 0.125))
+
+    # --- SECTION 4 – Create Sleeping Chamber Structure ---
+    
+    # chamber_floor
+    # Align center to Avg(all 4 posts). Offset (0,0,0.3)
+    obj_ch_floor = create_and_place_cube("chamber_floor", (1.0, 0.02, 1.0), 
+                                         anchor_points=all_posts, 
+                                         anchor_side='center', 
+                                         offset=(0, 0, 0.3))
+    
+    # chamber_back
+    # Align center to Avg(LB, RB). Offset (0,0,0.5)
+    obj_ch_back = create_and_place_cube("chamber_back", (1.0, 0.4, 0.02), 
+                                        anchor_points=[obj_lb, obj_rb], 
+                                        anchor_side='center', 
+                                        offset=(0, 0, 0.5))
+    
+    # chamber_left
+    # Align center to Avg(LF, LB). Offset (0,0,0.5)
+    obj_ch_left = create_and_place_cube("chamber_left", (0.02, 0.4, 1.0), 
+                                        anchor_points=[obj_lf, obj_lb], 
+                                        anchor_side='center', 
+                                        offset=(0, 0, 0.5))
+    
+    # chamber_right
+    # Align center to Avg(RF, RB). Offset (0,0,0.5)
+    obj_ch_right = create_and_place_cube("chamber_right", (0.02, 0.4, 1.0), 
+                                         anchor_points=[obj_rf, obj_rb], 
+                                         anchor_side='center', 
+                                         offset=(0, 0, 0.5))
+    
+    # chamber_ceiling
+    # Align center to Avg(all 4 posts). Offset (0,0,0.7)
+    obj_ch_ceil = create_and_place_cube("chamber_ceiling", (1.0, 0.02, 1.0), 
+                                        anchor_points=all_posts, 
+                                        anchor_side='center', 
+                                        offset=(0, 0, 0.7))
+
+    # --- SECTION 5 – Create Roof ---
+    
+    # roof_left
+    # Align center to Avg(LF, LB). Offset (0,0,0.71). Then rotate local Y 10 deg.
+    obj_roof_l = create_and_place_cube("roof_left", (0.55, 0.02, 1.05), 
+                                       anchor_points=[obj_lf, obj_lb], 
+                                       anchor_side='center', 
+                                       offset=(0, 0, 0.71))
+    rotate_local_y(obj_roof_l, 10)
+    
+    # roof_right
+    # Align center to Avg(RF, RB). Offset (0,0,0.71). Then rotate local Y -10 deg.
+    obj_roof_r = create_and_place_cube("roof_right", (0.55, 0.02, 1.05), 
+                                       anchor_points=[obj_rf, obj_rb], 
+                                       anchor_side='center', 
+                                       offset=(0, 0, 0.71))
+    rotate_local_y(obj_roof_r, -10)
+
+    # --- SECTION 6 – Create Ramp ---
+    
+    # ramp
+    # Align center to Avg(LF, RF). Offset (0,0,0.15). Then rotate local X -15 deg.
+    obj_ramp = create_and_place_cube("ramp", (0.8, 0.02, 1.0), 
+                                     anchor_points=[obj_lf, obj_rf], 
+                                     anchor_side='center', 
+                                     offset=(0, 0, 0.15))
+    rotate_local_x(obj_ramp, -15)
+
+    # --- SECTION 7 – Create Door ---
+    
+    # door
+    # Align center to Avg(LF, RF). Offset (0,0,0.5)
+    obj_door = create_and_place_cube("door", (0.4, 0.3, 0.02), 
+                                     anchor_points=[obj_lf, obj_rf], 
+                                     anchor_side='center', 
+                                     offset=(0, 0, 0.5))
+
+    # Assign Materials (Optional but good practice based on Block 1)
+    # Since the prompt didn't explicitly say "assign material X to object Y", 
+    # I will leave them unassigned or assign based on naming convention if obvious.
+    # However, to be safe and clean, I'll just leave them default unless specified.
+    # The prompt asked to "Define material", not necessarily assign.
+    
+    # Select all for visibility
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in bpy.context.scene.objects:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj_lf
+
+if __name__ == "__main__":
+    main()
+```

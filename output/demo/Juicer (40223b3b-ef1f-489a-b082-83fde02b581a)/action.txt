@@ -1,0 +1,117 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material food_safe_plastic; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+Define material metal_steel; diffuse_color = (0.7, 0.7, 0.75, 1.0).
+Define material rubber_grip; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Base Housing and Feet  ---
+Create primitive cuboid with size 0.15×0.15×0.25 m and name it housing.
+Rotate housing so its +Z axis aligns +Z (world).
+Move housing to pos=(0,0,0.125).
+
+Create primitive cylinder with size Ø0.02×0.01 m and name it foot_1.
+Rotate foot_1 so its +Z axis aligns +Z (world).
+Move foot_1 to pos=(0.06, 0.06, 0.005).
+
+Create primitive cylinder with size Ø0.02×0.01 m and name it foot_2.
+Rotate foot_2 so its +Z axis aligns +Z (world).
+Move foot_2 to pos=(-0.06, 0.06, 0.005).
+
+Create primitive cylinder with size Ø0.02×0.01 m and name it foot_3.
+Rotate foot_3 so its +Z axis aligns +Z (world).
+Move foot_3 to pos=(0.06, -0.06, 0.005).
+
+Create primitive cylinder with size Ø0.02×0.01 m and name it foot_4.
+Rotate foot_4 so its +Z axis aligns +Z (world).
+Move foot_4 to pos=(-0.06, -0.06, 0.005).
+
+Boolean-union housing, foot_1, foot_2, foot_3, foot_4; keep housing.
+Name the resulting composite object base_plate.
+Stage 1 complete.
+
+---  SECTION 2 – Motor Unit and Drive Shaft  ---
+Create primitive cylinder with size Ø0.12×0.10 m and name it motor_unit.
+Rotate motor_unit so its +Z axis aligns +Z (world).
+Move motor_unit to pos=(0,0,0.30).
+
+Create primitive cylinder with size Ø0.01×0.05 m and name it drive_shaft.
+Rotate drive_shaft so its +Z axis aligns +Z (world).
+Move drive_shaft to pos=(0,0,0.375).
+
+Connect motor_unit.+Z_face to drive_shaft.-Z_face.
+Stage 2 complete.
+
+---  SECTION 3 – Blade Assembly (Hub and Blades)  ---
+Create primitive cylinder with size Ø0.03×0.02 m and name it hub.
+Rotate hub so its +Z axis aligns +Z (world).
+Move hub to pos=(0,0,0.40).
+
+Create primitive cylinder with size Ø0.10×0.002 m and name it blade_1.
+Rotate blade_1 so its +Z axis aligns +Z (world).
+Move blade_1 to pos=(0,0,0.41).
+
+Create primitive cylinder with size Ø0.10×0.002 m and name it blade_2.
+Rotate blade_2 so its +Z axis aligns +Z (world).
+Move blade_2 to pos=(0,0,0.41).
+Rotate blade_2 so its local +X axis aligns +Y (world).
+
+Create primitive cylinder with size Ø0.10×0.002 m and name it blade_3.
+Rotate blade_3 so its +Z axis aligns +Z (world).
+Move blade_3 to pos=(0,0,0.41).
+Rotate blade_3 so its local +X axis aligns +X (world).
+
+Create primitive cylinder with size Ø0.10×0.002 m and name it blade_4.
+Rotate blade_4 so its +Z axis aligns +Z (world).
+Move blade_4 to pos=(0,0,0.41).
+Rotate blade_4 so its local +X axis aligns -Y (world).
+
+Boolean-union hub, blade_1, blade_2, blade_3, blade_4; keep hub.
+Name the resulting composite object blade_assembly.
+Stage 3 complete.
+
+---  SECTION 4 – Filter Cone and Juice Spout  ---
+Create primitive cone with size Ø0.14×0.15 m and name it filter_cone.
+Rotate filter_cone so its +Z axis aligns +Z (world).
+Move filter_cone to pos=(0,0,0.475).
+
+Create primitive cylinder with size Ø0.03×0.05 m and name it juice_spout.
+Rotate juice_spout so its +Z axis aligns +X (world).
+Move juice_spout to pos=(0.06, 0, 0.55).
+Align juice_spout.-X_face to filter_cone.+X_face.
+Stage 4 complete.
+
+---  SECTION 5 – Feed Tube and Pusher  ---
+Create primitive cylinder with size Ø0.05×0.20 m and name it feed_tube.
+Rotate feed_tube so its +Z axis aligns +Z (world).
+Move feed_tube to pos=(0,0,0.60).
+
+Create primitive cylinder with size Ø0.045×0.10 m and name it pusher.
+Rotate pusher so its +Z axis aligns +Z (world).
+Move pusher to pos=(0,0,0.75).
+Align pusher.-Z_face to feed_tube.+Z_face.
+Stage 5 complete.
+
+---  SECTION 6 – Pulp Collector and Juice Container  ---
+Create primitive cuboid with size 0.10×0.08×0.15 m and name it pulp_collector.
+Rotate pulp_collector so its +Z axis aligns +Z (world).
+Move pulp_collector to pos=(-0.12, 0, 0.075).
+
+Create primitive cylinder with size Ø0.08×0.12 m and name it juice_container.
+Rotate juice_container so its +Z axis aligns +Z (world).
+Move juice_container to pos=(0.06, 0, 0.06).
+Align juice_container.+Z_face to base_plate.-Z_face.
+Stage 6 complete.
+
+All stages complete.

@@ -1,0 +1,50 @@
+{
+  "id": "70aee8d7-3e43-4053-ac98-6ff8c7a24bbe",
+  "name": "Pliers vs. Wrench",
+  "instruction": "Create a 3D model comparing pliers and a wrench. The pliers should have a pair of jaws and a pivot point, while the wrench should have an adjustable open-end. Place both tools side by side to highlight their differences.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pliers have a pair of jaws.",
+        "The pliers include a pivot point.",
+        "The wrench features an adjustable open-end.",
+        "The overall shape of the pliers is ergonomic.",
+        "The wrench has a long handle for leverage."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The jaws of the pliers are proportionate to the length of the handles.",
+        "The adjustable open-end of the wrench is proportionate to its handle length."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pliers are positioned with jaws facing outward.",
+        "The pivot point is correctly located between the handles.",
+        "The wrench is placed with the adjustable end clearly visible.",
+        "Both tools are side by side without overlapping."
+      ],
+      "Object distance and contact": [
+        "There is an appropriate distance between the pliers and wrench to highlight differences.",
+        "The jaws of the pliers do not touch the adjustable end of the wrench.",
+        "Both tools are stable and do not appear to fall over."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both tools are accurately represented as specified.",
+        "The comparison between the pliers and wrench is clear and effective."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

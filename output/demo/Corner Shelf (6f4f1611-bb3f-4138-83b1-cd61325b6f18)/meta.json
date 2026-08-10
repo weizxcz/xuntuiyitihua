@@ -1,0 +1,46 @@
+{
+  "id": "6f4f1611-bb3f-4138-83b1-cd61325b6f18",
+  "name": "Corner Shelf",
+  "instruction": "Create a simple corner shelf with three triangular tiers. The shelf is designed to fit snugly into the corner of a room, providing additional storage space.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a corner shelf.",
+        "The shelf has three triangular tiers.",
+        "Each tier is shaped to fit into a corner."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The tiers are proportionate to each other and the corner space.",
+        "The shelf should not obstruct the corner or room layout."
+      ],
+      "Texture and surface detail": [
+        "The material is suitable for shelving, such as wood or metal.",
+        "The surface may have a smooth finish for easy cleaning."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tiers are arranged vertically in a staggered manner.",
+        "The shelf fits snugly into the corner without gaps."
+      ],
+      "Object distance and contact": [
+        "The tiers do not overlap with each other.",
+        "Each tier is securely attached to the vertical support."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the corner shelf are accurately represented.",
+        "The design adheres to the instruction of having three triangular tiers."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

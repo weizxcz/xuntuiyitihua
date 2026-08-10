@@ -1,0 +1,37 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_dark_grout; diffuse_color = (0.15,0.15,0.15,1.0).
+Define material mat_tile_blue; diffuse_color = (0.2,0.4,0.8,1.0).
+Define material mat_tile_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create 4x4 Tile Grid Unit  ---
+Create an Empty helper (cube display) and name it floor_base.
+Rotate floor_base so its axis aligns +Z (world).
+Move floor_base to (0,0,0).
+
+For r in 0…3 and c in 0…3:
+  Create primitive cylinder with Ø0.3×0.02 m and name it tile_r_c.
+  Rotate tile_r_c so its +Z axis aligns +Z (world).
+  Align tile_r_c.Z_face to floor_base.Z_face.
+  Then offset(dx = -0.155 + c*0.11, dy = 0.155 - r*0.11, dz=0).
+  If (r,c) is (5,6), (6,7), (9,10), (10,11), (11,12):
+    Apply material mat_tile_blue to tile_r_c.
+  Else:
+    Apply material mat_tile_white to tile_r_c.
+
+Boolean-union all tile_r_c objects into floor_base; discard individual tile_r_c references.
+Stage 1 complete.
+
+All stages complete.

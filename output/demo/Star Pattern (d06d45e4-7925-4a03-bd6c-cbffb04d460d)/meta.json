@@ -1,0 +1,42 @@
+{
+  "id": "d06d45e4-7925-4a03-bd6c-cbffb04d460d",
+  "name": "Star Pattern",
+  "instruction": "Could you create a star pattern for me? It should be a simple arrangement of five-pointed stars.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object consists of five-pointed stars.",
+        "The stars are arranged in a simple pattern."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The stars in the patteren are proportionate to the entire pattern."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The arrangement maintains symmetry typical of star patterns."
+      ],
+      "Object distance and contact": [
+        "The stars are evenly spaced in the pattern.",
+        "There is a clear visual distinction between each star."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The star pattern created matches the request for five-pointed stars.",
+        "The arrangement adheres to the simplicity specified."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

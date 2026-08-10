@@ -1,0 +1,284 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc (flat cylinder) mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add an UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, depth):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, segments=32, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.to_quaternion()
+    # Get target direction
+    target_dir = vector.normalized()
+    
+    # Define axis vectors
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    else:
+        return
+
+    # Calculate rotation to align local_axis to target_dir
+    # We need to preserve the object's roll around the target axis if possible, 
+    # but for simple alignment, we can use a quaternion from two vectors.
+    # To keep it simple and robust for this script:
+    # We will set the rotation such that the local axis points to the target.
+    
+    # Create a temporary object to calculate rotation
+    temp = bpy.context.view_layer.objects.active
+    bpy.ops.object.empty_add(location=(0,0,0))
+    temp_align = bpy.context.active_object
+    temp_align.name = "_temp_align"
+    
+    # Align temp_align Z to target_dir
+    temp_align.rotation_mode = 'QUATERNION'
+    temp_align.rotation_quaternion = target_dir.to_track_quat('Z', 'Y') # Default up is Y, but we want Z aligned
+    
+    # Actually, simpler approach:
+    # Calculate quaternion between local_axis and target_dir
+    q = local_axis.rotation_difference(target_dir)
+    
+    # Apply to object
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = q
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform a boolean subtract operation using the modifier stack."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, other_obj):
+    """Perform a boolean union operation."""
+    bpy.context.view_layer.objects.active = target_obj
+    
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj, face_index=None):
+        self.obj = obj
+        self.face_index = face_index
+        self._update_matrix()
+
+    def _update_matrix(self):
+        # Update matrix to ensure transforms are current
+        self.obj.matrix_world.update()
+        self.matrix = self.obj.matrix_world
+
+    def center_world(self):
+        """Return the world center of the object."""
+        return self.matrix.to_translation()
+
+    def face_center_world(self):
+        """Return the world center of a specific face or the mesh center if no face index."""
+        if self.face_index is not None and self.obj.data.polygons:
+            # Get face center in local space
+            poly = self.obj.data.polygons[self.face_index]
+            center_local = poly.center
+            # Transform to world space
+            return self.matrix @ center_local
+        else:
+            return self.center_world()
+
+    def radial_point_world(self, angle=0, radius=None):
+        """Return a point on the radial edge."""
+        # Default to radius of bounding box or specific radius if provided
+        if radius is None:
+            # Approximate radius from bounding box
+            bb_min = self.matrix @ self.obj.bound_box[0]
+            bb_max = self.matrix @ self.obj.bound_box[6]
+            center = self.center_world()
+            radius = (bb_max - center).length
+        
+        # Simple radial point along X axis rotated by angle
+        local_point = Vector((radius, 0, 0))
+        # Rotate around Z
+        rot_z = Matrix.Rotation(angle, 4, 'Z')
+        local_point = rot_z @ local_point
+        return self.matrix @ local_point
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+fabric_green = make_material("fabric_green", (0.05, 0.25, 0.05, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create beanie body ---
+
+# Create primitive cylinder with size Ø0.220×0.200 m
+# Radius = 0.110, Depth = 0.200
+beanie_body = add_cylinder("beanie_body", radius=0.110, depth=0.200)
+beanie_body.data.materials.append(fabric_green)
+
+# Rotate beanie_body so its +Z axis aligns +Z (world)
+# Default cylinder is already aligned to Z, but we ensure it.
+align_axis_to_vector(beanie_body, 'Z', Vector((0, 0, 1)))
+
+# Align beanie_body.center to world.origin
+beanie_body.location = Vector((0, 0, 0))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create beanie top (hemisphere) ---
+
+# Create full_sphere and name it beanie_top
+# Radius needs to match the cylinder radius 0.110
+beanie_top = add_uvsphere("beanie_top", radius=0.110)
+beanie_top.data.materials.append(fabric_green)
+
+# Rotate beanie_top so its +Z axis aligns +Z (world)
+align_axis_to_vector(beanie_top, 'Z', Vector((0, 0, 1)))
+
+# Create plane_cutter and name it beanie_top_cut with size Ø0.220×0.220 m; orientation=axis:+Z
+# A disc with diameter 0.220 (radius 0.110)
+beanie_top_cut = add_disc("beanie_top_cut", radius=0.110)
+# Orientation is already +Z aligned by default for disc
+
+# Boolean-subtract beanie_top_cut from beanie_top; keep beanie_top
+# The cutter needs to be positioned to cut the bottom half off to leave a hemisphere
+# The sphere center is at (0,0,0). We want the hemisphere facing +Z.
+# So we need to cut off the bottom (Z < 0).
+# The cutter plane should be at Z=0.
+beanie_top_cut.location = Vector((0, 0, 0))
+
+boolean_subtract(beanie_top_cut, beanie_top)
+
+# Rotate beanie_top so its curved face points +Z.
+# After cutting the bottom half (Z<0) off, the flat face is at Z=0 and curved part is Z>0.
+# The "curved face" usually refers to the main surface. The prompt says "curved face points +Z".
+# This implies the dome should be on top. Since we kept the top half (Z>0), the dome is already pointing +Z.
+# However, if the boolean kept the bottom, we'd need to rotate.
+# Let's verify: add_uvsphere creates a sphere. add_disc creates a flat cylinder.
+# Boolean subtract removes the volume of the cutter.
+# If cutter is at Z=0, it removes Z<0 part of sphere? No, boolean is volumetric.
+# A disc has thickness (0.001). It removes a slice.
+# To get a perfect hemisphere, we usually cut with a plane.
+# Since we used a disc, it might leave a small flat edge.
+# Assuming the result is a hemisphere with flat base at Z=0 and dome at Z>0.
+# The prompt asks to rotate so curved face points +Z. It already does.
+# Just to be safe, we ensure orientation.
+align_axis_to_vector(beanie_top, 'Z', Vector((0, 0, 1)))
+
+# Align beanie_top.center to beanie_body.top_face.center.
+# beanie_body is at (0,0,0), height 0.200. Top face is at Z=0.100.
+# beanie_top (hemisphere) center of mass or geometric center?
+# "center" usually means object center.
+# The hemisphere object's center is at (0,0,0) relative to its origin.
+# We need to move beanie_top so its bottom (flat face) sits on beanie_body's top.
+# beanie_body top face center is at (0, 0, 0.100).
+# beanie_top flat face is at Z=0 (relative to object origin).
+# So we need to move beanie_top up by 0.100.
+locator_body_top = Locator(beanie_body)
+# Find top face index. For a cylinder, faces are 0 (bottom), 1 (top), rest sides.
+# Usually index 1 is top if created with default settings.
+# Let's calculate manually to be safe.
+beanie_body_top_z = 0.100
+beanie_body_top_center = Vector((0, 0, beanie_body_top_z))
+
+# beanie_top origin is at its geometric center (equator).
+# We want the equator to be at beanie_body_top_center.
+beanie_top.location = beanie_body_top_center
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create beanie fold ---
+
+# Create primitive cylinder with size Ø0.220×0.040 m and name it beanie_fold
+beanie_fold = add_cylinder("beanie_fold", radius=0.110, depth=0.040)
+beanie_fold.data.materials.append(fabric_green)
+
+# Rotate beanie_fold so its +Z axis aligns +Z (world)
+align_axis_to_vector(beanie_fold, 'Z', Vector((0, 0, 1)))
+
+# Align beanie_fold.center to beanie_body.top_face.center.
+# beanie_body top face center is at (0, 0, 0.100).
+# beanie_fold center is at its origin.
+# So we place beanie_fold origin at (0, 0, 0.100).
+beanie_fold.location = Vector((0, 0, 0.100))
+
+# Stage 3 complete.
+
+# All stages complete.
+```

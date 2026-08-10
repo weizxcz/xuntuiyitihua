@@ -1,0 +1,32 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material candle_wax; diffuse_color = (1.00, 1.00, 0.86, 1).
+Define material wick_cotton; diffuse_color = (0.08, 0.08, 0.08, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create wax body  ---
+Create primitive cylinder with diameter 0.080 m and height 0.150 m and name it wax_body.
+Rotate wax_body so its +Z axis aligns +Z (world).
+Align wax_body.XY_face to world.origin.
+Stage 1 complete.
+
+---  SECTION 2 – Create wick  ---
+Create primitive cylinder with diameter 0.002 m and height 0.020 m and name it wick.
+Rotate wick so its +Z axis aligns +Z (world).
+Align wick.XY_face to wax_body.center.
+Align wick.bottom_face to wax_body.top_face.
+Then move by offset(0,0,0.002).
+Stage 2 complete.
+
+All stages complete.

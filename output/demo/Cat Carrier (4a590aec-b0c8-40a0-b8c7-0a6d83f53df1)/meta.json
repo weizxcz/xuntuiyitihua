@@ -1,0 +1,47 @@
+{
+  "id": "4a590aec-b0c8-40a0-b8c7-0a6d83f53df1",
+  "name": "Cat Carrier",
+  "instruction": "Design a 3D model of a cat carrier. The carrier should be rectangular with a handle on top. It should have a front door with bars and a latch to keep it closed. The sides should have ventilation holes. The top should be detachable for easy cleaning.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cat carrier.",
+        "The carrier is rectangular in shape.",
+        "The top of the carrier has a handle."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The handle is at reasonable length and height for grip.",
+        "The door is proportionate to the entire carrior."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is positioned correctly on top for easy carrying.",
+        "The front door is properly aligned with the carrier's structure.",
+        "The ventilation holes are evenly distributed on the sides."
+      ],
+      "Object distance and contact": [
+        "The front door does not obstruct the ventilation holes.",
+        "The latch is easily accessible and does not interfere with the door's function.",
+        "The detachable top fits securely onto the carrier."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified features are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

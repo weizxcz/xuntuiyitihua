@@ -1,0 +1,48 @@
+{
+  "id": "f2d895b8-4ec4-44ef-8197-e02f919f0d45",
+  "name": "Chess Piece - Knight",
+  "instruction": "Create a chess piece in the shape of a knight. It should be recognizable and fit on a standard chessboard.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a chess piece.",
+        "The chess piece is shaped like a knight.",
+        "The knight has a distinct horse head and neck.",
+        "The base of the knight is circular to fit on a chessboard."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head and neck of the knight are proportionate to the body.",
+        "The base is wide enough to provide stability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The knight is designed to stand upright.",
+        "The head is elevated above the base for visibility.",
+        "The body of the knight is balanced to prevent tipping."
+      ],
+      "Object distance and contact": [
+        "The base of the knight should sit flat on the chessboard.",
+        "There should be no gaps between the base and the chessboard."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The knight shape is accurately represented.",
+        "The piece is recognizable as a knight.",
+        "The size is appropriate for a standard chessboard."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

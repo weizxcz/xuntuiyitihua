@@ -1,0 +1,97 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material board_green; diffuse_color = (0.1, 0.4, 0.1, 1.0).
+Define material connector_gold; diffuse_color = (0.8, 0.6, 0.1, 1.0).
+Define material ic_black; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+Define material led_red; diffuse_color = (0.8, 0.0, 0.0, 1.0).
+Define material resistor_body; diffuse_color = (0.8, 0.6, 0.4, 1.0).
+Define material resistor_lead; diffuse_color = (0.7, 0.7, 0.7, 1.0).
+Define material via_copper; diffuse_color = (0.8, 0.5, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create PCB Substrate and Base Layer  ---
+Create primitive cuboid with size 0.150×0.100×0.002 m and name it substrate.
+Rotate substrate so its +Z axis aligns +Z (world).
+Anchor substrate to world origin.
+Then move by offset(0,0,0).
+Create primitive cuboid with size 0.150×0.100×0.00005 m and name it copper_layer.
+Rotate copper_layer so its +Z axis aligns +Z (world).
+Align copper_layer.+Z_face to substrate.+Z_face.
+Then move by offset(0,0,0.001).
+Create primitive cylinder with diameter 0.002 m and height 0.002 m and name it via_1.
+Rotate via_1 so its +Z axis aligns +Z (world).
+Anchor via_1 to substrate.
+Then move by offset(-0.05, -0.03, 0).
+Create primitive cylinder with diameter 0.002 m and height 0.002 m and name it via_2.
+Rotate via_2 so its +Z axis aligns +Z (world).
+Anchor via_2 to substrate.
+Then move by offset(0.05, 0.03, 0).
+Boolean-union via_1 to substrate.
+Boolean-union via_2 to substrate.
+Boolean-union copper_layer to substrate.
+Stage 1 complete.
+
+---  SECTION 2 – Create Integrated Circuits  ---
+Create primitive cuboid with size 0.040×0.040×0.005 m and name it ic_1.
+Rotate ic_1 so its +Z axis aligns +Z (world).
+Align ic_1.+Z_face to substrate.+Z_face.
+Then move by offset(-0.03, 0.02, 0.0035).
+Create primitive cuboid with size 0.020×0.020×0.004 m and name it ic_2.
+Rotate ic_2 so its +Z axis aligns +Z (world).
+Align ic_2.+Z_face to substrate.+Z_face.
+Then move by offset(0.03, -0.02, 0.003).
+Stage 2 complete.
+
+---  SECTION 3 – Create Passive Components  ---
+Create primitive cuboid with size 0.006×0.003×0.003 m and name it resistor_1.
+Rotate resistor_1 so its +Z axis aligns +Z (world).
+Align resistor_1.+Z_face to substrate.+Z_face.
+Then move by offset(-0.08, 0.04, 0.0025).
+Create primitive cuboid with size 0.006×0.003×0.003 m and name it resistor_2.
+Rotate resistor_2 so its +Z axis aligns +Z (world).
+Align resistor_2.+Z_face to substrate.+Z_face.
+Then move by offset(0.08, -0.04, 0.0025).
+Create primitive cuboid with size 0.005×0.005×0.004 m and name it capacitor_1.
+Rotate capacitor_1 so its +Z axis aligns +Z (world).
+Align capacitor_1.+Z_face to substrate.+Z_face.
+Then move by offset(-0.06, -0.04, 0.003).
+Create primitive cuboid with size 0.005×0.005×0.004 m and name it capacitor_2.
+Rotate capacitor_2 so its +Z axis aligns +Z (world).
+Align capacitor_2.+Z_face to substrate.+Z_face.
+Then move by offset(0.06, 0.04, 0.003).
+Stage 3 complete.
+
+---  SECTION 4 – Create LEDs  ---
+Create primitive cylinder with diameter 0.004 m and height 0.003 m and name it led_1.
+Rotate led_1 so its +Z axis aligns +Z (world).
+Align led_1.+Z_face to substrate.+Z_face.
+Then move by offset(-0.05, 0.06, 0.0025).
+Create primitive cylinder with diameter 0.004 m and height 0.003 m and name it led_2.
+Rotate led_2 so its +Z axis aligns +Z (world).
+Align led_2.+Z_face to substrate.+Z_face.
+Then move by offset(0.05, -0.06, 0.0025).
+Stage 4 complete.
+
+---  SECTION 5 – Create Connectors  ---
+Create primitive cuboid with size 0.030×0.010×0.008 m and name it conn_1.
+Rotate conn_1 so its +Z axis aligns +Z (world).
+Align conn_1.+Z_face to substrate.+Z_face.
+Then move by offset(0, -0.045, 0.005).
+Create primitive cuboid with size 0.020×0.010×0.006 m and name it conn_2.
+Rotate conn_2 so its +Z axis aligns +Z (world).
+Align conn_2.+Z_face to substrate.+Z_face.
+Then move by offset(0, 0.045, 0.005).
+Stage 5 complete.
+
+All stages complete.

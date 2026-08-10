@@ -1,0 +1,43 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_calendar_body; diffuse_color = (0.941, 0.941, 0.941, 1).
+Define material mat_calendar_binding; diffuse_color = (0.863, 0.863, 0.863, 1).
+Define material mat_calendar_text; diffuse_color = (0.196, 0.196, 0.196, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create binding group  ---
+Create primitive cuboid with size 0.120×0.020×0.005 m and name it binding_rect.
+Rotate binding_rect so its +Z axis aligns +Z (world).
+Anchor binding_rect to calendar_root.center.
+Align binding_rect.+Z_face to calendar_root.+Z_face.
+Then move by offset(0, 0.060, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create body group  ---
+Create primitive cuboid with size 0.100×0.100×0.005 m and name it body_cube.
+Rotate body_cube so its +Z axis aligns +Z (world).
+Anchor body_cube to calendar_root.center.
+Align body_cube.+Z_face to calendar_root.+Z_face.
+Then move by offset(0, 0, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create text group  ---
+Create primitive cuboid with size 0.010×0.060×0.001 m and name it text_prism.
+Rotate text_prism so its +Z axis aligns +Z (world).
+Anchor text_prism to body_cube.center.
+Align text_prism.+Z_face to body_cube.+Z_face.
+Then move by offset(0, 0, 0).
+Stage 3 complete.
+
+All stages complete.

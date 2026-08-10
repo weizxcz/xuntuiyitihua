@@ -1,0 +1,51 @@
+{
+  "id": "a83e7bbd-a121-4350-8393-8ac755c1fa19",
+  "name": "Medical Bed",
+  "instruction": "Develop a 3D model of a medical bed. It should have adjustable head and foot sections, side rails for safety, and a simple control panel for adjusting the bed's position. The mattress should be flat and uniform.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a medical bed.",
+        "The bed features adjustable head and foot sections.",
+        "The mattress is flat and uniform.",
+        "The side rails are present for safety."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head and foot sections are proportionate to the overall length of the bed.",
+        "The side rails are appropriately sized for safety without obstructing access."
+      ],
+      "Texture and surface detail": [
+        "The bed frame has a smooth finish for easy cleaning.",
+        "The mattress may have a fabric texture suitable for comfort and hygiene.",
+        "The control panel has a simple, user-friendly interface."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The adjustable head and foot sections are correctly positioned relative to the mattress.",
+        "The side rails are securely attached and do not interfere with the bed's functionality.",
+        "The control panel is easily accessible from the side of the bed."
+      ],
+      "Object distance and contact": [
+        "The mattress fits snugly within the bed frame.",
+        "There are no gaps between the mattress and the side rails.",
+        "The head and foot sections adjust without colliding with the side rails."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented in the model.",
+        "The adjustable features function as described.",
+        "The control panel is included and meets the simplicity requirement."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

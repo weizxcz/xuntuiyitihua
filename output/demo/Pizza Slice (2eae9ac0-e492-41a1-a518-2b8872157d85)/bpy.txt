@@ -1,0 +1,281 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, location, rotation_euler, material=None):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius, location, rotation_euler, material=None):
+    """Add an UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_text_object(name, text, size, location, rotation_euler, material=None):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.scale = (size, size, size)
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='+Z', target_vector):
+    """Align an object's local axis to a target world vector."""
+    # This is a simplified helper. For strict alignment, we calculate rotation.
+    # Default Blender Z-up alignment logic:
+    if axis_to_align == '+Z':
+        # Align Z to target
+        z_vec = Vector((0, 0, 1))
+        if target_vec.length > 0:
+            rot_quat = z_vec.rotation_difference(target_vec)
+            obj.rotation_euler = rot_quat.to_euler()
+    elif axis_to_align == '+Y':
+        y_vec = Vector((0, 1, 0))
+        if target_vec.length > 0:
+            rot_quat = y_vec.rotation_difference(target_vec)
+            obj.rotation_euler = rot_quat.to_euler()
+    elif axis_to_align == '+X':
+        x_vec = Vector((1, 0, 0))
+        if target_vec.length > 0:
+            rot_quat = x_vec.rotation_difference(target_vec)
+            obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of Vector objects."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        """Return the world center of the object."""
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, face_index=0):
+        """Return the world center of a specific face."""
+        bm = bmesh.new()
+        bm.from_mesh(self.obj.data)
+        bm.transform(self.obj.matrix_world)
+        if face_index < len(bm.faces):
+            face = bm.faces[face_index]
+            center = face.calc_center_median()
+            bm.free()
+            return center
+        bm.free()
+        return self.center_world()
+
+    def radial_point_world(self, index=0):
+        """Return a point on the radial edge (approximate for cylinders/cones)."""
+        # Simplified: returns center for now as radial point logic varies by shape
+        return self.center_world()
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Apply Boolean Subtract modifier."""
+    # Ensure target is active for modifier application context if needed, 
+    # but modifiers are added to target.
+    
+    # Add modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, other_obj):
+    """Apply Boolean Union modifier."""
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+
+def add_bevel(obj, width, segments=2):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this generator context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def create_triangular_prism(name, vertices_2d, height, location, rotation_euler, material=None):
+    """
+    Create a triangular prism by extruding a 2D triangle along Z.
+    vertices_2d: List of (x, y) tuples.
+    height: Extrusion depth.
+    """
+    # Create mesh data
+    mesh = bpy.data.meshes.new(name + "_mesh")
+    mesh.from_pydata(vertices_2d + [(v[0], v[1], height) for v in vertices_2d], [], [])
+    mesh.update()
+    
+    # Create object
+    obj = bpy.data.objects.new(name, mesh)
+    obj.location = location
+    obj.rotation_euler = rotation_euler
+    
+    # Add faces
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    
+    # Top face
+    top_verts = bm.verts[len(vertices_2d):]
+    bm.faces.new(top_verts)
+    
+    # Bottom face
+    bottom_verts = bm.verts[:len(vertices_2d)]
+    bm.faces.new(bottom_verts)
+    
+    # Side faces
+    for i in range(len(vertices_2d)):
+        v1 = bottom_verts[i]
+        v2 = bottom_verts[(i + 1) % len(vertices_2d)]
+        v3 = top_verts[(i + 1) % len(vertices_2d)]
+        v4 = top_verts[i]
+        bm.faces.new([v1, v2, v3, v4])
+        
+    bm.to_mesh(mesh)
+    bm.free()
+    
+    if material:
+        obj.data.materials.append(material)
+        
+    bpy.context.collection.objects.link(obj)
+    return obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_cheese_yellow = make_material("cheese_yellow", (0.9, 0.8, 0.1, 1.0))
+mat_crust_brown = make_material("crust_brown", (0.6, 0.3, 0.1, 1.0))
+mat_pepperoni_red = make_material("pepperoni_red", (0.8, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create crust base ---
+# Create primitive prism with base triangle vertices (0,0), (0.3, 0.15), (0.3, -0.15) and height 0.015 m and name it crust_base.
+# Rotate crust_base so its +Z axis aligns +Z (world).
+# Align crust_base.bottom_face to world.origin.
+# Then move by offset(0, 0, 0).
+
+vertices_2d = [(0, 0), (0.3, 0.15), (0.3, -0.15)]
+height = 0.015
+location = (0, 0, 0) # Bottom face at origin
+rotation = (0, 0, 0) # +Z aligned with world +Z
+
+crust_base = create_triangular_prism("crust_base", vertices_2d, height, location, rotation, mat_crust_brown)
+
+# --- SECTION 2 – Create cheese layer ---
+# Create primitive prism with base triangle vertices (0.01, 0.01), (0.29, 0.14), (0.29, -0.14) and height 0.002 m and name it cheese_layer.
+# Rotate cheese_layer so its +Z axis aligns +Z (world).
+# Align cheese_layer.bottom_face to crust_base.top_face.
+# Then move by offset(0, 0, 0.001).
+
+cheese_vertices_2d = [(0.01, 0.01), (0.29, 0.14), (0.29, -0.14)]
+cheese_height = 0.002
+
+# Calculate position: crust_base top face is at Z = 0.015
+# Align bottom face to crust_base.top_face means bottom Z = 0.015
+# Offset (0, 0, 0.001) means move up by 0.001
+cheese_z = 0.015 + 0.001
+
+cheese_layer = create_triangular_prism("cheese_layer", cheese_vertices_2d, cheese_height, (0, 0, cheese_z), (0, 0, 0), mat_cheese_yellow)
+
+# --- SECTION 3 – Create pepperoni toppings ---
+
+# Helper to create pepperoni
+def create_pepperoni(name, x_offset, y_offset, z_offset):
+    # Align bottom face to cheese_layer.top_face
+    # cheese_layer top face Z = cheese_z + cheese_height = 0.015 + 0.001 + 0.002 = 0.018
+    # Offset (x, y, 0.001)
+    
+    radius = 0.02 # Diameter 0.04
+    depth = 0.003
+    
+    # Base Z position: cheese top + offset Z
+    base_z = 0.018 + 0.001
+    
+    # Location
+    loc = (x_offset, y_offset, base_z)
+    
+    # Create cylinder
+    pepperoni = add_cylinder(name, radius, depth, loc, (0, 0, 0), mat_pepperoni_red)
+    return pepperoni
+
+pepperoni_1 = create_pepperoni("pepperoni_1", 0.1, 0.05, 0.001)
+pepperoni_2 = create_pepperoni("pepperoni_2", 0.15, -0.05, 0.001)
+pepperoni_3 = create_pepperoni("pepperoni_3", 0.2, 0.0, 0.001)
+
+```

@@ -1,0 +1,43 @@
+{
+  "id": "9ed1c015-df11-41de-978e-963d0fb9ffc4",
+  "name": "Geometric Pattern",
+  "instruction": "Can you create a 3D geometric pattern? It should consist of interconnected hexagons forming a honeycomb structure.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object consists of interconnected hexagons.",
+        "The overall structure resembles a honeycomb."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The haxagons are proportionate to the whole pattern."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hexagons are arranged in a way that maintains structural integrity.",
+        "The honeycomb structure allows for interconnectivity between hexagons."
+      ],
+      "Object distance and contact": [
+        "There are no gaps between adjacent hexagons.",
+        "The hexagons are positioned to form a cohesive pattern."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the request for a honeycomb structure.",
+        "All specified attributes of interconnected hexagons are represented."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

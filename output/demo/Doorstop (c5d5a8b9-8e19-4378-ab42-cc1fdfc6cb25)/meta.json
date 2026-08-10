@@ -1,0 +1,43 @@
+{
+  "id": "c5d5a8b9-8e19-4378-ab42-cc1fdfc6cb25",
+  "name": "Doorstop",
+  "instruction": "Could you create a doorstop?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a doorstop.",
+        "The doorstop has a wedge shape for effective use."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The doorstop could be made from rubber, wood, or plastic."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The doorstop should be designed to fit snugly against the base of a door.",
+        "The angle of the wedge should allow for effective door holding."
+      ],
+      "Object distance and contact": [
+        "The doorstop should remain stable when in use.",
+        "The base should be wide enough to prevent tipping."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the request for a doorstop.",
+        "All necessary attributes for functionality are considered."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,39 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.8,0.8,0.85,1.0)
+mat_hardshell | diffuse_color=(0.1,0.1,0.15,1.0)
+mat_polyurethane | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_rubber | diffuse_color=(0.15,0.15,0.15,1.0)
+mat_zinc | diffuse_color=(0.6,0.6,0.65,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| suitcase_root | Composite assembly of the main suitcase body, telescopic handle, and wheel assembly | assembly_order=[body_group], [handle_group], [wheel_group] |
+
+Layer 1 – Primary Structure (Body Group)
+| ID | Description | Key attributes / placement |
+| main_shell | Composite of outer hardshell and inner lining; approx 0.65×0.45×0.28 m (W×H×D) | Align(XYZ) main_shell.center to (0,0,0); orientation=axis:+Y; mat=mat_hardshell; create_method=primitive; constraint=box 0.65x0.45x0.28; assembly_order=[body_group] |
+| outer_shell | Outer hardshell casing | Align(XYZ) outer_shell.center to main_shell.center; orientation=axis:+Y; mat=mat_hardshell; create_method=primitive; constraint=box 0.65x0.45x0.28; assembly_order=[body_group] |
+| inner_lining | Inner lining cavity | Align(XYZ) inner_lining.center to main_shell.center; orientation=axis:+Y; mat=mat_polyurethane; create_method=primitive; constraint=box 0.63x0.43x0.26; assembly_order=[body_group] |
+| zipper_track | Zipper track running around the top perimeter | Align(XYZ) zipper_track.center to main_shell.center; orientation=axis:+Y; mat=mat_zinc; create_method=primitive; constraint=box 0.66x0.01x0.29; assembly_order=[body_group] |
+
+Layer 2 – Handle Group
+| ID | Description | Key attributes / placement |
+| handle_base | Base plate for the telescopic handle | Align(XYZ) handle_base.center to main_shell.center; offset(0, 0.225, -0.14); orientation=axis:+Y; mat=mat_aluminum; create_method=primitive; constraint=box 0.1x0.02x0.05; assembly_order=[handle_group] |
+| telescopic_tube_1 | First stage telescopic tube | Align(XYZ) telescopic_tube_1.center to handle_base.center; offset(0, 0.01, 0); orientation=axis:+Y; mat=mat_aluminum; create_method=primitive; constraint=cylinder 0.015x0.3; assembly_order=[handle_group] |
+| telescopic_tube_2 | Second stage telescopic tube | Align(XYZ) telescopic_tube_2.center to telescopic_tube_1.center; offset(0, 0.15, 0); orientation=axis:+Y; mat=mat_aluminum; create_method=primitive; constraint=cylinder 0.012x0.3; assembly_order=[handle_group] |
+| handle_grip | Ergonomic handle grip | Align(XYZ) handle_grip.center to telescopic_tube_2.center; offset(0, 0.15, 0); orientation=axis:+Y; mat=mat_rubber; create_method=primitive; constraint=cylinder 0.02x0.15; assembly_order=[handle_group] |
+
+Layer 3 – Wheel Group
+| ID | Description | Key attributes / placement |
+| wheel_mount_fl | Front-left wheel mount | Align(XYZ) wheel_mount_fl.center to main_shell.center; offset(-0.25, -0.225, 0.12); orientation=axis:+Y; mat=mat_polyurethane; create_method=primitive; constraint=box 0.05x0.05x0.05; assembly_order=[wheel_group] |
+| wheel_mount_fr | Front-right wheel mount | Align(XYZ) wheel_mount_fr.center to main_shell.center; offset(0.25, -0.225, 0.12); orientation=axis:+Y; mat=mat_polyurethane; create_method=primitive; constraint=box 0.05x0.05x0.05; assembly_order=[wheel_group] |
+| wheel_mount_rl | Rear-left wheel mount | Align(XYZ) wheel_mount_rl.center to main_shell.center; offset(-0.25, -0.225, -0.12); orientation=axis:+Y; mat=mat_polyurethane; create_method=primitive; constraint=box 0.05x0.05x0.05; assembly_order=[wheel_group] |
+| wheel_mount_rr | Rear-right wheel mount | Align(XYZ) wheel_mount_rr.center to main_shell.center; offset(0.25, -0.225, -0.12); orientation=axis:+Y; mat=mat_polyurethane; create_method=primitive; constraint=box 0.05x0.05x0.05; assembly_order=[wheel_group] |
+| wheel_fl | Front-left wheel | Align(XYZ) wheel_fl.center to wheel_mount_fl.center; offset(0, -0.025, 0); orientation=axis:+X; mat=mat_rubber; create_method=primitive; constraint=cylinder 0.02x0.02; assembly_order=[wheel_group] |
+| wheel_fr | Front-right wheel | Align(XYZ) wheel_fr.center to wheel_mount_fr.center; offset(0, -0.025, 0); orientation=axis:+X; mat=mat_rubber; create_method=primitive; constraint=cylinder 0.02x0.02; assembly_order=[wheel_group] |
+| wheel_rl | Rear-left wheel | Align(XYZ) wheel_rl.center to wheel_mount_rl.center; offset(0, -0.025, 0); orientation=axis:+X; mat=mat_rubber; create_method=primitive; constraint=cylinder 0.02x0.02; assembly_order=[wheel_group] |
+| wheel_rr | Rear-right wheel | Align(XYZ) wheel_rr.center to wheel_mount_rr.center; offset(0, -0.025, 0); orientation=axis:+X; mat=mat_rubber; create_method=primitive; constraint=cylinder 0.02x0.02; assembly_order=[wheel_group] |
+
+# ----------  END_GRAPH  ----------

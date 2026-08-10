@@ -1,0 +1,42 @@
+-- MATERIAL LIBRARY --
+fabric_main | diffuse_color=(0.2,0.2,0.2,1.0)
+fabric_lining | diffuse_color=(0.8,0.8,0.8,1.0)
+metal_zipper | diffuse_color=(0.7,0.7,0.7,1.0)
+plastic_puller | diffuse_color=(0.1,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pencil_case | Composite of fabric_main + fabric_lining + metal_zipper + plastic_puller; Rectangular zippered pouch | assembly_order=[fabric_shell, lining_shell, zipper_track, pullers] |
+
+Layer 1 – Primary Structure (Fabric Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| fabric_shell | Composite of front_panel + back_panel + side_gusset; Outer shell of the pencil case | assembly_order=[front_panel, back_panel, side_gusset] |
+| front_panel | Rectangular fabric panel 0.200×0.100×0.002 m | Align(XY) front_panel.center to (0,0,0); orientation=axis:+Z; mat=fabric_main; create_method=primitive(cube) |
+| back_panel | Rectangular fabric panel 0.200×0.100×0.002 m | Align(XY) back_panel.center to (0,0,0); orientation=axis:+Z; offset(0,0,0.002); mat=fabric_main; create_method=primitive(cube) |
+| side_gusset | Rectangular fabric strip 0.200×0.050×0.002 m forming the bottom and sides | Align(XY) side_gusset.center to (0,0,0); orientation=axis:+Z; offset(0,0,-0.025); mat=fabric_main; create_method=primitive(cube) |
+
+Layer 2 – Lining
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lining_shell | Composite of front_lining + back_lining; Inner lining of the pencil case | assembly_order=[front_lining, back_lining] |
+| front_lining | Rectangular fabric panel 0.190×0.090×0.001 m | Align(XY) front_lining.center to (0,0,0); orientation=axis:+Z; offset(0,0,0.001); mat=fabric_lining; create_method=primitive(cube) |
+| back_lining | Rectangular fabric panel 0.190×0.090×0.001 m | Align(XY) back_lining.center to (0,0,0); orientation=axis:+Z; offset(0,0,-0.001); mat=fabric_lining; create_method=primitive(cube) |
+
+Layer 3 – Zipper Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| zipper_track | Composite of left_track + right_track; Metal zipper teeth along the top edge | assembly_order=[left_track, right_track] |
+| left_track | Thin metal strip 0.200×0.005×0.002 m | Align(XY) left_track.center to (-0.100,0,0); orientation=axis:+Z; offset(0,0,0.050); mat=metal_zipper; create_method=primitive(cube) |
+| right_track | Thin metal strip 0.200×0.005×0.002 m | Align(XY) right_track.center to (0.100,0,0); orientation=axis:+Z; offset(0,0,0.050); mat=metal_zipper; create_method=primitive(cube) |
+
+Layer 4 – Pullers
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pullers | Composite of left_puller + right_puller; Plastic zipper pulls | assembly_order=[left_puller, right_puller] |
+| left_puller | Small plastic tab 0.010×0.005×0.002 m | Align(XY) left_puller.center to (-0.100,0,0); orientation=axis:+Z; offset(0,0,0.052); mat=plastic_puller; create_method=primitive(cube) |
+| right_puller | Small plastic tab 0.010×0.005×0.002 m | Align(XY) right_puller.center to (0.100,0,0); orientation=axis:+Z; offset(0,0,0.052); mat=plastic_puller; create_method=primitive(cube) |
+# ----------  END_GRAPH  ----------

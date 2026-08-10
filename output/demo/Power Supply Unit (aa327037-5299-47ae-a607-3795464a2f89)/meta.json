@@ -1,0 +1,48 @@
+{
+  "id": "aa327037-5299-47ae-a607-3795464a2f89",
+  "name": "Power Supply Unit",
+  "instruction": "Create a power supply unit. It should be rectangular with a fan grill on one side. Include a power switch and a few connectors for cables.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a power supply unit.",
+        "The power supply unit has a rectangular shape.",
+        "The fan grill is located on one of the sides."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The fan grill is proportionate to the side of the power supply unit.",
+        "The power switch and connectors are appropriately sized for the unit."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The fan grill is correctly positioned to allow airflow.",
+        "The power switch is easily accessible on the unit.",
+        "The connectors are placed in a way that allows for easy cable management."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the fan grill and the power supply unit body.",
+        "The power switch is securely attached to the unit.",
+        "The connectors are properly integrated into the design of the unit."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a fan grill, power switch, and connectors as instructed.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

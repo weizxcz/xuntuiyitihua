@@ -1,0 +1,1 @@
+Design a 3D model comparing a blender and a juicer. The blender should have a tall container with blades at the bottom, while the juicer should have a spout for juice and a separate container for pulp. Position them side by side.

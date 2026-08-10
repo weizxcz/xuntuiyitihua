@@ -1,0 +1,43 @@
+{
+  "id": "abc1c82e-5d2e-49ce-9083-03f82a2776c5",
+  "name": "Patterned Rug",
+  "instruction": "Design a 3D model of a rectangular rug with a geometric pattern. How does it compare to a rug with a floral pattern?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a rectangular rug.",
+        "The rug features a geometric pattern."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pattern on the rug is proportionate to the rug."
+      ],
+      "Texture and surface detail": [
+        "The rug has a textured surface that suggests a fabric material."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The rug lays flat on the surface without any distortion.",
+        "The edges of the rug are straight and well-defined."
+      ],
+      "Object distance and contact": [
+        "The rug does not overlap with any surrounding objects.",
+        "The rug is positioned correctly on the floor."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The rug is accurately designed as a rectangular shape with a geometric pattern.",
+        "There is a clear differentiation between the geometric pattern and a floral pattern."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

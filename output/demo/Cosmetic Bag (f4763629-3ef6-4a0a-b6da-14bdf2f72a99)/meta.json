@@ -1,0 +1,42 @@
+{
+  "id": "f4763629-3ef6-4a0a-b6da-14bdf2f72a99",
+  "name": "Cosmetic Bag",
+  "instruction": "Can you create a cosmetic bag? It should be rectangular with a zippered top. Include small compartments inside for organizing items.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a cosmetic bag.",
+        "The bag is rectangular in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The zippered top is proportionate to the bag."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The compartments are appropriately sized for organizing small items.",
+        "The zippered top allows for easy access to the contents."
+      ],
+      "Object distance and contact": [
+        "The compartments do not interfere with the opening and closing of the zippered top."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the cosmetic bag are accurately represented.",
+        "The design includes a rectangular shape, zippered top, and internal compartments."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

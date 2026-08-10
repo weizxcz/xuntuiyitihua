@@ -1,0 +1,42 @@
+{
+  "id": "2b0184c6-c1c5-4d90-9c29-146ba4d93025",
+  "name": "Toothbrush Holder",
+  "instruction": "Create a simple 3D model of a toothbrush holder.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a toothbrush holder.",
+        "The toothbrush holder has a cylindrical or rectangular shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The holder should be proportionate to typical toothbrush sizes."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The holder must have enough space to accommodate multiple toothbrushes.",
+        "The base should be stable to prevent tipping."
+      ],
+      "Object distance and contact": [
+        "The holder should not have any internal obstructions that prevent toothbrush placement."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design adheres to the instruction to create a toothbrush holder.",
+        "No additional features are included that deviate from the basic design."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

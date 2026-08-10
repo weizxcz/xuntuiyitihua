@@ -1,0 +1,1 @@
+Design a 3D model of a hot air balloon. The balloon should be large and rounded, with a basket attached below it. Include ropes connecting the basket to the balloon. Add a burner system for heating the air inside the balloon.

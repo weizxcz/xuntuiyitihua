@@ -1,0 +1,385 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects in the scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure collections are clean
+    for col in bpy.data.collections:
+        bpy.data.collections.remove(col)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign a material to an object's first material slot."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive(type, name, size, location, rotation_euler):
+    """Add a primitive object, set name, location, and rotation."""
+    bpy.ops.object.select_all(action='DESELECT')
+    
+    if type == 'cube':
+        # size is (x, y, z)
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif type == 'cylinder':
+        # size is (diameter, height) -> radius, depth
+        radius = size[0] / 2
+        depth = size[1]
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+        obj = bpy.context.active_object
+        # Default cylinder is along Z. If we want it along Y later, we rotate.
+    elif type == 'sphere':
+        # size is diameter
+        radius = size[0] / 2
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=(0, 0, 0))
+        obj = bpy.context.active_object
+    elif type == 'torus':
+        # size is (major_radius, minor_radius)
+        major_r = size[0] / 2
+        minor_r = size[1] / 2
+        bpy.ops.mesh.primitive_torus_add(major_radius=major_r, minor_radius=minor_r, location=(0, 0, 0))
+        obj = bpy.context.active_object
+    else:
+        return None
+
+    obj.name = name
+    obj.location = location
+    obj.rotation_euler = rotation_euler
+    obj.select_set(True)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """
+    Align a specific axis of an object to a target vector.
+    axis_to_align: 'X', 'Y', or 'Z'
+    target_vector: Vector in world space
+    """
+    # Get current world matrix
+    mat = obj.matrix_world.copy()
+    
+    # Get the current direction of the axis to align
+    if axis_to_align == 'X':
+        current_axis = mat.to_3x3().col[0]
+    elif axis_to_align == 'Y':
+        current_axis = mat.to_3x3().col[1]
+    elif axis_to_align == 'Z':
+        current_axis = mat.to_3x3().col[2]
+    
+    # Calculate rotation matrix to align current_axis to target_vector
+    # We use quaternion rotation
+    rot_quat = current_axis.rotation_difference(target_vector.normalized())
+    
+    # Apply rotation
+    obj.rotation_euler = rot_quat.to_euler()
+    obj.update_tag()
+
+def boolean_union(objects_to_union, result_name):
+    """
+    Perform a boolean union on a list of objects.
+    Returns the resulting object.
+    """
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+    
+    # Set active object as the first one
+    bpy.context.view_layer.objects.active = objects_to_union[0]
+    
+    # Apply modifiers to clear history before boolean if needed, 
+    # but for simple union, we can use the modifier stack.
+    # However, to get a clean mesh named 'result_name', we usually:
+    # 1. Add Boolean modifier to the first object with the others as operands.
+    # 2. Apply it.
+    
+    target = objects_to_union[0]
+    
+    # Add boolean modifier to target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    
+    # Add other objects to the modifier's object list
+    for obj in objects_to_union[1:]:
+        mod.object = obj
+        # Trigger update
+        bpy.context.view_layer.update()
+        
+    # Apply the modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Rename
+    target.name = result_name
+    
+    # Deselect all
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    return target
+
+def boolean_subtract(base_obj, cutter_obj, result_name):
+    """
+    Subtract cutter_obj from base_obj.
+    """
+    bpy.ops.object.select_all(action='DESELECT')
+    base_obj.select_set(True)
+    bpy.context.view_layer.objects.active = base_obj
+    
+    mod = base_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    base_obj.name = result_name
+    
+    bpy.ops.object.select_all(action='DESELECT')
+    base_obj.select_set(True)
+    bpy.context.view_layer.objects.active = base_obj
+    
+    return base_obj
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_body = make_material("mat_body", (0.2, 0.2, 0.2, 1.0))
+mat_joint = make_material("mat_joint", (0.1, 0.1, 0.1, 1.0))
+mat_sword_blade = make_material("mat_sword_blade", (0.8, 0.8, 0.9, 1.0))
+mat_sword_hilt = make_material("mat_sword_hilt", (0.6, 0.4, 0.1, 1.0))
+mat_shield_body = make_material("mat_shield_body", (0.7, 0.1, 0.1, 1.0))
+mat_shield_trim = make_material("mat_shield_trim", (0.8, 0.8, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Torso Group ---
+# Create chest_plate
+chest_plate = add_primitive('cube', 'chest_plate', (0.15, 0.20, 0.05), (0, 0, 0.25), (0, 0, 0))
+apply_material(chest_plate, mat_body)
+
+# Create spine_segment
+spine_segment = add_primitive('cylinder', 'spine_segment', (0.04, 0.10), (0, 0, 0.15), (0, 0, 0))
+apply_material(spine_segment, mat_body)
+
+# Create pelvis_plate
+pelvis_plate = add_primitive('cube', 'pelvis_plate', (0.12, 0.15, 0.04), (0, 0, 0.05), (0, 0, 0))
+apply_material(pelvis_plate, mat_body)
+
+# Boolean-union torso
+torso = boolean_union([chest_plate, spine_segment, pelvis_plate], 'torso')
+
+# --- SECTION 2 – Create Head Group ---
+# Create skull_base
+skull_base = add_primitive('sphere', 'skull_base', 0.12, (0, 0, 0.38), (0, 0, 0))
+apply_material(skull_base, mat_body)
+
+# Create jaw_plate
+jaw_plate = add_primitive('cube', 'jaw_plate', (0.08, 0.06, 0.04), (0, 0, 0.32), (0, 0, 0))
+apply_material(jaw_plate, mat_body)
+
+# Boolean-union head
+head = boolean_union([skull_base, jaw_plate], 'head')
+
+# --- SECTION 3 – Create Left Arm Group ---
+# Create shoulder_joint_L
+shoulder_joint_L = add_primitive('sphere', 'shoulder_joint_L', 0.06, (-0.10, 0, 0.35), (0, 0, 0))
+apply_material(shoulder_joint_L, mat_joint)
+
+# Create upper_arm_L (Cylinder, Z aligns Y)
+upper_arm_L = add_primitive('cylinder', 'upper_arm_L', (0.04, 0.15), (-0.10, 0, 0.25), (0, 0, 0))
+apply_material(upper_arm_L, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(upper_arm_L, 'Z', Vector((0, 1, 0)))
+
+# Create elbow_joint_L
+elbow_joint_L = add_primitive('sphere', 'elbow_joint_L', 0.05, (-0.10, 0, 0.15), (0, 0, 0))
+apply_material(elbow_joint_L, mat_joint)
+
+# Create forearm_L (Cylinder, Z aligns Y)
+forearm_L = add_primitive('cylinder', 'forearm_L', (0.035, 0.12), (-0.10, 0, 0.08), (0, 0, 0))
+apply_material(forearm_L, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(forearm_L, 'Z', Vector((0, 1, 0)))
+
+# Create wrist_joint_L
+wrist_joint_L = add_primitive('sphere', 'wrist_joint_L', 0.04, (-0.10, 0, 0.02), (0, 0, 0))
+apply_material(wrist_joint_L, mat_joint)
+
+# Create hand_L
+hand_L = add_primitive('cube', 'hand_L', (0.03, 0.04, 0.02), (-0.10, 0, -0.01), (0, 0, 0))
+apply_material(hand_L, mat_body)
+
+# Boolean-union arm_L
+arm_L = boolean_union([shoulder_joint_L, upper_arm_L, elbow_joint_L, forearm_L, wrist_joint_L, hand_L], 'arm_L')
+
+# --- SECTION 4 – Create Right Arm Group ---
+# Create shoulder_joint_R
+shoulder_joint_R = add_primitive('sphere', 'shoulder_joint_R', 0.06, (0.10, 0, 0.35), (0, 0, 0))
+apply_material(shoulder_joint_R, mat_joint)
+
+# Create upper_arm_R (Cylinder, Z aligns Y)
+upper_arm_R = add_primitive('cylinder', 'upper_arm_R', (0.04, 0.15), (0.10, 0, 0.25), (0, 0, 0))
+apply_material(upper_arm_R, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(upper_arm_R, 'Z', Vector((0, 1, 0)))
+
+# Create elbow_joint_R
+elbow_joint_R = add_primitive('sphere', 'elbow_joint_R', 0.05, (0.10, 0, 0.15), (0, 0, 0))
+apply_material(elbow_joint_R, mat_joint)
+
+# Create forearm_R (Cylinder, Z aligns Y)
+forearm_R = add_primitive('cylinder', 'forearm_R', (0.035, 0.12), (0.10, 0, 0.08), (0, 0, 0))
+apply_material(forearm_R, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(forearm_R, 'Z', Vector((0, 1, 0)))
+
+# Create wrist_joint_R
+wrist_joint_R = add_primitive('sphere', 'wrist_joint_R', 0.04, (0.10, 0, 0.02), (0, 0, 0))
+apply_material(wrist_joint_R, mat_joint)
+
+# Create hand_R
+hand_R = add_primitive('cube', 'hand_R', (0.03, 0.04, 0.02), (0.10, 0, -0.01), (0, 0, 0))
+apply_material(hand_R, mat_body)
+
+# Boolean-union arm_R
+arm_R = boolean_union([shoulder_joint_R, upper_arm_R, elbow_joint_R, forearm_R, wrist_joint_R, hand_R], 'arm_R')
+
+# --- SECTION 5 – Create Left Leg Group ---
+# Create hip_joint_L
+hip_joint_L = add_primitive('sphere', 'hip_joint_L', 0.07, (-0.06, 0, 0.02), (0, 0, 0))
+apply_material(hip_joint_L, mat_joint)
+
+# Create thigh_L (Cylinder, Z aligns Y)
+thigh_L = add_primitive('cylinder', 'thigh_L', (0.05, 0.20), (-0.06, 0, -0.10), (0, 0, 0))
+apply_material(thigh_L, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(thigh_L, 'Z', Vector((0, 1, 0)))
+
+# Create knee_joint_L
+knee_joint_L = add_primitive('sphere', 'knee_joint_L', 0.06, (-0.06, 0, -0.20), (0, 0, 0))
+apply_material(knee_joint_L, mat_joint)
+
+# Create shin_L (Cylinder, Z aligns Y)
+shin_L = add_primitive('cylinder', 'shin_L', (0.04, 0.20), (-0.06, 0, -0.30), (0, 0, 0))
+apply_material(shin_L, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(shin_L, 'Z', Vector((0, 1, 0)))
+
+# Create ankle_joint_L
+ankle_joint_L = add_primitive('sphere', 'ankle_joint_L', 0.05, (-0.06, 0, -0.40), (0, 0, 0))
+apply_material(ankle_joint_L, mat_joint)
+
+# Create foot_L
+foot_L = add_primitive('cube', 'foot_L', (0.04, 0.10, 0.03), (-0.06, 0, -0.45), (0, 0, 0))
+apply_material(foot_L, mat_body)
+
+# Boolean-union leg_L
+leg_L = boolean_union([hip_joint_L, thigh_L, knee_joint_L, shin_L, ankle_joint_L, foot_L], 'leg_L')
+
+# --- SECTION 6 – Create Right Leg Group ---
+# Create hip_joint_R
+hip_joint_R = add_primitive('sphere', 'hip_joint_R', 0.07, (0.06, 0, 0.02), (0, 0, 0))
+apply_material(hip_joint_R, mat_joint)
+
+# Create thigh_R (Cylinder, Z aligns Y)
+thigh_R = add_primitive('cylinder', 'thigh_R', (0.05, 0.20), (0.06, 0, -0.10), (0, 0, 0))
+apply_material(thigh_R, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(thigh_R, 'Z', Vector((0, 1, 0)))
+
+# Create knee_joint_R
+knee_joint_R = add_primitive('sphere', 'knee_joint_R', 0.06, (0.06, 0, -0.20), (0, 0, 0))
+apply_material(knee_joint_R, mat_joint)
+
+# Create shin_R (Cylinder, Z aligns Y)
+shin_R = add_primitive('cylinder', 'shin_R', (0.04, 0.20), (0.06, 0, -0.30), (0, 0, 0))
+apply_material(shin_R, mat_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(shin_R, 'Z', Vector((0, 1, 0)))
+
+# Create ankle_joint_R
+ankle_joint_R = add_primitive('sphere', 'ankle_joint_R', 0.05, (0.06, 0, -0.40), (0, 0, 0))
+apply_material(ankle_joint_R, mat_joint)
+
+# Create foot_R
+foot_R = add_primitive('cube', 'foot_R', (0.04, 0.10, 0.03), (0.06, 0, -0.45), (0, 0, 0))
+apply_material(foot_R, mat_body)
+
+# Boolean-union leg_R
+leg_R = boolean_union([hip_joint_R, thigh_R, knee_joint_R, shin_R, ankle_joint_R, foot_R], 'leg_R')
+
+# --- SECTION 7 – Create Sword Accessory ---
+# Create blade
+blade = add_primitive('cube', 'blade', (0.01, 0.25, 0.005), (-0.10, 0.05, 0.05), (0, 0, 0))
+apply_material(blade, mat_sword_blade)
+
+# Create hilt
+hilt = add_primitive('cube', 'hilt', (0.02, 0.05, 0.01), (-0.10, 0.05, -0.05), (0, 0, 0))
+apply_material(hilt, mat_sword_hilt)
+
+# Create pommel
+pommel = add_primitive('sphere', 'pommel', 0.02, (-0.10, 0.05, -0.08), (0, 0, 0))
+apply_material(pommel, mat_sword_hilt)
+
+# Boolean-union sword
+sword = boolean_union([blade, hilt, pommel], 'sword')
+
+# --- SECTION 8 – Create Shield Accessory ---
+# Create shield_body (Cylinder, Z aligns Y)
+shield_body = add_primitive('cylinder', 'shield_body', (0.15, 0.02), (0.10, 0.05, 0.05), (0, 0, 0))
+apply_material(shield_body, mat_shield_body)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(shield_body, 'Z', Vector((0, 1, 0)))
+
+# Create shield_trim (Torus, Z aligns Y)
+shield_trim = add_primitive('torus', 'shield_trim', (0.15, 0.01), (0.10, 0.05, 0.05), (0, 0, 0))
+apply_material(shield_trim, mat_shield_trim)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(shield_trim, 'Z', Vector((0, 1, 0)))
+
+# Boolean-union shield
+shield = boolean_union([shield_body, shield_trim], 'shield')
+
+# --- SECTION 9 – Assemble Root Composite ---
+# Boolean-union all parts
+root = boolean_union([torso, head, arm_L, arm_R, leg_L, leg_R, sword, shield], 'root')
+
+# Final cleanup: deselect all
+bpy.ops.object.select_all(action='DESELECT')
+root.select_set(True)
+bpy.context.view_layer.objects.active = root
+```

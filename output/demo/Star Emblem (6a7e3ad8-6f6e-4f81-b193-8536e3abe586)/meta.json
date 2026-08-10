@@ -1,0 +1,45 @@
+{
+  "id": "6a7e3ad8-6f6e-4f81-b193-8536e3abe586",
+  "name": "Star Emblem",
+  "instruction": "Design a five-pointed star emblem with a circular border around it.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a five-pointed star.",
+        "The star has five distinct points.",
+        "The star is centrally located within the circular border."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The star should be well-centered within the circular border.",
+        "The points of the star should be evenly spaced."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The star should be flat and not extruded.",
+        "The circular border should enclose the star without overlapping."
+      ],
+      "Object distance and contact": [
+        "There should be a consistent gap between the star and the circular border.",
+        "The star should not intersect with the border."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately represents a five-pointed star with a circular border.",
+        "All specified attributes are clearly defined."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

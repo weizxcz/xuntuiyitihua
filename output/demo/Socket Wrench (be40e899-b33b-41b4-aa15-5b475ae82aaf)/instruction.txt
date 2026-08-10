@@ -1,0 +1,1 @@
+Create a 3D model of a socket wrench. The handle should be long and cylindrical, with a rotating head that can hold different socket sizes. Include a mechanism for adjusting the direction of rotation. The wrench should be placed on a workbench with various socket sizes scattered around it.

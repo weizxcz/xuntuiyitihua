@@ -1,0 +1,90 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material mat_grey_plastic; diffuse_color = (0.50,0.50,0.50,1.00).
+Define material mat_screen_blue; diffuse_color = (0.05,0.10,0.20,1.00).
+Define material mat_white_plastic; diffuse_color = (0.90,0.90,0.90,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Monitor Stand Assembly  ---
+Create primitive cuboid with size 0.05×0.05×0.15 m and name it monitor_stand_neck.
+Rotate monitor_stand_neck so its +Z axis aligns +Z (world).
+Anchor monitor_stand_neck to monitor_stand_base.top_face.
+Then move by offset(0,0,0.005).
+
+Create primitive cuboid with size 0.20×0.15×0.01 m and name it monitor_stand_base.
+Rotate monitor_stand_base so its +Z axis aligns +Z (world).
+Anchor monitor_stand_base to monitor_stand.bottom_face.
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Monitor Screen and Frame  ---
+Create primitive cuboid with size 0.50×0.30×0.005 m and name it monitor_screen.
+Rotate monitor_screen so its +Z axis aligns +Z (world).
+Anchor monitor_screen to monitor_stand.top_face.
+
+Create primitive cuboid with size 0.52×0.32×0.01 m and name it monitor_frame.
+Rotate monitor_frame so its +Z axis aligns +Z (world).
+Anchor monitor_frame to monitor_screen.center.
+Then move by offset(0,0,0.002).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create CPU Tower Assembly  ---
+Create primitive cuboid with size 0.20×0.45×0.40 m and name it cpu_tower_body.
+Rotate cpu_tower_body so its +Z axis aligns +Z (world).
+Anchor cpu_tower_body to desk_surface.center.
+Then move by offset(0.4,0,0.225).
+
+Create primitive cuboid with size 0.20×0.45×0.01 m and name it cpu_front_panel.
+Rotate cpu_front_panel so its +Z axis aligns +Z (world).
+Anchor cpu_front_panel to cpu_tower_body.front_face.
+Then move by offset(0,0,0.005).
+
+Create primitive cylinder with diameter 0.01 m and height 0.01 m and name it cpu_power_button.
+Rotate cpu_power_button so its +Z axis aligns +Z (world).
+Anchor cpu_power_button to cpu_front_panel.center.
+Then move by offset(0,0.1,0.006).
+
+Create primitive cuboid with size 0.02×0.01×0.01 m and name it cpu_usb_port.
+Rotate cpu_usb_port so its +Z axis aligns +Z (world).
+Anchor cpu_usb_port to cpu_front_panel.center.
+Then move by offset(0,-0.1,0.006).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Input Devices Assembly  ---
+Create primitive cuboid with size 0.45×0.15×0.02 m and name it keyboard_base.
+Rotate keyboard_base so its +Z axis aligns +Z (world).
+Anchor keyboard_base to desk_surface.center.
+Then move by offset(0,0.3,0.01).
+
+Create primitive cuboid with size 0.40×0.10×0.005 m and name it keyboard_keys.
+Rotate keyboard_keys so its +Z axis aligns +Z (world).
+Anchor keyboard_keys to keyboard_base.top_face.
+Then move by offset(0,0,0.012).
+
+Create primitive cuboid with size 0.10×0.06×0.04 m and name it mouse_body.
+Rotate mouse_body so its +Z axis aligns +Z (world).
+Anchor mouse_body to desk_surface.center.
+Then move by offset(0.25,0.3,0.02).
+
+Create primitive cuboid with size 0.05×0.06×0.01 m and name it mouse_button.
+Rotate mouse_button so its +Z axis aligns +Z (world).
+Anchor mouse_button to mouse_body.top_face.
+Then move by offset(0,0,0.025).
+
+Stage 4 complete.
+
+All stages complete.

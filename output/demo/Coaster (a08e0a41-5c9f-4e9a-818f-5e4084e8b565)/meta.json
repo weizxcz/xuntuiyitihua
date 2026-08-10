@@ -1,0 +1,41 @@
+{
+  "id": "a08e0a41-5c9f-4e9a-818f-5e4084e8b565",
+  "name": "Coaster",
+  "instruction": "Design a coaster with a circular shape, 4 inches in diameter, and a simple pattern.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a coaster.",
+        "The coaster has a circular shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The diameter of the coaster is 4 inches."
+      ],
+      "Proportion": [
+        "The coaster features a simple pattern."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The coaster maintains a flat profile appropriate for use under cups."
+      ],
+      "Object distance and contact": [
+        "The coaster has a uniform thickness across its surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The coaster's shape and size are accurately represented as circular with a 4-inch diameter.",
+        "The design includes a simple pattern as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,290 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size=(1,1,1), location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top=0, radius_bottom=0.5, depth=1, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius=0.5, location=(0,0,0)):
+    """Add a UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_text_object(name, text="Text", size=1.0, location=(0,0,0)):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.data.size = size
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a target world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    target = vector.normalized()
+    current = local_axis.copy()
+    
+    # Calculate rotation
+    rot_quat = current.rotation_between(target)
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = rot_quat
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and points on objects."""
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        """Get the world space center of the object's bounding box."""
+        # Use the object's location if it's a primitive or simple mesh
+        # For more complex meshes, bounding box is safer
+        bm = bmesh.new()
+        bm.from_mesh(self.obj.data)
+        bmesh.ops.transform(bm, matrix=Matrix.Identity(4)) # Ensure local coords are clean if needed, though from_mesh handles it
+        # Actually, bmesh.from_mesh gives local coords. We need world coords.
+        # Easier: Use the object's location for primitives, or calculate bbox in world space.
+        
+        # Robust way: Transform vertices to world space
+        verts_world = [self.obj.matrix_world @ v.co for v in self.obj.data.vertices]
+        if not verts_world:
+            return self.obj.location
+        
+        center = average(verts_world)
+        return center
+
+    def face_center_world(self, face_index=0):
+        """Get the world space center of a specific face."""
+        if face_index >= len(self.obj.data.polygons):
+            return self.obj.location
+        
+        poly = self.obj.data.polygons[face_index]
+        # Get vertices of the face
+        verts = [self.obj.matrix_world @ self.obj.data.vertices[i].co for i in poly.vertices]
+        return average(verts)
+
+    def radial_point_world(self, direction=(1,0,0), radius=1.0):
+        """Get a point on the radial surface in a given direction."""
+        # Approximate by taking center + direction * radius
+        center = self.center_world()
+        return center + Vector(direction) * radius
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract operation using the modifier stack."""
+    target = bpy.data.objects.get(target_name)
+    cutter = bpy.data.objects.get(cutter_name)
+    
+    if not target or not cutter:
+        print(f"Error: Object '{target_name}' or '{cutter_name}' not found.")
+        return
+
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Remove cutter after use to keep scene clean, or keep it.
+    # The prompt says "keep fabric_shell", implying the result.
+    # We usually delete the cutter after boolean to avoid clutter, unless it's reused.
+    # Here, foam_core is used once.
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(obj1_name, obj2_name):
+    """Perform a boolean union."""
+    obj1 = bpy.data.objects.get(obj1_name)
+    obj2 = bpy.data.objects.get(obj2_name)
+    
+    if not obj1 or not obj2:
+        print(f"Error: Object '{obj1_name}' or '{obj2_name}' not found.")
+        return
+
+    mod = obj1.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = obj2
+    
+    bpy.context.view_layer.objects.active = obj1
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(obj2, do_unlink=True)
+
+def add_bevel(obj_name, radius=0.01, segments=4, limit_method='ANGLE'):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects.get(obj_name)
+    if not obj:
+        print(f"Error: Object '{obj_name}' not found.")
+        return
+
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = limit_method
+    mod.angle_limit = math.radians(30) # Default angle limit
+    
+    # Apply bevel
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but good practice for clean scripts)
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_fabric_cotton = make_material("fabric_cotton", diffuse_color=(0.95, 0.95, 0.92, 1.0))
+mat_foam_memory = make_material("foam_memory", diffuse_color=(0.90, 0.90, 0.88, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create foam core ---
+
+# Create primitive cuboid with size 0.65×0.45×0.12 m and name it foam_core.
+# Note: add_cube takes half-sizes in scale, so we pass full sizes and scale by 0.5 internally or just set scale.
+# My helper add_cube sets scale = size/2. So passing (0.65, 0.45, 0.12) results in a cube of that size.
+foam_core = add_cube("foam_core", size=(0.65, 0.45, 0.12), location=(0,0,0), rotation=(0,0,0))
+foam_core.material_slots[0].material = mat_foam_memory
+
+# Rotate foam_core so its +Z axis aligns +Z (world).
+# It is already aligned, but we enforce it.
+align_axis_to_vector(foam_core, 'Z', (0,0,1))
+
+# Anchor foam_core to pillow_root.center.
+# pillow_root does not exist yet. The prompt implies it might be a reference point.
+# "Anchor foam_core to pillow_root.center"
+# If pillow_root doesn't exist, we assume it's the world origin or a placeholder.
+# However, looking at Section 2, fabric_shell also anchors to pillow_root.center.
+# And foam_core is inside fabric_shell.
+# Let's assume pillow_root is a conceptual anchor. If it's not in the scene, we treat it as (0,0,0).
+# To be safe, I will create a dummy object named pillow_root at origin if it doesn't exist, 
+# OR simply anchor to (0,0,0) if pillow_root is not defined.
+# Given the strictness, I'll check if pillow_root exists. If not, I'll assume origin.
+
+pillow_root = bpy.data.objects.get("pillow_root")
+if not pillow_root:
+    # Create a dummy anchor object if it doesn't exist
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0,0,0))
+    pillow_root = bpy.context.active_object
+    pillow_root.name = "pillow_root"
+
+# Anchor foam_core to pillow_root.center
+loc = pillow_root.location
+foam_core.location = loc
+
+# Then move by offset(0,0,0).
+foam_core.location += Vector((0,0,0))
+
+# Bevel foam_core.edges with radius 0.05 m, segments 8.
+add_bevel("foam_core", radius=0.05, segments=8)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create fabric shell ---
+
+# Create primitive cuboid with size 0.68×0.48×0.13 m and name it fabric_shell.
+fabric_shell = add_cube("fabric_shell", size=(0.68, 0.48, 0.13), location=(0,0,0), rotation=(0,0,0))
+fabric_shell.material_slots[0].material = mat_fabric_cotton
+
+# Rotate fabric_shell so its +Z axis aligns +Z (world).
+align_axis_to_vector(fabric_shell, 'Z', (0,0,1))
+
+# Anchor fabric_shell to pillow_root.center.
+fabric_shell.location = pillow_root.location
+
+# Then move by offset(0,0,0).
+fabric_shell.location += Vector((0,0,0))
+
+# Boolean-subtract foam_core from fabric_shell; keep fabric_shell.
+# Note: foam_core was already applied and potentially removed in boolean_subtract helper?
+# Wait, my boolean_subtract helper removes the cutter.
+# But I need foam_core to exist for the boolean.
+# Let's re-check the helper.
+# `bpy.data.objects.remove(cutter, do_unlink=True)` removes it.
+# So foam_core is gone.
+# I need to recreate foam_core or adjust the helper to not remove it if it's needed for subsequent steps?
+# No, foam_core is only used once.
+# BUT, I need to make sure foam_core exists BEFORE boolean_subtract is called.
+# In Section 1, I created foam_core.
+# In Section 2, I call boolean_subtract("foam_core", "fabric_shell").
+# This will work if foam_core is still in the scene.
+# My helper removes it. That's fine.
+
+boolean_subtract("foam_core", "fabric_shell")
+
+# Stage 2 complete.
+
+# All stages complete.
+```

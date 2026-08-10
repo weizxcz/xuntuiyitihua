@@ -1,0 +1,14 @@
+-- MATERIAL LIBRARY --
+crust_dough | diffuse_color=(0.96,0.84,0.62,1.0)
+fill_apple | diffuse_color=(0.85,0.15,0.10,0.9)
+glaze_eggs | diffuse_color=(0.95,0.85,0.50,0.6)
+sugar_crystal | diffuse_color=(1.0,1.0,1.0,0.8)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pie_base | Composite of crust_base + filling + crust_top + glaze + sugar | (1) execute 'crust_base': Align(XY) pie_base.center to table.center; orientation=axis:+Z; mat=crust_dough; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Circle, radius R=0.100 m. **Extrude:** thickness t=0.015 m along +Z with caps. (2) execute 'filling': Align(XY) pie_base.center to crust_base.center; offset(0,0,0.015); orientation=axis:+Z; mat=fill_apple; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Circle, radius R=0.090 m. **Extrude:** thickness t=0.020 m along +Z with caps. (3) execute 'crust_top': Align(XY) pie_base.center to crust_base.center; offset(0,0,0.035); orientation=axis:+Z; mat=crust_dough; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Circle, radius R=0.100 m. **Extrude:** thickness t=0.005 m along +Z with caps. (4) execute 'glaze': Align(XY) pie_base.center to crust_top.center; offset(0,0,0.040); orientation=axis:+Z; mat=glaze_eggs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Circle, radius R=0.095 m. **Extrude:** thickness t=0.001 m along +Z with caps. (5) execute 'sugar': Align(XY) pie_base.center to crust_top.center; offset(0,0,0.041); orientation=axis:+Z; mat=sugar_crystal; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Circle, radius R=0.095 m. **Extrude:** thickness t=0.0005 m along +Z with caps. |
+
+# ----------  END_GRAPH  ----------

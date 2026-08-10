@@ -1,0 +1,49 @@
+{
+  "id": "c926d2c5-f9b4-4506-a3b2-016669dc3d03",
+  "name": "Luggage",
+  "instruction": "Create a 3D model of luggage. The luggage should be rectangular with wheels and a telescoping handle. Compare it with a duffel bag.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is luggage.",
+        "The luggage is rectangular in shape.",
+        "The luggage features a telescoping handle.",
+        "The luggage has wheels for mobility."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportions of the luggage are consistent with typical luggage design.",
+        "The wheels are proportionate to the size of the luggage.",
+        "The handle is proportionate to the luggage height."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The wheels are positioned at the base of the luggage for stability.",
+        "The telescoping handle is located at the top of the luggage.",
+        "The luggage maintains a rectangular form when viewed from all angles."
+      ],
+      "Object distance and contact": [
+        "The wheels do not overlap with the body of the luggage.",
+        "The handle retracts into the luggage without obstruction.",
+        "There is sufficient clearance between the wheels and the luggage body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The luggage is accurately represented as rectangular with wheels and a handle.",
+        "The comparison with a duffel bag is acknowledged but not visually represented."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

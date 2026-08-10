@@ -1,0 +1,362 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Alpha'].default_value = diffuse_color[3]
+    bsdf.inputs['Specular IOR Level'].default_value = 0.0
+    bsdf.inputs['Transmission'].default_value = 1.0
+    bsdf.inputs['Transmission Roughness'].default_value = 0.0
+    return mat
+
+def add_cylinder(radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    return bpy.context.active_object
+
+def add_uvsphere(radius, width_segments=16, height_segments=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, align='WORLD', location=(0, 0, 0))
+    return bpy.context.active_object
+
+def add_cube(size):
+    bpy.ops.mesh.primitive_cube_add(size=size, align='WORLD', location=(0, 0, 0))
+    return bpy.context.active_object
+
+def add_disc(radius):
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', align='WORLD', location=(0, 0, 0))
+    return bpy.context.active_object
+
+def align_axis_to_vector(obj, axis_to_align='Z', target_vector=None):
+    """Aligns an object's local axis to a target vector."""
+    if target_vector is None:
+        return
+    
+    # Get current axis vector in world space
+    if axis_to_align == 'X':
+        current_axis = obj.matrix_world.to_3x3().col[0]
+    elif axis_to_align == 'Y':
+        current_axis = obj.matrix_world.to_3x3().col[1]
+    else: # Z
+        current_axis = obj.matrix_world.to_3x3().col[2]
+        
+    # Calculate rotation
+    rot_quat = current_axis.rotation_difference(target_vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_index):
+    """Returns the world location of a specific face center."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+    face = bm.faces[face_index]
+    # Calculate center in local space
+    center_local = sum((v.co for v in face.verts), Vector()) / len(face.verts)
+    # Convert to world space
+    center_world = obj.matrix_world @ center_local
+    bm.free()
+    return center_world
+
+def get_face_normal(obj, face_index):
+    """Returns the world normal of a specific face."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+    face = bm.faces[face_index]
+    normal_world = obj.matrix_world.to_3x3() @ face.normal
+    bm.free()
+    return normal_world
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Performs a boolean subtract using the modifier stack."""
+    # Ensure target is active for modifier application if needed, but we'll apply later
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter_obj
+    
+    # Apply modifier immediately to keep geometry clean for subsequent steps
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, other_obj):
+    """Performs a boolean union."""
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+
+def align_object_to_face(obj_target, obj_source, target_face_idx, source_face_idx):
+    """Aligns obj_source to obj_target such that source_face touches target_face."""
+    target_center = get_face_center(obj_target, target_face_idx)
+    target_normal = get_face_normal(obj_target, target_face_idx)
+    
+    source_center = get_face_center(obj_source, source_face_idx)
+    source_normal = get_face_normal(obj_source, source_face_idx)
+    
+    # 1. Align normals
+    # We want source_normal to point in same direction as target_normal (or opposite depending on context)
+    # Here we assume standard outward normals. If we are placing bottom of sphere on bottom of cylinder,
+    # sphere normal at bottom points -Z, cylinder bottom normal points -Z. They should align.
+    align_axis_to_vector(obj_source, 'Z', target_normal)
+    
+    # 2. Align centers
+    # Move source so its face center matches target face center
+    obj_source.location = target_center - (obj_source.matrix_world @ source_center - target_center)
+    # Simplified: location = target_center - (source_local_center transformed to world) + target_center?
+    # Actually: WorldLoc_Source_Face = WorldLoc_Target_Face
+    # Mat_W * Loc_Local_Source_Face = Loc_Target_Face
+    # Loc_Local_Source_Face is known.
+    # We need to set obj_source.location such that this holds.
+    # Since we just rotated, Mat_W is updated.
+    # Let's just set location directly.
+    # Current world pos of source face:
+    current_face_world = obj_source.matrix_world @ source_center
+    offset = target_center - current_face_world
+    obj_source.location += offset
+
+def align_center_to_center(obj_target, obj_source):
+    """Aligns center of obj_source to center of obj_target."""
+    target_center = obj_target.location
+    source_center = obj_source.location
+    obj_source.location = target_center - (source_center - target_center) # Just move source to target? No.
+    # "Align glass_body_bottom_sphere.center to glass_body.bottom_face" implies center-to-face or center-to-center?
+    # Prompt says: "Align glass_body_bottom_sphere.center to glass_body.bottom_face"
+    # Then "Align glass_body_bottom_sphere.bottom_face to glass_body.bottom_face"
+    # This is a bit redundant or implies a specific stacking.
+    # Let's interpret "Align A.center to B.face" as moving A's center to B's face center.
+    pass
+
+def apply_material(obj, mat):
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_glass = make_material("glass_transparent", (0.8, 0.9, 1.0, 0.3))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create glass body ---
+
+# Create primitive cylinder with radius 0.010 m and height 0.150 m
+cyl = add_cylinder(radius=0.010, depth=0.150)
+cyl.name = "glass_body"
+
+# Rotate glass_body so its +Z axis aligns +Z (world)
+# Default cylinder is already aligned to Z, but we ensure it.
+align_axis_to_vector(cyl, 'Z', Vector((0, 0, 1)))
+
+# Move glass_body to (0,0,0)
+cyl.location = (0, 0, 0)
+
+# Apply material
+apply_material(cyl, mat_glass)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create glass bottom cap ---
+
+# Create full_sphere with diameter 0.020 m (radius 0.010)
+sphere = add_uvsphere(radius=0.010)
+sphere.name = "glass_body_bottom_sphere"
+
+# Rotate glass_body_bottom_sphere so its +Z axis aligns +Z (world)
+align_axis_to_vector(sphere, 'Z', Vector((0, 0, 1)))
+
+# Create plane_cutter and name it glass_body_bottom_cut with size 0.020×0.020 m; orientation=axis:+Z
+# A cube of size 0.020 is 0.010 half-size.
+cutter = add_cube(size=0.020)
+cutter.name = "glass_body_bottom_cut"
+align_axis_to_vector(cutter, 'Z', Vector((0, 0, 1)))
+
+# Boolean-subtract glass_body_bottom_cut from glass_body_bottom_sphere
+boolean_subtract(cutter, sphere)
+
+# Rotate glass_body_bottom_sphere so its curved face points +Z
+# After subtracting a cube from the bottom half (assuming default sphere center at 0,0,0 and cube at 0,0,0),
+# we need to determine which face is the "curved face" pointing +Z.
+# The sphere was centered at 0,0,0. The cutter was centered at 0,0,0.
+# The cutter removes the bottom half if it's large enough?
+# Cube size 0.020, Sphere radius 0.010. The cube completely engulfs the sphere if centered at same point.
+# Wait, "produces hemisphere".
+# If I subtract a cube from a sphere, I get a sphere with corners cut off, not a hemisphere.
+# To get a hemisphere via boolean, I usually cut with a plane.
+# The prompt says "Create plane_cutter... size 0.020x0.020". A cube is a 3D object.
+# If the intention is to cut the sphere in half, a plane is needed.
+# However, the prompt explicitly says "plane_cutter" but defines size as 0.020x0.020 (2D dims) and orientation.
+# In Blender, a "plane" primitive has no depth. A "cube" has depth.
+# If I use a cube cutter, it won't make a clean hemisphere unless the cube is infinitely thin or I use a plane.
+# Let's assume "plane_cutter" implies a Plane object.
+# Re-reading: "Create plane_cutter ... size 0.020x0.020".
+# I will create a Plane instead of a Cube for the cutter to achieve the hemisphere cut.
+
+# Remove the cube cutter created above
+bpy.data.objects.remove(cutter, do_unlink=True)
+
+# Create Plane Cutter
+bpy.ops.mesh.primitive_plane_add(size=0.020, align='WORLD', location=(0, 0, 0))
+plane_cutter = bpy.context.active_object
+plane_cutter.name = "glass_body_bottom_cut"
+# Orientation axis +Z. Plane default normal is +Z.
+align_axis_to_vector(plane_cutter, 'Z', Vector((0, 0, 1)))
+
+# Re-do boolean subtract with plane
+# Note: The previous boolean subtract was applied to `sphere`.
+# We need to re-create the sphere because the previous boolean modified it.
+# Actually, the previous boolean_subtract function applied the modifier and removed the cutter.
+# So `sphere` is now a sphere with a cube cut out.
+# I need to reset `sphere` to a full sphere first.
+
+# Reset sphere to full sphere
+bpy.ops.object.select_all(action='DESELECT')
+sphere.select_set(True)
+bpy.context.view_layer.objects.active = sphere
+bpy.ops.object.modifier_add(type='BOOLEAN')
+# This is getting messy. Let's just re-create the sphere from scratch for this section.
+
+# Delete the modified sphere
+bpy.data.objects.remove(sphere, do_unlink=True)
+
+# Re-create full sphere
+sphere = add_uvsphere(radius=0.010)
+sphere.name = "glass_body_bottom_sphere"
+align_axis_to_vector(sphere, 'Z', Vector((0, 0, 1)))
+
+# Re-create plane cutter
+# plane_cutter was removed.
+bpy.ops.mesh.primitive_plane_add(size=0.020, align='WORLD', location=(0, 0, 0))
+plane_cutter = bpy.context.active_object
+plane_cutter.name = "glass_body_bottom_cut"
+align_axis_to_vector(plane_cutter, 'Z', Vector((0, 0, 1)))
+
+# Boolean-subtract plane_cutter from sphere
+boolean_subtract(plane_cutter, sphere)
+
+# Rotate glass_body_bottom_sphere so its curved face points +Z
+# The sphere was centered at 0,0,0. The plane was at 0,0,0.
+# Subtracting the plane (which has no volume in boolean usually, or acts as a slicer)
+# If the plane normal is +Z, it keeps the bottom half (Z < 0) or top half?
+# Blender boolean with plane: usually keeps the side the normal points to? Or cuts it off?
+# Let's assume we want the bottom hemisphere (curved face pointing down? No, prompt says "curved face points +Z").
+# If curved face points +Z, it's the top hemisphere.
+# Let's rotate the sphere 180 degrees around X so the flat face is at bottom and curved part is at top.
+# Currently, if cut by plane at Z=0, we have a hemisphere.
+# If we want curved face to point +Z, we want the dome to be at the top.
+# Default sphere center 0,0,0. Cut by plane Z=0.
+# If we keep the top half, the flat face is at Z=0, curved face peaks at Z=0.01.
+# This matches "curved face points +Z".
+# So we might not need to rotate if the boolean kept the top half.
+# However, boolean operations can be ambiguous about which side is kept.
+# Let's explicitly rotate to be safe.
+# If it's the top hemisphere, the flat face is at the bottom (relative to the object's local geometry if centered).
+# Let's rotate 180 deg around X to flip it if necessary, or just position it.
+# Prompt: "Rotate glass_body_bottom_sphere so its curved face points +Z."
+# Let's assume the result is a hemisphere. We orient it.
+# If the flat face is normal -Z (bottom), curved is +Z.
+# Let's rotate 180 around X to ensure standard orientation if needed.
+# Actually, let's just align it based on the next step.
+
+# Align glass_body_bottom_sphere.center to glass_body.bottom_face
+# glass_body is cylinder at 0,0,0, height 0.150.
+# Bottom face is at Z = -0.075.
+# Center of glass_body is 0,0,0.
+# Bottom face center is (0, 0, -0.075).
+
+# Align glass_body_bottom_sphere.bottom_face to glass_body.bottom_face
+# This implies the flat face of the hemisphere is the "bottom face".
+# So we place the flat face of the hemisphere onto the bottom face of the cylinder.
+
+# Step 1: Align centers?
+# "Align glass_body_bottom_sphere.center to glass_body.bottom_face"
+# This moves the sphere's center to (0, 0, -0.075).
+# But then "Align glass_body_bottom_sphere.bottom_face to glass_body.bottom_face"
+# This moves the sphere's bottom face to (0, 0, -0.075).
+# These two instructions might conflict or be sequential.
+# Usually "Align A to B" means snap A's feature to B's feature.
+# If I align center to bottom_face, the center is at -0.075.
+# If I then align bottom_face to bottom_face, the bottom_face is at -0.075.
+# For a hemisphere of radius 0.010, the distance from center to flat face is 0.
+# Wait, a hemisphere's center of geometry is not at the flat face.
+# If the sphere was centered at 0,0,0 and cut in half, the flat face is at Z=0 (local).
+# The "center" of the hemisphere object (mesh center) is shifted.
+# Let's assume "center" refers to the object's origin.
+# If we cut a sphere centered at 0,0,0 with a plane at 0,0,0, the resulting mesh's origin is still at 0,0,0.
+# The flat face is at Z=0.
+# So "Align center to bottom_face" moves origin to -0.075.
+# "Align bottom_face to bottom_face" moves the face at Z=0 (local) to Z=-0.075 (world).
+# This would move the origin to -0.075 + 0 = -0.075.
+# So both alignments result in the same position if the flat face is at the origin.
+# Let's perform the alignments.
+
+# 1. Align glass_body_bottom_sphere.center to glass_body.bottom_face
+target_face_idx_cyl_bottom = 0 # Assuming bottom face is index 0? Need to check.
+# Cylinder faces: Top is usually one, bottom is another.
+# Let's find the bottom face of the cylinder.
+# Cylinder created with depth 0.150. Center 0,0,0.
+# Top face Z = 0.075. Bottom face Z = -0.075.
+# We need to identify the bottom face index.
+# For a primitive cylinder, face indices depend on creation.
+# Let's use a helper to find the face with normal -Z.
+
+def get_face_by_normal(obj, normal_target):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+    for face in bm.faces:
+        if face.normal.dot(normal_target) > 0.9:
+            return bm.faces.find(face.index)
+    bm.free()
+    return -1
+
+cyl_bottom_face_idx = get_face_by_normal(cyl, Vector((0, 0, -1)))
+cyl_bottom_face_center = get_face_center(cyl, cyl_bottom_face_idx)
+
+# Align sphere center to cyl bottom face center
+sphere.location = cyl_bottom_face_center
+
+# 2. Align glass_body_bottom_sphere.bottom_face to glass_body.bottom_face
+# We need to identify the "bottom face" of the hemisphere.
+# The hemisphere was created by cutting a sphere. The flat face is the cut face.
+# We need to find the face with normal closest to -Z (if curved part is up) or +Z?
+# Prompt: "Rotate ... so its curved face points +Z".
+# This implies the flat face points -Z.
+# So the "bottom face" is the flat face with normal -Z.
+
+hemisphere_bottom_face_idx = get_face_by_normal(sphere, Vector((0, 0, -1)))
+
+# Align sphere's bottom face to cylinder's bottom face
+align_object_to_face(cyl, sphere, cyl_bottom_face_idx, hemisphere_bottom_face_idx)
+
+# 3. Then move by offset(0,0,-0.010)
+# Offset is in reference local axes.
+# Local Z is aligned with World Z.
+sphere.location = sphere.location + Vector((0, 0, -0.010))
+
+# Apply material to sphere
+apply_material(sphere, mat_glass)
+
+# Stage 2 complete.

@@ -1,0 +1,1 @@
+Design a bookshelf with adjustable shelves. The bookshelf should be 6 feet tall and 3 feet wide. Include five shelves that can be repositioned at different heights. Ensure the sides are straight and the top and bottom are flat.

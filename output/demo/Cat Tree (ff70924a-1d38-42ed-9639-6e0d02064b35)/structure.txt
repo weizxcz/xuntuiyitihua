@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+fabric_beige | diffuse_color=(0.96,0.92,0.84,1.0)
+plastic_black | diffuse_color=(0.1,0.1,0.1,1.0)
+wood_brown | diffuse_color=(0.55,0.35,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base | Composite of base_pad + base_footprint | (1) execute 'base_pad': Align(XY) base_pad.center to (0,0); Align(Z) base_pad.bottom_face to (0,0,0); orientation=axis:+Z; mat=wood_brown; create_method=primitive; (2) execute 'base_footprint': Align(XY) base_footprint.center to (0,0); Align(Z) base_footprint.bottom_face to base_pad.bottom_face; offset(0,0,-0.005); orientation=axis:+Z; mat=plastic_black; create_method=primitive |
+| base_pad | Cube 0.8×0.8×0.05 m | Align(XY) base_pad.center to (0,0); Align(Z) base_pad.bottom_face to (0,0,0); orientation=axis:+Z; mat=wood_brown; create_method=primitive |
+| base_footprint | Cube 0.82×0.82×0.01 m | Align(XY) base_footprint.center to (0,0); Align(Z) base_footprint.bottom_face to base_pad.bottom_face; offset(0,0,-0.005); orientation=axis:+Z; mat=plastic_black; create_method=primitive |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| post | Cylinder Ø0.1×1.2 m | Align(XY) post.center to base_pad.center; Align(Z) post.bottom_face to base_pad.top_face; orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+
+Layer 2 – Platforms
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| platform_L1 | Cube 0.5×0.5×0.03 m | Align(XY) platform_L1.center to post.center; Align(Z) platform_L1.bottom_face to post.side_at(0°); offset(0.25,0,0); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+| platform_L2 | Cube 0.5×0.5×0.03 m | Align(XY) platform_L2.center to post.center; Align(Z) platform_L2.bottom_face to post.side_at(90°); offset(0,0.25,0.4); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+| platform_L3 | Cube 0.5×0.5×0.03 m | Align(XY) platform_L3.center to post.center; Align(Z) platform_L3.bottom_face to post.side_at(180°); offset(-0.25,0,0.8); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+
+Layer 3 – Enclosure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| box | Composite of box_body + box_roof | (1) execute 'box_body': Align(XY) box_body.center to platform_L3.center; Align(Z) box_body.bottom_face to platform_L3.top_face; offset(0,0,0.15); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; (2) execute 'box_roof': Align(XY) box_roof.center to box_body.center; Align(Z) box_roof.bottom_face to box_body.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+| box_body | Cube 0.3×0.3×0.3 m | Align(XY) box_body.center to platform_L3.center; Align(Z) box_body.bottom_face to platform_L3.top_face; offset(0,0,0.15); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+| box_roof | Cube 0.32×0.32×0.02 m | Align(XY) box_roof.center to box_body.center; Align(Z) box_roof.bottom_face to box_body.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+
+Layer 4 – Accessories
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| toy | Composite of toy_string + toy_feather | (1) execute 'toy_string': Align(XY) toy_string.center to platform_L2.center; Align(Z) toy_string.top_face to platform_L2.bottom_face; offset(0.1,0.1,0); orientation=axis:+Z; mat=plastic_black; create_method=primitive; (2) execute 'toy_feather': Align(XY) toy_feather.center to toy_string.center; Align(Z) toy_feather.top_face to toy_string.bottom_face; offset(0,0,-0.15); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+| toy_string | Cylinder Ø0.005×0.2 m | Align(XY) toy_string.center to platform_L2.center; Align(Z) toy_string.top_face to platform_L2.bottom_face; offset(0.1,0.1,0); orientation=axis:+Z; mat=plastic_black; create_method=primitive |
+| toy_feather | Sphere Ø0.05 m | Align(XY) toy_feather.center to toy_string.center; Align(Z) toy_feather.top_face to toy_string.bottom_face; offset(0,0,-0.15); orientation=axis:+Z; mat=fabric_beige; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,202 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_color = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to the first material slot of an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(radius, depth, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive, oriented along Z by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive. Size is total width/height/depth."""
+    half_size = size / 2.0
+    bpy.ops.mesh.primitive_cube_add(size=half_size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_z_to_world(obj):
+    """Ensure object's +Z axis aligns with world +Z."""
+    # If the object was created with default orientation, it's already aligned.
+    # This helper ensures no accidental rotation.
+    obj.rotation_euler = (0, 0, 0)
+
+def set_transform(obj, location, rotation_euler=(0,0,0)):
+    """Set location and rotation euler."""
+    obj.location = location
+    obj.rotation_euler = rotation_euler
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_fabric_blue = make_material("fabric_blue", (0.1, 0.2, 0.5, 1.0))
+mat_fabric_white = make_material("fabric_white", (0.95, 0.95, 0.95, 1.0))
+mat_metal_silver = make_material("metal_silver", (0.7, 0.7, 0.7, 1.0))
+mat_wood_dark = make_material("wood_dark", (0.2, 0.1, 0.05, 1.0))
+mat_wood_light = make_material("wood_light", (0.6, 0.4, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create bed frame legs ---
+
+# leg_LF
+obj_leg_LF = add_cylinder(radius=0.025, depth=0.35, name="leg_LF", location=(-0.95, -1.95, 0.175))
+align_z_to_world(obj_leg_LF)
+apply_material(obj_leg_LF, mat_wood_dark)
+
+# leg_RF
+obj_leg_RF = add_cylinder(radius=0.025, depth=0.35, name="leg_RF", location=(0.95, -1.95, 0.175))
+align_z_to_world(obj_leg_RF)
+apply_material(obj_leg_RF, mat_wood_dark)
+
+# leg_LB
+obj_leg_LB = add_cylinder(radius=0.025, depth=0.35, name="leg_LB", location=(-0.95, 1.95, 0.175))
+align_z_to_world(obj_leg_LB)
+apply_material(obj_leg_LB, mat_wood_dark)
+
+# leg_RB
+obj_leg_RB = add_cylinder(radius=0.025, depth=0.35, name="leg_RB", location=(0.95, 1.95, 0.175))
+align_z_to_world(obj_leg_RB)
+apply_material(obj_leg_RB, mat_wood_dark)
+
+# --- SECTION 2 – Create side rails ---
+
+# side_rail_L
+# Size 0.05x3.9x0.05. In Blender cube, size is total dimension.
+# We want X=0.05, Y=3.9, Z=0.05.
+# Default cube is centered.
+obj_side_rail_L = add_cube(size=0.05, name="side_rail_L", location=(-0.975, 0, 0.35))
+# The cube created has size 0.05 in all axes. We need to scale it to match dimensions.
+# However, the prompt says "Create primitive box with size...". 
+# Using add_cube with size parameter sets the initial size. 
+# To get specific non-uniform dimensions, we scale or use add_box if available (not standard).
+# Let's scale the cube to match the required dimensions relative to its initial size.
+# Initial size is 0.05. Target X=0.05 (scale 1), Y=3.9 (scale 78), Z=0.05 (scale 1).
+obj_side_rail_L.scale = (1.0, 78.0, 1.0)
+align_z_to_world(obj_side_rail_L)
+apply_material(obj_side_rail_L, mat_wood_dark)
+
+# side_rail_R
+obj_side_rail_R = add_cube(size=0.05, name="side_rail_R", location=(0.975, 0, 0.35))
+obj_side_rail_R.scale = (1.0, 78.0, 1.0)
+align_z_to_world(obj_side_rail_R)
+apply_material(obj_side_rail_R, mat_wood_dark)
+
+# --- SECTION 3 – Create headboard and footboard ---
+
+# headboard
+# Size 2.0x0.1x1.2. X=2.0, Y=0.1, Z=1.2.
+# Base cube size 0.1 (arbitrary small start, then scale).
+# Let's use a cube of size 0.1 and scale.
+# Target X=2.0 (scale 20), Y=0.1 (scale 1), Z=1.2 (scale 12).
+obj_headboard = add_cube(size=0.1, name="headboard", location=(0, 1.95, 0.6))
+obj_headboard.scale = (20.0, 1.0, 12.0)
+align_z_to_world(obj_headboard)
+apply_material(obj_headboard, mat_wood_dark)
+
+# footboard
+# Size 2.0x0.1x0.6. X=2.0, Y=0.1, Z=0.6.
+obj_footboard = add_cube(size=0.1, name="footboard", location=(0, -1.95, 0.3))
+obj_footboard.scale = (20.0, 1.0, 6.0)
+align_z_to_world(obj_footboard)
+apply_material(obj_footboard, mat_wood_dark)
+
+# --- SECTION 4 – Create bed slats ---
+
+for i in range(1, 11):
+    # Size 1.9x0.05x0.02. X=1.9, Y=0.05, Z=0.02.
+    # Base cube size 0.02.
+    # Target X=1.9 (scale 95), Y=0.05 (scale 2.5), Z=0.02 (scale 1).
+    name = f"slat_{i}"
+    offset_y = -1.8 + (i-1)*0.2
+    loc = (0, offset_y, 0.36)
+    
+    obj_slat = add_cube(size=0.02, name=name, location=loc)
+    obj_slat.scale = (95.0, 2.5, 1.0)
+    align_z_to_world(obj_slat)
+    apply_material(obj_slat, mat_wood_light)
+
+# --- SECTION 5 – Create mattress ---
+
+# Size 2.0x1.9x0.25. X=2.0, Y=1.9, Z=0.25.
+# Base cube size 0.25.
+# Target X=2.0 (scale 8), Y=1.9 (scale 7.6), Z=0.25 (scale 1).
+obj_mattress = add_cube(size=0.25, name="mattress", location=(0, 0, 0.485))
+obj_mattress.scale = (8.0, 7.6, 1.0)
+align_z_to_world(obj_mattress)
+apply_material(obj_mattress, mat_fabric_white)
+
+# --- SECTION 6 – Create pillows ---
+
+# pillow_L
+# Size 0.6x0.4x0.1. X=0.6, Y=0.4, Z=0.1.
+# Base cube size 0.1.
+# Target X=0.6 (scale 6), Y=0.4 (scale 4), Z=0.1 (scale 1).
+obj_pillow_L = add_cube(size=0.1, name="pillow_L", location=(-0.5, 1.7, 0.66))
+obj_pillow_L.scale = (6.0, 4.0, 1.0)
+align_z_to_world(obj_pillow_L)
+apply_material(obj_pillow_L, mat_fabric_white)
+
+# pillow_R
+obj_pillow_R = add_cube(size=0.1, name="pillow_R", location=(0.5, 1.7, 0.66))
+obj_pillow_R.scale = (6.0, 4.0, 1.0)
+align_z_to_world(obj_pillow_R)
+apply_material(obj_pillow_R, mat_fabric_white)
+
+# --- SECTION 7 – Create blanket ---
+
+# Size 2.0x1.5x0.05. X=2.0, Y=1.5, Z=0.05.
+# Base cube size 0.05.
+# Target X=2.0 (scale 40), Y=1.5 (scale 30), Z=0.05 (scale 1).
+obj_blanket = add_cube(size=0.05, name="blanket", location=(0, -0.25, 0.635))
+obj_blanket.scale = (40.0, 30.0, 1.0)
+align_z_to_world(obj_blanket)
+apply_material(obj_blanket, mat_fabric_blue)
+
+print("All stages complete.")
+```

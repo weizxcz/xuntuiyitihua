@@ -1,0 +1,51 @@
+{
+  "id": "dbfd2af2-bd19-4085-91ac-4afd639222ca",
+  "name": "Door Handle",
+  "instruction": "Let's create a door handle. The handle should be a lever style, with a cylindrical base attached to the door. The lever itself extends outwards and then curves slightly downwards. The base should have a circular plate with screws visible. Add a keyhole below the handle.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a door handle.",
+        "The handle is a lever style.",
+        "The handle has a cylindrical base.",
+        "The lever extends outwards and curves slightly downwards.",
+        "The base features a circular plate."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The lever length is proportionate to the base size.",
+        "The circular plate is proportionate to the base and lever."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical base is correctly positioned on the door.",
+        "The lever extends outwards from the base without obstruction.",
+        "The curve of the lever is smoothly integrated into the design.",
+        "The circular plate is properly aligned with the base."
+      ],
+      "Object distance and contact": [
+        "The lever does not overlap with the cylindrical base.",
+        "The circular plate is flush against the door surface.",
+        "The keyhole is positioned below the handle without interference."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the door handle are accurately represented.",
+        "The lever style, cylindrical base, and circular plate with screws are included.",
+        "The keyhole is correctly placed below the handle."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

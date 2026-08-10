@@ -1,0 +1,40 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+metal_silver | diffuse_color=(0.8,0.8,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coffee_pot | Composite of body, spout, handle, and lid | assembly_order=body_group, spout_group, handle_group, lid_group |
+
+Layer 1 – Primary Structure (Body Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body | Cylinder Ø0.100×0.150 m (R=0.050 m, H=0.150 m) | pos=(0,0,0); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| body_bottom | Cylinder Ø0.100×0.005 m (R=0.050 m, H=0.005 m) | Align(XY) body_bottom.top_face to body.bottom_face; offset(0,0,0.0025); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+
+Layer 2 – Spout Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| spout_base | Cylinder Ø0.030×0.040 m (R=0.015 m, H=0.040 m) | Align(X) spout_base.right_face to body.left_face; offset(0.050,0,0.050); orientation=axis:+X; mat=ceramic_white; create_method=primitive |
+| spout_tip | Cone Ø0.020×0.030 m (Base R=0.010 m, H=0.030 m) | Align(X) spout_tip.left_face to spout_base.right_face; offset(0.020,0,0.010); orientation=axis:+X; mat=ceramic_white; create_method=primitive |
+| spout_curve | Torus R=0.020 r=0.015 m | Align(XY) spout_curve.center to Avg(spout_base.center, spout_tip.center); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| spout_union | Composite union of spout_base + spout_tip + spout_curve | (1) execute 'spout_base': Align(X) spout_base.right_face to body.left_face; offset(0.050,0,0.050); orientation=axis:+X; mat=ceramic_white; (2) execute 'spout_tip': Align(X) spout_tip.left_face to spout_base.right_face; offset(0.020,0,0.010); orientation=axis:+X; mat=ceramic_white; (3) execute 'spout_curve': Align(XY) spout_curve.center to Avg(spout_base.center, spout_tip.center); orientation=axis:+Z; mat=ceramic_white |
+
+Layer 3 – Handle Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_arc | Torus R=0.040 r=0.005 m | Align(XY) handle_arc.center to body.left_face; offset(-0.060,0,0.075); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| handle_top | Cylinder Ø0.010×0.020 m (R=0.005 m, H=0.020 m) | Align(X) handle_top.right_face to handle_arc.left_face; offset(0.040,0,0.040); orientation=axis:+X; mat=ceramic_white; create_method=primitive |
+| handle_bottom | Cylinder Ø0.010×0.020 m (R=0.005 m, H=0.020 m) | Align(X) handle_bottom.right_face to handle_arc.left_face; offset(0.040,0,-0.040); orientation=axis:+X; mat=ceramic_white; create_method=primitive |
+| handle_union | Composite union of handle_arc + handle_top + handle_bottom | (1) execute 'handle_arc': Align(XY) handle_arc.center to body.left_face; offset(-0.060,0,0.075); orientation=axis:+Z; mat=ceramic_white; (2) execute 'handle_top': Align(X) handle_top.right_face to handle_arc.left_face; offset(0.040,0,0.040); orientation=axis:+X; mat=ceramic_white; (3) execute 'handle_bottom': Align(X) handle_bottom.right_face to handle_arc.left_face; offset(0.040,0,-0.040); orientation=axis:+X; mat=ceramic_white |
+
+Layer 4 – Lid Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lid_dome | Hemisphere R=0.050 m | Align(XY) lid_dome.center to body.top_face; offset(0,0,0.075); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| lid_knob | Sphere R=0.010 m | Align(XY) lid_knob.center to lid_dome.top_face; offset(0,0,0.060); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| lid_union | Composite union of lid_dome + lid_knob | (1) execute 'lid_dome': Align(XY) lid_dome.center to body.top_face; offset(0,0,0.075); orientation=axis:+Z; mat=ceramic_white; (2) execute 'lid_knob': Align(XY) lid_knob.center to lid_dome.top_face; offset(0,0,0.060); orientation=axis:+Z; mat=metal_silver |
+# ----------  END_GRAPH  ----------

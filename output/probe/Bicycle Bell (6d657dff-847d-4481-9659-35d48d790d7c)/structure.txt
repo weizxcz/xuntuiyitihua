@@ -1,0 +1,21 @@
+-- MATERIAL LIBRARY --
+bell_dome | diffuse_color=(240,215,85,1)
+clamp_base | diffuse_color=(50,50,50,1)
+lever | diffuse_color=(50,50,50,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bell_assembly | Composite of bell_dome + lever + clamp_base | assembly_order=[bell_dome], [lever], [clamp_base] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bell_dome | Hemisphere Ø0.0508 m (2 inches) | Align(XY) bell_dome.center to bell_assembly.center; Align(Z) bell_dome.bottom_face to bell_assembly.bottom_face; orientation=axis:+Z; mat=bell_dome; create_method=boolean_subtract; constraint=full_sphere Ø0.0508 m + plane_cutter at Z=0 |
+| clamp_base | Cylinder Ø0.040×0.015 m | Align(XY) clamp_base.center to bell_assembly.center; Align(Z) clamp_base.top_face to bell_dome.bottom_face; offset(0,0,-0.0075); orientation=axis:+Z; mat=clamp_base; create_method=primitive |
+| lever | Composite of lever_arm + lever_head | assembly_order=[lever_arm], [lever_head] |
+| lever_arm | Cylinder Ø0.005×0.020 m | Align(XY) lever_arm.center to bell_dome.side_at(0°); Align(Z) lever_arm.bottom_face to bell_dome.bottom_face; offset(0.025,0,0); orientation=axis:+X; mat=lever; create_method=primitive |
+| lever_head | Sphere Ø0.010 m | Align(XY) lever_head.center to lever_arm.top_face.center; offset(0,0,0.010); orientation=axis:+Z; mat=lever; create_method=primitive |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,1 @@
+Design a 3D model of a candle holder that can hold a single candle. The base should be circular and stable.

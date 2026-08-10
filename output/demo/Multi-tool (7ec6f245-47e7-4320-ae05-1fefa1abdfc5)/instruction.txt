@@ -1,0 +1,1 @@
+Please design a multi-tool with multiple functionalities. Include a knife blade, scissors, a bottle opener, and a small saw. Each tool should fold out from a central handle.

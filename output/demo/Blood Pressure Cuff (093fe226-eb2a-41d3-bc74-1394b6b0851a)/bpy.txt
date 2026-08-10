@@ -1,0 +1,459 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with a specific diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube, scale it, set location/rotation, and assign material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        if obj.data.materials:
+            obj.data.materials[0] = material
+        else:
+            obj.data.materials.append(material)
+    return obj
+
+def add_primitive_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        if obj.data.materials:
+            obj.data.materials[0] = material
+        else:
+            obj.data.materials.append(material)
+    return obj
+
+def get_face_normal(obj, face_index):
+    """Get the world-space normal of a specific face."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    face = bm.faces[face_index]
+    normal = face.normal.copy()
+    bm.free()
+    return normal
+
+def get_face_center(obj, face_index):
+    """Get the world-space center of a specific face."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    face = bm.faces[face_index]
+    center = face.calc_center_median()
+    bm.free()
+    return center
+
+def align_to_face(obj_target, target_obj, target_face_idx, offset_vector_local):
+    """
+    Aligns obj_target to a specific face of target_obj.
+    Assumes obj_target is a box-like object.
+    Logic: Move obj_target so its center aligns with the target face center,
+    then apply local offset.
+    """
+    # Calculate target position: Face Center + Offset in Target's Local Space
+    face_center_world = get_face_center(target_obj, target_face_idx)
+    
+    # Convert local offset to world space
+    offset_world = offset_vector_local @ target_obj.matrix_world.to_3x3()
+    
+    new_location = face_center_world + offset_world
+    
+    # For simple boxes aligned with axes, we just move the center.
+    # If rotation is needed to match face normal, we'd rotate here.
+    # The prompt implies simple placement relative to faces for boxes.
+    obj_target.location = new_location
+    
+    return obj_target
+
+def align_xy_face_to_xy_face(obj_source, obj_target):
+    """
+    Aligns the XY face (Top/Bottom) of obj_source to the XY face (Top/Bottom) of obj_target.
+    Specifically, aligns the bottom of source to the top of target or similar based on context.
+    Here we assume 'Align XY_face' means placing them on the same plane or stacking.
+    Given the offset instructions, we usually align the bottom of the new object to the top of the reference.
+    """
+    # Get top face center of target (Face index 2 is usually top for default cube in Blender if not rotated)
+    # Default Cube: -Z is bottom, +Z is top.
+    # Let's use a robust method: align the bottom of source to the top of target.
+    
+    # Target Top Face (Index 2 in default cube)
+    target_top_center = get_face_center(obj_target, 2)
+    
+    # Source Bottom Face (Index 5 in default cube)
+    # We want the source's bottom to be at target_top_center + offset
+    # But the offset is applied separately. So we align the *base* position.
+    
+    # Calculate the position where source's bottom touches target's top
+    # Source height
+    h_source = obj_source.scale[2] * obj_source.dimensions[2] # Actually scale*1.0 since size=1
+    # Wait, obj_source.scale is (sx, sy, sz). Dimensions are (1,1,1) before scale.
+    # So height is sz.
+    
+    # We want source.location.z - (sz/2) = target_top_center.z
+    # So source.location.z = target_top_center.z + (sz/2)
+    
+    # However, the prompt says "Align ... to ... Move by offset".
+    # So we set location to the alignment point, then add offset.
+    
+    # Let's just set the location to the face center for now, and let the offset handle the gap.
+    # Actually, "Align face to face" usually means touching.
+    
+    # Let's refine:
+    # 1. Determine the "contact plane".
+    # 2. Place object such that its relevant face is on that plane.
+    
+    # For simplicity with the provided offsets (small Z offsets), we will:
+    # 1. Calculate the world position of the target face.
+    # 2. Place the source object such that its corresponding face is at that position.
+    
+    # Target Top Face Center
+    t_center = get_face_center(obj_target, 2)
+    
+    # Source Bottom Face is at obj.location.z - (obj.scale.z / 2)
+    # We want: obj.location.z - (obj.scale.z / 2) = t_center.z
+    # obj.location.z = t_center.z + (obj.scale.z / 2)
+    
+    obj_source.location.z = t_center.z + (obj_source.scale[2] / 2)
+    
+    # Align X and Y to center? The prompt doesn't specify X/Y alignment for this step,
+    # but usually "Align face" implies centering unless specified.
+    # However, subsequent offsets suggest specific X/Y placement.
+    # I will leave X/Y alone unless "center" is implied. 
+    # Looking at Section 2: "Align velcro_strap.Z_face to sleeve_main.top_face".
+    # This implies Z-axis alignment (stacking).
+    
+    return obj_source
+
+def align_face_to_face(obj_source, obj_target, source_face_idx, target_face_idx, offset_vector_local):
+    """
+    General face alignment.
+    Moves obj_source so that source_face_idx touches target_face_idx.
+    Then applies offset_vector_local (in target's local space) to the final position.
+    """
+    # 1. Get Target Face Center in World Space
+    t_center = get_face_center(obj_target, target_face_idx)
+    
+    # 2. Determine Source Face Normal in Local Space to know which way it points
+    # We need to move the source so its face is at t_center.
+    # Source Face Center in Local Space
+    bm = bmesh.new()
+    bm.from_mesh(obj_source.data)
+    bm.transform(Matrix.Identity(4)) # Local space
+    s_face = bm.faces[source_face_idx]
+    s_center_local = s_face.calc_center_median()
+    s_normal_local = s_face.normal.copy()
+    bm.free()
+    
+    # 3. Calculate required translation to put source face at target center
+    # We need to rotate the source first if normals don't match, but prompt says "Rotate ... so +Z aligns +Z".
+    # So normals are likely aligned.
+    # If +Z of source aligns with +Z of target:
+    # Source Top Face (2) normal is +Z. Target Top Face (2) normal is +Z.
+    # To touch, Source Bottom (5) should be at Target Top (2).
+    
+    # Let's assume standard box orientation where faces are axis aligned.
+    # If we just want to place the object "on" the face:
+    
+    # Vector from Source Center to Source Face Center (Local)
+    vec_local = s_center_local
+    
+    # Transform to World (assuming no rotation yet or rotation is identity)
+    # Since we rotate before aligning, obj_source.rotation_euler is set.
+    vec_world = vec_local @ obj_source.matrix_world.to_3x3()
+    
+    # The face center in world space is: obj.location + vec_world
+    # We want: obj.location + vec_world = t_center
+    # So: obj.location = t_center - vec_world
+    
+    obj_source.location = t_center - vec_world
+    
+    # 4. Apply Offset
+    # Offset is in Target's local space
+    offset_world = offset_vector_local @ obj_target.matrix_world.to_3x3()
+    obj_source.location += offset_world
+    
+    return obj_source
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    if mesh.users == 0:
+        bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_arm_band = make_material("mat_arm_band", (0.86, 0.86, 0.86, 1))
+mat_buckle = make_material("mat_buckle", (0.12, 0.12, 0.12, 1))
+mat_display_casing = make_material("mat_display_casing", (0.20, 0.20, 0.20, 1))
+mat_display_screen = make_material("mat_display_screen", (0.00, 0.00, 0.00, 1))
+mat_inner_pad = make_material("mat_inner_pad", (1.00, 1.00, 1.00, 1))
+mat_sleeve = make_material("mat_sleeve", (0.94, 0.94, 0.94, 1))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create sleeve assembly (sleeve_main and inner_pad) ---
+
+# Create sleeve_main
+# Size 0.350x0.120x0.002 m
+# Rotate +Z aligns +Z (Identity)
+# Anchor to world origin (0,0,0)
+# Offset (0,0,0)
+sleeve_main = add_primitive_cube(
+    name="sleeve_main",
+    size=(0.350, 0.120, 0.002),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_sleeve
+)
+
+# Create inner_pad
+# Size 0.340x0.110x0.005 m
+# Rotate +Z aligns +Z (Identity)
+# Align inner_pad.XY_face to sleeve_main.XY_face
+# Move by offset(0,0,0.001)
+# "Align XY_face" likely means aligning the bottom of inner_pad to the top of sleeve_main
+# Inner Pad is smaller, so it sits on top.
+inner_pad = add_primitive_cube(
+    name="inner_pad",
+    size=(0.340, 0.110, 0.005),
+    location=(0, 0, 0), # Temp location
+    rotation_euler=(0, 0, 0),
+    material=mat_inner_pad
+)
+
+# Align inner_pad to sleeve_main top face
+# Sleeve Main Top Face Index: 2
+# Inner Pad Bottom Face Index: 5
+align_face_to_face(
+    obj_source=inner_pad,
+    obj_target=sleeve_main,
+    source_face_idx=5, # Bottom
+    target_face_idx=2, # Top
+    offset_vector_local=Vector((0, 0, 0.001))
+)
+
+# --- SECTION 2 – Create closure system (velcro_strap and buckle_frame) ---
+
+# Create velcro_strap
+# Size 0.200x0.040x0.002 m
+# Rotate +Z aligns +Z
+# Align velcro_strap.Z_face to sleeve_main.top_face
+# Move by offset(0,0,0.001)
+# "Z_face" usually implies the face perpendicular to Z. 
+# Given it's a strap on a sleeve, it likely sits on top.
+velcro_strap = add_primitive_cube(
+    name="velcro_strap",
+    size=(0.200, 0.040, 0.002),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_arm_band
+)
+
+# Align velcro_strap to sleeve_main top face
+# Strap Bottom (5) to Sleeve Top (2)
+align_face_to_face(
+    obj_source=velcro_strap,
+    obj_target=sleeve_main,
+    source_face_idx=5,
+    target_face_idx=2,
+    offset_vector_local=Vector((0, 0, 0.001))
+)
+
+# Create buckle_frame
+# Size 0.050x0.030x0.010 m
+# Rotate +Z aligns +Z
+# Align buckle_frame.XY_face to sleeve_main.left_face
+# Move by offset(0.025,0,0)
+# "Left Face" of sleeve_main is -X face (Index 4 in default cube)
+# "XY_face" of buckle_frame is Top/Bottom. 
+# If we align an XY face to a Left face, we are rotating the buckle?
+# No, "Align ... to ..." in this context with "Rotate +Z aligns +Z" implies 
+# positioning the object such that its face is coplanar or adjacent.
+# However, buckle_frame is a box. If we align its XY face (Top/Bottom) to the Left Face (Side) of the sleeve,
+# the buckle would be lying flat against the side? Or standing up?
+# Usually, buckles stick out. 
+# Let's interpret "Align buckle_frame.XY_face to sleeve_main.left_face" as:
+# The center of the buckle's XY face (e.g., Bottom) is placed against the Left Face of the sleeve.
+# But the buckle's Z axis is still aligned with World Z.
+# So the buckle sits on the side of the sleeve?
+# Let's assume it means: Place the buckle such that its bottom face is touching the left face of the sleeve.
+# This would mean the buckle is "standing" on the side of the sleeve? No, that would require rotation.
+# If rotation is fixed to +Z, the buckle's Z axis is vertical.
+# The sleeve's Left Face is vertical.
+# You cannot align a horizontal face (XY) to a vertical face (Left) without rotating the object.
+# BUT, the prompt says "Rotate buckle_frame so its +Z axis aligns +Z".
+# This implies the buckle remains upright.
+# Perhaps "Align XY_face" is a typo for "Align Z_face" or it means "Align the center of the XY face to the plane of the left face"?
+# Or maybe it means align the *position* of the XY face center to the left face center?
+# Let's look at the offset: `offset(0.025, 0, 0)`.
+# Sleeve Main Left Face is at X = -0.350/2 = -0.175.
+# If we place the buckle's center at X = -0.175, and offset by +0.025 in X, it ends up at X = -0.150.
+# This places it *inside* or *on* the sleeve surface.
+# Let's assume "Align buckle_frame.XY_face to sleeve_main.left_face" means:
+# Align the *center* of the buckle's XY face (e.g. its bottom center) to the *center* of the sleeve's left face?
+# No, that's just positioning.
+# Let's try: Align the buckle such that it is attached to the left face.
+# Since the buckle is upright (Z aligned), it likely sits *on top* of the sleeve but shifted to the left?
+# No, "left_face" is specific.
+# Let's assume the instruction means: Place the buckle so that its bottom face is at the same Z-height as the sleeve's left face center?
+# No, that's weak.
+# Let's assume standard "Attach to face" logic:
+# The object is placed such that its relevant face is touching the target face.
+# If the object cannot rotate, we can only touch it with a parallel face.
+# Sleeve Left Face Normal is (-1, 0, 0).
+# Buckle XY Face Normal is (0, 0, 1) or (0, 0, -1).
+# They are perpendicular. They cannot "align" in a touching sense without rotation.
+# 
+# Alternative Interpretation:
+# "Align buckle_frame.XY_face" might refer to the *plane* of the XY face (Z=0 plane of the object).
+# And "to sleeve_main.left_face" might mean the object is positioned relative to that face.
+# Given the offset (0.025, 0, 0), it suggests movement along X.
+# 
+# Let's look at the previous step: `velcro_strap.Z_face to sleeve_main.top_face`.
+# Z_face (Top/Bottom) aligns to Top Face (Top). This works (parallel).
+# 
+# For `buckle_frame.XY_face to sleeve_main.left_face`:
+# If we assume the user meant "Align the buckle to the left face", and the buckle is upright,
+# maybe it means "Align the buckle's center X to the sleeve's left face X"?
+# And the Z height is determined by the face center?
+# 
+# Let's try this:
+# 1. Find the center of the sleeve's left face.
+# 2. Place the buckle such that its bottom face is at that Z height? No.
+# 3. Place the buckle such that its *center* is at the left face center, then offset?
+# 
+# Let's look at the offset: `offset(0.025, 0, 0)`.
+# If we place the buckle's center at the sleeve's left face center:
+# Sleeve Left Face Center: X = -0.175, Y = 0, Z = 0.
+# Buckle Center: (-0.175, 0, 0).
+# Offset (0.025, 0, 0) -> New Center: (-0.150, 0, 0).
+# Buckle Width is 0.050. Half-width 0.025.
+# So the buckle extends from X = -0.175 to X = -0.125.
+# This places the buckle *on* the left face of the sleeve (flush with the surface).
+# This seems like a plausible interpretation of "Align ... to ... face" when rotation is constrained.
+# It means "Center the object on the face".
+
+# So:
+# 1. Get Center of Sleeve Main Left Face (Index 4).
+# 2. Place Buckle Frame Center at that location.
+# 3. Apply Offset.
+
+def align_center_to_face(obj_source, obj_target, target_face_idx, offset_vector_local):
+    """
+    Centers obj_source on the center of target_face_idx.
+    """
+    face_center = get_face_center(obj_target, target_face_idx)
+    obj_source.location = face_center
+    
+    # Apply Offset
+    offset_world = offset_vector_local @ obj_target.matrix_world.to_3x3()
+    obj_source.location += offset_world
+    
+    return obj_source
+
+buckle_frame = add_primitive_cube(
+    name="buckle_frame",
+    size=(0.050, 0.030, 0.010),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_buckle
+)
+
+# Align buckle_frame to sleeve_main left face (Index 4)
+align_center_to_face(
+    obj_source=buckle_frame,
+    obj_target=sleeve_main,
+    target_face_idx=4, # Left Face
+    offset_vector_local=Vector((0.025, 0, 0))
+)
+
+# --- SECTION 3 – Create display module (display_unit and screen_panel) ---
+
+# Create display_unit
+# Size 0.080x0.060x0.015 m
+# Rotate +Z aligns +Z
+# Align display_unit.XY_face to sleeve_main.top_face
+# Move by offset(0.100, 0, 0.002)
+# Similar to inner_pad, this sits on top of the sleeve.
+display_unit = add_primitive_cube(
+    name="display_unit",
+    size=(0.080, 0.060, 0.015),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_display_casing
+)
+
+# Align display_unit to sleeve_main top face
+align_face_to_face(
+    obj_source=display_unit,
+    obj_target=sleeve_main,
+    source_face_idx=5, # Bottom
+    target_face_idx=2, # Top
+    offset_vector_local=Vector((0.100, 0, 0.002))
+)
+
+# Create screen_panel
+# Size 0.070x0.050x0.001 m
+# Rotate +Z aligns +Z
+# Align screen_panel.XY_face to display_unit.top_face
+# Move by offset(0,0,0.008)
+screen_panel = add_primitive_cube(
+    name="screen_panel",
+    size=(0.070, 0.050, 0.001),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_display_screen
+)
+
+# Align screen_panel to display_unit top face
+align_face_to_face(
+    obj_source=screen_panel,
+    obj_target=display_unit,
+    source_face_idx=5, # Bottom
+    target_face_idx=2, # Top
+    offset_vector_local=Vector((0, 0, 0.008))
+)
+
+# All stages complete.
+```

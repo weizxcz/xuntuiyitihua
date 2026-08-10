@@ -1,0 +1,228 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder mesh."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, name="Sphere"):
+    """Add a UV sphere mesh."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=32, ring_count=16, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube mesh."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Ensure vector is normalized
+    v = Vector(vector).normalized()
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(v)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        self.bound_box = obj.bound_box
+        # Local coordinates of the 8 corners
+        self.local_corners = [Vector(corner) for corner in self.bound_box]
+        
+    def center_world(self):
+        """Return the world center of the object."""
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, face_index):
+        """
+        Return the world center of a specific face.
+        Assumes the object has a mesh with faces.
+        face_index: index of the face in the mesh data.
+        """
+        me = self.obj.data
+        if face_index < len(me.polygons):
+            face = me.polygons[face_index]
+            # Get local coordinates of face vertices
+            verts_local = [me.vertices[i].co for i in face.vertices]
+            center_local = average(verts_local)
+            # Transform to world
+            return self.obj.matrix_world @ center_local
+        return self.center_world()
+
+    def radial_point_world(self, angle_z=0, angle_y=0, radius=None):
+        """
+        Return a point on the radial perimeter.
+        Simplified: returns a point along X axis at max radius in world space.
+        """
+        # Find max extent from center
+        center = self.center_world()
+        max_r = 0
+        for corner in self.local_corners:
+            dist = corner.length
+            if dist > max_r:
+                max_r = dist
+        
+        # Direction vector based on angles
+        dir_vec = Vector((math.cos(angle_z) * math.cos(angle_y), 
+                          math.sin(angle_z) * math.cos(angle_y), 
+                          math.sin(angle_y))).normalized()
+        
+        # Apply object rotation to direction
+        dir_vec = self.obj.matrix_world.to_3x3() @ dir_vec
+        
+        return center + (dir_vec * max_r)
+
+def boolean_subtract(cutter_name, target_name):
+    """
+    Perform a boolean subtract operation using the modifier stack.
+    cutter_name: Name of the object to subtract.
+    target_name: Name of the object to be cut.
+    """
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target is active for modifier addition if needed, but we can add directly
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_union(union_obj_name, target_name):
+    """
+    Perform a boolean union operation.
+    union_obj_name: Name of the object to add.
+    target_name: Name of the base object.
+    """
+    target = bpy.data.objects[target_name]
+    union_obj = bpy.data.objects[union_obj_name]
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def add_bevel(obj_name, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    # Apply immediately for geometry generation consistency
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- BLOCK 1: Materials ---
+
+fabric_green = make_material("fabric_green", (0.05, 0.25, 0.05, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1 – Create beanie body ---
+
+# Create primitive cylinder
+beanie_body = add_cylinder(radius=0.110, depth=0.150, name="beanie_body")
+beanie_body.data.materials.append(fabric_green)
+
+# Rotate beanie_body so its +Z axis aligns +Z (world)
+# Default cylinder is already aligned to Z, but we enforce it.
+align_axis_to_vector(beanie_body, axis='Z', vector=(0, 0, 1))
+
+# Align beanie_body.center to world.center
+beanie_body.location = (0, 0, 0)
+
+# Move by offset(0,0,0.025)
+beanie_body.location += Vector((0, 0, 0.025))
+
+# --- SECTION 2 – Create beanie crown ---
+
+# Create primitive sphere
+beanie_crown = add_uvsphere(radius=0.110, name="beanie_crown")
+beanie_crown.data.materials.append(fabric_green)
+
+# Rotate beanie_crown so its +Z axis aligns +Z (world)
+align_axis_to_vector(beanie_crown, axis='Z', vector=(0, 0, 1))
+
+# Align beanie_crown.center to beanie_body.top_face
+# Helper to find top face center of beanie_body
+loc_body = Locator(beanie_body)
+# For a cylinder aligned to Z, the top face is usually the last face or can be identified by normal
+# Let's find the face with normal closest to +Z
+top_face_idx = -1
+max_dot = -1
+for i, poly in enumerate(beanie_body.data.polygons):
+    # Get world normal
+    world_normal = beanie_body.matrix_world.to_3x3() @ poly.normal
+    dot = world_normal.dot(Vector((0, 0, 1)))
+    if dot > max_dot:
+        max_dot = dot
+        top_face_idx = i
+
+if top_face_idx != -1:
+    top_face_center = loc_body.face_center_world(top_face_idx)
+    beanie_crown.location = top_face_center
+else:
+    # Fallback: center at top of bounding box
+    top_face_center = loc_body.center_world() + Vector((0, 0, loc_body.obj.dimensions.z / 2))
+    beanie_crown.location = top_face_center
+
+# Move by offset(0,0,0.005)
+beanie_crown.location += Vector((0, 0, 0.005))
+
+# Stage 2 complete.
+# All stages complete.
+```

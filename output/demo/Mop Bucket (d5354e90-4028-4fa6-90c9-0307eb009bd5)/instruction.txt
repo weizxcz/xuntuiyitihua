@@ -1,0 +1,1 @@
+Create a 3D model of a mop bucket. The bucket should be round with a flat bottom and include a wringer attachment on one side. Add a handle for carrying.

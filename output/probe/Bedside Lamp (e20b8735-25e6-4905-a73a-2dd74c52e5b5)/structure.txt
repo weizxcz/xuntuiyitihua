@@ -1,0 +1,26 @@
+-- MATERIAL LIBRARY --
+mat_base | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_shade | diffuse_color=(1.0,0.95,0.8,1.0)
+mat_stand | diffuse_color=(0.8,0.8,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lamp_root | Composite assembly of base, stand, and shade | assembly_order=[base_group], [stand_group], [shade_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_group | Composite of base_cylinder | assembly_order=[base_cylinder] |
+| stand_group | Composite of stand_cylinder | assembly_order=[stand_cylinder] |
+| shade_group | Composite of shade_cone | assembly_order=[shade_cone] |
+
+Layer 2 – Leaf Nodes
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_cylinder | Cylinder Ø0.152×0.025 m (Diameter 6 inches, Height 1 inch) | Align(XY) base_cylinder.center to lamp_root.center; Align(Z) base_cylinder.bottom_face to lamp_root.bottom_face; orientation=axis:+Z; mat=mat_base; create_method=primitive |
+| stand_cylinder | Cylinder Ø0.025×0.305 m (Diameter 1 inch, Height 12 inches) | Align(XY) stand_cylinder.center to base_cylinder.top_face.center; Align(Z) stand_cylinder.bottom_face to base_cylinder.top_face; orientation=axis:+Z; mat=mat_stand; create_method=primitive |
+| shade_cone | Cone Ø0.203×0.152 m (Bottom Diameter 8 inches, Height 6 inches) | Align(XY) shade_cone.bottom_face.center to stand_cylinder.top_face.center; Align(Z) shade_cone.bottom_face to stand_cylinder.top_face; orientation=axis:+Z; mat=mat_shade; create_method=primitive |
+# ----------  END_GRAPH  ----------

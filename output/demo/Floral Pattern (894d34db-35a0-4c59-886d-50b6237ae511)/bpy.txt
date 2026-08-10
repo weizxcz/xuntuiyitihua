@@ -1,0 +1,253 @@
+import bpy
+import math
+import bmesh
+from mathutils import Vector, Matrix, Euler
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def average(points):
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, face_index=0):
+        # Approximate face center by averaging vertices of the face
+        # Note: This assumes the object is in edit mode or we access mesh data directly
+        # For simplicity in object mode, we assume standard primitives or use bounding box center if mesh access is tricky
+        # A robust way for primitives:
+        if self.obj.type == 'MESH':
+            bm = bmesh.new()
+            bm.from_mesh(self.obj.data)
+            bm.verts.ensure_lookup_table()
+            if face_index < len(bm.faces):
+                face = bm.faces[face_index]
+                center = average([v.co for v in face.verts])
+                bm.free()
+                return self.obj.matrix_world @ center
+            bm.free()
+        return self.center_world()
+
+    def radial_point_world(self, angle_deg, radius, axis='Z'):
+        # Returns a point in world space relative to the object's center, rotated by angle
+        # Default axis Z means rotation in XY plane
+        angle_rad = math.radians(angle_deg)
+        if axis == 'Z':
+            pt_local = Vector((radius * math.cos(angle_rad), radius * math.sin(angle_rad), 0))
+        elif axis == 'Y':
+            pt_local = Vector((radius * math.sin(angle_rad), 0, radius * math.cos(angle_rad)))
+        elif axis == 'X':
+            pt_local = Vector((0, radius * math.sin(angle_rad), radius * math.cos(angle_rad)))
+        else:
+            pt_local = Vector((radius * math.cos(angle_rad), radius * math.sin(angle_rad), 0))
+        
+        return self.obj.matrix_world @ pt_local
+
+def align_axis_to_vector(obj, target_vector, axis='Z'):
+    """Aligns the specified axis of the object to the target vector."""
+    if axis == 'Z':
+        current_axis = Vector((0, 0, 1))
+    elif axis == 'Y':
+        current_axis = Vector((0, 1, 0))
+    elif axis == 'X':
+        current_axis = Vector((1, 0, 0))
+    else:
+        return
+
+    # Calculate rotation matrix to align current_axis to target_vector
+    rot_mat = current_axis.rotation_difference(target_vector).to_matrix().to_4x4()
+    
+    # Apply rotation
+    obj.rotation_euler = rot_mat.to_euler()
+    obj.rotation_mode = 'QUATERNION' # Reset mode to avoid gimbal lock issues during calculation if needed, but here we set euler directly usually better
+    # Actually, setting rotation_euler directly is safer if we compute it correctly
+    obj.rotation_euler = rot_mat.to_euler()
+    obj.rotation_mode = 'XYZ'
+
+def add_cylinder(name, radius, depth, location, rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cube(name, size, location, rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def boolean_subtract(cutter_name, target_name):
+    cutter = bpy.data.objects.get(cutter_name)
+    target = bpy.data.objects.get(target_name)
+    if not cutter or not target:
+        return
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply Modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete Cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    union = bpy.data.objects.get(union_name)
+    target = bpy.data.objects.get(target_name)
+    if not union or not target:
+        return
+
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+
+    # Apply Modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # Delete Union Object
+    bpy.data.objects.remove(union, do_unlink=True)
+
+def align_center_to_center(obj_a, obj_b):
+    """Aligns center of obj_a to center of obj_b."""
+    loc_a = obj_a.location
+    loc_b = obj_b.location
+    delta = loc_b - loc_a
+    obj_a.location += delta
+
+def align_bottom_face_to_bottom_face(obj_a, obj_b):
+    """Aligns bottom face of obj_a to bottom face of obj_b.
+    Assumes objects are upright (Z is up)."""
+    # Get bounding box min Z for both
+    def get_min_z(obj):
+        # Transform vertices to world space
+        verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        return min(v.z for v in verts)
+    
+    min_z_a = get_min_z(obj_a)
+    min_z_b = get_min_z(obj_b)
+    
+    delta_z = min_z_b - min_z_a
+    obj_a.location.z += delta_z
+
+# --- Main Script ---
+
+# Block 0: Scene Reset & Units
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# Block 1: Materials
+mat_flower_petal = make_material("flower_petal", (1.0, 0.8, 0.8, 1.0))
+mat_flower_stamen = make_material("flower_stamen", (1.0, 0.9, 0.0, 1.0))
+mat_pattern_background = make_material("pattern_background", (0.9, 0.9, 0.9, 1.0))
+
+# Block 2: Geometry Generation
+
+# --- SECTION 1 – Create pattern background panel ---
+# Create primitive cuboid with size 1.0×1.0×0.01 m and name it pattern_background.
+# Note: add_cube size is total width, so half-size is 0.5. Depth is Z.
+obj_bg = add_cube("pattern_background", 1.0, (0, 0, 0), (0, 0, 0))
+obj_bg.data.materials.append(mat_pattern_background)
+
+# Rotate pattern_background so its +Z axis aligns +Z (world).
+# Already aligned by default, but explicit step:
+align_axis_to_vector(obj_bg, Vector((0, 0, 1)), 'Z')
+
+# Anchor pattern_background to world origin.
+obj_bg.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+obj_bg.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create floral array grid ---
+for r in range(2): # 0...1
+    for c in range(2): # 0...1
+        # Create Empty helper (cube display) and name it flower_template_r_c.
+        # Using a cube as a visual helper/locator
+        name_template = f"flower_template_{r}_{c}"
+        obj_template = add_cube(name_template, 0.01, (0, 0, 0), (0, 0, 0)) # Small cube as placeholder
+        
+        # Rotate flower_template_r_c so its +Z axis aligns +Z (world).
+        align_axis_to_vector(obj_template, Vector((0, 0, 1)), 'Z')
+        
+        # Anchor flower_template_r_c to world origin.
+        obj_template.location = (0, 0, 0)
+        
+        # Then move by offset(-0.25 + c*0.5, -0.25 + r*0.5, 0).
+        offset_x = -0.25 + c * 0.5
+        offset_y = -0.25 + r * 0.5
+        obj_template.location += Vector((offset_x, offset_y, 0))
+        
+        # Create primitive cylinder with Ø0.01×0.005 m and name it stamen_core_r_c.
+        # Radius = 0.005, Depth = 0.005
+        name_stamen = f"stamen_core_{r}_{c}"
+        obj_stamen = add_cylinder(name_stamen, 0.005, 0.005, (0, 0, 0), (0, 0, 0))
+        obj_stamen.data.materials.append(mat_flower_stamen)
+        
+        # Rotate stamen_core_r_c so its +Z axis aligns +Z (world).
+        align_axis_to_vector(obj_stamen, Vector((0, 0, 1)), 'Z')
+        
+        # Align stamen_core_r_c.center to flower_template_r_c.center.
+        align_center_to_center(obj_stamen, obj_template)
+        
+        # Align stamen_core_r_c.bottom_face to flower_template_r_c.bottom_face.
+        align_bottom_face_to_bottom_face(obj_stamen, obj_template)
+        
+        # Then move by offset(0,0,0).
+        obj_stamen.location += Vector((0, 0, 0))
+        
+        # For i in 0…4:
+        for i in range(5):
+            # Create primitive cuboid with size 0.04×0.02×0.002 m and name it petal_i_r_c.
+            name_petal = f"petal_{i}_{r}_{c}"
+            # Size in add_cube is total dimension. X=0.04, Y=0.02, Z=0.002
+            obj_petal = add_cube(name_petal, 0.04, (0, 0, 0), (0, 0, 0))
+            obj_petal.data.materials.append(mat_flower_petal)
+            
+            # Rotate petal_i_r_c so its +Z axis aligns +Z (world).
+            align_axis_to_vector(obj_petal, Vector((0, 0, 1)), 'Z')
+            
+            # Align petal_i_r_c.center to flower_template_r_c.center.
+            align_center_to_center(obj_petal, obj_template)
+            
+            # Then position at polar(i*72°; dr=0.05).
+            # Polar coordinates: angle = i*72, radius = 0.05
+            # Assuming polar is in XY plane relative to the object's local Z-up orientation
+            angle_deg = i * 72
+            radius = 0.05
+            
+            # Calculate offset in local space of the template (which is aligned to world)
+            rad_rad = math.radians(angle_deg)
+            dx = radius * math.cos(rad_rad)
+            dy = radius * math.sin(rad_rad)
+            
+            obj_petal.location += Vector((dx, dy, 0))
+
+# --- SECTION 3 – Finalize floral array ---
+# All stages complete.

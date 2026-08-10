@@ -1,0 +1,43 @@
+-- MATERIAL LIBRARY --
+metal_silver | diffuse_color=(0.75,0.75,0.80,1.0)
+plastic_black | diffuse_color=(0.10,0.10,0.10,1.0)
+glass_transparent | diffuse_color=(0.90,0.95,0.95,0.3)
+metal_heating | diffuse_color=(0.80,0.20,0.10,1.0)
+chrome | diffuse_color=(0.90,0.90,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| toaster_root | Composite of body, door, interior, and controls | assembly_order=[body_group], [door_group], [interior_group], [controls_group] |
+
+Layer 1 – Primary Structure (Body Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_shell | Composite of main chassis and top cover | assembly_order=[chassis], [top_cover] |
+| chassis | Rectangular box shell Ø0.40×0.30×0.25 m (W×H×D) | pos=(0, 0.15, 0); orientation=axis:+Z; mat=metal_silver; create_method=primitive; constraint=box dimensions 0.40x0.30x0.25m, hollowed interior 0.36x0.26x0.21m |
+| top_cover | Flat plate Ø0.40×0.30 m | Align(XY) top_cover.bottom_face to chassis.top_face; offset(0,0,0.005); mat=metal_silver; create_method=primitive; constraint=plate thickness 0.005m |
+
+Layer 2 – Door Assembly (Door Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_frame | Rectangular frame Ø0.38×0.28 m | Align(XY) door_frame.center to chassis.front_face.center; offset(0,0,0.002); mat=metal_silver; create_method=primitive; constraint=frame outer 0.38x0.28m, inner window 0.30x0.20m, thickness 0.02m |
+| door_glass | Glass pane Ø0.30×0.20 m | Align(XY) door_glass.center to door_frame.center; offset(0,0,0.001); mat=glass_transparent; create_method=primitive; constraint=pane thickness 0.004m |
+| door_handle | Curved handle bar Ø0.25 m long | Align(XY) door_handle.center to door_frame.bottom_face.center; offset(0,0,0.015); orientation=axis:+X; mat=chrome; create_method=cylinder; constraint=diameter 0.01m, length 0.25m |
+| door_hinge | Hinge mechanism | Align(XY) door_hinge.center to door_frame.top_face.center; offset(0,0,0.001); mat=metal_silver; create_method=primitive; constraint=small block 0.02x0.02x0.01m |
+
+Layer 3 – Interior Components (Interior Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| heating_element_top | Top heating coil | Align(XY) heating_element_top.center to chassis.top_face.center; offset(0,0,-0.02); orientation=axis:+Z; mat=metal_heating; create_method=cylinder; constraint=diameter 0.005m, length 0.30m |
+| heating_element_bottom | Bottom heating coil | Align(XY) heating_element_bottom.center to chassis.bottom_face.center; offset(0,0,0.02); orientation=axis:+Z; mat=metal_heating; create_method=cylinder; constraint=diameter 0.005m, length 0.30m |
+| food_rack | Wire rack | Align(XY) food_rack.center to chassis.center; offset(0,0,0.05); orientation=axis:+Z; mat=metal_silver; create_method=primitive; constraint=grid 0.30x0.20m, wire diameter 0.002m |
+
+Layer 4 – Controls (Controls Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| control_panel | Panel with dials | Align(XY) control_panel.center to chassis.top_face.center; offset(0,0,0.01); mat=plastic_black; create_method=primitive; constraint=panel 0.10x0.05m, thickness 0.005m |
+| dial_temp | Temperature dial | Align(XY) dial_temp.center to control_panel.left_face.center; offset(0,0,0.005); orientation=axis:+Z; mat=chrome; create_method=cylinder; constraint=diameter 0.02m, height 0.01m |
+| dial_timer | Timer dial | Align(XY) dial_timer.center to control_panel.right_face.center; offset(0,0,0.005); orientation=axis:+Z; mat=chrome; create_method=cylinder; constraint=diameter 0.02m, height 0.01m |
+# ----------  END_GRAPH  ----------

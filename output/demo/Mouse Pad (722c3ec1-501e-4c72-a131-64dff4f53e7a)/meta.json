@@ -1,0 +1,43 @@
+{
+  "id": "722c3ec1-501e-4c72-a131-64dff4f53e7a",
+  "name": "Mouse Pad",
+  "instruction": "Generate a 3D model of a mouse pad with a simple design.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a mouse pad.",
+        "The mouse pad has a rectangular shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The surface of the mouse pad is smooth for optimal mouse movement."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The mouse pad has a flat profile.",
+        "The thickness of the mouse pad is consistent across its surface."
+      ],
+      "Object distance and contact": [
+        "The mouse pad is positioned flat on a surface.",
+        "There are no gaps between the mouse pad and the surface it rests on."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The mouse pad is accurately represented as per the instruction.",
+        "The design adheres to the requirement of being simple."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

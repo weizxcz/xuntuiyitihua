@@ -1,0 +1,45 @@
+{
+  "id": "93f8c424-69bf-45cd-9d56-79ec1bdd0ab5",
+  "name": "Paintbrush",
+  "instruction": "Let's create two versions of a paintbrush. The first one should have a flat, wide bristle arrangement, ideal for broad strokes. The second version should have a round, pointed tip for detailed work. Compare the two designs in terms of their usefulness for different painting techniques.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The first paintbrush has a flat, wide bristle arrangement.",
+        "The second paintbrush has a round, pointed tip.",
+        "Both paintbrushes have a handle that is cylindrical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The tip s are proportionate to paintbrushes."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bristles of the flat brush are evenly distributed across the width.",
+        "The bristles of the round brush taper to a point.",
+        "The handles of both brushes are proportionate to their bristle arrangements."
+      ],
+      "Object distance and contact": [
+        "The bristles of the flat brush do not overlap with the handle.",
+        "The pointed tip of the round brush is well-defined and does not touch the handle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both paintbrush designs are accurately represented as per the instructions.",
+        "The distinction between the two brushes is clear and well-defined."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

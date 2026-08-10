@@ -1,0 +1,46 @@
+{
+  "id": "ba985bce-17f1-438f-907a-2766d899e945",
+  "name": "Yo-Yo",
+  "instruction": "Generate a 3D model of a yo-yo. It should have a simple, classic design.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a yo-yo.",
+        "The yo-yo has a circular shape.",
+        "The design is simple and classic."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The two halves of the yo-yo are symmetrical.",
+        "The axle is centered between the two halves."
+      ],
+      "Texture and surface detail": [
+        "The surface of the yo-yo should be smooth."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The two halves of the yo-yo are properly aligned.",
+        "The axle is positioned correctly in the center.",
+        "The string attachment point is accurately placed."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the two halves of the yo-yo.",
+        "The string is securely attached to the axle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design adheres to the simple and classic style specified.",
+        "All specified attributes are accurately represented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

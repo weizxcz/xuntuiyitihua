@@ -1,0 +1,1 @@
+Create a 3D model comparing a drill and a screwdriver. The drill should have a chuck for holding drill bits and a trigger for operation. The screwdriver should have a handle and a shaft with a flat or Phillips head. Position them side by side.

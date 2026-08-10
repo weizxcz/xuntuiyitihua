@@ -1,0 +1,52 @@
+-- MATERIAL LIBRARY --
+mat_frame | diffuse_color=(0.502,0.271,0.0,1.0)
+mat_bar_c | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_d | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_e | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_f | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_g | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_a | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_b | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_bar_c_high | diffuse_color=(0.957,0.851,0.651,1.0)
+mat_mallet_head | diffuse_color=(0.957,0.957,0.957,1.0)
+mat_mallet_stick | diffuse_color=(0.502,0.271,0.0,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_base | Composite of frame_base_left + frame_base_right + frame_base_top + frame_base_bottom + frame_base_mid | A sturdy rectangular wooden frame holding the bars. |
+
+Layer 1 – Primary Structure (Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_base_left | Cuboid 0.02×0.02×0.6 m | Align(XZ) frame_base_left.bottom_face to world.bottom_face; Align(X) frame_base_left.left_face to world.left_face; pos=(0,0,0); mat=mat_frame; create_method=primitive |
+| frame_base_right | Cuboid 0.02×0.02×0.6 m | Align(XZ) frame_base_right.bottom_face to world.bottom_face; Align(X) frame_base_right.right_face to world.right_face; pos=(0,0,0); mat=mat_frame; create_method=primitive |
+| frame_base_top | Cuboid 0.42×0.02×0.02 m | Align(XZ) frame_base_top.top_face to frame_base_left.top_face; Align(Z) frame_base_top.front_face to frame_base_left.front_face; offset(0.2,0,0); mat=mat_frame; create_method=primitive |
+| frame_base_bottom | Cuboid 0.42×0.02×0.02 m | Align(XZ) frame_base_bottom.bottom_face to frame_base_left.bottom_face; Align(Z) frame_base_bottom.front_face to frame_base_left.front_face; offset(0.2,0,0); mat=mat_frame; create_method=primitive |
+| frame_base_mid | Cuboid 0.42×0.02×0.02 m | Align(XZ) frame_base_mid.top_face to frame_base_left.top_face; Align(Z) frame_base_mid.front_face to frame_base_left.front_face; offset(0.2,0,0.3); mat=mat_frame; create_method=primitive |
+
+Layer 2 – Bars (Ascending Size)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bar_c | Cuboid 0.02×0.02×0.15 m | Align(XZ) bar_c.bottom_face to frame_base_mid.top_face; Align(Z) bar_c.front_face to frame_base_mid.front_face; offset(0.02,0,0); mat=mat_bar_c; create_method=primitive |
+| bar_d | Cuboid 0.02×0.02×0.17 m | Align(XZ) bar_d.bottom_face to frame_base_mid.top_face; Align(Z) bar_d.front_face to frame_base_mid.front_face; offset(0.06,0,0); mat=mat_bar_d; create_method=primitive |
+| bar_e | Cuboid 0.02×0.02×0.19 m | Align(XZ) bar_e.bottom_face to frame_base_mid.top_face; Align(Z) bar_e.front_face to frame_base_mid.front_face; offset(0.10,0,0); mat=mat_bar_e; create_method=primitive |
+| bar_f | Cuboid 0.02×0.02×0.21 m | Align(XZ) bar_f.bottom_face to frame_base_mid.top_face; Align(Z) bar_f.front_face to frame_base_mid.front_face; offset(0.14,0,0); mat=mat_bar_f; create_method=primitive |
+| bar_g | Cuboid 0.02×0.02×0.23 m | Align(XZ) bar_g.bottom_face to frame_base_mid.top_face; Align(Z) bar_g.front_face to frame_base_mid.front_face; offset(0.18,0,0); mat=mat_bar_g; create_method=primitive |
+| bar_a | Cuboid 0.02×0.02×0.25 m | Align(XZ) bar_a.bottom_face to frame_base_mid.top_face; Align(Z) bar_a.front_face to frame_base_mid.front_face; offset(0.22,0,0); mat=mat_bar_a; create_method=primitive |
+| bar_b | Cuboid 0.02×0.02×0.27 m | Align(XZ) bar_b.bottom_face to frame_base_mid.top_face; Align(Z) bar_b.front_face to frame_base_mid.front_face; offset(0.26,0,0); mat=mat_bar_b; create_method=primitive |
+| bar_c_high | Cuboid 0.02×0.02×0.29 m | Align(XZ) bar_c_high.bottom_face to frame_base_mid.top_face; Align(Z) bar_c_high.front_face to frame_base_mid.front_face; offset(0.30,0,0); mat=mat_bar_c_high; create_method=primitive |
+
+Layer 3 – Mallets
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| mallet_1 | Composite of mallet_1_head + mallet_1_stick | A wooden mallet with a soft head. |
+| mallet_2 | Composite of mallet_2_head + mallet_2_stick | A wooden mallet with a soft head. |
+| mallet_1_head | Cylinder Ø0.02×0.02 m | Align(XY) mallet_1_head.bottom_face to mallet_1_stick.top_face; offset(0,0,0.01); mat=mat_mallet_head; create_method=primitive |
+| mallet_1_stick | Cylinder Ø0.005×0.25 m | Align(XY) mallet_1_stick.bottom_face to world.bottom_face; pos=(0.1,0,0); orientation=axis:+Z; mat=mat_mallet_stick; create_method=primitive |
+| mallet_2_head | Cylinder Ø0.02×0.02 m | Align(XY) mallet_2_head.bottom_face to mallet_2_stick.top_face; offset(0,0,0.01); mat=mat_mallet_head; create_method=primitive |
+| mallet_2_stick | Cylinder Ø0.005×0.25 m | Align(XY) mallet_2_stick.bottom_face to world.bottom_face; pos=(0.3,0,0); orientation=axis:+Z; mat=mat_mallet_stick; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

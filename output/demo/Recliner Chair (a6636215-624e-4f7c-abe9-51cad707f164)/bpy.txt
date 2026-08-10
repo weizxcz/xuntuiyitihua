@@ -1,0 +1,180 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube object with specific size, location, and rotation."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0,0,1))):
+    """Align an object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1,0,0))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    else: # Z
+        local_axis = Vector((0,0,1))
+        
+    # Calculate rotation to align local_axis to target vector
+    rot_quat = local_axis.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type):
+    """
+    Get the world location of a specific face center of an object.
+    face_type: 'top', 'bottom', 'front', 'back', 'left', 'right'
+    Assumes object is axis-aligned or we are approximating based on bounds.
+    """
+    # Get bounds
+    min_x, min_y, min_z = obj.location - (obj.scale[0], obj.scale[1], obj.scale[2])
+    max_x, max_y, max_z = obj.location + (obj.scale[0], obj.scale[1], obj.scale[2])
+    
+    # Adjust for rotation if necessary, but for simple axis-aligned boxes:
+    # Note: The prompt implies objects are rotated to align +Z to +Z, so they are axis aligned.
+    
+    if face_type == 'top':
+        return Vector((obj.location.x, obj.location.y, max_z))
+    elif face_type == 'bottom':
+        return Vector((obj.location.x, obj.location.y, min_z))
+    elif face_type == 'front': # +Y
+        return Vector((obj.location.x, max_y, obj.location.z))
+    elif face_type == 'back': # -Y
+        return Vector((obj.location.x, min_y, obj.location.z))
+    elif face_type == 'right': # +X
+        return Vector((max_x, obj.location.y, obj.location.z))
+    elif face_type == 'left': # -X
+        return Vector((min_x, obj.location.y, obj.location.z))
+    else:
+        return obj.location
+
+def anchor_and_offset(anchor_obj, anchor_face, offset_vec, target_obj):
+    """
+    Anchors target_obj to a face of anchor_obj, then applies offset.
+    The offset is applied in the reference local axes (assumed world-aligned here).
+    """
+    # 1. Get anchor point
+    anchor_point = get_face_center(anchor_obj, anchor_face)
+    
+    # 2. Calculate target location
+    # The offset is relative to the anchor point in world space (since axes are aligned)
+    target_loc = anchor_point + offset_vec
+    
+    # 3. Set location
+    target_obj.location = target_loc
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_fabric_dark = make_material("fabric_dark", (0.15, 0.15, 0.18, 1.0))
+mat_fabric_light = make_material("fabric_light", (0.85, 0.85, 0.85, 1.0))
+mat_metal_steel = make_material("metal_steel", (0.2, 0.2, 0.25, 1.0))
+mat_wood_oak = make_material("wood_oak", (0.5, 0.35, 0.2, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Helper for creating and positioning objects as per instructions
+def create_stage_object(name, size, anchor_obj=None, anchor_face=None, offset=Vector((0,0,0)), material=None):
+    """
+    Creates a cuboid, orients it, anchors it, and offsets it.
+    """
+    # 1. Create primitive
+    # Default location (0,0,0) before anchoring
+    obj = add_cube(name, size, (0,0,0), (0,0,0), material)
+    
+    # 2. Rotate so +Z aligns +Z (already default, but explicit per rules)
+    align_axis_to_vector(obj, 'Z', Vector((0,0,1)))
+    
+    # 3. Anchor & Offset
+    if anchor_obj is not None and anchor_face is not None:
+        anchor_and_offset(anchor_obj, anchor_face, offset, obj)
+    else:
+        # If no anchor, just apply offset to initial location (0,0,0)
+        obj.location = offset
+        
+    return obj
+
+# --- SECTION 1 – Create frame base ---
+frame_base = create_stage_object("frame_base", (0.7, 0.6, 0.05), material=mat_wood_oak)
+# Anchor to world origin (0,0,0) is implicit if no anchor obj, but let's be explicit for clarity if needed.
+# The prompt says "Anchor frame_base to world origin". Since it's the first object, location is already 0,0,0.
+frame_base.location = (0,0,0)
+# Offset (0,0,0)
+frame_base.location += Vector((0,0,0))
+
+# --- SECTION 2 – Create support legs ---
+# leg_fl
+leg_fl = create_stage_object("leg_fl", (0.05, 0.05, 0.45), anchor_obj=frame_base, anchor_face='bottom', offset=Vector((-0.3, -0.25, -0.25)), material=mat_metal_steel)
+# leg_fr
+leg_fr = create_stage_object("leg_fr", (0.05, 0.05, 0.45), anchor_obj=frame_base, anchor_face='bottom', offset=Vector((0.3, -0.25, -0.25)), material=mat_metal_steel)
+# leg_bl
+leg_bl = create_stage_object("leg_bl", (0.05, 0.05, 0.45), anchor_obj=frame_base, anchor_face='bottom', offset=Vector((-0.3, 0.25, -0.25)), material=mat_metal_steel)
+# leg_br
+leg_br = create_stage_object("leg_br", (0.05, 0.05, 0.45), anchor_obj=frame_base, anchor_face='bottom', offset=Vector((0.3, 0.25, -0.25)), material=mat_metal_steel)
+
+# --- SECTION 3 – Create seat frame ---
+seat_frame = create_stage_object("seat_frame", (0.6, 0.5, 0.08), anchor_obj=frame_base, anchor_face='top', offset=Vector((0, 0, 0.25)), material=mat_wood_oak)
+
+# --- SECTION 4 – Create back frame ---
+back_frame = create_stage_object("back_frame", (0.6, 0.08, 0.8), anchor_obj=seat_frame, anchor_face='top', offset=Vector((0, 0.25, 0.65)), material=mat_wood_oak)
+
+# --- SECTION 5 – Create seat cushion ---
+seat_cushion = create_stage_object("seat_cushion", (0.65, 0.55, 0.1), anchor_obj=seat_frame, anchor_face='top', offset=Vector((0, 0, 0.35)), material=mat_fabric_dark)
+
+# --- SECTION 6 – Create backrest cushion ---
+backrest_cushion = create_stage_object("backrest_cushion", (0.65, 0.15, 0.9), anchor_obj=back_frame, anchor_face='top', offset=Vector((0, 0.3, 0.7)), material=mat_fabric_dark)
+
+# --- SECTION 7 – Create headrest cushion ---
+headrest_cushion = create_stage_object("headrest_cushion", (0.4, 0.15, 0.2), anchor_obj=backrest_cushion, anchor_face='top', offset=Vector((0, 0.35, 1.15)), material=mat_fabric_dark)
+
+# --- SECTION 8 – Create left armrest ---
+armrest_l = create_stage_object("armrest_l", (0.15, 0.55, 0.15), anchor_obj=seat_frame, anchor_face='top', offset=Vector((-0.35, 0, 0.55)), material=mat_fabric_light)
+
+# --- SECTION 9 – Create right armrest ---
+armrest_r = create_stage_object("armrest_r", (0.15, 0.55, 0.15), anchor_obj=seat_frame, anchor_face='top', offset=Vector((0.35, 0, 0.55)), material=mat_fabric_light)
+
+# --- SECTION 10 – Create pivot hinge ---
+pivot_hinge = create_stage_object("pivot_hinge", (0.1, 0.1, 0.1), anchor_obj=seat_frame, anchor_face='top', offset=Vector((0, 0, 0.3)), material=mat_metal_steel)
+
+# --- SECTION 11 – Create recline lever ---
+recline_lever = create_stage_object("recline_lever", (0.05, 0.05, 0.2), anchor_obj=seat_frame, anchor_face='left', offset=Vector((-0.35, -0.1, 0.4)), material=mat_metal_steel)
+
+# --- SECTION 12 – Create gas spring ---
+gas_spring = create_stage_object("gas_spring", (0.03, 0.03, 0.4), anchor_obj=seat_frame, anchor_face='bottom', offset=Vector((0.1, 0.1, 0.3)), material=mat_metal_steel)
+
+# --- SECTION 13 – Create footrest base ---
+footrest_base = create_stage_object("footrest_base", (0.5, 0.4, 0.05), anchor_obj=seat_frame, anchor_face='bottom', offset=Vector((0, -0.4, 0.3)), material=mat_wood_oak)
+
+# --- SECTION 14 – Create footrest cushion ---
+footrest_cushion = create_stage_object("footrest_cushion", (0.55, 0.45, 0.08), anchor_obj=footrest_base, anchor_face='top', offset=Vector((0, -0.4, 0.36)), material=mat_fabric_light)
+
+# --- SECTION 15 – Create footrest hinge ---
+footrest_hinge = create_stage_object("footrest_hinge", (0.05, 0.05, 0.05), anchor_obj=footrest_base, anchor_face='top', offset=Vector((0, -0.2, 0.3)), material=mat_metal_steel)
+```

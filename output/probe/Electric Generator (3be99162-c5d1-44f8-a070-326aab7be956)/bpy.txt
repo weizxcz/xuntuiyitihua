@@ -1,0 +1,300 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    # size is a tuple (x, y, z)
+    half = (size[0]/2, size[1]/2, size[2]/2)
+    bpy.ops.mesh.primitive_cube_add(size=1, align='WORLD', location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = half
+    return obj
+
+def add_disc(name, radius, depth, segments=32):
+    return add_cylinder(name, radius, depth, segments)
+
+def boolean_subtract(cutter_obj, target_obj):
+    # Add Boolean Modifier to target
+    mod = target_obj.modifiers.new(name="BoolSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter_obj
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    # Add Boolean Modifier to target
+    mod = target_obj.modifiers.new(name="BoolUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Remove union_obj
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0,0,1))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    elif axis == 'X':
+        local_axis = Vector((1,0,0))
+    else:
+        return
+
+    target = Vector(vector).normalized()
+    if local_axis == target:
+        return
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_world_center(obj):
+    """Get the world location of the object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_world_bottom_face_center(obj):
+    """Get the world location of the center of the bottom face (min Z in local space)."""
+    # Assuming standard orientation where Z is up/down
+    # Local bottom is at -height/2 on Z axis
+    local_bottom = Vector((0, 0, -obj.dimensions.z / 2))
+    return obj.matrix_world @ local_bottom
+
+def get_world_top_face_center(obj):
+    """Get the world location of the center of the top face (max Z in local space)."""
+    local_top = Vector((0, 0, obj.dimensions.z / 2))
+    return obj.matrix_world @ local_top
+
+def get_world_center_face(obj):
+    """Get the world location of the geometric center."""
+    return get_world_center(obj)
+
+def align_to_anchor(anchor_obj, target_obj, align_type='center_to_center'):
+    """
+    Align target_obj to anchor_obj based on align_type.
+    Types: 'center_to_center', 'bottom_to_top', 'top_to_bottom', 'bottom_to_bottom'
+    """
+    anchor_center = get_world_center(anchor_obj)
+    target_center = get_world_center(target_obj)
+    
+    if align_type == 'center_to_center':
+        target_obj.location = anchor_center
+    elif align_type == 'bottom_to_top':
+        # Align target bottom to anchor top
+        anchor_top = get_world_top_face_center(anchor_obj)
+        target_bottom = get_world_bottom_face_center(target_obj)
+        # We want target_bottom to be at anchor_top
+        # Current target location is its center.
+        # Offset needed: anchor_top - target_bottom
+        offset = anchor_top - target_bottom
+        target_obj.location += offset
+    elif align_type == 'top_to_bottom':
+        anchor_bottom = get_world_bottom_face_center(anchor_obj)
+        target_top = get_world_top_face_center(target_obj)
+        offset = anchor_bottom - target_top
+        target_obj.location += offset
+    elif align_type == 'bottom_to_bottom':
+        anchor_bottom = get_world_bottom_face_center(anchor_obj)
+        target_bottom = get_world_bottom_face_center(target_obj)
+        offset = anchor_bottom - target_bottom
+        target_obj.location += offset
+
+def polar_position(obj, anchor_obj, angle_deg, dr):
+    """
+    Position obj relative to anchor_obj using polar coordinates.
+    Angle is in degrees, measured from X axis in XY plane.
+    dr is radial distance from anchor center.
+    """
+    anchor_center = get_world_center(anchor_obj)
+    angle_rad = math.radians(angle_deg)
+    
+    # Calculate offset in XY plane
+    dx = dr * math.cos(angle_rad)
+    dy = dr * math.sin(angle_rad)
+    
+    # Apply offset to current location (which is already anchored)
+    obj.location.x += dx
+    obj.location.y += dy
+
+def create_empty_helper(name):
+    bpy.ops.object.empty_add(type='PLAIN_AXES', align='WORLD', location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_copper_wire = make_material("copper_wire", (0.87, 0.27, 0.09, 1.0))
+mat_magnetic_steel = make_material("magnetic_steel", (0.4, 0.4, 0.45, 1.0))
+mat_steel_alloy = make_material("steel_alloy", (0.3, 0.3, 0.35, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Stator Frame: Outer Housing ---
+outer_housing = add_cylinder("outer_housing", 0.100, 0.150) # Radius = Diameter/2
+apply_material(outer_housing, mat_steel_alloy)
+align_axis_to_vector(outer_housing, 'Z', (0,0,1))
+outer_housing.location = (0, 0, 0)
+
+# --- SECTION 2 – Create Stator Frame: Inner Core Ring ---
+inner_core_ring = add_cylinder("inner_core_ring", 0.090, 0.140)
+apply_material(inner_core_ring, mat_steel_alloy)
+align_axis_to_vector(inner_core_ring, 'Z', (0,0,1))
+# Align inner_core_ring.bottom_face to outer_housing.top_face
+align_to_anchor(outer_housing, inner_core_ring, 'bottom_to_top')
+# Move by offset(0,0,0.005)
+inner_core_ring.location.z += 0.005
+
+# --- SECTION 3 – Create Stator Frame: Winding Slots ---
+winding_slots = create_empty_helper("winding_slots")
+align_axis_to_vector(winding_slots, 'Z', (0,0,1))
+# Align winding_slots.center to outer_housing.center
+align_to_anchor(outer_housing, winding_slots, 'center_to_center')
+# Align winding_slots.bottom_face to outer_housing.top_face
+align_to_anchor(outer_housing, winding_slots, 'bottom_to_top')
+# Move by offset(0,0,0.005)
+winding_slots.location.z += 0.005
+
+for i in range(4):
+    slot_cut = add_cube(f"slot_cut_{i}", (0.010, 0.010, 0.140))
+    align_axis_to_vector(slot_cut, 'Z', (0,0,1))
+    # Anchor slot_cut_i to winding_slots
+    align_to_anchor(winding_slots, slot_cut, 'center_to_center')
+    # Position at polar(i*90°; dr=0.085)
+    polar_position(slot_cut, winding_slots, i * 90, 0.085)
+    # Boolean-subtract slot_cut_i from outer_housing; discard slot_cut_i
+    boolean_subtract(slot_cut, outer_housing)
+
+# --- SECTION 4 – Create Rotor Core: Core Body ---
+core_body = add_cylinder("core_body", 0.050, 0.120)
+apply_material(core_body, mat_magnetic_steel)
+align_axis_to_vector(core_body, 'Z', (0,0,1))
+core_body.location = (0, 0, 0.075)
+
+# --- SECTION 5 – Create Rotor Core: Magnets ---
+magnets = create_empty_helper("magnets")
+align_axis_to_vector(magnets, 'Z', (0,0,1))
+# Align magnets.center to core_body.center
+align_to_anchor(core_body, magnets, 'center_to_center')
+# Align magnets.bottom_face to core_body.top_face
+align_to_anchor(core_body, magnets, 'bottom_to_top')
+# Move by offset(0,0,0.001)
+magnets.location.z += 0.001
+
+for i in range(4):
+    magnet = add_cube(f"magnet_{i}", (0.020, 0.020, 0.010))
+    align_axis_to_vector(magnet, 'Z', (0,0,1))
+    # Anchor magnet_i to magnets
+    align_to_anchor(magnets, magnet, 'center_to_center')
+    # Position at polar(i*90°; dr=0.045)
+    polar_position(magnet, magnets, i * 90, 0.045)
+    # Boolean-union magnet_i with core_body; discard magnet_i
+    boolean_union(magnet, core_body)
+
+# --- SECTION 6 – Create Rotor Core: Windings ---
+windings = create_empty_helper("windings")
+align_axis_to_vector(windings, 'Z', (0,0,1))
+# Align windings.center to core_body.center
+align_to_anchor(core_body, windings, 'center_to_center')
+# Align windings.bottom_face to core_body.top_face
+align_to_anchor(core_body, windings, 'bottom_to_top')
+# Move by offset(0,0,0.011)
+windings.location.z += 0.011
+
+for i in range(4):
+    coil = add_cylinder(f"coil_{i}", 0.0075, 0.020) # Diameter 0.015 -> Radius 0.0075
+    apply_material(coil, mat_copper_wire)
+    align_axis_to_vector(coil, 'Z', (0,0,1))
+    # Anchor coil_i to windings
+    align_to_anchor(windings, coil, 'center_to_center')
+    # Position at polar(i*90°; dr=0.045)
+    polar_position(coil, windings, i * 90, 0.045)
+    # Boolean-union coil_i with core_body; discard coil_i
+    boolean_union(coil, core_body)
+
+# --- SECTION 7 – Create Shaft ---
+shaft = add_cylinder("shaft", 0.010, 0.200) # Diameter 0.020 -> Radius 0.010
+apply_material(shaft, mat_steel_alloy)
+align_axis_to_vector(shaft, 'Z', (0,0,1))
+# Align shaft.center to generator_assembly.center
+# Note: generator_assembly is not explicitly defined as an object, but implies the global center (0,0,0)
+# Align shaft.center to (0,0,0)
+shaft.location = (0, 0, 0)
+# Align shaft.bottom_face to stator_frame.bottom_face
+# stator_frame is outer_housing
+align_to_anchor(outer_housing, shaft, 'bottom_to_bottom')
+# Move by offset(0,0,-0.025)
+shaft.location.z -= 0.025
+
+# --- SECTION 8 – Assemble Rotor Core to Shaft ---
+# Align rotor_core.center to shaft.center
+# rotor_core is core_body
+align_to_anchor(shaft, core_body, 'center_to_center')
+# Align rotor_core.bottom_face to shaft.top_face
+align_to_anchor(shaft, core_body, 'bottom_to_top')
+# Move by offset(0,0,0.060)
+core_body.location.z += 0.060
+# Boolean-union rotor_core with shaft; discard rotor_core
+boolean_union(core_body, shaft)
+
+# --- SECTION 9 – Create End Cover Top ---
+end_cover_top = add_cylinder("end_cover_top", 0.090, 0.010)
+apply_material(end_cover_top, mat_steel_alloy)
+align_axis_to_vector(end_cover_top, 'Z', (0,0,1))
+# Align end_cover_top.center to generator_assembly.center (0,0,0)
+end_cover_top.location = (0, 0, 0)
+# Align end_cover_top.bottom_face to stator_frame.top_face
+align_to_anchor(outer_housing, end_cover_top, 'bottom_to_top')
+# Move by offset(0,0,0.005)
+end_cover_top.location.z += 0.005
+
+# --- SECTION 10 – Create End Cover Bottom ---
+end_cover_bottom = add_cylinder("end_cover_bottom", 0.090, 0.010)
+apply_material(end_cover_bottom, mat_steel_alloy)
+align_axis_to_vector(end_cover_bottom, 'Z', (0,0,1))
+# Align end_cover_bottom.center to generator_assembly.center (0,0,0)
+end_cover_bottom.location = (0, 0, 0)
+# Align end_cover_bottom.top_face to stator_frame.bottom_face
+align_to_anchor(outer_housing, end_cover_bottom, 'top_to_bottom')
+# Move by offset(0,0,-0.005)
+end_cover_bottom.location.z -= 0.005
+```

@@ -1,0 +1,40 @@
+-- MATERIAL LIBRARY --
+mat_clear_plastic | diffuse_color=(240,240,240,0.3)
+mat_paper_blue | diffuse_color=(100,149,237,1.0)
+mat_paper_green | diffuse_color=(144,238,144,1.0)
+mat_paper_orange | diffuse_color=(255,165,0,1.0)
+mat_paper_pink | diffuse_color=(255,192,203,1.0)
+mat_paper_yellow | diffuse_color=(255,255,0,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Sticky Note Set | A. Composite of holder + 5 note stacks; arranged in a vertical stack within the holder. |
+
+Layer 1 – Primary Structure (Holder)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| holder_base | Holder Base Plate | cube 0.080×0.080×0.005 m; mat=mat_clear_plastic; create_method=primitive; pos=(0,0,0); orientation=axis:+Z |
+| holder_back | Holder Back Panel | cube 0.080×0.120×0.002 m; mat=mat_clear_plastic; create_method=primitive; Align(Z) holder_back.bottom_face to holder_base.top_face; offset(0,0,0.002); orientation=axis:+Z |
+| holder_left | Holder Left Wall | cube 0.002×0.120×0.080 m; mat=mat_clear_plastic; create_method=primitive; Align(XZ) holder_left.right_face to holder_back.left_face; offset(0,0,0); orientation=axis:+Z |
+| holder_right | Holder Right Wall | cube 0.002×0.120×0.080 m; mat=mat_clear_plastic; create_method=primitive; Align(XZ) holder_right.left_face to holder_back.right_face; offset(0,0,0); orientation=axis:+Z |
+| holder_top | Holder Top Lip | cube 0.080×0.002×0.002 m; mat=mat_clear_plastic; create_method=primitive; Align(XZ) holder_top.bottom_face to holder_back.top_face; offset(0,0,0); orientation=axis:+Z |
+| holder_union | Holder Assembly | Composite union of holder_base + holder_back + holder_left + holder_right + holder_top; create_method=boolean_union; assembly_order=[holder_base, holder_back, holder_left, holder_right, holder_top] |
+
+Layer 2 – Sticky Notes (Stacked)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| note_yellow | Yellow Note Sheet | cube 0.076×0.076×0.0001 m; mat=mat_paper_yellow; create_method=primitive; Align(XY) note_yellow.bottom_face to holder_base.top_face; offset(0,0,0.005); orientation=axis:+Z |
+| note_pink | Pink Note Sheet | cube 0.076×0.076×0.0001 m; mat=mat_paper_pink; create_method=primitive; Align(XY) note_pink.bottom_face to note_yellow.top_face; offset(0,0,0.0001); orientation=axis:+Z |
+| note_blue | Blue Note Sheet | cube 0.076×0.076×0.0001 m; mat=mat_paper_blue; create_method=primitive; Align(XY) note_blue.bottom_face to note_pink.top_face; offset(0,0,0.0001); orientation=axis:+Z |
+| note_green | Green Note Sheet | cube 0.076×0.076×0.0001 m; mat=mat_paper_green; create_method=primitive; Align(XY) note_green.bottom_face to note_blue.top_face; offset(0,0,0.0001); orientation=axis:+Z |
+| note_orange | Orange Note Sheet | cube 0.076×0.076×0.0001 m; mat=mat_paper_orange; create_method=primitive; Align(XY) note_orange.bottom_face to note_green.top_face; offset(0,0,0.0001); orientation=axis:+Z |
+| notes_stack | Note Stack | Composite union of note_yellow + note_pink + note_blue + note_green + note_orange; create_method=boolean_union; assembly_order=[note_yellow, note_pink, note_blue, note_green, note_orange] |
+
+Layer 3 – Final Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| final_product | Complete Sticky Note Set | Composite union of holder_union + notes_stack; create_method=boolean_union; assembly_order=[holder_union, notes_stack] |
+# ----------  END_GRAPH  ----------

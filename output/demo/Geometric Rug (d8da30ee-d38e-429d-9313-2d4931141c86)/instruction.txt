@@ -1,0 +1,1 @@
+Compare two geometric rug designs. The first design should have hexagonal patterns, while the second design should feature triangles. Use a monochromatic color scheme for both.

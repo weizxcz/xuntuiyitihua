@@ -1,0 +1,279 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, roughness=0.5, metallic=0.0):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, end_fill_type='TRIFAN')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_torus(name, major_radius, minor_radius, segments=32):
+    """Add a torus aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=segments, minor_segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def apply_transform(obj):
+    """Apply location, rotation, and scale."""
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    obj.select_set(False)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the target vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    target = Vector(vector).normalized()
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_center_world(obj):
+    """Get the world location of the object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_bottom_face_z(obj):
+    """Get the Z coordinate of the bottom-most face of the object."""
+    # Transform vertices to world space
+    verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    min_z = min(v[2] for v in verts_world)
+    return min_z
+
+def align_to_bottom_face(obj, target_obj):
+    """Align obj's bottom face to target_obj's bottom face."""
+    target_bottom_z = get_bottom_face_z(target_obj)
+    obj_bottom_z = get_bottom_face_z(obj)
+    offset_z = target_bottom_z - obj_bottom_z
+    obj.location.z += offset_z
+
+def align_centers(obj, target_obj):
+    """Align obj's center to target_obj's center."""
+    target_center = get_center_world(target_obj)
+    obj_center = get_center_world(obj)
+    obj.location += (target_center - obj_center)
+
+def boolean_union(objects, result_name):
+    """Perform boolean union on a list of objects, keeping the first one as the result."""
+    if not objects:
+        return None
+    
+    # Activate the first object as the base
+    base_obj = objects[0]
+    bpy.context.view_layer.objects.active = base_obj
+    base_obj.select_set(True)
+    
+    # Select others
+    for obj in objects[1:]:
+        obj.select_set(True)
+    
+    # Apply boolean union modifier
+    bpy.ops.object.boolean_modifier(modifier="Union", operation="UNION")
+    
+    # Clean up: remove modifiers and apply
+    # Note: bpy.ops.object.boolean_modifier is not standard for finalizing. 
+    # Better approach: Add modifier, apply, then delete operands.
+    
+    # Let's do it manually for robustness
+    base_obj.select_set(False)
+    for obj in objects[1:]:
+        obj.select_set(False)
+        
+    base_obj.select_set(True)
+    bpy.context.view_layer.objects.active = base_obj
+    
+    # Add modifier to base
+    mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    
+    # Add operands to the modifier
+    for obj in objects[1:]:
+        mod.object = obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+    # Delete operands
+    for obj in objects[1:]:
+        bpy.data.objects.remove(obj, do_unlink=True)
+        
+    base_obj.name = result_name
+    return base_obj
+
+def boolean_subtract(base_obj, cutter_obj, result_name):
+    """Subtract cutter from base."""
+    bpy.context.view_layer.objects.active = base_obj
+    base_obj.select_set(True)
+    
+    mod = base_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    base_obj.name = result_name
+    return base_obj
+
+def add_bevel(obj, width, segments=2):
+    """Add a bevel modifier."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_black = make_material("mat_black", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Create a placeholder 'peace_symbol' object to serve as the anchor target.
+# Since peace_symbol doesn't exist yet, we create a temporary reference cube at origin.
+# The instructions say "Align ... to peace_symbol.center". 
+# This implies peace_symbol is the target. But peace_symbol is created in Stage 6.
+# However, Stages 1-4 align TO peace_symbol. This is a circular dependency if peace_symbol is the final union.
+# Interpretation: The "peace_symbol" anchor likely refers to the geometric center of the final design, 
+# which is (0,0,0) if we build symmetrically around it. 
+# Or, it refers to a pre-existing object named 'peace_symbol'. 
+# Given the prompt structure, it's safer to assume 'peace_symbol' is the final object, 
+# but the alignment steps in 1-4 refer to its *intended* position/center.
+# Since we are building it from scratch, we will align everything to the World Origin (0,0,0) 
+# which will become the center of the peace_symbol.
+# Let's create a dummy object named 'peace_symbol' at origin to satisfy the "Align to peace_symbol" logic.
+bpy.ops.mesh.primitive_cube_add(size=0.001, location=(0,0,0))
+peace_symbol_anchor = bpy.context.active_object
+peace_symbol_anchor.name = "peace_symbol"
+# Make it invisible/non-renderable if needed, but it serves as the anchor.
+
+# --- SECTION 1 – Create outer ring ---
+outer_ring = add_torus("outer_ring", major_radius=0.100, minor_radius=0.010)
+outer_ring.data.materials.append(mat_black)
+
+# Rotate outer_ring so its +Z axis aligns +Z (world) - Default is already +Z, but ensure it.
+align_axis_to_vector(outer_ring, 'Z', (0, 0, 1))
+
+# Align outer_ring.center to peace_symbol.center
+align_centers(outer_ring, peace_symbol_anchor)
+
+# Align outer_ring.bottom_face to peace_symbol.bottom_face
+# peace_symbol_anchor is a cube of size 0.001, bottom face is at -0.0005.
+# outer_ring torus bottom face is at -0.010 (minor radius).
+align_to_bottom_face(outer_ring, peace_symbol_anchor)
+
+# Move by offset(0,0,0)
+outer_ring.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create vertical stem ---
+vertical_stem = add_cylinder("vertical_stem", radius=0.010, depth=0.200) # Ø0.020 -> r=0.010
+vertical_stem.data.materials.append(mat_black)
+
+# Rotate vertical_stem so its +Z axis aligns +Z (world)
+align_axis_to_vector(vertical_stem, 'Z', (0, 0, 1))
+
+# Align vertical_stem.center to peace_symbol.center
+align_centers(vertical_stem, peace_symbol_anchor)
+
+# Align vertical_stem.bottom_face to peace_symbol.bottom_face
+align_to_bottom_face(vertical_stem, peace_symbol_anchor)
+
+# Move by offset(0,0,0)
+vertical_stem.location += Vector((0, 0, 0))
+
+# --- SECTION 3 – Create left diagonal ---
+left_diagonal = add_cylinder("left_diagonal", radius=0.010, depth=0.141) # Ø0.020 -> r=0.010
+left_diagonal.data.materials.append(mat_black)
+
+# Rotate left_diagonal so its +Z axis aligns +Z (world)
+align_axis_to_vector(left_diagonal, 'Z', (0, 0, 1))
+
+# Rotate left_diagonal so its local +Z axis achieves orientation=axis:+Z (world) then apply rotation=axis:Z,135°
+# This phrasing is slightly redundant/confusing. 
+# "Rotate ... so its local +Z axis achieves orientation=axis:+Z (world)" -> Already done above.
+# "then apply rotation=axis:Z,135°" -> Rotate around its local Z axis by 135 degrees.
+left_diagonal.rotation_euler.z += math.radians(135)
+
+# Align left_diagonal.center to peace_symbol.center
+align_centers(left_diagonal, peace_symbol_anchor)
+
+# Align left_diagonal.bottom_face to peace_symbol.bottom_face
+align_to_bottom_face(left_diagonal, peace_symbol_anchor)
+
+# Move by offset(0,0,0)
+left_diagonal.location += Vector((0, 0, 0))
+
+# --- SECTION 4 – Create right diagonal ---
+right_diagonal = add_cylinder("right_diagonal", radius=0.010, depth=0.141) # Ø0.020 -> r=0.010
+right_diagonal.data.materials.append(mat_black)
+
+# Rotate right_diagonal so its +Z axis aligns +Z (world)
+align_axis_to_vector(right_diagonal, 'Z', (0, 0, 1))
+
+# Rotate right_diagonal so its local +Z axis achieves orientation=axis:+Z (world) then apply rotation=axis:Z,45°
+right_diagonal.rotation_euler.z += math.radians(45)
+
+# Align right_diagonal.center to peace_symbol.center
+align_centers(right_diagonal, peace_symbol_anchor)
+
+# Align right_diagonal.bottom_face to peace_symbol.bottom_face
+align_to_bottom_face(right_diagonal, peace_symbol_anchor)
+
+# Move by offset(0,0,0)
+right_diagonal.location += Vector((0, 0, 0))
+
+# --- SECTION 5 – Assemble inner lines union ---
+# Boolean-union vertical_stem, left_diagonal, and right_diagonal to create inner_lines.
+inner_lines = boolean_union([vertical_stem, left_diagonal, right_diagonal], "inner_lines")
+inner_lines.data.materials.append(mat_black)
+
+# Align inner_lines.center to peace_symbol.center
+align_centers(inner_lines, peace_symbol_anchor)
+
+# Align inner_lines.bottom_face to peace_symbol.bottom_face
+align_to_bottom_face(inner_lines, peace_symbol_anchor)
+
+# Move by offset(0,0,0)
+inner_lines.location += Vector((0, 0, 0))
+
+# --- SECTION 6 – Assemble peace symbol union ---
+# Boolean-union outer_ring and inner_lines to create peace_symbol.
+final_peace_symbol = boolean_union([outer_ring, inner_lines], "peace_symbol")
+final_peace_symbol.data.materials.append(mat_black)
+
+# Assembly guideline satisfied.
+
+# Cleanup: Remove the anchor object if it's not part of the final mesh
+if peace_symbol_anchor and peace_symbol_anchor.name == "peace_symbol":
+    # Check if it's still in the scene
+    if peace_symbol_anchor in bpy.context.scene.objects:
+        bpy.data.objects.remove(peace_symbol_anchor, do_unlink=True)

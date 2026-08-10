@@ -1,0 +1,600 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(name, type, size, location, rotation_euler):
+    """Add a primitive mesh object and apply transforms."""
+    if type == 'CUBE':
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif type == 'CYLINDER':
+        # size is (radius, depth) for cylinder in this helper context usually, 
+        # but here we assume size tuple (radius, radius, height) or similar.
+        # Standard add_cylinder takes radius and depth.
+        # Input format: Ø0.05x0.05 -> radius=0.025, depth=0.05
+        r = size[0] / 2
+        h = size[1]
+        bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=h, location=location)
+        obj = bpy.context.active_object
+        # Default cylinder is along Z.
+    elif type == 'CONE':
+        r = size[0] / 2
+        h = size[1]
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=r, radius2=0, depth=h, location=location)
+        obj = bpy.context.active_object
+    elif type == 'UVSPHERE':
+        r = size[0] / 2
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=r, location=location)
+        obj = bpy.context.active_object
+    
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.data.name = name + ".Data"
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Rotate object so its local axis aligns with target vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.copy()
+    
+    # Define basis vectors
+    if axis_to_align == 'X':
+        local_vec = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        local_vec = Vector((0, 1, 0))
+    elif axis_to_align == 'Z':
+        local_vec = Vector((0, 0, 1))
+    
+    # Calculate rotation needed
+    # We want local_vec to point to target_vector
+    # Use quaternion rotation from local_vec to target_vector
+    q = local_vec.rotation_difference(target_vector)
+    
+    # Apply rotation
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = q
+    obj.rotation_mode = 'XYZ' # Reset to Euler for consistency if needed, but keep quaternion for precision
+
+def get_face_center(obj, face_type='bottom'):
+    """Get the world location of a specific face center."""
+    # Ensure object is updated
+    obj.update_from_editmode() # Not needed for mesh objects usually, but good practice if in edit mode
+    
+    # Calculate bounding box to find face centers
+    # This is a simplified approach assuming axis-aligned or known orientation
+    # For robustness, we calculate based on dimensions and rotation
+    
+    # Get dimensions
+    dim = obj.dimensions
+    rot = obj.rotation_euler
+    
+    # Base center
+    center = obj.location
+    
+    # Offsets for faces relative to center in local space
+    if face_type == 'bottom':
+        local_offset = Vector((0, 0, -dim[2]/2))
+    elif face_type == 'top':
+        local_offset = Vector((0, 0, dim[2]/2))
+    elif face_type == 'front':
+        local_offset = Vector((0, dim[1]/2, 0))
+    elif face_type == 'back':
+        local_offset = Vector((0, -dim[1]/2, 0))
+    elif face_type == 'right':
+        local_offset = Vector((dim[0]/2, 0, 0))
+    elif face_type == 'left':
+        local_offset = Vector((-dim[0]/2, 0, 0))
+        
+    # Rotate offset to world space
+    world_offset = local_offset @ obj.rotation_euler.to_matrix()
+    
+    return center + world_offset
+
+def connect_faces(obj1, face1, obj2, face2):
+    """Move obj2 so face2 aligns with face1."""
+    loc1 = get_face_center(obj1, face1)
+    loc2 = get_face_center(obj2, face2)
+    
+    # Calculate translation needed
+    # We want obj2's face2 to be at loc1
+    # Current face2 is at loc2
+    # Translation = loc1 - loc2
+    translation = loc1 - loc2
+    
+    obj2.location += translation
+
+def align_faces(obj_target, face_target, obj_source, face_source):
+    """Align obj_source's face_source to obj_target's face_target."""
+    # This usually implies snapping the faces together
+    # Get centers
+    loc_target = get_face_center(obj_target, face_target)
+    loc_source = get_face_center(obj_source, face_source)
+    
+    # Calculate offset
+    offset = loc_target - loc_source
+    
+    # Apply offset
+    obj_source.location += offset
+
+def add_locator(name, location):
+    """Add a simple empty locator."""
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=location)
+    loc = bpy.context.active_object
+    loc.name = name
+    return loc
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_aluminum = make_material("mat_aluminum", (0.75, 0.75, 0.80, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.10, 0.10, 0.10, 1.0))
+mat_blue_foam = make_material("mat_blue_foam", (0.10, 0.20, 0.50, 1.0))
+mat_grey_steel = make_material("mat_grey_steel", (0.40, 0.40, 0.45, 1.0))
+mat_white_pad = make_material("mat_white_pad", (0.95, 0.95, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: Create main chassis ---
+# Create primitive cuboid with size 2.0×0.9×0.15 m and name it main_chassis.
+# Rotate main_chassis so its +Z axis aligns +Z (world).
+# Anchor main_chassis to world origin.
+# Then move by offset(0, 0, 0.075).
+
+main_chassis = add_primitive("main_chassis", "CUBE", (2.0, 0.9, 0.15), (0, 0, 0), (0, 0, 0))
+# Align +Z to +Z (already aligned)
+# Anchor to world origin (already at 0,0,0)
+# Offset
+main_chassis.location += Vector((0, 0, 0.075))
+
+# --- SECTION 2: Create caster wheels ---
+# For r in 0…1 and c in 0…1:
+#   Create primitive cylinder with Ø0.05×0.05 m and name it caster_wheel_r_c.
+#   Rotate caster_wheel_r_c so its +Z axis aligns +Z (world).
+#   Anchor caster_wheel_r_c to main_chassis.bottom_face.
+#   Then offset(-0.9 + c*1.8, -0.4 + r*0.7, 0.025).
+
+caster_wheels = {}
+for r in range(2):
+    for c in range(2):
+        name = f"caster_wheel_{r}_{c}"
+        # Cylinder Ø0.05x0.05 -> radius 0.025, height 0.05
+        # Initial placement at origin, then we will anchor
+        caster = add_primitive(name, "CYLINDER", (0.05, 0.05), (0, 0, 0), (0, 0, 0))
+        
+        # Rotate +Z to +Z (already aligned)
+        
+        # Anchor to main_chassis.bottom_face
+        # main_chassis bottom face is at Z = 0.075 - 0.15/2 = 0.075 - 0.075 = 0
+        # The caster bottom face should be at Z=0
+        # Caster height is 0.05. Bottom face is at -0.025 relative to center.
+        # So center Z should be 0.025
+        
+        # Calculate anchor point on main_chassis bottom face
+        # We need to determine the X,Y position based on the offset logic later, 
+        # but anchoring usually means snapping to the surface.
+        # Let's place it at the target X,Y first, then snap Z.
+        
+        target_x = -0.9 + c * 1.8
+        target_y = -0.4 + r * 0.7
+        target_z_offset = 0.025
+        
+        # Set X,Y
+        caster.location.x = target_x
+        caster.location.y = target_y
+        
+        # Anchor Z: main_chassis bottom is at 0. Caster bottom needs to be at 0.
+        # Caster center Z = 0 + (caster.height/2) = 0.025
+        caster.location.z = 0.025
+        
+        # Apply offset
+        caster.location += Vector((0, 0, target_z_offset))
+        
+        caster_wheels[(r,c)] = caster
+
+# --- SECTION 3: Create wheel stems ---
+# For r in 0…1 and c in 0…1:
+#   Create primitive cylinder with Ø0.02×0.05 m and name it stem_r_c.
+#   Rotate stem_r_c so its +Z axis aligns +Z (world).
+#   Connect caster_wheel_r_c.top + stem_r_c.bottom.
+
+stems = {}
+for r in range(2):
+    for c in range(2):
+        name = f"stem_{r}_{c}"
+        # Cylinder Ø0.02x0.05 -> radius 0.01, height 0.05
+        stem = add_primitive(name, "CYLINDER", (0.02, 0.05), (0, 0, 0), (0, 0, 0))
+        
+        # Rotate +Z to +Z (already aligned)
+        
+        # Connect caster_wheel_r_c.top to stem_r_c.bottom
+        caster = caster_wheels[(r,c)]
+        connect_faces(caster, 'top', stem, 'bottom')
+        
+        stems[(r,c)] = stem
+
+# --- SECTION 4: Create mattress ---
+# Create primitive cuboid with size 2.0×0.9×0.1 m and name it mattress.
+# Rotate mattress so its +Z axis aligns +Z (world).
+# Align mattress.bottom_face to base_frame.top_face.
+# Then move by offset(0, 0, 0.2).
+
+# Note: "base_frame" is not explicitly created, but "main_chassis" is the main body.
+# Assuming base_frame refers to main_chassis or the structure below.
+# Given the context, main_chassis is likely the base.
+# main_chassis top face Z = 0.075 + 0.15/2 = 0.15
+# mattress bottom face should align to main_chassis top face.
+
+mattress = add_primitive("mattress", "CUBE", (2.0, 0.9, 0.1), (0, 0, 0), (0, 0, 0))
+
+# Align mattress.bottom_face to main_chassis.top_face
+# main_chassis top Z = 0.15
+# mattress bottom Z should be 0.15
+# mattress center Z = 0.15 + 0.1/2 = 0.2
+mattress.location.z = 0.2
+
+# Offset (0, 0, 0.2)
+mattress.location += Vector((0, 0, 0.2))
+
+# --- SECTION 5: Create long support beams ---
+# For c in 0…1:
+#   Create primitive cuboid with size 1.8×0.05×0.05 m and name it support_beam_long_c.
+#   Rotate support_beam_long_c so its +Z axis aligns +Z (world).
+#   Align support_beam_long_c.bottom_face to base_frame.top_face.
+#   Then offset(-0.2 + c*0.4, 0, 0.15).
+
+support_beams_long = {}
+for c in range(2):
+    name = f"support_beam_long_{c}"
+    # Size 1.8x0.05x0.05
+    beam = add_primitive(name, "CUBE", (1.8, 0.05, 0.05), (0, 0, 0), (0, 0, 0))
+    
+    # Align bottom to main_chassis top (Z=0.15)
+    # Beam height 0.05. Bottom Z = 0.15. Center Z = 0.15 + 0.025 = 0.175
+    beam.location.z = 0.175
+    
+    # Offset X
+    offset_x = -0.2 + c * 0.4
+    beam.location.x = offset_x
+    beam.location.y = 0
+    
+    support_beams_long[c] = beam
+
+# --- SECTION 6: Create short support beams ---
+# For r in 0…1:
+#   Create primitive cuboid with size 0.05×0.8×0.05 m and name it support_beam_short_r.
+#   Rotate support_beam_short_r so its +Z axis aligns +Z (world).
+#   Align support_beam_short_r.bottom_face to base_frame.top_face.
+#   Then offset(0, -0.2 + r*0.4, 0.15).
+
+support_beams_short = {}
+for r in range(2):
+    name = f"support_beam_short_{r}"
+    # Size 0.05x0.8x0.05
+    beam = add_primitive(name, "CUBE", (0.05, 0.8, 0.05), (0, 0, 0), (0, 0, 0))
+    
+    # Align bottom to main_chassis top (Z=0.15)
+    beam.location.z = 0.175
+    
+    # Offset Y
+    offset_y = -0.2 + r * 0.4
+    beam.location.x = 0
+    beam.location.y = offset_y
+    
+    support_beams_short[r] = beam
+
+# --- SECTION 7: Create head platform ---
+# Create primitive cuboid with size 0.8×0.9×0.02 m and name it head_platform.
+# Rotate head_platform so its +Z axis aligns +Z (world).
+# Align head_platform.bottom_face to base_frame.top_face.
+# Then move by offset(0.6, 0, 0.25).
+
+head_platform = add_primitive("head_platform", "CUBE", (0.8, 0.9, 0.02), (0, 0, 0), (0, 0, 0))
+
+# Align bottom to main_chassis top (Z=0.15)
+# Platform height 0.02. Bottom Z = 0.15. Center Z = 0.15 + 0.01 = 0.16
+head_platform.location.z = 0.16
+
+# Offset (0.6, 0, 0.25)
+head_platform.location += Vector((0.6, 0, 0.25))
+
+# --- SECTION 8: Create head mattress ---
+# Create primitive cuboid with size 0.8×0.9×0.1 m and name it head_mattress.
+# Rotate head_mattress so its +Z axis aligns +Z (world).
+# Align head_mattress.bottom_face to head_platform.top_face.
+# Then move by offset(0.6, 0, 0.31).
+
+head_mattress = add_primitive("head_mattress", "CUBE", (0.8, 0.9, 0.1), (0, 0, 0), (0, 0, 0))
+
+# Align bottom to head_platform.top_face
+# head_platform top Z = head_platform.location.z + 0.02/2 = 0.16 + 0.01 = 0.17
+# head_mattress bottom Z = 0.17
+# head_mattress center Z = 0.17 + 0.1/2 = 0.22
+head_mattress.location.z = 0.22
+
+# Offset (0.6, 0, 0.31)
+head_mattress.location += Vector((0.6, 0, 0.31))
+
+# --- SECTION 9: Create head hinge joint ---
+# Create primitive cylinder with Ø0.05×0.1 m and name it hinge_joint_head.
+# Rotate hinge_joint_head so its +Z axis aligns +Y (world).
+# Align hinge_joint_head.bottom_face to base_frame.top_face.
+# Then move by offset(0.2, 0, 0.25).
+
+hinge_joint_head = add_primitive("hinge_joint_head", "CYLINDER", (0.05, 0.1), (0, 0, 0), (0, 0, 0))
+
+# Rotate +Z to +Y
+# Current Z is (0,0,1). Target is (0,1,0).
+# Rotation around X axis by -90 degrees (or 270)
+hinge_joint_head.rotation_euler = (math.radians(-90), 0, 0)
+
+# Align bottom face to main_chassis top face (Z=0.15)
+# Cylinder height 0.1.
+# After rotation, the cylinder is along Y.
+# "Bottom" face in local space is usually -Z.
+# We need to determine which end is "bottom" after rotation.
+# If we rotated -90 around X, local Z (0,0,1) becomes world Y (0,1,0).
+# Local -Z (0,0,-1) becomes world -Y (0,-1,0).
+# So the "bottom" face (local -Z) is now pointing in -Y direction.
+# The "top" face (local +Z) is pointing in +Y direction.
+# The "side" faces are along X and Z axes.
+# Wait, the instruction says "Align hinge_joint_head.bottom_face to base_frame.top_face".
+# This implies the face that was originally bottom (local -Z) should be on the main_chassis top.
+# But main_chassis top is a horizontal plane (Z=const).
+# If the cylinder is rotated to lie along Y, its circular faces are perpendicular to Y.
+# They cannot align with a horizontal plane (Z=const) unless the cylinder is vertical.
+# There is a contradiction here.
+# "Rotate hinge_joint_head so its +Z axis aligns +Y (world)." -> Cylinder is horizontal.
+# "Align hinge_joint_head.bottom_face to base_frame.top_face." -> Base frame top is horizontal.
+# A horizontal cylinder's "bottom" (side) is a line/edge, not a face that aligns with a plane.
+# Perhaps "bottom_face" refers to the face that is physically at the bottom of the assembly?
+# Or maybe the rotation is different?
+# Let's assume "bottom_face" means the face that ends up at the lowest Z coordinate?
+# No, "bottom_face" is a specific mesh face.
+# If the cylinder is along Y, the faces are at +/- Y.
+# Maybe the intention is to align the *center* of the bottom face to the surface?
+# Or maybe the cylinder is meant to be vertical?
+# Let's re-read: "Rotate ... so its +Z axis aligns +Y". This is explicit.
+# "Align ... bottom_face to base_frame.top_face".
+# If the cylinder is along Y, the "bottom" face (local -Z) is now in world -Y.
+# This face is vertical. It cannot align with a horizontal plane.
+# Hypothesis: The instruction implies aligning the *position* of the bottom face center to the surface, 
+# but since the face is vertical, it might just mean placing the object such that the face touches the surface?
+# Or maybe "bottom_face" refers to the face that is geometrically at the bottom of the object in world space?
+# If the cylinder is along Y, the "bottom" in world Z is the edge along X.
+# This is ambiguous.
+# Alternative interpretation: "bottom_face" refers to the face defined as bottom in the object's local space, 
+# and we are snapping its location to the surface, ignoring normal alignment?
+# Let's try to interpret "Align ... to ..." as "Place the face center on the surface".
+# Local bottom face center is (0, 0, -0.05) in local space (radius 0.025, height 0.1, so half-height 0.05).
+# After rotation (-90 deg X), this point becomes (0, -0.05, 0) in world space relative to object center.
+# So the face center is at Y = -0.05 relative to object center.
+# We want this point to be on the main_chassis top surface (Z=0.15).
+# So Object Center Z + 0 = 0.15 => Object Center Z = 0.15.
+# And Object Center Y - 0.05 = Y_surface? No, the surface is Z=0.15.
+# The face is vertical. It doesn't touch the Z=0.15 plane unless the object is positioned such that the face intersects it.
+# This seems physically unlikely for a hinge joint.
+# Let's reconsider the rotation. Maybe +Z aligns +Y means the axis of the cylinder is Y.
+# If it's a hinge, it might be a pin.
+# Let's assume the "bottom_face" instruction is a mistake in my interpretation of "bottom".
+# Maybe it means "Align the object such that its lowest point is on the surface"?
+# If the cylinder is along Y, its lowest Z point is at Z_center - radius = Z_center - 0.025.
+# Set Z_center - 0.025 = 0.15 => Z_center = 0.175.
+# Let's try this.
+
+# Recalculate hinge_joint_head placement
+hinge_joint_head.rotation_euler = (math.radians(-90), 0, 0)
+# Align lowest point to main_chassis top (Z=0.15)
+# Lowest point Z = center Z - radius (0.025)
+hinge_joint_head.location.z = 0.15 + 0.025
+
+# Offset (0.2, 0, 0.25)
+hinge_joint_head.location += Vector((0.2, 0, 0.25))
+
+# --- SECTION 10: Create foot platform ---
+# Create primitive cuboid with size 0.8×0.9×0.02 m and name it foot_platform.
+# Rotate foot_platform so its +Z axis aligns +Z (world).
+# Align foot_platform.bottom_face to base_frame.top_face.
+# Then move by offset(-0.6, 0, 0.25).
+
+foot_platform = add_primitive("foot_platform", "CUBE", (0.8, 0.9, 0.02), (0, 0, 0), (0, 0, 0))
+
+# Align bottom to main_chassis top (Z=0.15)
+foot_platform.location.z = 0.16
+
+# Offset (-0.6, 0, 0.25)
+foot_platform.location += Vector((-0.6, 0, 0.25))
+
+# --- SECTION 11: Create foot mattress ---
+# Create primitive cuboid with size 0.8×0.9×0.1 m and name it foot_mattress.
+# Rotate foot_mattress so its +Z axis aligns +Z (world).
+# Align foot_mattress.bottom_face to foot_platform.top_face.
+# Then move by offset(-0.6, 0, 0.31).
+
+foot_mattress = add_primitive("foot_mattress", "CUBE", (0.8, 0.9, 0.1), (0, 0, 0), (0, 0, 0))
+
+# Align bottom to foot_platform.top_face
+# foot_platform top Z = foot_platform.location.z + 0.01
+fp_top_z = foot_platform.location.z + 0.01
+# foot_mattress bottom Z = fp_top_z
+# foot_mattress center Z = fp_top_z + 0.05
+foot_mattress.location.z = fp_top_z + 0.05
+
+# Offset (-0.6, 0, 0.31)
+foot_mattress.location += Vector((-0.6, 0, 0.31))
+
+# --- SECTION 12: Create foot hinge joint ---
+# Create primitive cylinder with Ø0.05×0.1 m and name it hinge_joint_foot.
+# Rotate hinge_joint_foot so its +Z axis aligns +Y (world).
+# Align hinge_joint_foot.bottom_face to base_frame.top_face.
+# Then move by offset(-0.2, 0, 0.25).
+
+hinge_joint_foot = add_primitive("hinge_joint_foot", "CYLINDER", (0.05, 0.1), (0, 0, 0), (0, 0, 0))
+
+# Rotate +Z to +Y
+hinge_joint_foot.rotation_euler = (math.radians(-90), 0, 0)
+
+# Align lowest point to main_chassis top (Z=0.15)
+hinge_joint_foot.location.z = 0.15 + 0.025
+
+# Offset (-0.2, 0, 0.25)
+hinge_joint_foot.location += Vector((-0.2, 0, 0.25))
+
+# --- SECTION 13: Create side rails ---
+# For c in 0…1:
+#   Create primitive cuboid with size 1.8×0.02×0.6 m and name it side_rail_c.
+#   Rotate side_rail_c so its +Z axis aligns +Z (world).
+#   Align side_rail_c.bottom_face to mattress.top_face.
+#   Then offset(0, -0.45 + c*0.9, 0.5).
+
+side_rails = {}
+for c in range(2):
+    name = f"side_rail_{c}"
+    # Size 1.8x0.02x0.6
+    rail = add_primitive(name, "CUBE", (1.8, 0.02, 0.6), (0, 0, 0), (0, 0, 0))
+    
+    # Align bottom to mattress.top_face
+    # mattress top Z = mattress.location.z + 0.1/2
+    mat_top_z = mattress.location.z + 0.05
+    # rail bottom Z = mat_top_z
+    # rail center Z = mat_top_z + 0.6/2 = mat_top_z + 0.3
+    rail.location.z = mat_top_z + 0.3
+    
+    # Offset Y
+    offset_y = -0.45 + c * 0.9
+    rail.location.y = offset_y
+    rail.location.x = 0
+    
+    side_rails[c] = rail
+
+# --- SECTION 14: Create rail supports ---
+# For r in 0…1 and c in 0…1:
+#   Create primitive cuboid with size 0.02×0.02×0.6 m and name it rail_support_r_c.
+#   Rotate rail_support_r_c so its +Z axis aligns +Z (world).
+#   Align rail_support_r_c.bottom_face to mattress.top_face.
+#   Then offset(-0.4 + c*0.8, -0.45 + r*0.9, 0.5).
+
+rail_supports = {}
+for r in range(2):
+    for c in range(2):
+        name = f"rail_support_{r}_{c}"
+        # Size 0.02x0.02x0.6
+        support = add_primitive(name, "CUBE", (0.02, 0.02, 0.6), (0, 0, 0), (0, 0, 0))
+        
+        # Align bottom to mattress.top_face
+        mat_top_z = mattress.location.z + 0.05
+        support.location.z = mat_top_z + 0.3
+        
+        # Offset
+        offset_x = -0.4 + c * 0.8
+        offset_y = -0.45 + r * 0.9
+        support.location.x = offset_x
+        support.location.y = offset_y
+        
+        rail_supports[(r,c)] = support
+
+# --- SECTION 15: Create control panel body ---
+# Create primitive cuboid with size 0.1×0.05×0.02 m and name it panel_body.
+# Rotate panel_body so its +Z axis aligns +Z (world).
+# Align panel_body.bottom_face to mattress.top_face.
+# Then move by offset(0.95, 0.45, 0.3).
+
+panel_body = add_primitive("panel_body", "CUBE", (0.1, 0.05, 0.02), (0, 0, 0), (0, 0, 0))
+
+# Align bottom to mattress.top_face
+mat_top_z = mattress.location.z + 0.05
+panel_body.location.z = mat_top_z + 0.01
+
+# Offset (0.95, 0.45, 0.3)
+panel_body.location += Vector((0.95, 0.45, 0.3))
+
+# --- SECTION 16: Create control panel buttons ---
+# For r in 0…1 and c in 0…1:
+#   Create primitive cylinder with Ø0.01×0.005 m and name it button_r_c.
+#   Rotate button_r_c so its +Z axis aligns +Z (world).
+#   Align button_r_c.bottom_face to panel_body.top_face.
+#   Then offset(0.95 - 0.01 + c*0.02, 0.45 - 0.005 + r*0.01, 0.31).
+
+for r in range(2):
+    for c in range(2):
+        name = f"button_{r}_{c}"
+        # Cylinder Ø0.01x0.005 -> radius 0.005, height 0.005
+        button = add_primitive(name, "CYLINDER", (0.01, 0.005), (0, 0, 0), (0, 0, 0))
+        
+        # Align bottom to panel_body.top_face
+        # panel_body top Z = panel_body.location.z + 0.02/2
+        pb_top_z = panel_body.location.z + 0.01
+        # button bottom Z = pb_top_z
+        # button center Z = pb_top_z + 0.005/2 = pb_top_z + 0.0025
+        button.location.z = pb_top_z + 0.0025
+        
+        # Offset
+        offset_x = 0.95 - 0.01 + c * 0.02
+        offset_y = 0.45 - 0.005 + r * 0.01
+        offset_z = 0.31
+        
+        # Note: The offset in the prompt seems to be absolute coordinates or relative to something?
+        # "Then offset(0.95 - 0.01 + c*0.02, 0.45 - 0.005 + r*0.01, 0.31)."
+        # Given the previous steps, "offset" usually means adding to the current location.
+        # However, these values look like absolute positions or positions relative to the panel body's base?
+        # Let's look at panel_body location:
+        # panel_body.location = (0.95, 0.45, mat_top_z + 0.01 + 0.3)
+        # The button offsets are small.
+        # If we add these offsets to the button's current location (which is aligned to panel top),
+        # it might be correct if the offsets are relative to the panel body's bottom-left corner?
+        # Let's assume the offsets are relative to the panel_body's bottom face center?
+        # Or maybe they are absolute world coordinates?
+        # "Then offset(...)" usually implies addition.
+        # Let's add them to the button's location.
+        
+        button.location += Vector((offset_x, offset_y, offset_z))
+
+# Assign materials (Optional, but good for completeness)
+# main_chassis.data.materials.append(mat_grey_steel)
+# mattress.data.materials.append(mat_blue_foam)
+# etc.
+# Since not explicitly requested to assign, we leave them unassigned or default.
+
+print("All stages complete.")
+```

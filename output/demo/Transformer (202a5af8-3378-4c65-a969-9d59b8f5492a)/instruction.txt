@@ -1,0 +1,1 @@
+Can you create a 3D model of an electrical transformer? It should have a cylindrical core with windings around it. Include the input and output terminals on opposite sides.

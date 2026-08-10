@@ -1,0 +1,51 @@
+{
+  "id": "1db0e04a-fcd1-4494-b086-af4a033459ea",
+  "name": "Electric Guitar vs Acoustic Guitar",
+  "instruction": "Compare a 3D model of an electric guitar with an acoustic guitar. The electric guitar should have a solid body, six strings, and a fretboard with dot inlays. The acoustic guitar should have a hollow body, a sound hole in the center, six strings, and a fretboard with dot inlays. Place them side by side for comparison.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The electric guitar has a solid body.",
+        "The acoustic guitar has a hollow body.",
+        "Both guitars have six strings.",
+        "Both guitars feature a fretboard with dot inlays.",
+        "The sound hole is present in the center of the acoustic guitar."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportions of the electric guitar's body are appropriate for a solid body design.",
+        "The proportions of the acoustic guitar's body are appropriate for a hollow body design."
+      ],
+      "Texture and surface detail": [
+        "The electric guitar may have a glossy finish.",
+        "The acoustic guitar typically has a matte or satin finish."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The electric guitar is positioned correctly with its body facing forward.",
+        "The acoustic guitar is positioned correctly with its body facing forward.",
+        "Both guitars are placed side by side for comparison.",
+        "The fretboards of both guitars are aligned at the same height."
+      ],
+      "Object distance and contact": [
+        "There is a clear space between the two guitars for visual comparison.",
+        "The strings of both guitars do not interfere with each other.",
+        "The fretboards are parallel to each other."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both guitars are accurately represented according to the specifications.",
+        "The comparison aspect is clearly executed by placing them side by side."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

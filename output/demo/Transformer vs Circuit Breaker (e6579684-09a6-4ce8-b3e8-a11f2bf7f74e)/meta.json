@@ -1,0 +1,47 @@
+{
+  "id": "e6579684-09a6-4ce8-b3e8-a11f2bf7f74e",
+  "name": "Transformer vs Circuit Breaker",
+  "instruction": "Create a 3D model comparing a transformer and a circuit breaker. The transformer should have a rectangular body with cylindrical coils on top. The circuit breaker should be a small rectangular box with a switch on the front. Place them side by side for comparison.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The transformer has a rectangular body.",
+        "The transformer features cylindrical coils on top.",
+        "The circuit breaker is a small rectangular box.",
+        "The switch on the circuit breaker is clearly defined."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The coils are proportionate to the body of the transformer.",
+        "The box is at a reasonable height relative to the circuit breaker."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The transformer is positioned with its coils clearly visible.",
+        "The circuit breaker is placed at an appropriate height for comparison.",
+        "Both objects are aligned side by side for clear visibility."
+      ],
+      "Object distance and contact": [
+        "There is adequate space between the transformer and the circuit breaker.",
+        "The positioning allows for easy visual comparison without overlap."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the transformer and circuit breaker are accurately represented.",
+        "The placement side by side is correctly executed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

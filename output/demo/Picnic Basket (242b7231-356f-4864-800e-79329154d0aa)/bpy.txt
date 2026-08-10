@@ -1,0 +1,546 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    """Add a cube primitive, scale it, and set transform."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    obj.data.update()
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    obj.data.update()
+    return obj
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def align_face_to_face(obj_align, obj_target, align_axis='Z', offset_axis='Z', offset_val=0):
+    """
+    Align the bottom face of obj_align to the top face of obj_target along the specified axis.
+    Assumes objects are axis-aligned.
+    """
+    # Get bounding box centers and extents
+    min_a, max_a = obj_align.bound_box[0], obj_align.bound_box[6]
+    min_t, max_t = obj_target.bound_box[0], obj_target.bound_box[6]
+    
+    # Convert to world coordinates
+    # Note: bound_box is local. We need world space for accurate alignment if rotated, 
+    # but here we assume axis-aligned for simplicity in this specific script structure.
+    # However, to be robust, we use world coordinates.
+    
+    # Helper to get world bounds
+    def get_world_bounds(ob):
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        bm.transform(ob.matrix_world)
+        min_w = Vector((float('inf'), float('inf'), float('inf')))
+        max_w = Vector((float('-inf'), float('-inf'), float('-inf')))
+        for v in bm.verts:
+            min_w.x = min(min_w.x, v.co.x)
+            min_w.y = min(min_w.y, v.co.y)
+            min_w.z = min(min_w.z, v.co.z)
+            max_w.x = max(max_w.x, v.co.x)
+            max_w.y = max(max_w.y, v.co.y)
+            max_w.z = max(max_w.z, v.co.z)
+        bm.free()
+        return min_w, max_w
+
+    min_a_w, max_a_w = get_world_bounds(obj_align)
+    min_t_w, max_t_w = get_world_bounds(obj_target)
+
+    # Determine target position for the aligning face
+    # If aligning bottom of align_obj to top of target_obj:
+    # Target Y (or Z) = max_t_w[axis]
+    # Current Bottom Y (or Z) of align_obj = min_a_w[axis]
+    # Delta = Target - Current
+    
+    if align_axis == 'X':
+        target_pos = max_t_w.x
+        current_pos = min_a_w.x
+        delta = target_pos - current_pos
+        obj_align.location.x += delta
+    elif align_axis == 'Y':
+        target_pos = max_t_w.y
+        current_pos = min_a_w.y
+        delta = target_pos - current_pos
+        obj_align.location.y += delta
+    elif align_axis == 'Z':
+        target_pos = max_t_w.z
+        current_pos = min_a_w.z
+        delta = target_pos - current_pos
+        obj_align.location.z += delta
+
+    # Apply offset
+    if offset_axis == 'X':
+        obj_align.location.x += offset_val
+    elif offset_axis == 'Y':
+        obj_align.location.y += offset_val
+    elif offset_axis == 'Z':
+        obj_align.location.z += offset_val
+
+def align_center_to_center(obj_align, obj_target):
+    """Align center of obj_align to center of obj_target."""
+    min_a, max_a = obj_align.bound_box[0], obj_align.bound_box[6]
+    min_t, max_t = obj_target.bound_box[0], obj_target.bound_box[6]
+    
+    # World centers
+    center_a = (Vector(min_a) + Vector(max_a)) / 2
+    center_t = (Vector(min_t) + Vector(max_t)) / 2
+    
+    # Transform to world
+    center_a_w = obj_align.matrix_world @ center_a
+    center_t_w = obj_align.matrix_world @ center_t # Target center in align's local space? No, we want to move align_obj.
+    
+    # Actually, simpler: Move align_obj so its world center matches target's world center
+    center_a_world = obj_align.matrix_world.to_translation() # Approx if scale is 1,1,1 and no rotation offset from identity
+    # Better:
+    def get_world_center(ob):
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        bm.transform(ob.matrix_world)
+        center = Vector((0,0,0))
+        for v in bm.verts:
+            center += v.co
+        center /= len(bm.verts)
+        bm.free()
+        return center
+
+    ca_w = get_world_center(obj_align)
+    ct_w = get_world_center(obj_target)
+    
+    delta = ct_w - ca_w
+    obj_align.location += delta
+
+def align_center_to_face(obj_align, obj_target, face_axis='Z'):
+    """Align center of obj_align to the center of a specific face of obj_target."""
+    # Get world center of target face
+    def get_world_face_center(ob, axis, is_max=True):
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        bm.transform(ob.matrix_world)
+        
+        face_verts = []
+        for v in bm.verts:
+            if axis == 'X':
+                if is_max and v.co.x > ob.matrix_world.to_translation().x + 0.001: face_verts.append(v)
+                elif not is_max and v.co.x < ob.matrix_world.to_translation().x - 0.001: face_verts.append(v)
+            elif axis == 'Y':
+                if is_max and v.co.y > ob.matrix_world.to_translation().y + 0.001: face_verts.append(v)
+                elif not is_max and v.co.y < ob.matrix_world.to_translation().y - 0.001: face_verts.append(v)
+            elif axis == 'Z':
+                if is_max and v.co.z > ob.matrix_world.to_translation().z + 0.001: face_verts.append(v)
+                elif not is_max and v.co.z < ob.matrix_world.to_translation().z - 0.001: face_verts.append(v)
+        
+        bm.free()
+        if not face_verts:
+            return ob.matrix_world.to_translation()
+        
+        center = Vector((0,0,0))
+        for v in face_verts:
+            center += v.co
+        return center / len(face_verts)
+
+    # Determine which face of target to align to
+    # "top_face" usually implies +Z face
+    # "bottom_face" usually implies -Z face
+    # "left_face" usually implies -X face
+    # "right_face" usually implies +X face
+    # "front_face" usually implies +Y face
+    # "back_face" usually implies -Y face
+    
+    # For simplicity in this script, we assume standard orientation:
+    # Top = +Z, Bottom = -Z, Front = +Y, Back = -Y, Right = +X, Left = -X
+    
+    target_center = None
+    
+    # Parse face_axis string like "base_bottom.top_face"
+    # We need to know which object and which face.
+    # This function is generic, so we pass the target object and the face descriptor.
+    
+    # Let's implement specific logic for the common cases in the prompt
+    pass
+
+def align_center_to_avg_faces(list_of_face_refs):
+    """
+    Align obj_align center to the average of multiple face centers.
+    list_of_face_refs: list of tuples (obj, face_descriptor)
+    face_descriptor: 'top', 'bottom', 'front', 'back', 'left', 'right'
+    """
+    avg_loc = Vector((0,0,0))
+    count = 0
+    
+    for obj, face_desc in list_of_face_refs:
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bm.transform(obj.matrix_world)
+        
+        face_verts = []
+        for v in bm.verts:
+            if face_desc == 'top' and v.co.z > 0.001: face_verts.append(v)
+            elif face_desc == 'bottom' and v.co.z < -0.001: face_verts.append(v)
+            elif face_desc == 'front' and v.co.y > 0.001: face_verts.append(v)
+            elif face_desc == 'back' and v.co.y < -0.001: face_verts.append(v)
+            elif face_desc == 'right' and v.co.x > 0.001: face_verts.append(v)
+            elif face_desc == 'left' and v.co.x < -0.001: face_verts.append(v)
+        
+        bm.free()
+        if face_verts:
+            center = Vector((0,0,0))
+            for v in face_verts:
+                center += v.co
+            avg_loc += center / len(face_verts)
+            count += 1
+            
+    if count > 0:
+        avg_loc /= count
+        return avg_loc
+    return Vector((0,0,0))
+
+def bevel_object(obj, radius, segments):
+    """Add a bevel modifier and apply it."""
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Add bevel modifier
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE' # or 'WEIGHT', 'WIDTH' depending on desired behavior. Angle is often safer for uniform bevels.
+    mod.bevel_angle = math.radians(45) # Default angle
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def orient_z_to_vector(obj, vector):
+    """Rotate object so its local Z axis aligns with the given world vector."""
+    # This is a simplified orientation helper. 
+    # For strict alignment, we might need to calculate the rotation matrix.
+    # However, the prompt asks for specific rotations like "+Z aligns +Y".
+    # We will handle specific rotations in the main script for clarity and reliability.
+    pass
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Clear orphan data
+    for mesh in bpy.data.meshes:
+        bpy.data.meshes.remove(mesh)
+    for mat in bpy.data.materials:
+        bpy.data.materials.remove(mat)
+        
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_bamboo = make_material("mat_bamboo", (0.85, 0.75, 0.50, 1.0))
+    mat_leather = make_material("mat_leather", (0.40, 0.20, 0.10, 1.0))
+    mat_metal = make_material("mat_metal", (0.70, 0.70, 0.70, 1.0))
+    mat_wood = make_material("mat_wood", (0.60, 0.45, 0.30, 1.0))
+
+    # Block 2: Geometry Generation
+    
+    # --- SECTION 1 – Create Base Bottom Panel ---
+    base_bottom = add_cube("base_bottom", (0.4572, 0.3048, 0.015), (0, 0, 0), (0, 0, 0))
+    # Rotate so +Z aligns +Z (already default)
+    # Anchor to world origin (already at 0,0,0)
+    # Offset (0,0,0)
+    apply_material(base_bottom, mat_wood)
+
+    # --- SECTION 2 – Create Base Front Wall Panel ---
+    base_front = add_cube("base_front", (0.4572, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align base_front.bottom_face to base_bottom.top_face
+    # base_bottom top face is at Z = 0.015/2 = 0.0075
+    # base_front bottom face is at Z = -0.015/2 = -0.0075
+    # Delta Z = 0.0075 - (-0.0075) = 0.015
+    base_front.location.z += 0.015
+    # Offset (0, 0.1524, 0)
+    base_front.location.y += 0.1524
+    apply_material(base_front, mat_wood)
+
+    # --- SECTION 3 – Create Base Back Wall Panel ---
+    base_back = add_cube("base_back", (0.4572, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align base_back.bottom_face to base_bottom.top_face
+    base_back.location.z += 0.015
+    # Offset (0, -0.1524, 0)
+    base_back.location.y += -0.1524
+    apply_material(base_back, mat_wood)
+
+    # --- SECTION 4 – Create Base Left Wall Panel ---
+    base_left = add_cube("base_left", (0.3048, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align base_left.bottom_face to base_bottom.top_face
+    base_left.location.z += 0.015
+    # Offset (-0.2286, 0, 0)
+    base_left.location.x += -0.2286
+    apply_material(base_left, mat_wood)
+
+    # --- SECTION 5 – Create Base Right Wall Panel ---
+    base_right = add_cube("base_right", (0.3048, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align base_right.bottom_face to base_bottom.top_face
+    base_right.location.z += 0.015
+    # Offset (0.2286, 0, 0)
+    base_right.location.x += 0.2286
+    apply_material(base_right, mat_wood)
+
+    # --- SECTION 6 – Create Corner Protectors ---
+    # Helper to create a corner protector at a specific corner
+    def create_corner_protector(name, face_refs, offset):
+        cp = add_cube(name, (0.02, 0.02, 0.02), (0, 0, 0), (0, 0, 0))
+        # Align center to Avg of faces
+        avg_loc = align_center_to_avg_faces(face_refs)
+        cp.location = avg_loc
+        # Offset
+        cp.location.x += offset[0]
+        cp.location.y += offset[1]
+        cp.location.z += offset[2]
+        apply_material(cp, mat_metal)
+        bevel_object(cp, 0.002, 4)
+        return cp
+
+    # Front-Left Corner: base_front.left_face, base_left.front_face, base_bottom.top_face
+    # Note: "left_face" of base_front is -X face. "front_face" of base_left is +Y face.
+    cp_FL = create_corner_protector("corner_protector_FL", [
+        (base_front, 'left'),
+        (base_left, 'front'),
+        (base_bottom, 'top')
+    ], (0.01, 0.01, 0.01))
+
+    # Front-Right Corner: base_front.right_face, base_right.front_face, base_bottom.top_face
+    cp_FR = create_corner_protector("corner_protector_FR", [
+        (base_front, 'right'),
+        (base_right, 'front'),
+        (base_bottom, 'top')
+    ], (0.01, 0.01, 0.01))
+
+    # Back-Left Corner: base_back.left_face, base_left.back_face, base_bottom.top_face
+    cp_BL = create_corner_protector("corner_protector_BL", [
+        (base_back, 'left'),
+        (base_left, 'back'),
+        (base_bottom, 'top')
+    ], (0.01, 0.01, 0.01))
+
+    # Back-Right Corner: base_back.right_face, base_right.back_face, base_bottom.top_face
+    cp_BR = create_corner_protector("corner_protector_BR", [
+        (base_back, 'right'),
+        (base_right, 'back'),
+        (base_bottom, 'top')
+    ], (0.01, 0.01, 0.01))
+
+    # --- SECTION 7 – Create Lid Top Panel ---
+    lid_top = add_cube("lid_top", (0.4572, 0.3048, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align lid_top.bottom_face to base_back.top_face
+    # base_back top face Z:
+    # base_back was placed at Z=0.015 (bottom aligned to base_bottom top).
+    # base_back height is 0.254. So top is at 0.015 + 0.254 = 0.269.
+    # lid_top bottom is at -0.015/2 = -0.0075.
+    # Delta Z = 0.269 - (-0.0075) = 0.2765
+    lid_top.location.z += 0.2765
+    # Offset (0, 0, 0.254)
+    lid_top.location.z += 0.254
+    apply_material(lid_top, mat_wood)
+
+    # --- SECTION 8 – Create Lid Front Wall Panel ---
+    lid_front = add_cube("lid_front", (0.4572, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align lid_front.bottom_face to lid_top.top_face
+    # lid_top top face Z:
+    # lid_top bottom was at 0.269. Height 0.015. Top is at 0.269 + 0.015 = 0.284.
+    # lid_front bottom is at -0.0075.
+    # Delta Z = 0.284 - (-0.0075) = 0.2915
+    lid_front.location.z += 0.2915
+    # Offset (0, 0.1524, 0)
+    lid_front.location.y += 0.1524
+    apply_material(lid_front, mat_wood)
+
+    # --- SECTION 9 – Create Lid Back Wall Panel ---
+    lid_back = add_cube("lid_back", (0.4572, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align lid_back.bottom_face to base_back.top_face
+    # base_back top face Z is 0.269.
+    # lid_back bottom is at -0.0075.
+    # Delta Z = 0.269 - (-0.0075) = 0.2765
+    lid_back.location.z += 0.2765
+    # Offset (0, -0.1524, 0)
+    lid_back.location.y += -0.1524
+    apply_material(lid_back, mat_wood)
+
+    # --- SECTION 10 – Create Lid Left Wall Panel ---
+    lid_left = add_cube("lid_left", (0.3048, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align lid_left.bottom_face to lid_top.top_face
+    # lid_top top face Z is 0.284.
+    # lid_left bottom is at -0.0075.
+    # Delta Z = 0.284 - (-0.0075) = 0.2915
+    lid_left.location.z += 0.2915
+    # Offset (-0.2286, 0, 0)
+    lid_left.location.x += -0.2286
+    apply_material(lid_left, mat_wood)
+
+    # --- SECTION 11 – Create Lid Right Wall Panel ---
+    lid_right = add_cube("lid_right", (0.3048, 0.254, 0.015), (0, 0, 0), (0, 0, 0))
+    # Align lid_right.bottom_face to lid_top.top_face
+    # Delta Z = 0.2915
+    lid_right.location.z += 0.2915
+    # Offset (0.2286, 0, 0)
+    lid_right.location.x += 0.2286
+    apply_material(lid_right, mat_wood)
+
+    # --- SECTION 12 – Create Left Hinge ---
+    # Cylinder diameter 0.01 -> radius 0.005. Length 0.05.
+    # Rotate so +Z aligns +Y.
+    # Default cylinder is along Z. To align Z to Y, rotate -90 deg around X.
+    hinge_L = add_cylinder("hinge_L", 0.005, 0.05, (0, 0, 0), (-math.radians(90), 0, 0))
+    # Align hinge_L.center to Avg(base_back.left_face, lid_back.left_face)
+    avg_loc = align_center_to_avg_faces([
+        (base_back, 'left'),
+        (lid_back, 'left')
+    ])
+    hinge_L.location = avg_loc
+    # Offset (0.1, 0, 0)
+    hinge_L.location.x += 0.1
+    apply_material(hinge_L, mat_metal)
+
+    # --- SECTION 13 – Create Right Hinge ---
+    hinge_R = add_cylinder("hinge_R", 0.005, 0.05, (0, 0, 0), (-math.radians(90), 0, 0))
+    # Align hinge_R.center to Avg(base_back.right_face, lid_back.right_face)
+    avg_loc = align_center_to_avg_faces([
+        (base_back, 'right'),
+        (lid_back, 'right')
+    ])
+    hinge_R.location = avg_loc
+    # Offset (-0.1, 0, 0)
+    hinge_R.location.x += -0.1
+    apply_material(hinge_R, mat_metal)
+
+    # --- SECTION 14 – Create Handle Bar ---
+    handle_bar = add_cube("handle_bar", (0.3048, 0.02, 0.02), (0, 0, 0), (0, 0, 0))
+    # Align handle_bar.center to Avg(base_left.top_face, base_right.top_face)
+    avg_loc = align_center_to_avg_faces([
+        (base_left, 'top'),
+        (base_right, 'top')
+    ])
+    handle_bar.location = avg_loc
+    # Offset (0, 0, 0.254)
+    handle_bar.location.z += 0.254
+    apply_material(handle_bar, mat_bamboo)
+
+    # --- SECTION 15 – Create Left Handle Bracket ---
+    bracket_L = add_cube("bracket_L", (0.05, 0.05, 0.01), (0, 0, 0), (0, 0, 0))
+    # Align bracket_L.center to base_left.top_face
+    # "center to face" usually means aligning the object's center to the face's center.
+    avg_loc = align_center_to_avg_faces([
+        (base_left, 'top')
+    ])
+    bracket_L.location = avg_loc
+    # Offset (0.1, 0, 0.254)
+    bracket_L.location.x += 0.1
+    bracket_L.location.z += 0.254
+    apply_material(bracket_L, mat_metal)
+
+    # --- SECTION 16 – Create Right Handle Bracket ---
+    bracket_R = add_cube("bracket_R", (0.05, 0.05, 0.01), (0, 0, 0), (0, 0, 0))
+    # Align bracket_R.center to base_right.top_face
+    avg_loc = align_center_to_avg_faces([
+        (base_right, 'top')
+    ])
+    bracket_R.location = avg_loc
+    # Offset (-0.1, 0, 0.254)
+    bracket_R.location.x += -0.1
+    bracket_R.location.z += 0.254
+    apply_material(bracket_R, mat_metal)
+
+    # --- SECTION 17 – Create Interior Compartments ---
+    compartments = add_cube("compartments", (0.40, 0.25, 0.05), (0, 0, 0), (0, 0, 0))
+    # Align compartments.center to base_bottom.center
+    # base_bottom center is at (0,0,0) because it was anchored to origin.
+    # But wait, base_bottom was created at (0,0,0) with size 0.015.
+    # Its center is (0,0,0).
+    compartments.location = (0, 0, 0)
+    # Offset (0, 0, 0.025)
+    compartments.location.z += 0.025
+    apply_material(compartments, mat_wood)
+    bevel_object(compartments, 0.005, 4)
+
+    # --- SECTION 18 – Create Cutlery Tray ---
+    cutlery_tray = add_cube("cutlery_tray", (0.20, 0.10, 0.02), (0, 0, 0), (0, 0, 0))
+    # Align cutlery_tray.center to base_bottom.center
+    cutlery_tray.location = (0, 0, 0)
+    # Offset (0.1, 0, 0.025)
+    cutlery_tray.location.x += 0.1
+    cutlery_tray.location.z += 0.025
+    apply_material(cutlery_tray, mat_wood)
+
+    # --- SECTION 19 – Create Left Strap ---
+    strap_L = add_cube("strap_L", (0.30, 0.02, 0.005), (0, 0, 0), (0, 0, 0))
+    # Align strap_L.center to Avg(base_left.top_face, lid_left.bottom_face)
+    avg_loc = align_center_to_avg_faces([
+        (base_left, 'top'),
+        (lid_left, 'bottom')
+    ])
+    strap_L.location = avg_loc
+    # Offset (0.1, 0, 0.127)
+    strap_L.location.x += 0.1
+    strap_L.location.z += 0.127
+    apply_material(strap_L, mat_leather)
+
+    # --- SECTION 20 – Create Right Strap ---
+    strap_R = add_cube("strap_R", (0.30, 0.02, 0.005), (0, 0, 0), (0, 0, 0))
+    # Align strap_R.center to Avg(base_right.top_face, lid_right.bottom_face)
+    avg_loc = align_center_to_avg_faces([
+        (base_right, 'top'),
+        (lid_right, 'bottom')
+    ])
+    strap_R.location = avg_loc
+    # Offset (-0.1, 0, 0.127)
+    strap_R.location.x += -0.1
+    strap_R.location.z += 0.127
+    apply_material(strap_R, mat_leather)
+
+    # --- SECTION 21 – Create Left Buckle ---
+    buckle_L = add_cube("buckle_L", (0.03, 0.03, 0.01), (0, 0, 0), (0, 0, 0))
+    # Align buckle_L.center to strap_L.center
+    # strap_L center is its location
+    buckle_L.location = strap_L.location
+    # Offset (0.1, 0, 0)
+    buckle_L.location.x += 0.1
+    apply_material(buckle_L, mat_metal)
+
+    # --- SECTION 22 – Create Right Buckle ---
+    buckle_R = add_cube("buckle_R", (0.03, 0.03, 0.01), (0, 0, 0), (0, 0, 0))
+    # Align buckle_R.center to strap_R.center
+    buckle_R.location = strap_R.location
+    # Offset (-0.1, 0, 0)
+    buckle_R.location.x += -0.1
+    apply_material(buckle_R, mat_metal)
+
+if __name__ == "__main__":
+    main()
+```

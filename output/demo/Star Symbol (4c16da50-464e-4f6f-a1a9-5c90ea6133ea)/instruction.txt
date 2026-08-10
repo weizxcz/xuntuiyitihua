@@ -1,0 +1,1 @@
+Design a simple star symbol with five evenly spaced points.

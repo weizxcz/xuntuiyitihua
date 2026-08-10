@@ -1,0 +1,1 @@
+Create a 3D model of a jigsaw puzzle. The puzzle should have 100 pieces, each uniquely shaped to fit together. The completed puzzle forms a rectangle measuring 10 inches by 15 inches. Ensure the pieces are easy to distinguish and fit together seamlessly.

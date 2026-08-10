@@ -1,0 +1,43 @@
+{
+  "id": "4bad1642-73fd-4b67-80f0-d357666deac4",
+  "name": "Board Game",
+  "instruction": "Could you create a board game set for me? It should include a square game board with a grid pattern. Add some game pieces, such as small figurines or tokens, that can be moved around the board. Include a set of cards with different instructions or challenges written on them. Add a pair of dice for rolling to determine the movement of the game pieces. Make sure the game looks fun and engaging for players of all ages.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The shape is not specified in the instruction."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The game pieces are proportionate to the board."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The grid pattern on the board is clearly defined.",
+        "The game pieces can be placed on the grid without obstruction."
+      ],
+      "Object distance and contact": [
+        "The game pieces can move freely across the grid.",
+        "The dice rolling mechanism allows for varied movement.",
+        "There are no gap between the game pieces and the board."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components of the game are included.",
+        "The design adheres closely to the provided instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

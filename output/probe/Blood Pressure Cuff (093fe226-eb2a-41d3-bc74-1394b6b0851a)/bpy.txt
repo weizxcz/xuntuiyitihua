@@ -1,0 +1,278 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure we are in object mode
+    if bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+def set_units_meters():
+    """Set scene units to meters."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def add_primitive(name, type, **kwargs):
+    """Helper to add primitives and return the object."""
+    bpy.ops.object.select_all(action='DESELECT')
+    obj = None
+    if type == 'cylinder':
+        bpy.ops.mesh.primitive_cylinder_add(**kwargs)
+        obj = bpy.context.active_object
+    elif type == 'cube':
+        bpy.ops.mesh.primitive_cube_add(**kwargs)
+        obj = bpy.context.active_object
+    elif type == 'sphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(**kwargs)
+        obj = bpy.context.active_object
+    elif type == 'cone':
+        bpy.ops.mesh.primitive_cone_add(**kwargs)
+        obj = bpy.context.active_object
+    
+    if obj:
+        obj.name = name
+        obj.data.name = name + "_data"
+    return obj
+
+def align_axis_to_z(obj):
+    """Rotate object so its local +Z aligns with world +Z."""
+    # If the primitive is already Z-up (cylinder, cube, sphere), this is identity.
+    # Blender primitives are generally Z-up.
+    obj.rotation_euler = (0, 0, 0)
+
+def get_face_normal(obj, face_type):
+    """
+    Returns the world-space location of the center of a specific face 
+    and the normal vector for alignment purposes.
+    face_type: 'right', 'left', 'top', 'bottom', 'front', 'back'
+    Assumes object is axis-aligned and Z-up.
+    """
+    # Local extents
+    half_x = obj.dimensions.x / 2
+    half_y = obj.dimensions.y / 2
+    half_z = obj.dimensions.z / 2
+    
+    # World transform
+    loc = obj.location
+    rot = obj.rotation_euler
+    
+    # Helper to rotate a vector
+    def rot_vec(v):
+        return v @ Matrix.Rotation(rot.z, 4, 'Z') @ Matrix.Rotation(rot.y, 4, 'Y') @ Matrix.Rotation(rot.x, 4, 'X')
+
+    # Define local face centers
+    local_centers = {
+        'right': Vector((half_x, 0, 0)),
+        'left': Vector((-half_x, 0, 0)),
+        'top': Vector((0, 0, half_z)),
+        'bottom': Vector((0, 0, -half_z)),
+        'front': Vector((0, half_y, 0)),
+        'back': Vector((0, -half_y, 0))
+    }
+    
+    # Define local normals for these faces
+    local_normals = {
+        'right': Vector((1, 0, 0)),
+        'left': Vector((-1, 0, 0)),
+        'top': Vector((0, 0, 1)),
+        'bottom': Vector((0, 0, -1)),
+        'front': Vector((0, 1, 0)),
+        'back': Vector((0, -1, 0))
+    }
+    
+    if face_type not in local_centers:
+        return None, None
+        
+    center_local = local_centers[face_type]
+    normal_local = local_normals[face_type]
+    
+    # Transform to world
+    center_world = loc + center_local # Assuming no rotation for position calc of center relative to origin? 
+    # Actually, rotation affects position if object is not at 0,0,0.
+    # Correct way: obj.matrix_world * local_point
+    center_world = obj.matrix_world @ center_local
+    normal_world = rot_vec(normal_local)
+    
+    return center_world, normal_world
+
+def align_to_face(obj_target, obj_source, face_type, axes='XY'):
+    """
+    Align obj_source center to obj_target's specific face center.
+    axes: which axes to constrain the alignment to.
+    """
+    target_center, _ = get_face_normal(obj_target, face_type)
+    if target_center is None:
+        return
+
+    # Current source center
+    src_center = obj_source.location
+    
+    # Calculate offset
+    offset = target_center - src_center
+    
+    # Apply offset based on axes
+    if 'X' not in axes:
+        offset.x = 0
+    if 'Y' not in axes:
+        offset.y = 0
+    if 'Z' not in axes:
+        offset.z = 0
+        
+    obj_source.location += offset
+
+def apply_offset(obj, offset_vec):
+    """Apply a local/global offset to an object."""
+    obj.location += offset_vec
+
+def assign_material(obj, mat_name):
+    """Assign a material to an object."""
+    if mat_name in bpy.data.materials:
+        mat = bpy.data.materials[mat_name]
+        if obj.data.materials:
+            obj.data.materials[0] = mat
+        else:
+            obj.data.materials.append(mat)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units_meters()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_neoprene = make_material("fabric_neoprene", (0.1, 0.1, 0.1, 1.0))
+mat_plastic_housing = make_material("plastic_housing", (0.9, 0.9, 0.9, 1.0))
+mat_plastic_translucent = make_material("plastic_translucent", (0.8, 0.8, 0.8, 0.3))
+mat_screen_lcd = make_material("screen_lcd", (0.1, 0.2, 0.1, 1.0))
+mat_velcro_hook = make_material("velcro_hook", (0.2, 0.2, 0.2, 1.0))
+mat_velcro_loop = make_material("velcro_loop", (0.3, 0.3, 0.3, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create cuff base ---
+# Cylinder: diameter 0.15 (radius 0.075), length 0.35
+cuff_base = add_primitive("cuff_base", "cylinder", 
+                          radius=0.075, depth=0.35, 
+                          location=(0, 0, 0))
+align_axis_to_z(cuff_base)
+cuff_base.location = (0, 0, 0)
+assign_material(cuff_base, "fabric_neoprene")
+
+# --- SECTION 2 – Create inflation bladder ---
+# Cylinder: diameter 0.12 (radius 0.06), length 0.30
+inflation_bladder = add_primitive("inflation_bladder", "cylinder", 
+                                  radius=0.06, depth=0.30, 
+                                  location=(0, 0, 0))
+align_axis_to_z(inflation_bladder)
+
+# Align center to cuff_base.center using axes XY
+# Since both are at 0,0,0 initially, center-to-center is already aligned.
+# But we follow the instruction: Align inflation_bladder.center to cuff_base.center
+# This effectively keeps them concentric.
+align_to_face(cuff_base, inflation_bladder, 'top', axes='XY') # Using top face center as proxy for center if needed, but center-to-center is simpler.
+# Actually, "Align ... to cuff_base.center" implies center-to-center.
+# Let's explicitly move it to cuff_base's location for X and Y.
+inflation_bladder.location.x = cuff_base.location.x
+inflation_bladder.location.y = cuff_base.location.y
+
+# Offset (0, 0, 0.005)
+apply_offset(inflation_bladder, (0, 0, 0.005))
+assign_material(inflation_bladder, "plastic_translucent")
+
+# --- SECTION 3 – Create velcro strap ---
+# Box: 0.04 x 0.02 x 0.002
+velcro_strap = add_primitive("velcro_strap", "cube", 
+                             size=0.04, 
+                             location=(0, 0, 0))
+align_axis_to_z(velcro_strap)
+
+# Align velcro_strap.center to cuff_base.right_face using axes XY
+align_to_face(cuff_base, velcro_strap, 'right', axes='XY')
+
+# Offset (0.02, 0, 0.01)
+apply_offset(velcro_strap, (0.02, 0, 0.01))
+assign_material(velcro_strap, "velcro_hook")
+
+# --- SECTION 4 – Create velcro loop ---
+# Box: 0.04 x 0.02 x 0.002
+velcro_loop = add_primitive("velcro_loop", "cube", 
+                            size=0.04, 
+                            location=(0, 0, 0))
+align_axis_to_z(velcro_loop)
+
+# Align velcro_loop.center to velcro_strap.left_face using axes XY
+align_to_face(velcro_strap, velcro_loop, 'left', axes='XY')
+
+# Offset (-0.001, 0, 0)
+apply_offset(velcro_loop, (-0.001, 0, 0))
+assign_material(velcro_loop, "velcro_loop")
+
+# --- SECTION 5 – Create display housing ---
+# Box: 0.06 x 0.04 x 0.01
+display_housing = add_primitive("display_housing", "cube", 
+                                size=0.06, 
+                                location=(0, 0, 0))
+align_axis_to_z(display_housing)
+
+# Align display_housing.center to cuff_base.top_face using axes XY
+align_to_face(cuff_base, display_housing, 'top', axes='XY')
+
+# Offset (0, 0.02, 0.015)
+apply_offset(display_housing, (0, 0.02, 0.015))
+assign_material(display_housing, "plastic_housing")
+
+# --- SECTION 6 – Create LCD screen ---
+# Box: 0.05 x 0.03 x 0.001
+lcd_screen = add_primitive("lcd_screen", "cube", 
+                           size=0.05, 
+                           location=(0, 0, 0))
+align_axis_to_z(lcd_screen)
+
+# Align lcd_screen.center to display_housing.front_face using axes XY
+align_to_face(display_housing, lcd_screen, 'front', axes='XY')
+
+# Offset (0, 0, 0.005)
+apply_offset(lcd_screen, (0, 0, 0.005))
+assign_material(lcd_screen, "screen_lcd")
+
+# --- SECTION 7 – Create display protector ---
+# Box: 0.052 x 0.032 x 0.001
+display_protector = add_primitive("display_protector", "cube", 
+                                  size=0.052, 
+                                  location=(0, 0, 0))
+align_axis_to_z(display_protector)
+
+# Align display_protector.center to lcd_screen.center using axes XY
+# Center-to-center alignment
+display_protector.location.x = lcd_screen.location.x
+display_protector.location.y = lcd_screen.location.y
+
+# Offset (0, 0, 0.001)
+apply_offset(display_protector, (0, 0, 0.001))
+assign_material(display_protector, "plastic_translucent")
+
+print("Stage 1 complete.")
+print("All stages complete.")
+```

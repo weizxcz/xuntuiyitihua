@@ -1,0 +1,5 @@
+INFO:     Will watch for changes in these directories: ['D:\\wyg\\xuntuiyitihua\\NTIC-CAX-Agent\\backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [23308] using WatchFiles
+D:\wyg\xuntuiyitihua\NTIC-CAX-Agent\backend\.venv\Lib\site-packages\langgraph\checkpoint\serde\encrypted.py:5: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer

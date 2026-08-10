@@ -1,0 +1,48 @@
+{
+  "id": "1e936894-2553-4433-9dfe-c1630eb7daf5",
+  "name": "Cargo Crane",
+  "instruction": "Hey there, could you create a 3D model of a cargo crane for me? The crane should have a tall structure with a long arm extending outward. Include a hook at the end of the arm for lifting heavy loads. Make sure the base is wide and stable to support the weight.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cargo crane.",
+        "The crane has a tall vertical structure.",
+        "The arm of the crane is long and extends outward.",
+        "The hook is located at the end of the arm."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The arm is proportionate to the height of the crane.",
+        "The base is wide enough to support the tall structure."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tall structure is correctly positioned to support the arm.",
+        "The arm extends outward from the vertical structure without obstruction.",
+        "The hook is properly positioned at the end of the arm for lifting."
+      ],
+      "Object distance and contact": [
+        "The base is wide and stable, ensuring no overlap with the vertical structure.",
+        "The arm does not interfere with the base.",
+        "The hook does not interfere with the arm."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the crane are accurately represented.",
+        "The design adheres to the request for a tall structure and long arm."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

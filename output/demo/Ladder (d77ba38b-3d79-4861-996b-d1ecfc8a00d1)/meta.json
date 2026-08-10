@@ -1,0 +1,43 @@
+{
+  "id": "d77ba38b-3d79-4861-996b-d1ecfc8a00d1",
+  "name": "Ladder",
+  "instruction": "Create a ladder with a height of 15 feet and a width of 2 feet. It should have evenly spaced rungs and be suitable for both indoor and outdoor use.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a ladder.",
+        "The ladder has a rectangular frame."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The height of the ladder is 15 feet.",
+        "The width of the ladder is 2 feet."
+      ],
+      "Proportion": [
+        "The rungs are evenly spaced along the height of the ladder."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The ladder's height and width are appropriately represented.",
+        "The rungs are positioned correctly for user access."
+      ],
+      "Object distance and contact": [
+        "The ladder is designed to stand securely without tipping over."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified dimensions are accurately represented.",
+        "The ladder is designed for both indoor and outdoor use as instructed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

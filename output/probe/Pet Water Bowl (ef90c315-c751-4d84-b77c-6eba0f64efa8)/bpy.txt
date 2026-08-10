@@ -1,0 +1,305 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(0.95, 0.95, 0.95, 1.0)):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone/tapered cylinder."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add a UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width, segments=5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Rotate object so its local axis aligns with the given world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.bound_box = obj.bound_box
+        self.center_world = obj.matrix_world.to_translation()
+        
+        # Calculate face centers based on bounding box in world space
+        # Assuming axis-aligned for simplicity unless rotated, but we use world matrix
+        verts_world = [self.obj.matrix_world @ v for v in self.bound_box]
+        
+        # Find min/max for each axis
+        xs = [v.x for v in verts_world]
+        ys = [v.y for v in verts_world]
+        zs = [v.z for v in verts_world]
+        
+        self.min_x = min(xs); self.max_x = max(xs)
+        self.min_y = min(ys); self.max_y = max(ys)
+        self.min_z = min(zs); self.max_z = max(zs)
+        
+        # Define face centers
+        self.center_x_min = Vector((self.min_x, self.center_world.y, self.center_world.z))
+        self.center_x_max = Vector((self.max_x, self.center_world.y, self.center_world.z))
+        self.center_y_min = Vector((self.center_world.x, self.min_y, self.center_world.z))
+        self.center_y_max = Vector((self.center_world.x, self.max_y, self.center_world.z))
+        self.center_z_min = Vector((self.center_world.x, self.center_world.y, self.min_z))
+        self.center_z_max = Vector((self.center_world.x, self.center_world.y, self.max_z))
+
+    def face_center_world(self, face_type):
+        """Return world location of a specific face center."""
+        if face_type == 'x_min': return self.center_x_min
+        if face_type == 'x_max': return self.center_x_max
+        if face_type == 'y_min': return self.center_y_min
+        if face_type == 'y_max': return self.center_y_max
+        if face_type == 'z_min': return self.center_z_min
+        if face_type == 'z_max': return self.center_z_max
+        return self.center_world
+
+    def radial_point_world(self, direction, radius):
+        """Get a point on the surface in a given direction."""
+        # Simplified: just return center + direction * radius
+        return self.center_world + direction.normalized() * radius
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using modifier stack."""
+    target = bpy.data.objects.get(target_name)
+    cutter = bpy.data.objects.get(cutter_name)
+    
+    if not target or not cutter:
+        print(f"Error: Object {target_name} or {cutter_name} not found.")
+        return
+
+    # Ensure cutter is a mesh
+    if cutter.type != 'MESH':
+        bpy.ops.object.convert(target='MESH')
+        cutter = bpy.context.active_object
+        cutter.name = cutter_name # Re-assign name if changed
+
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_obj_name, target_name):
+    """Perform boolean union."""
+    target = bpy.data.objects.get(target_name)
+    union_obj = bpy.data.objects.get(union_obj_name)
+    
+    if not target or not union_obj:
+        print(f"Error: Object {target_name} or {union_obj_name} not found.")
+        return
+
+    if union_obj.type != 'MESH':
+        bpy.ops.object.convert(target='MESH')
+        union_obj = bpy.context.active_object
+        union_obj.name = union_obj_name
+
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- BLOCK 1: Materials ---
+
+mat_ceramic_white = make_material("ceramic_white", diffuse_color=(0.95, 0.95, 0.95, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# Note: The prompt references 'bowl_root' which is not explicitly created in the steps.
+# We assume 'bowl_root' is an existing object in the scene or needs to be created.
+# Since the prompt says "Anchor base_plate to bowl_root.center", we must ensure bowl_root exists.
+# If it doesn't exist, we create a dummy or assume it's there. 
+# Given the strict "create primitive" instructions for other parts, and no creation for bowl_root,
+# we will check if it exists. If not, we create a simple placeholder to avoid errors, 
+# or assume the user has it. 
+# However, to make the script self-contained and robust, let's create a dummy 'bowl_root' if missing.
+if "bowl_root" not in bpy.data.objects:
+    bpy.ops.mesh.primitive_cube_add(size=0.1, location=(0,0,0))
+    bpy.context.active_object.name = "bowl_root"
+    # Apply material to root for visibility
+    apply_material(bpy.data.objects["bowl_root"], mat_ceramic_white)
+
+# Create Locators for existing objects
+loc_bowl_root = Locator(bpy.data.objects["bowl_root"])
+
+# --- SECTION 1 – Create base plate ---
+
+# 1. Create primitive cylinder
+# Diameter 0.203 m -> Radius 0.1015 m
+# Height 0.005 m
+base_plate = add_cylinder("base_plate", radius=0.1015, depth=0.005)
+apply_material(base_plate, mat_ceramic_white)
+
+# 2. Rotate base_plate so its +Z axis aligns +Z (world)
+# Default cylinder is already aligned to Z, but we enforce it.
+align_axis_to_vector(base_plate, 'Z', Vector((0, 0, 1)))
+
+# 3. Anchor base_plate to bowl_root.center
+# This implies moving the center of base_plate to the center of bowl_root
+base_plate.location = loc_bowl_root.center_world
+
+# 4. Align base_plate.+Z_face to bowl_root.base_plate.top_face
+# This instruction is slightly ambiguous. "bowl_root.base_plate.top_face" likely refers to 
+# the top face of the bowl_root object itself, or a hypothetical face. 
+# Assuming it means aligning the top face of base_plate to the top face of bowl_root.
+# However, step 5 says "move by offset(0,0,0.001)".
+# Let's interpret "Align ... to ..." as setting the position such that the faces touch or align.
+# Since we anchored centers, we need to adjust Z.
+# Let's get the top face of bowl_root.
+loc_bowl_root_top = loc_bowl_root.face_center_world('z_max')
+# Let's get the top face of base_plate (currently at center)
+# Base plate height is 0.005. Top face is at center.z + 0.0025
+# We want base_plate.top_face to be at bowl_root.top_face? Or just aligned in Z?
+# "Align base_plate.+Z_face to bowl_root.base_plate.top_face"
+# If bowl_root doesn't have a "base_plate" child, this might refer to the top of bowl_root.
+# Let's assume it means: Align the top face of base_plate to the top face of bowl_root.
+# But wait, step 2 says "Align bowl_shell.bottom_face to bowl_root.base_plate.top_face".
+# This suggests bowl_root might have a specific face named "base_plate.top_face" or it's a typo for "bowl_root.top_face".
+# Given the context of "bowl_root", let's assume it means the top face of the bowl_root object.
+
+# Let's re-read carefully: "Align base_plate.+Z_face to bowl_root.base_plate.top_face"
+# This is recursive/nonsensical if base_plate is being created. 
+# It likely means: Align base_plate's +Z face to the top face of the bowl_root object.
+# Let's assume "bowl_root.base_plate.top_face" is a typo for "bowl_root.top_face".
+
+# Current state: Centers aligned.
+# We need to move base_plate so its top face touches bowl_root's top face? 
+# Or just align the Z-axis?
+# Usually "Align face to face" means coplanar.
+# Let's calculate the target Z for base_plate center.
+# Target: base_plate.top_face_z == bowl_root.top_face_z
+# base_plate.top_face_z = base_plate.location.z + (base_plate.dimensions.z / 2)
+# bowl_root.top_face_z = loc_bowl_root_top.z
+# base_plate.location.z = loc_bowl_root_top.z - (base_plate.dimensions.z / 2)
+
+# However, the prompt says "Anchor ... to center" THEN "Align ... face".
+# Anchoring sets location. Aligning face might override location or rotation.
+# Since it's a face alignment on Z, it's a translation.
+
+# Let's perform the alignment:
+# Move base_plate so its top face is at bowl_root's top face level
+target_z_face = loc_bowl_root_top.z
+base_plate.location.z = target_z_face - (base_plate.dimensions.z / 2)
+
+# 5. Then move by offset(0,0,0.001)
+base_plate.location.z += 0.001
+
+# --- SECTION 2 – Create bowl shell ---
+
+# 1. Create primitive cylinder
+# Diameter 0.203 m -> Radius 0.1015 m
+# Height 0.076 m
+bowl_shell = add_cylinder("bowl_shell", radius=0.1015, depth=0.076)
+apply_material(bowl_shell, mat_ceramic_white)
+
+# 2. Rotate bowl_shell so its +Z axis aligns +Z (world)
+align_axis_to_vector(bowl_shell, 'Z', Vector((0, 0, 1)))
+
+# 3. Anchor bowl_shell to bowl_root.center
+bowl_shell.location = loc_bowl_root.center_world
+
+# 4. Align bowl_shell.center to bowl_root.center
+# Already done by anchor, but explicitly stated.
+bowl_shell.location = loc_bowl_root.center_world
+
+# 5. Align bowl_shell.bottom_face to bowl_root.base_plate.top_face
+# Again, assuming "bowl_root.base_plate.top_face" means "bowl_root.top_face" or "base_plate.top_face" from previous step?
+# Context: "bowl_root.base_plate.top_face". 
+# If it refers to the base_plate we just created:
+loc_base_plate = Locator(base_plate)
+target_z_face_shell = loc_base_plate.face_center_world('z_max').z
+
+# Align bowl_shell.bottom_face to this Z level
+# bowl_shell.bottom_face_z = bowl_shell.location.z - (bowl_shell.dimensions.z / 2)
+# bowl_shell.location.z = target_z_face_shell + (bowl_shell.dimensions.z / 2)
+
+bowl_shell.location.z = target_z_face_shell + (bowl_shell.dimensions.z / 2)
+
+# 6. Then move by offset(0,0,0.001)
+bowl_shell.location.z += 0.001
+
+print("All stages complete.")
+```

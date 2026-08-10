@@ -1,0 +1,1 @@
+Design a geometric wall pattern. Start with a series of hexagons arranged in a honeycomb structure. Add smaller triangles inside each hexagon. Connect the triangles with lines to form a star shape within each hexagon. Ensure the pattern is seamless and can repeat across a large surface.

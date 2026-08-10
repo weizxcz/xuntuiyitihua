@@ -1,0 +1,423 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Get current rotation matrix
+    rot_mat = obj.matrix_world.to_quaternion()
+    
+    # Target direction
+    target_dir = vector.normalized()
+    
+    # Current axis direction in world space
+    if axis == 'X':
+        current_dir = Vector((1, 0, 0))
+    elif axis == 'Y':
+        current_dir = Vector((0, 1, 0))
+    else: # Z
+        current_dir = Vector((0, 0, 1))
+        
+    current_dir = rot_mat @ current_dir
+    
+    # Calculate rotation quaternion to align current_dir to target_dir
+    if current_dir.dot(target_dir) < -0.9999:
+        # 180 degree rotation
+        rot_quat = Mathutils.Quaternion((0,1,0), math.pi) # Fallback, usually needs specific axis
+        # Better approach: use rotation_difference
+        rot_quat = current_dir.rotation_difference(target_dir)
+    else:
+        rot_quat = current_dir.rotation_difference(target_dir)
+        
+    obj.rotation_euler = rot_quat.to_euler()
+
+def align_face_to_face(obj_target, obj_ref, target_axis='Z', ref_axis='Z'):
+    """Align obj_target's face axis to obj_ref's face axis."""
+    # This is a simplified alignment assuming standard orientations.
+    # For robust face-to-face alignment, we often just need to match the axis direction.
+    # If we want to align the *plane* (normal), we align the axis.
+    # If we want to align the *edge* or specific face, we might need more complex logic.
+    # Here we assume aligning the normal vectors.
+    
+    # Get world rotation of reference
+    ref_rot = obj_ref.matrix_world.to_quaternion()
+    
+    # Define local axis vectors
+    if target_axis == 'Z': t_vec = Vector((0,0,1))
+    elif target_axis == 'Y': t_vec = Vector((0,1,0))
+    else: t_vec = Vector((1,0,0))
+    
+    if ref_axis == 'Z': r_vec = Vector((0,0,1))
+    elif ref_axis == 'Y': r_vec = Vector((0,1,0))
+    else: r_vec = Vector((1,0,0))
+    
+    # Rotate reference local vector to world space
+    r_vec_world = ref_rot @ r_vec
+    
+    # Calculate rotation to align target local vector to reference world vector
+    # We want obj_target's t_vec to point in direction of r_vec_world
+    # But usually "align face" implies matching the normal.
+    
+    # Simple approach: Set rotation to match reference's rotation if axes are same
+    # Or calculate difference.
+    
+    # Let's use a simpler method: Align the object's up vector to the reference's up vector
+    # This assumes we are just orienting them similarly.
+    
+    # More precise: Align the specific axis of target to the specific axis of ref
+    # We need to rotate target such that its axis matches ref's axis in world space.
+    
+    # Get current world axis of target
+    t_vec_world = obj_target.matrix_world.to_quaternion() @ t_vec
+    
+    # Rotation from t_vec_world to r_vec_world
+    rot_diff = t_vec_world.rotation_difference(r_vec_world)
+    
+    # Apply rotation
+    # Note: Applying rotation directly to euler can be tricky. 
+    # We'll update the matrix world directly or use quaternion.
+    obj_target.rotation_euler = rot_diff.to_euler()
+
+def align_face_normal(obj_target, obj_ref, target_axis='Z', ref_axis='Z'):
+    """Align the normal of obj_target's face to the normal of obj_ref's face."""
+    # This is effectively aligning the axis vectors in world space
+    align_axis_to_vector(obj_target, axis=target_axis, vector=(obj_ref.matrix_world.to_quaternion() @ (Vector((0,0,1)) if ref_axis=='Z' else Vector((0,1,0)) if ref_axis=='Y' else Vector((1,0,0)))))
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using modifier stack."""
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Perform boolean union using modifier stack."""
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union_obj
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj, radius, segments, edge_set=None):
+    """Add bevel modifier to object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE' # or 'WEIGHT', 'WIDTH'
+    # If edge_set is specified, we might need to select edges and use 'EDGE' limit method
+    # For simplicity, we apply global bevel. If specific edges are needed, 
+    # we'd need to enter edit mode, select edges, and set limit method to EDGE.
+    # Given the prompt "Bevel banana.edge_set", let's try to be more specific if possible.
+    # However, without a clear definition of "edge_set" (e.g. top/bottom rings), 
+    # a global bevel is the safest interpretation for a cylinder unless specified.
+    # Let's assume global bevel for now as "edge_set" is vague.
+    
+    # To bevel specific edges (like the top rim of a cylinder):
+    # We would need to select them.
+    if edge_set:
+        mod.limit_method = 'EDGE'
+        # Note: Implementing specific edge selection in script requires entering edit mode
+        # and selecting edges by index or normal. This is complex.
+        # We will stick to global bevel for robustness unless indices are provided.
+        # If the user meant "bevel the edges of the cylinder", global bevel does that.
+        
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def get_world_center(obj):
+    """Get the world space center of an object."""
+    return obj.matrix_world.to_translation()
+
+def get_world_face_center(obj, axis='Z'):
+    """Get the world space center of a specific face (top/bottom)."""
+    # For a cylinder/sphere aligned to Z, the "top" face center is at Z + radius/height
+    # This is an approximation based on object bounds.
+    # A more robust way is to use the object's bounding box.
+    bbox = obj.bound_box
+    # bbox has 8 points. 
+    # We need to identify which points correspond to the face.
+    # Assuming standard orientation:
+    # Z axis is up.
+    # Top face Z is max, Bottom face Z is min.
+    
+    # Find max and min Z
+    z_vals = [p[2] for p in bbox]
+    z_max = max(z_vals)
+    z_min = min(z_vals)
+    
+    # Find points at z_max
+    top_points = [p for p in bbox if abs(p[2] - z_max) < 1e-5]
+    bottom_points = [p for p in bbox if abs(p[2] - z_min) < 1e-5]
+    
+    # Average X,Y for top and bottom
+    if top_points:
+        avg_x = sum(p[0] for p in top_points) / len(top_points)
+        avg_y = sum(p[1] for p in top_points) / len(top_points)
+        top_center_local = Vector((avg_x, avg_y, z_max))
+    else:
+        top_center_local = Vector((0,0,z_max))
+        
+    if bottom_points:
+        avg_x = sum(p[0] for p in bottom_points) / len(bottom_points)
+        avg_y = sum(p[1] for p in bottom_points) / len(bottom_points)
+        bottom_center_local = Vector((avg_x, avg_y, z_min))
+    else:
+        bottom_center_local = Vector((0,0,z_min))
+        
+    # Transform to world space
+    top_center_world = obj.matrix_world @ top_center_local
+    bottom_center_world = obj.matrix_world @ bottom_center_local
+    
+    if axis == 'Z':
+        # Return top and bottom
+        return top_center_world, bottom_center_world
+    elif axis == 'X':
+        # Left and Right
+        x_vals = [p[0] for p in bbox]
+        x_max = max(x_vals)
+        x_min = min(x_vals)
+        right_points = [p for p in bbox if abs(p[0] - x_max) < 1e-5]
+        left_points = [p for p in bbox if abs(p[0] - x_min) < 1e-5]
+        if right_points:
+            avg_y = sum(p[1] for p in right_points)/len(right_points)
+            avg_z = sum(p[2] for p in right_points)/len(right_points)
+            right_center_local = Vector((x_max, avg_y, avg_z))
+        else:
+            right_center_local = Vector((x_max,0,0))
+        if left_points:
+            avg_y = sum(p[1] for p in left_points)/len(left_points)
+            avg_z = sum(p[2] for p in left_points)/len(left_points)
+            left_center_local = Vector((x_min, avg_y, avg_z))
+        else:
+            left_center_local = Vector((x_min,0,0))
+        return obj.matrix_world @ right_center_local, obj.matrix_world @ left_center_local
+        
+    return top_center_world, bottom_center_world
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+
+mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95))
+mat_wood_oak = make_material("wood_oak", (0.6, 0.4, 0.2))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create root anchor ---
+root = add_cube("root", size=0.1, location=(0,0,0), material=None)
+# Rotate root so its axis aligns +Z (world). Cube is already aligned.
+# Move root to (0,0,0).
+root.location = (0,0,0)
+
+# --- SECTION 2 – Create base_group ---
+
+# --- SECTION 2.1 – Create bowl_body ---
+# Create primitive cylinder with size Ø0.250×0.120 m
+# Radius = 0.125, Depth = 0.120
+bowl_body = add_cylinder("bowl_body", radius=0.125, depth=0.120, location=(0,0,0), rotation=(0,0,0), material=mat_ceramic_white)
+# Rotate bowl_body so its +Z axis aligns +Z (world). Already aligned.
+# Align bowl_body.XY_face to root.XY_face.
+# root is at 0,0,0. bowl_body center is at 0,0,0.
+# We need to align the bottom face of bowl_body to the top face of root? 
+# Or just align the XY planes? 
+# "Align bowl_body.XY_face to root.XY_face" usually means matching the plane.
+# Since both are at 0,0,0, they are already aligned in XY.
+# Then move by offset(0,0,0.060).
+bowl_body.location += Vector((0,0,0.060))
+
+# --- SECTION 2.2 – Create base_foot ---
+# Create primitive cylinder with size Ø0.100×0.010 m
+# Radius = 0.050, Depth = 0.010
+base_foot = add_cylinder("base_foot", radius=0.050, depth=0.010, location=(0,0,0), rotation=(0,0,0), material=mat_ceramic_white)
+# Rotate base_foot so its +Z axis aligns +Z (world). Already aligned.
+# Align base_foot.XY_face to bowl_body.bottom_face.XY_face.
+# bowl_body.bottom_face is at Z = 0.060 - 0.060 = 0.000? 
+# bowl_body center is at 0,0,0.060. Radius 0.125, Depth 0.120.
+# Top Z = 0.060 + 0.060 = 0.120. Bottom Z = 0.060 - 0.060 = 0.000.
+# So bowl_body bottom face is at Z=0.
+# base_foot center is at 0,0,0. Bottom Z = -0.005, Top Z = 0.005.
+# We want to align base_foot.XY_face (let's assume bottom face) to bowl_body.bottom_face.
+# So base_foot bottom face should be at Z=0.
+# base_foot bottom face is at Z_center - depth/2.
+# 0 - 0.005 = -0.005. We want it at 0.
+# So we need to move base_foot up by 0.005.
+# But the instruction says: "Align base_foot.XY_face to bowl_body.bottom_face.XY_face."
+# And "Align base_foot.Z_face to bowl_body.bottom_face.Z_face."
+# This implies positional alignment.
+# Let's calculate the target position for base_foot.
+# bowl_body bottom face center:
+bowl_bottom_z = bowl_body.location.z - (bowl_body.dimensions.z / 2)
+# base_foot bottom face should be at bowl_bottom_z.
+# base_foot bottom face Z = base_foot.location.z - (base_foot.dimensions.z / 2)
+# So base_foot.location.z = bowl_bottom_z + (base_foot.dimensions.z / 2)
+base_foot.location.z = bowl_bottom_z + (base_foot.dimensions.z / 2)
+
+# Align base_foot.Z_face to bowl_body.bottom_face.Z_face.
+# This is redundant if we just aligned the position, but ensures orientation.
+# Both are aligned to Z, so no rotation needed.
+
+# Then move by offset(0,0,0).
+base_foot.location += Vector((0,0,0))
+
+# --- SECTION 2.3 – Assemble base_group ---
+# Boolean-union base_foot into bowl_body; discard base_foot.
+boolean_union(base_foot, bowl_body)
+
+# --- SECTION 3 – Create fruit_group ---
+
+# --- SECTION 3.1 – Create apple ---
+# Create primitive sphere with size Ø0.060 m
+# Radius = 0.030
+apple = add_uvsphere("apple", radius=0.030, location=(0,0,0), rotation=(0,0,0), material=mat_ceramic_white)
+# Rotate apple so its +Z axis aligns +Z (world). Already aligned.
+# Align apple.XY_face to bowl_body.inner_bottom.XY_face.
+# "inner_bottom" likely refers to the bottom interior surface.
+# For a cylinder, the bottom interior is the same plane as the bottom exterior face.
+# bowl_body bottom face Z = 0.000 (as calculated above).
+# apple is a sphere. Its "XY_face" isn't a flat face, but we can align its center's Z to the plane.
+# Or align the bottom of the sphere to the plane.
+# Let's assume "Align apple.XY_face" means align the sphere's center to the plane? 
+# Or align the bottom of the sphere to the plane?
+# Given "Align apple.Z_face to bowl_body.inner_bottom.Z_face", it suggests orienting the sphere.
+# Spheres are symmetric, so orientation doesn't matter for shape, but let's follow instructions.
+# Let's align the center of the apple to the bowl_body inner bottom plane?
+# No, "Align ... to ..." usually means position.
+# Let's assume we want the apple to sit on the bottom of the bowl.
+# So the bottom of the apple (Z_center - radius) should be at bowl_body bottom Z (0.000).
+# apple.location.z = 0.000 + 0.030 = 0.030.
+# But wait, the instruction says "Align apple.XY_face to bowl_body.inner_bottom.XY_face".
+# If we interpret "XY_face" as the plane Z=constant, then we are aligning the Z coordinate.
+# Let's assume we align the center of the apple to the plane? 
+# If we align the center, the apple would be half-submerged.
+# If we align the bottom, it sits on the surface.
+# Let's look at the offset: "Then move by offset(0,0,0.030)".
+# If we start at 0,0,0 and move by 0.030, the center is at 0.030.
+# If the bowl bottom is at 0.000, and apple radius is 0.030, then the bottom of the apple is at 0.000.
+# This matches "sitting on the bottom".
+# So, initial alignment: Align apple center to bowl_body inner bottom plane? 
+# If we align center to plane, apple.location.z = 0.000.
+# Then offset(0,0,0.030) -> apple.location.z = 0.030.
+# This results in the bottom of the apple at 0.000.
+# This seems correct.
+
+# Step 1: Align apple.XY_face to bowl_body.inner_bottom.XY_face.
+# Let's assume this means aligning the Z-coordinate of the apple's center to the Z-coordinate of the bowl's inner bottom.
+apple.location.z = bowl_bottom_z # 0.000
+
+# Step 2: Align apple.Z_face to bowl_body.inner_bottom.Z_face.
+# This is redundant for a sphere, but ensures no rotation.
+# Already aligned.
+
+# Step 3: Move by offset(0,0,0.030).
+apple.location += Vector((0,0,0.030))
+
+# --- SECTION 3.2 – Create banana ---
+# Create primitive cylinder with size Ø0.030×0.150 m
+# Radius = 0.015, Depth = 0.150
+banana = add_cylinder("banana", radius=0.015, depth=0.150, location=(0,0,0), rotation=(0,0,0), material=mat_ceramic_white)
+# Rotate banana so its +Z axis aligns +Z (world). Already aligned.
+# Align banana.XY_face to bowl_body.inner_bottom.XY_face.
+# Align banana.Z_face to bowl_body.inner_bottom.Z_face.
+# Similar to apple, let's align the center's Z to the bowl bottom Z.
+banana.location.z = bowl_bottom_z # 0.000
+
+# Then move by offset(0.05,0,0.075).
+banana.location += Vector((0.05, 0, 0.075))
+
+# Bevel banana.edge_set with radius 0.015 m, segments 8.
+add_bevel(banana, radius=0.015, segments=8)
+
+# --- SECTION 3.3 – Create orange ---
+# Create primitive sphere with size Ø0.050 m
+# Radius = 0.025
+orange = add_uvsphere("orange", radius=0.025, location=(0,0,0), rotation=(0,0,0), material=mat_ceramic_white)
+# Rotate orange so its +Z axis aligns +Z (world). Already aligned.
+# Align orange.XY_face to bowl_body.inner_bottom.XY_face.
+orange.location.z = bowl_bottom_z # 0.000
+
+# Align orange.Z_face to bowl_body.inner_bottom.Z_face.
+# Redundant.
+
+# Then move by offset(-0.05,0,0.025).
+orange.location += Vector((-0.05, 0, 0.025))
+
+# --- SECTION 3.4 – Assemble fruit_group ---
+# Boolean-union apple into bowl_body; discard apple.
+boolean_union(apple, bowl_body)
+
+# Boolean-union banana into bowl_body; discard banana.
+boolean_union(banana, bowl_body)
+
+# Boolean-union orange into bowl_body; discard orange.
+boolean_union(orange, bowl_body)
+
+# All stages complete.
+```

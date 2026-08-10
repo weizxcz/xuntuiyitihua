@@ -1,0 +1,23 @@
+-- MATERIAL LIBRARY --
+mat_body | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_chuck | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_trigger | diffuse_color=(0.2,0.2,0.2,1.0)
+mat_switch | diffuse_color=(0.9,0.9,0.9,1.0)
+mat_battery | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_battery_cap | diffuse_color=(0.1,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| main_body | Composite of handle, motor housing, and gear housing; ergonomic pistol-grip shape | Align(XYZ) main_body.center to (0,0,0); orientation=axis:+Z; mat=mat_body; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Profile of a pistol grip. Handle width 0.05m, length 0.12m. Motor housing diameter 0.06m, length 0.15m. Total length 0.25m. Extrude thickness 0.02m along +Z. Caps enabled. |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+| trigger | Ergonomic trigger for operation | Align(XY) trigger.center to main_body.trigger_slot.center; Align(Z) trigger.bottom_face to main_body.trigger_slot.bottom_face; orientation=axis:+Z; mat=mat_trigger; create_method=cylinder; size=Ø0.02×0.04 |
+| fwd_rev_switch | Forward/Reverse switch | Align(XY) switch.center to main_body.switch_slot.center; Align(Z) switch.bottom_face to main_body.switch_slot.bottom_face; orientation=axis:+Z; mat=mat_switch; create_method=cube; size=0.02×0.01×0.01 |
+| chuck | Keyless chuck for bit changes | Align(XY) chuck.center to main_body.chuck_mount.center; Align(Z) chuck.bottom_face to main_body.chuck_mount.top_face; orientation=axis:+Z; mat=mat_chuck; create_method=cylinder; size=Ø0.03×0.05 |
+| battery_compartment | Battery compartment at the base | Align(XY) battery_compartment.center to main_body.battery_mount.center; Align(Z) battery_compartment.top_face to main_body.battery_mount.bottom_face; orientation=axis:+Z; mat=mat_battery; create_method=cylinder; size=Ø0.04×0.10 |
+| battery_cap | Battery cap to secure battery | Align(XY) battery_cap.center to battery_compartment.center; Align(Z) battery_cap.bottom_face to battery_compartment.top_face; orientation=axis:+Z; mat=mat_battery_cap; create_method=cylinder; size=Ø0.04×0.01 |
+
+# ----------  END_GRAPH  ----------

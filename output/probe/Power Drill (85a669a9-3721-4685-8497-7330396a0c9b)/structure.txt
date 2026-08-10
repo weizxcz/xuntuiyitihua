@@ -1,0 +1,46 @@
+-- MATERIAL LIBRARY --
+mat_black_abs | diffuse_color=(0.10,0.10,0.10,1.00)
+mat_grey_al | diffuse_color=(0.60,0.60,0.65,1.00)
+mat_grip_tpe | diffuse_color=(0.15,0.15,0.15,1.00)
+mat_metal_steel | diffuse_color=(0.70,0.70,0.75,1.00)
+mat_orange_abs | diffuse_color=(0.90,0.40,0.10,1.00)
+mat_translucent_white | diffuse_color=(0.95,0.95,0.95,0.30)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| drill_root | Composite assembly of the main power drill | A. Composite of body_shell + trigger_assembly + switch_assembly + chuck_assembly + battery_pack; ergonomic handheld power tool. |
+
+Layer 1 – Primary Structure (Body & Housing)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_shell | Main ergonomic housing of the drill | Align(XYZ) body_shell.center to drill_root.center; orientation=axis:+Z; mat=mat_black_abs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Profile of a pistol-grip shape. Handle width ~0.045m, length ~0.12m. Head width ~0.055m, length ~0.08m. Smooth transitions. **Extrude:** thickness 0.06m along +X (depth). Caps enabled. |
+| grip_overlay | Textured rubber grip for handle | Align(XYZ) grip_overlay.center to body_shell.center; orientation=axis:+Z; mat=mat_grip_tpe; create_method=boolean_subtract; constraint=**Cutter:** Cylinder Ø0.048×0.10m. **Align:** grip_overlay.center to body_shell.left_face (local X-). **Operation:** boolean_subtract from body_shell to create recess for grip. **Note:** This creates the negative space; the actual grip is a separate part fitting into this recess. Let's redefine: grip_overlay is the physical grip. |
+| grip_overlay | Textured rubber grip for handle | Align(XYZ) grip_overlay.center to body_shell.center; orientation=axis:+Z; mat=mat_grip_tpe; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Same profile as body_shell handle section but slightly larger (Ø0.048m vs Ø0.045m). **Extrude:** thickness 0.002m (shell thickness) along +X. **Assembly:** Align grip_overlay.left_face to body_shell.left_face. **Offset:** offset(0.001, 0, 0) to fit snugly. |
+| head_casing | Front motor housing | Align(XYZ) head_casing.center to body_shell.center; orientation=axis:+Z; mat=mat_black_abs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Rectangular block with rounded corners. Width 0.055m, Height 0.055m, Length 0.08m. **Extrude:** thickness 0.06m along +X. **Assembly:** Align head_casing.right_face to body_shell.right_face. |
+
+Layer 2 – Control Interface (Trigger & Switch)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| trigger | Main operation trigger | Align(XYZ) trigger.center to body_shell.center; orientation=axis:+Z; mat=mat_black_abs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Curved lever shape. Length 0.03m, Width 0.015m. **Extrude:** thickness 0.01m along +X. **Assembly:** Align trigger.bottom_face to body_shell.bottom_face (inner cavity). **Pivot:** Connect trigger.top to body_shell.pivot_point (virtual). |
+| trigger_spring | Return spring for trigger | Align(XYZ) trigger_spring.center to trigger.center; orientation=axis:+Z; mat=mat_metal_steel; create_method=cylinder; constraint=size=Ø0.005×0.02m. **Assembly:** Align trigger_spring.bottom_face to trigger.top_face. |
+| fwd_rev_switch | Forward/Reverse toggle switch | Align(XYZ) fwd_rev_switch.center to body_shell.center; orientation=axis:+Z; mat=mat_orange_abs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Small rectangular tab. Width 0.01m, Height 0.02m. **Extrude:** thickness 0.005m along +X. **Assembly:** Align fwd_rev_switch.left_face to body_shell.left_face (exposed side). |
+| switch_cap | Protective cap for switch | Align(XYZ) switch_cap.center to fwd_rev_switch.center; orientation=axis:+Z; mat=mat_black_abs; create_method=cylinder; constraint=size=Ø0.012×0.005m. **Assembly:** Align switch_cap.bottom_face to fwd_rev_switch.top_face. |
+
+Layer 3 – Chuck & Drive Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| chuck_body | Keyless chuck housing | Align(XYZ) chuck_body.center to head_casing.center; orientation=axis:+X; mat=mat_grey_al; create_method=cylinder; constraint=size=Ø0.035×0.04m. **Assembly:** Align chuck_body.left_face to head_casing.right_face. |
+| chuck_jaws | Keyless chuck jaws | Align(XYZ) chuck_jaws.center to chuck_body.center; orientation=axis:+X; mat=mat_metal_steel; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Three-jaw pattern. **Extrude:** thickness 0.02m along +X. **Assembly:** Align chuck_jaws.left_face to chuck_body.right_face. |
+| bit_holder | Internal bit retention mechanism | Align(XYZ) bit_holder.center to chuck_body.center; orientation=axis:+X; mat=mat_metal_steel; create_method=cylinder; constraint=size=Ø0.015×0.03m. **Assembly:** Align bit_holder.left_face to chuck_body.right_face. |
+
+Layer 4 – Power System (Battery)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| battery_pack | Removable battery pack | Align(XYZ) battery_pack.center to body_shell.center; orientation=axis:+Z; mat=mat_black_abs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Rectangular block. Width 0.045m, Height 0.06m, Length 0.03m. **Extrude:** thickness 0.06m along +X. **Assembly:** Align battery_pack.top_face to body_shell.bottom_face. |
+| battery_contacts | Electrical contacts for battery | Align(XYZ) battery_contacts.center to battery_pack.center; orientation=axis:+Z; mat=mat_metal_steel; create_method=cylinder; constraint=size=Ø0.002×0.005m. **Assembly:** Align battery_contacts.bottom_face to battery_pack.bottom_face. |
+| battery_latch | Latch mechanism for battery | Align(XYZ) battery_latch.center to battery_pack.center; orientation=axis:+Z; mat=mat_orange_abs; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (YZ plane):** Small tab. **Extrude:** thickness 0.005m along +X. **Assembly:** Align battery_latch.left_face to battery_pack.left_face. |
+
+# ----------  END_GRAPH  ----------

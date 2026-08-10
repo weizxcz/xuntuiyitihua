@@ -1,0 +1,76 @@
+# 应用基本配置
+recognize_task_infos:
+  name: "blind_slot"  #任务名称，如果是圆角识别，则为round
+  index_num: [17, 18, 19]  #任务名称特征对应开源数据标签的index编号，支持单个整数(如23)或列表(如[17,18,19])
+
+ncti_path_config:
+  Ncti_api_path: "/softwares/YanHe_GMDE_SDK_2026.1.1.5_Beta_Linux_x86-64"  # NCTI库文件路径
+  dllpath: "/softwares/YanHe_GMDE_SDK_2026.1.1.5_Beta_Linux_x86-64"
+
+# 数据路径配置
+data_path_infos:
+  use_absolute_path: true  # 是否使用绝对路径
+  use_public_data: true  # 是否使用公开数据集
+  public_data_path_infos:
+    raw_step_data: "/data/data2/steps"  #如果use_absolute_path为false，则该路径为相对于项目根目录的路径,在data路径下；如果是ture，则该路径为绝对路径。注意开源数据集不是MFCAD2时，需要修改该路径。
+    raw_label_data: "/data/data2/labels"  #原始的所有开源数据的标签路径，该路径下都是json文件来储存标签信息
+  use_real_data: false  # 是否使用真实打标数据集
+  real_data_path_infos:
+    raw_step_data: "D:/data/stp_65/steps"  #如果use_absolute_path为false，则该路径为相对于项目根目录的路径,在data路径下；如果是ture，则该路径为绝对路径。注意特征不是圆角round时，需要修改该路径。
+    raw_label_data: "D:/data/stp_65/labels"  #原始的所有真实数据的标签路径，该路径下都是json文件来储存标签信息。注意特征不是圆角round时，需要修改该路径。
+
+  # processed_data: "data/processed/round"  #经过筛选处理后可用于训练的数据存放根路径,开源数据和真实数据会统一存放在该路径下。注意特征不是圆角round时，需要修改该路径。
+  # processed_graph_data: "data/processed/round/graphs"  #经过筛选处理后可用于训练的graph数据存放路径,开源数据和真实数据的graph数据会统一存放在该路径下。注意特征不是圆角round时，需要修改该路径。
+  # processed_label_data: "data/processed/round/labels"  #经过筛选处理后可用于训练的标签数据存放路径,开源数据和真实数据的label数据会统一存放在该路径下。注意特征不是圆角round时，需要修改该路径。
+  processed_data: "/data/data2/blind_slot"  #经过筛选处理后可用于训练的数据存放根路径,开源数据和真实数据会统一存放在该路径下。注意特征不是圆角round时，需要修改该路径。
+  processed_graph_data: "/data/data2/blind_slot/graphs"  #经过筛选处理后可用于训练的graph数据存放路径,开源数据和真实数据的graph数据会统一存放在该路径下。注意特征不是圆角round时，需要修改该路径。
+  processed_label_data: "/data/data2/blind_slot/labels"  #经过筛选处理后可用于训练的标签数据存放路径,开源数据和真实数据的label数据会统一存放在该路径下。注意特征不是圆角round时，需要修改该路径。
+
+
+  divide_data_infos:
+    random_seed: 42  # 数据划分随机种子
+    train_ratio: 0.8  # 训练集比例
+    val_ratio: 0.1    # 验证集比例
+    test_ratio: 0.1   # 测试集比例
+    divide_result_txt_save_dir: "/data/data2/blind_slot/splits"  # 划分后的数据集txt文件存放路径。注意特征不是圆角round时，需要修改该路径。
+
+  # MFR 专用路径（当 model_name=brepMFR 时使用）
+  mfr_data_infos:
+    graphs_mfr_json: "/data/data2/blind_slot/graphs_mfr_json"  # MFR JSON 图输出
+    bin_data: "/data/data2/blind_slot/bin"                     # DGL bin 输出
+    deleted_invalid_txt: "/data/data2/blind_slot/deleted_invalid_files.txt"  # 清理无效文件记录
+    adv_unlabeled_step_data: "/data/stp_65/steps"                             # BrepMFR对抗学习用无label step数据集路径
+    adv_unlabeled_graphs_mfr_json: "/data/stp_65/graphs_mfr_json_adv_unlabeled"  # 无label对抗MFR JSON图输出
+    adv_unlabeled_bin_data: "/data/stp_65/bin_adv_unlabeled"                       # 无label对抗DGL bin输出
+    adv_unlabeled_deleted_invalid_txt: "/data/stp_65/deleted_invalid_files_adv_unlabeled.txt"  # 无label对抗清理记录
+    domain_adapt_split_dir: "/data/data2/blind_slot"  # 对抗学习source/target划分txt输出
+    domain_adapt_open_set: 0  # 是否启用开集过滤
+
+step2graph_infos:
+  std_eps: 1e-8  # 小数值，对face和edge的属性数据进行标准化时，计算标准差后加上的小数值，防止除以0
+  use_ncti_tool: true  # 是否使用NCTI库进行step转graph
+  num_workers: 128  # step转graph时，使用的并行进程数
+  attr_standard_data_path: "/data/data2/blind_slot/attr_stat.json"  # AAGNet专用：属性标准化参数存放路径。BrepMFR不使用此配置。
+
+model_infos:
+  model_name: "aagnet"  # 模型名称，可选"aagnet", "aagnet_transformer", "brepMFR"
+  brepmfr_train_mode: "supervised"  # BrepMFR训练模式: supervised / domain_adapt
+  model_config_path: "configs/model_configs/aagnet/blind_slot_model_config.yaml"  # 模型配置文件路径。注意特征不是圆角round时，或模型不是aagnet时，需要修改该路径.
+  model_save_path: "model_weights/blind_slot_recognize/aagnet/best_model.pth"  # 训练好模型的保存路径。注意特征不是圆角round时，或模型不是aagnet时，需要修改该路径.
+  brepmfr_pretrain_ckpt: "/workspace/BrepMFR-main/results/BrepMFR1/0129/065651/best.ckpt"  # 对抗学习初始化用BrepMFR监督训练ckpt
+  brepmfr_checkpoint_dir: "/workspace/Geo-Rec/model_weights/round_recognize/brepMFR"  # BrepMFR 训练 checkpoint 保存目录（PyTorch Lightning 格式）
+  brepmfr_config_path: "/workspace/Geo-Rec/configs/model_configs/brepMFR/round_model_config.yaml"  # BrepMFR 模型配置
+
+# MFR 构图专用配置（当 model_name=brepMFR 时使用）
+mfr_step2graph_infos:
+  ai_u_count: 5
+  ai_v_count: 5
+  ai_edge_count: 5
+
+
+
+
+logs_infos:
+  log_dir: "/workspace/Geo-Rec/logs"  # 日志记录级别
+
+  

@@ -1,0 +1,46 @@
+{
+  "id": "6cb0dc86-d9c2-4dc5-b533-87e201823d3a",
+  "name": "Cheese Platter",
+  "instruction": "Design a cheese platter. The platter is circular and has a selection of cheeses arranged neatly.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cheese platter.",
+        "The platter is circular in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cheeses are proportionately sized relative to the platter.",
+        "The arrangement of cheeses allows for visual balance on the platter."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cheeses are arranged neatly on the circular platter.",
+        "The arrangement allows for easy access to each type of cheese.",
+        "The platter maintains a stable base to support the cheeses."
+      ],
+      "Object distance and contact": [
+        "The cheeses do not overlap excessively.",
+        "There is sufficient space between each type of cheese for clear visibility.",
+        "The cheeses are securely placed on the platter without falling off."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately represents a cheese platter with a circular shape.",
+        "The selection of cheeses is arranged neatly as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

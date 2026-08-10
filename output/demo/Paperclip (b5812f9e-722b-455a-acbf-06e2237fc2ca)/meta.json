@@ -1,0 +1,47 @@
+{
+  "id": "b5812f9e-722b-455a-acbf-06e2237fc2ca",
+  "name": "Paperclip",
+  "instruction": "Compare a standard paperclip to one with a triangular shape. Create a 3D model of each.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The standard paperclip has a rounded, elongated shape.",
+        "The triangular paperclip has three distinct edges forming a triangle.",
+        "Both paperclips maintain a consistent thickness throughout."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The standard paperclip is typically around 5 cm in length.",
+        "The triangular paperclip's dimensions should be proportionate to its shape."
+      ],
+      "Proportion": [
+        "The width of the standard paperclip is proportionate to its length.",
+        "The triangular paperclip maintains equal lengths for all three sides."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "Both paperclips are modeled to be free-standing.",
+        "The standard paperclip should be able to rest flat on a surface.",
+        "The triangular paperclip should also rest flat, with all three points touching the surface."
+      ],
+      "Object distance and contact": [
+        "There should be no overlapping between the two models.",
+        "The distance between the two paperclips should be sufficient to distinguish their shapes."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both paperclips are accurately represented as per the instruction.",
+        "The comparison between the two shapes is clear and distinct."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

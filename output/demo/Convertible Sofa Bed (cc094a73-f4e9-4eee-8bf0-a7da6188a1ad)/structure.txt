@@ -1,0 +1,48 @@
+-- MATERIAL LIBRARY --
+fabric_beige | diffuse_color=(0.96,0.92,0.86,1.0)
+fabric_cushion | diffuse_color=(0.90,0.85,0.80,1.0)
+metal_silver | diffuse_color=(0.70,0.72,0.75,1.0)
+wood_dark | diffuse_color=(0.25,0.18,0.12,1.0)
+wood_light | diffuse_color=(0.65,0.55,0.45,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sofa_root | Composite of base_frame + seat_cushion + backrest_assembly + armrests + storage | assembly_order=[base_frame, storage, seat_cushion, backrest_assembly, armrests] |
+
+Layer 1 – Primary Structure (Base & Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_frame | Composite of wooden_slat_base + metal_legs | assembly_order=[wooden_slat_base, metal_legs] |
+| wooden_slat_base | Rectangular wooden frame 2.032×0.762×0.05 m | pos=(0, 0, 0.025); orientation=axis:+Z; mat=wood_light; create_method=primitive |
+| metal_legs | Pattern of 4 cylinders | pattern=grid(rows:2, cols:2, x_spacing:1.8, y_spacing:0.6, start_offset:(-0.9, -0.3)); Align(Z) metal_legs[i].top_face to wooden_slat_base.bottom_face; offset(0,0,-0.4); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+
+Layer 2 – Storage & Seat
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| storage_compartment | Composite of storage_box + storage_lid | assembly_order=[storage_box, storage_lid] |
+| storage_box | Rectangular box 1.8×0.7×0.2 m | pos=(0, 0, 0.05); orientation=axis:+Z; mat=wood_dark; create_method=primitive |
+| storage_lid | Rectangular lid 1.82×0.72×0.02 m | Align(Z) storage_lid.bottom_face to storage_box.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=wood_dark; create_method=primitive |
+| seat_cushion | Rectangular cushion 2.032×0.762×0.15 m | Align(Z) seat_cushion.bottom_face to wooden_slat_base.top_face; offset(0,0,0.075); orientation=axis:+Z; mat=fabric_cushion; create_method=primitive |
+
+Layer 3 – Backrest Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| backrest_assembly | Composite of backrest_frame + backrest_cushion + hinge_mechanism | assembly_order=[hinge_mechanism, backrest_frame, backrest_cushion] |
+| hinge_mechanism | Composite of hinge_base + hinge_arm | assembly_order=[hinge_base, hinge_arm] |
+| hinge_base | Rectangular block 2.0×0.05×0.05 m | Align(Z) hinge_base.bottom_face to wooden_slat_base.top_face; offset(0, -0.35, 0.075); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| hinge_arm | Cylindrical rod Ø0.02×0.1 m | Align(X) hinge_arm.center to hinge_base.center; offset(0, 0.05, 0); orientation=axis:+Y; mat=metal_silver; create_method=primitive |
+| backrest_frame | Rectangular frame 2.032×0.8×0.1 m | Align(Z) backrest_frame.bottom_face to hinge_arm.top_face; offset(0, 0, 0.05); orientation=axis:+Z; mat=wood_light; create_method=primitive |
+| backrest_cushion | Rectangular cushion 2.032×0.75×0.1 m | Align(Z) backrest_cushion.bottom_face to backrest_frame.top_face; offset(0, 0, 0.05); orientation=axis:+Z; mat=fabric_cushion; create_method=primitive |
+
+Layer 4 – Armrests
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| armrests | Pattern of 2 armrests | pattern=grid(rows:1, cols:2, x_spacing:2.032, y_spacing:0, start_offset:(-1.016, 0)) |
+| armrest | Composite of armrest_base + armrest_cushion | assembly_order=[armrest_base, armrest_cushion] |
+| armrest_base | Rectangular block 0.1×0.762×0.4 m | Align(Z) armrest_base.bottom_face to wooden_slat_base.top_face; offset(0, 0, 0.2); orientation=axis:+Z; mat=wood_light; create_method=primitive |
+| armrest_cushion | Rectangular cushion 0.1×0.75×0.1 m | Align(Z) armrest_cushion.bottom_face to armrest_base.top_face; offset(0, 0, 0.05); orientation=axis:+Z; mat=fabric_cushion; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

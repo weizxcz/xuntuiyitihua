@@ -1,0 +1,1 @@
+Design a 3D model of both a screwdriver and a hammer. The screwdriver should have a long, thin shaft with a flat or Phillips head. The hammer should have a handle and a head with a flat striking surface on one side and a claw on the other. Compare the two tools in terms of their shapes and uses.

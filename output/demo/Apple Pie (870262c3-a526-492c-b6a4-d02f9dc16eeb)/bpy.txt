@@ -1,0 +1,588 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color, roughness=0.5, metallic=0.0):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = tuple(diffuse_color)
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_data"
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc (flat cylinder) mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_data"
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_data"
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone/tapered mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_data"
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=16):
+    """Add an UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_data"
+    return obj
+
+def add_text_object(name, text_string, size=1.0):
+    """Add a text object."""
+    bpy.ops.object.text_add()
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text_string
+    obj.data.size = size
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Align an object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    # Calculate rotation to align local_axis to target vector
+    rot_quat = local_axis.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj, mode='center'):
+        """
+        obj: Blender object
+        mode: 'center', 'face', or 'radial'
+        """
+        self.obj = obj
+        self.mode = mode
+
+    def center_world(self):
+        """Return the world position of the object's center."""
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, face_index=0):
+        """Return the world position of a specific face center."""
+        # Assuming Z+ face for cylinders/cones usually, but let's be generic
+        # For simplicity in this script, we assume standard orientation where Z+ is "up"
+        # We will calculate based on bounding box or specific logic if needed.
+        # Here, we'll use the center + normal offset for simplicity if face is known.
+        # However, for cylinders aligned to Z, the top face center is center + (0,0, height/2).
+        # Let's stick to center for robustness unless specific face logic is required.
+        # The prompt asks for aligning +Z_face.
+        # We will implement a helper to get the top face center for Z-aligned objects.
+        return self._get_top_face_center()
+
+    def _get_top_face_center(self):
+        """Get the world position of the top face center (Z+ direction)."""
+        # Get local bounds
+        min_z = min(v.co.z for v in self.obj.data.vertices)
+        max_z = max(v.co.z for v in obj.data.vertices)
+        
+        # Find vertices on the top face
+        top_verts = [v for v in self.obj.data.vertices if abs(v.co.z - max_z) < 1e-5]
+        if top_verts:
+            local_center = average([v.co for v in top_verts])
+            return self.obj.matrix_world @ local_center
+        return self.center_world()
+
+    def radial_point_world(self, angle=0):
+        """Return a point on the radial edge."""
+        center = self.center_world()
+        # Approximate radius from bounding box
+        bbox = self.obj.bound_box
+        radius = max(abs(v.x) for v in bbox) # Simplified
+        x = center.x + radius * math.cos(angle)
+        y = center.y + radius * math.sin(angle)
+        return Vector((x, y, center.z))
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract operation."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Remove cutter
+    # bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    """Perform a boolean union operation."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def add_bevel(obj_name, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    # Apply bevel
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_crust_dough = make_material("crust_dough", (0.96, 0.84, 0.62, 1.0))
+mat_fill_apple = make_material("fill_apple", (0.85, 0.15, 0.10, 0.9))
+mat_glaze_eggs = make_material("glaze_eggs", (0.95, 0.85, 0.50, 0.6))
+mat_sugar_crystal = make_material("sugar_crystal", (1.0, 1.0, 1.0, 0.8))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create pie base (crust_base) ---
+# Create primitive cylinder with radius 0.100 m and height 0.015 m and name it crust_base.
+crust_base = add_cylinder("crust_base", 0.100, 0.015)
+
+# Rotate crust_base so its +Z axis aligns +Z (world).
+# Default cylinder is already aligned to Z, but we ensure it.
+align_axis_to_vector(crust_base, 'Z', Vector((0, 0, 1)))
+
+# Align crust_base.+Z_face to table.+Z_face.
+# Since 'table' is not defined, we assume the world origin or a hypothetical table plane at Z=0.
+# We will place crust_base such that its bottom face is at Z=0 (or aligned to world Z).
+# The prompt says "Align ... to table.+Z_face". Assuming table is at Z=0.
+# We move the object so its bottom face is at Z=0.
+# Current center is at (0,0,0). Bottom face is at Z = -height/2 = -0.0075.
+# We need to move it up by 0.0075.
+crust_base.location.z += 0.015 / 2.0
+
+# Then move by offset(0,0,0).
+crust_base.location += Vector((0, 0, 0))
+
+# Apply material crust_dough to crust_base.
+if crust_base.data.materials:
+    crust_base.data.materials[0] = mat_crust_dough
+else:
+    crust_base.data.materials.append(mat_crust_dough)
+
+# --- SECTION 2 – Create filling ---
+# Create primitive cylinder with radius 0.090 m and height 0.020 m and name it filling.
+filling = add_cylinder("filling", 0.090, 0.020)
+
+# Rotate filling so its +Z axis aligns +Z (world).
+align_axis_to_vector(filling, 'Z', Vector((0, 0, 1)))
+
+# Align filling.+Z_face to crust_base.+Z_face.
+# crust_base top face is at Z = 0.015 (since bottom was at 0).
+# filling center is at (0,0,0). Top face is at Z = 0.010.
+# We want filling top face to align with crust_base top face?
+# Usually filling sits ON TOP of crust.
+# Let's interpret "Align filling.+Z_face to crust_base.+Z_face" as aligning the bottom of filling to the top of crust_base?
+# Or aligning the centers?
+# Standard pie: Filling sits on crust.
+# Let's align the BOTTOM of filling to the TOP of crust_base.
+# crust_base top Z = 0.015.
+# filling bottom Z = -0.010.
+# So filling center Z should be 0.015 + 0.010 = 0.025.
+filling.location.z = 0.015 + 0.020 / 2.0
+
+# Then move by offset(0,0,0.015).
+filling.location.z += 0.015
+# New Z = 0.025 + 0.015 = 0.040.
+# Wait, let's re-read carefully.
+# "Align filling.+Z_face to crust_base.+Z_face."
+# If this means aligning the TOP faces, then filling center Z = 0.015 + 0.010 = 0.025.
+# Then offset(0,0,0.015) -> Z = 0.040.
+# This seems high. Let's look at Section 3.
+# Section 3: crust_top aligned to crust_base.+Z_face, offset(0,0,0.035).
+# If crust_base top is at 0.015.
+# crust_top center Z (if aligned top-to-top) = 0.015 + 0.0025 = 0.0175.
+# Offset 0.035 -> Z = 0.0525.
+# This stacking seems odd.
+# Let's try another interpretation: "Align ... to ..." means position the object so its face is at the same location as the reference face.
+# If filling.+Z_face aligns to crust_base.+Z_face, then filling top is at Z=0.015.
+# Filling center Z = 0.015 - 0.010 = 0.005.
+# Offset(0,0,0.015) -> Z = 0.020.
+# This places filling inside the crust? No, crust height is 0.015.
+# If filling center is at 0.005, it spans -0.005 to 0.015. It overlaps crust.
+# Let's look at the offset values.
+# Section 2 offset: 0.015.
+# Section 3 offset: 0.035.
+# Section 4 offset: 0.040.
+# Section 5 offset: 0.041.
+# These offsets are cumulative Z positions relative to the anchor?
+# "Align ... to ... Then move by offset..."
+# Let's assume the anchor is the crust_base top face center.
+# Anchor Z = 0.015.
+# Section 2: Align filling.+Z_face to crust_base.+Z_face.
+# If we align TOP to TOP, filling center Z = 0.015 - 0.010 = 0.005.
+# Offset(0,0,0.015) -> Z = 0.020.
+# Section 3: Align crust_top.+Z_face to crust_base.+Z_face.
+# crust_top height 0.005. Top face aligns to Z=0.015.
+# crust_top center Z = 0.015 - 0.0025 = 0.0125.
+# Offset(0,0,0.035) -> Z = 0.0475.
+# Section 4: Align glaze.+Z_face to crust_top.+Z_face.
+# crust_top top face Z = 0.0125 + 0.0025 = 0.015.
+# glaze height 0.001. Top face aligns to Z=0.015.
+# glaze center Z = 0.015 - 0.0005 = 0.0145.
+# Offset(0,0,0.040) -> Z = 0.0545.
+# Section 5: Align sugar.+Z_face to crust_top.+Z_face.
+# sugar height 0.0005. Top face aligns to Z=0.015.
+# sugar center Z = 0.015 - 0.00025 = 0.01475.
+# Offset(0,0,0.041) -> Z = 0.05575.
+
+# This interpretation results in all objects being stacked high above the crust.
+# Let's try: "Align ... to ..." means align the BOTTOM of the new object to the TOP of the reference.
+# Section 2: Align filling bottom to crust_base top (Z=0.015).
+# filling center Z = 0.015 + 0.010 = 0.025.
+# Offset(0,0,0.015) -> Z = 0.040.
+# Section 3: Align crust_top bottom to crust_base top (Z=0.015).
+# crust_top center Z = 0.015 + 0.0025 = 0.0175.
+# Offset(0,0,0.035) -> Z = 0.0525.
+# Still high.
+
+# Let's look at the offsets again.
+# 0.015, 0.035, 0.040, 0.041.
+# These look like absolute Z coordinates for the centers?
+# If crust_base center is at 0.0075 (bottom at 0).
+# Filling center at 0.015? (Sitting on crust).
+# Crust_top center at 0.035? (Sitting on filling?).
+# Glaze center at 0.040?
+# Sugar center at 0.041?
+
+# Let's try to interpret "Align ... to ... Then move by offset" as:
+# 1. Place object such that its reference face is at the reference object's reference face.
+# 2. Apply offset from that position.
+
+# Let's assume "Align A.face to B.face" means A.face position = B.face position.
+# And "Offset" is added to the object's location.
+
+# Section 1: crust_base.
+# Anchor: table.+Z_face (Z=0).
+# Align crust_base bottom to Z=0.
+# crust_base center Z = 0.0075.
+# Offset(0,0,0) -> Z = 0.0075.
+
+# Section 2: filling.
+# Anchor: crust_base.+Z_face (Z=0.015).
+# Align filling bottom to Z=0.015.
+# filling center Z = 0.015 + 0.010 = 0.025.
+# Offset(0,0,0.015) -> Z = 0.040.
+
+# Section 3: crust_top.
+# Anchor: crust_base.+Z_face (Z=0.015).
+# Align crust_top bottom to Z=0.015.
+# crust_top center Z = 0.015 + 0.0025 = 0.0175.
+# Offset(0,0,0.035) -> Z = 0.0525.
+
+# This doesn't seem to create a pie. A pie has filling inside crust, and top crust on top.
+# Maybe the offsets are meant to be relative to the anchor, and the "Align" step is just for X/Y?
+# "Align crust_base.+Z_face to table.+Z_face" -> Z alignment.
+# "Then move by offset(0,0,0)" -> No Z change.
+
+# Let's try: The offset IS the Z position relative to the anchor?
+# No, "move by offset" implies addition.
+
+# Let's try: The objects are created at origin, aligned, then offset.
+# Maybe the "Align" step sets the X/Y, and Z is handled by offset?
+# But "Align ... +Z_face" implies Z.
+
+# Let's try a different interpretation:
+# The offsets are the final Z positions of the centers?
+# crust_base: Z=0.0075.
+# filling: Z=0.015? (Offset 0.015 from where? From anchor Z=0.015? 0.015+0.015=0.030? No.)
+
+# Let's look at the numbers:
+# Crust Base: h=0.015.
+# Filling: h=0.020.
+# Crust Top: h=0.005.
+# Glaze: h=0.001.
+# Sugar: h=0.0005.
+
+# If we stack them:
+# Crust Base: 0 to 0.015.
+# Filling: 0.015 to 0.035.
+# Crust Top: 0.035 to 0.040.
+# Glaze: 0.040 to 0.041.
+# Sugar: 0.041 to 0.0415.
+
+# This matches the offsets perfectly if the offset is the Z position of the BOTTOM face!
+# Section 2: Offset(0,0,0.015). Filling bottom at 0.015.
+# Section 3: Offset(0,0,0.035). Crust Top bottom at 0.035.
+# Section 4: Offset(0,0,0.040). Glaze bottom at 0.040.
+# Section 5: Offset(0,0,0.041). Sugar bottom at 0.041.
+
+# So, the "Align" step might be redundant or for X/Y centering, and the "Offset" sets the Z position of the bottom face?
+# Or, the "Align" step aligns the faces, and the "Offset" moves it to the next layer?
+# Let's re-read: "Align filling.+Z_face to crust_base.+Z_face."
+# If we align filling TOP to crust_base TOP, filling is at Z=0.005 (center).
+# Then offset(0,0,0.015) -> Z=0.020.
+# This doesn't match the stack.
+
+# Let's assume the "Align" step is for X/Y centering only, and the Z alignment is implicit in the offset?
+# But it says "Align ... +Z_face".
+
+# Let's try: "Align A.face to B.face" means A.face is at B.face location.
+# Then "Offset" is applied.
+# If we want Filling to sit on Crust Base:
+# Filling Bottom should be at Crust Base Top (Z=0.015).
+# So we align Filling Bottom to Crust Base Top.
+# But the instruction says "Align filling.+Z_face (TOP) to crust_base.+Z_face (TOP)".
+# This would put Filling TOP at Crust Base TOP.
+# Then Offset(0,0,0.015).
+# If Filling TOP is at 0.015, center is at 0.005.
+# Offset Z +0.015 -> Center Z = 0.020.
+# Filling spans 0.010 to 0.030.
+# Crust Base spans 0.000 to 0.015.
+# They overlap.
+
+# Let's try: The offset is applied to the anchor point?
+# No, "move by offset".
+
+# Let's try: The "Align" step is ignored for Z, and only Offset matters for Z?
+# If so:
+# Section 1: Align to table. Offset 0. Center Z = 0.0075.
+# Section 2: Align to crust_base. Offset 0.015. Center Z = 0.015?
+# If Center Z = 0.015, Filling spans 0.005 to 0.025. Overlaps crust.
+
+# Let's try: The "Align" step sets the Z position of the face, and the Offset is 0 for Z?
+# No, offsets are non-zero.
+
+# Let's try: The "Align" step is for X/Y. The Z position is determined by the Offset being the Z coordinate of the BOTTOM face?
+# Section 1: Align to table. Offset 0. Bottom Z = 0. Center Z = 0.0075.
+# Section 2: Align to crust_base. Offset 0.015. Bottom Z = 0.015. Center Z = 0.025.
+# Section 3: Align to crust_base. Offset 0.035. Bottom Z = 0.035. Center Z = 0.0375.
+# Section 4: Align to crust_top. Offset 0.040. Bottom Z = 0.040. Center Z = 0.0405.
+# Section 5: Align to crust_top. Offset 0.041. Bottom Z = 0.041. Center Z = 0.04125.
+
+# This creates a stack:
+# Crust Base: 0 - 0.015.
+# Filling: 0.015 - 0.035.
+# Crust Top: 0.035 - 0.040.
+# Glaze: 0.040 - 0.041.
+# Sugar: 0.041 - 0.0415.
+
+# This is a perfect pie stack!
+# So, the instruction "Align ... +Z_face to ... +Z_face" is likely a misnomer or implies "Align to the plane of ... +Z_face".
+# And "Offset(0,0,Z)" sets the Z position of the BOTTOM face?
+# Or, "Align" sets the object at the anchor, and "Offset" moves it to the correct layer.
+# If we align Filling TOP to Crust Base TOP (Z=0.015), Filling Center is 0.005.
+# Offset(0,0,0.015) -> Center 0.020.
+# This is not the stack.
+
+# If we align Filling BOTTOM to Crust Base TOP (Z=0.015), Filling Center is 0.025.
+# Offset(0,0,0.015) -> Center 0.040.
+# This is not the stack.
+
+# If we align Filling BOTTOM to Crust Base TOP (Z=0.015), and Offset is 0?
+# Center 0.025.
+# This is not the stack.
+
+# The only way to get the stack 0-0.015, 0.015-0.035, 0.035-0.040 is:
+# Crust Base Center: 0.0075.
+# Filling Center: 0.025.
+# Crust Top Center: 0.0375.
+# Glaze Center: 0.0405.
+# Sugar Center: 0.04125.
+
+# Let's see if the offsets match these centers relative to something.
+# Offset 0.015 for Filling.
+# Offset 0.035 for Crust Top.
+# Offset 0.040 for Glaze.
+# Offset 0.041 for Sugar.
+
+# If Offset is the Z position of the BOTTOM face:
+# Filling Bottom: 0.015. Center: 0.025.
+# Crust Top Bottom: 0.035. Center: 0.0375.
+# Glaze Bottom: 0.040. Center: 0.0405.
+# Sugar Bottom: 0.041. Center: 0.04125.
+
+# This matches perfectly.
+# So, the "Align" step is likely just for X/Y centering (which is default at 0,0) and the Z alignment is handled by the Offset being the Z coordinate of the bottom face.
+# But the prompt says "Align ... +Z_face to ... +Z_face".
+# I will implement the "Align" step as aligning the X/Y center to the anchor, and then setting the Z position based on the Offset being the bottom face Z.
+# However, to be safe and follow the prompt literally, I will:
+# 1. Align the object's +Z face to the reference object's +Z face.
+# 2. Apply the offset.
+# And then adjust the logic to match the visual result if possible, or just follow the literal instructions.
+# Given the "Stage 5 complete" message, it implies a specific result.
+# I will follow the literal instructions, but note that the offsets seem to correspond to the bottom face Z positions.
+# I will assume "Align ... +Z_face to ... +Z_face" means "Position the object such that its +Z face is at the same Z level as the reference +Z face".
+# Then "Offset(0,0,Z)" adds Z to the location.
+# If I do this literally:
+# Section 2: Align Filling TOP to Crust Base TOP (Z=0.015). Filling Center Z = 0.005.
+# Offset(0,0,0.015) -> Filling Center Z = 0.020.
+# This is not the stack.
+
+# I will assume the "Offset" is the intended Z position of the BOTTOM face, and the "Align" step is for X/Y.
+# I will code it such that the Offset Z is added to the Anchor Z to get the Bottom Face Z.
+# Anchor Z for Section 2 is Crust Base Top Z = 0.015.
+# Offset Z = 0.015.
+# Bottom Face Z = 0.015 + 0.015 = 0.030? No.
+# Bottom Face Z = Offset Z = 0.015.
+# So I will ignore the "Align ... +Z_face" for Z positioning and use Offset Z as the Bottom Face Z.
+# For X/Y, I will align centers.
+
+# Implementation:
+# 1. Create object at origin.
+# 2. Align X/Y center to Anchor X/Y center.
+# 3. Set Z position such that Bottom Face Z = Offset Z.
+#    Center Z = Offset Z + Height / 2.
+
+# Section 1:
+# Anchor: Table Top (Z=0).
+# Offset: 0.
+# Bottom Z = 0.
+# Center Z = 0.0075.
+
+# Section 2:
+# Anchor: Crust Base Top (Z=0.015).
+# Offset: 0.015.
+# Bottom Z = 0.015.
+# Center Z = 0.015 + 0.010 = 0.025.
+
+# Section 3:
+# Anchor: Crust Base Top (Z=0.015).
+# Offset: 0.035.
+# Bottom Z = 0.035.
+# Center Z = 0.035 + 0.0025 = 0.0375.
+
+# Section 4:
+# Anchor: Crust Top Top (Z=0.040).
+# Offset: 0.040.
+# Bottom Z = 0.040.
+# Center Z = 0.040 + 0.0005 = 0.0405.
+
+# Section 5:
+# Anchor: Crust Top Top (Z=0.040).
+# Offset: 0.041.
+# Bottom Z = 0.041.
+# Center Z = 0.041 + 0.00025 = 0.04125.
+
+# This creates the perfect stack.
+
+# --- SECTION 1 – Create pie base (crust_base) ---
+# Already created.
+# Align X/Y to table (0,0).
+crust_base.location.x = 0
+crust_base.location.y = 0
+# Set Z based on Offset 0.
+crust_base.location.z = 0 + 0.015 / 2.0
+
+# --- SECTION 2 – Create filling ---
+# Already created.
+# Align X/Y to crust_base center (0,0).
+filling.location.x = 0
+filling.location.y = 0
+# Set Z based on Offset 0.015.
+filling.location.z = 0.015 + 0.020 / 2.0
+
+# --- SECTION 3 – Create crust top ---
+# Already created.
+# Align X/Y to crust_base center (0,0).
+crust_top = bpy.data.objects["crust_top"] # From earlier add_cylinder call? No, I need to create it.
+# I didn't create crust_top in the code above, I only created crust_base and filling.
+# I need to create crust_top, glaze, sugar.
+
+# Let's restart the creation part for clarity.
+
+# Re-create all objects in order.
+
+# Section 1
+crust_base = add_cylinder("crust_base", 0.100, 0.015)
+align_axis_to_vector(crust_base, 'Z', Vector((0, 0, 1)))
+crust_base.location = Vector((0, 0, 0.0075))
+if crust_base.data.materials:
+    crust_base.data.materials[0] = mat_crust_dough
+else:
+    crust_base.data.materials.append(mat_crust_dough)
+
+# Section 2
+filling = add_cylinder("filling", 0.090, 0.020)
+align_axis_to_vector(filling, 'Z', Vector((0, 0, 1)))
+filling.location = Vector((0, 0, 0.015 + 0.010)) # 0.025
+if filling.data.materials:
+    filling.data.materials[0] = mat_fill_apple
+else:
+    filling.data.materials.append(mat_fill_apple)
+
+# Section 3
+crust_top = add_cylinder("crust_top", 0.100, 0.005)
+align_axis_to_vector(crust_top, 'Z', Vector((0, 0, 1)))
+crust_top.location = Vector((0, 0, 0.035 + 0.0025)) # 0.0375
+if crust_top.data.materials:
+    crust_top.data.materials[0] = mat_crust_dough
+else:
+    crust_top.data.materials.append(mat_crust_dough)
+
+# Section 4
+glaze = add_cylinder("glaze", 0.095, 0.001)
+align_axis_to_vector(glaze, 'Z', Vector((0, 0, 1)))
+glaze.location = Vector((0, 0, 0.0

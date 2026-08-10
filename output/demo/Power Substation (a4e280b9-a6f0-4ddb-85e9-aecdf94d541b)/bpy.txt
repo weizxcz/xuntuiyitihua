@@ -1,0 +1,280 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cylinder(name, radius, height, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=height, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def average_vectors(vectors):
+    if not vectors:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for v in vectors:
+        avg += v
+    return avg / len(vectors)
+
+def get_world_center(obj):
+    return obj.matrix_world.to_translation()
+
+def get_world_top_center(obj):
+    # Assuming object is axis aligned or we want the local top center in world space
+    # For a cube/cylinder, top center is local (0,0, half_height)
+    h = obj.dimensions[2] / 2
+    local_top = Vector((0, 0, h))
+    return obj.matrix_world @ local_top
+
+def get_world_base_center(obj):
+    h = obj.dimensions[2] / 2
+    local_base = Vector((0, 0, -h))
+    return obj.matrix_world @ local_base
+
+def align_to_face(obj_target, obj_source, face_type="top"):
+    """
+    Aligns obj_source to a specific face of obj_target.
+    face_type: 'top', 'base', 'center'
+    """
+    target_loc = get_world_center(obj_target)
+    
+    if face_type == "top":
+        anchor_loc = get_world_top_center(obj_target)
+    elif face_type == "base":
+        anchor_loc = get_world_base_center(obj_target)
+    else:
+        anchor_loc = target_loc
+
+    # Calculate offset from source center to the desired alignment point
+    source_center = get_world_center(obj_source)
+    
+    # We want source's specific point to match anchor_loc
+    # If aligning base of source to top of target:
+    # source_base_loc = anchor_loc
+    # source_center_loc = anchor_loc + (0,0, half_h)
+    
+    h = obj_source.dimensions[2] / 2
+    
+    if face_type == "top": # Align source top to target top? Or source base to target top?
+        # The prompt says "Align transformer_T1.base to support_grid_A.top_face"
+        # This implies the bottom of T1 touches the top of Support.
+        pass
+
+    # Logic:
+    # 1. Move source so its 'base' is at 'target_top'
+    # 2. Then apply offset
+    
+    # Current source center
+    curr_center = source_center
+    
+    # Desired source center if base is at anchor_loc
+    # Base is at -Z local. So center is Base + (0,0,h)
+    desired_center = anchor_loc + Vector((0, 0, h))
+    
+    # Move source
+    obj_source.location = desired_center
+
+def align_to_point(obj_target, obj_source, point_type="center"):
+    """
+    Aligns obj_source center to a specific point of obj_target.
+    """
+    target_loc = get_world_center(obj_target)
+    
+    if point_type == "top_center":
+        anchor_loc = get_world_top_center(obj_target)
+    elif point_type == "base_center":
+        anchor_loc = get_world_base_center(obj_target)
+    else:
+        anchor_loc = target_loc
+        
+    # Move source center to anchor_loc
+    obj_source.location = anchor_loc
+
+def apply_offset(obj, offset_vec):
+    obj.location += offset_vec
+
+def orient_z_to_z(obj):
+    obj.rotation_euler = (0, 0, 0)
+
+def orient_z_to_x(obj):
+    obj.rotation_euler = (0, math.radians(90), 0)
+
+def orient_z_to_y(obj):
+    obj.rotation_euler = (math.radians(-90), 0, 0)
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_concrete_light = make_material("concrete_light", (0.85, 0.85, 0.85))
+    mat_copper_busbar = make_material("copper_busbar", (0.95, 0.65, 0.25))
+    mat_glass_insulator = make_material("glass_insulator", (0.15, 0.15, 0.15))
+    mat_metal_steel = make_material("metal_steel", (0.6, 0.6, 0.65))
+    mat_oil_transformer = make_material("oil_transformer", (0.1, 0.1, 0.1))
+    mat_wire_copper = make_material("wire_copper", (0.9, 0.6, 0.2))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 ---
+    # Create site_pad
+    site_pad = add_cube("site_pad", (20, 15, 0.3), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(site_pad)
+    # Anchor to world origin (already at 0,0,0)
+    # Offset (0,0,0)
+    apply_offset(site_pad, (0, 0, 0))
+
+    # --- SECTION 2 ---
+    # support_grid_A
+    support_grid_A = add_cube("support_grid_A", (1, 1, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(support_grid_A)
+    # Anchor to world origin
+    apply_offset(support_grid_A, (-5, 0, 0))
+
+    # support_grid_B
+    support_grid_B = add_cube("support_grid_B", (1, 1, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(support_grid_B)
+    # Anchor to world origin
+    apply_offset(support_grid_B, (5, 0, 0))
+
+    # fence_perimeter
+    fence_perimeter = add_cube("fence_perimeter", (10, 10, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(fence_perimeter)
+    # Anchor to world origin
+    apply_offset(fence_perimeter, (0, 0, 0))
+
+    # --- SECTION 3 ---
+    # transformer_T1
+    transformer_T1 = add_cube("transformer_T1", (2, 2, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(transformer_T1)
+    # Align base to support_grid_A.top_face
+    align_to_face(transformer_T1, support_grid_A, face_type="top") # Note: align_to_face moves obj_source
+    # Offset (0,0,0.5)
+    apply_offset(transformer_T1, (0, 0, 0.5))
+
+    # transformer_T2
+    transformer_T2 = add_cube("transformer_T2", (2, 2, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(transformer_T2)
+    # Align base to support_grid_A.top_face
+    align_to_face(transformer_T2, support_grid_A, face_type="top")
+    # Offset (2,0,0.5)
+    apply_offset(transformer_T2, (2, 0, 0.5))
+
+    # circuit_breaker_CB1
+    circuit_breaker_CB1 = add_cube("circuit_breaker_CB1", (1, 1, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(circuit_breaker_CB1)
+    # Align base to support_grid_B.top_face
+    align_to_face(circuit_breaker_CB1, support_grid_B, face_type="top")
+    # Offset (0,0,0.8)
+    apply_offset(circuit_breaker_CB1, (0, 0, 0.8))
+
+    # circuit_breaker_CB2
+    circuit_breaker_CB2 = add_cube("circuit_breaker_CB2", (1, 1, 1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(circuit_breaker_CB2)
+    # Align base to support_grid_B.top_face
+    align_to_face(circuit_breaker_CB2, support_grid_B, face_type="top")
+    # Offset (1.5,0,0.8)
+    apply_offset(circuit_breaker_CB2, (1.5, 0, 0.8))
+
+    # --- SECTION 4 ---
+    # busbar_main_H
+    busbar_main_H = add_cube("busbar_main_H", (5, 0.1, 0.1), (0, 0, 0), (0, 0, 0))
+    orient_z_to_x(busbar_main_H)
+    # Align center to Avg(transformer_T1.top_center, transformer_T2.top_center)
+    avg_top = average_vectors([get_world_top_center(transformer_T1), get_world_top_center(transformer_T2)])
+    align_to_point(busbar_main_H, None, point_type="center") # Helper needs target, but here we calculate manually
+    busbar_main_H.location = avg_top
+    # Offset (0,0,1.5)
+    apply_offset(busbar_main_H, (0, 0, 1.5))
+
+    # insulator_set_T1
+    insulator_set_T1 = add_cylinder("insulator_set_T1", 0.1, 0.5, (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(insulator_set_T1)
+    # Align base to transformer_T1.top_face
+    align_to_face(insulator_set_T1, transformer_T1, face_type="top")
+    # Offset (0,0,0.2)
+    apply_offset(insulator_set_T1, (0, 0, 0.2))
+
+    # insulator_set_T2
+    insulator_set_T2 = add_cylinder("insulator_set_T2", 0.1, 0.5, (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(insulator_set_T2)
+    # Align base to transformer_T2.top_face
+    align_to_face(insulator_set_T2, transformer_T2, face_type="top")
+    # Offset (0,0,0.2)
+    apply_offset(insulator_set_T2, (0, 0, 0.2))
+
+    # insulator_set_CB1
+    insulator_set_CB1 = add_cylinder("insulator_set_CB1", 0.1, 0.5, (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(insulator_set_CB1)
+    # Align base to circuit_breaker_CB1.top_face
+    align_to_face(insulator_set_CB1, circuit_breaker_CB1, face_type="top")
+    # Offset (0,0,0.3)
+    apply_offset(insulator_set_CB1, (0, 0, 0.3))
+
+    # --- SECTION 5 ---
+    # line_in_A
+    line_in_A = add_cylinder("line_in_A", 0.05, 2, (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(line_in_A)
+    # Align end to insulator_set_T1.top_center
+    # Cylinder default: center is at 0,0,0. Top is +Z.
+    # "End" usually implies the top if aligned with Z.
+    # We want the top of line_in_A to be at the top center of insulator_set_T1.
+    target_top_T1 = get_world_top_center(insulator_set_T1)
+    # line_in_A local top is (0,0,1) since height is 2.
+    # So we need to move line_in_A such that its local top maps to target_top_T1.
+    # line_in_A.location + (0,0,1) = target_top_T1
+    # line_in_A.location = target_top_T1 - (0,0,1)
+    line_in_A.location = target_top_T1 - Vector((0, 0, 1))
+    # Offset (0,0,0.5)
+    apply_offset(line_in_A, (0, 0, 0.5))
+
+    # line_in_B
+    line_in_B = add_cylinder("line_in_B", 0.05, 2, (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(line_in_B)
+    # Align end to insulator_set_T2.top_center
+    target_top_T2 = get_world_top_center(insulator_set_T2)
+    line_in_B.location = target_top_T2 - Vector((0, 0, 1))
+    # Offset (0,0,0.5)
+    apply_offset(line_in_B, (0, 0, 0.5))
+
+    # line_out_A
+    line_out_A = add_cylinder("line_out_A", 0.05, 2, (0, 0, 0), (0, 0, 0))
+    orient_z_to_z(line_out_A)
+    # Align start to insulator_set_CB1.top_center
+    # "Start" of a cylinder aligned with Z is usually the bottom (-Z).
+    # We want the bottom of line_out_A to be at the top center of insulator_set_CB1.
+    target_top_CB1 = get_world_top_center(insulator_set_CB1)
+    # line_out_A local bottom is (0,0,-1).
+    # line_out_A.location + (0,0,-1) = target_top_CB1
+    # line_out_A.location = target_top_CB1 - (0,0,-1) = target_top_CB1 + (0,0,1)
+    line_out_A.location = target_top_CB1 + Vector((0, 0, 1))
+    # Offset (0,0,0.5)
+    apply_offset(line_out_A, (0, 0, 0.5))
+
+if __name__ == "__main__":
+    main()

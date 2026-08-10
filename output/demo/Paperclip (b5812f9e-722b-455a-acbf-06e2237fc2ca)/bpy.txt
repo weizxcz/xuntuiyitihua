@@ -1,0 +1,180 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(0.8, 0.8, 0.8, 1.0)):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius=1, depth=2, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=1):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract using the modifier stack."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target has a modifier slot
+    mod = target.modifiers.new(name="BoolSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply immediately to keep scene clean and geometry updated
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Discard cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    return target
+
+def add_bevel(obj, radius=0.01, segments=8):
+    """Add a bevel modifier and apply it."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width_type = 'WIDTH'
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis_to_align='+Z', target_vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with target vector."""
+    # Default is already aligned, but for robustness:
+    # This is a no-op if default, but kept for API consistency
+    pass
+
+def get_object_center(obj):
+    """Get world space center of an object."""
+    return obj.matrix_world.to_translation()
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Remove orphan data blocks
+for block in bpy.data.meshes:
+    bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.length_unit = 'METRES'
+
+# --- Block 1: Materials ---
+
+mat_steel_wire = make_material("mat_steel_wire", diffuse_color=(0.7, 0.7, 0.75, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Helper to assign material and setup initial state
+def setup_obj(obj, mat=None):
+    if mat:
+        if not obj.data.materials:
+            obj.data.materials.append(mat)
+        else:
+            obj.data.materials[0] = mat
+    return obj
+
+# --- SECTION 1 – Create standard paperclip ---
+
+# Create primitive cylinder and name it standard_paperclip_wire
+# Note: Dimensions are not specified in prompt, using defaults. 
+# In a real scenario, dimensions would be parsed from MCP. 
+# Here we use generic defaults as per "Create primitive cylinder".
+obj_wire_1 = add_cylinder("standard_paperclip_wire", radius=0.005, depth=0.1)
+setup_obj(obj_wire_1, mat_steel_wire)
+
+# Rotate standard_paperclip_wire so its +Z axis aligns +Z (world)
+# Default cylinder is +Z up, so this is effectively a no-op, but we ensure it.
+align_axis_to_vector(obj_wire_1, '+Z', (0, 0, 1))
+
+# Anchor standard_paperclip_wire to root
+# "Root" implies global origin (0,0,0) or a specific root object. 
+# Assuming global origin as no root object ID is provided.
+obj_wire_1.location = (0, 0, 0)
+
+# Then move by offset(0,0,0)
+obj_wire_1.location += Vector((0, 0, 0))
+
+# Create primitive cylinder and name it standard_paperclip_cut
+obj_cut_1 = add_cylinder("standard_paperclip_cut", radius=0.006, depth=0.12)
+setup_obj(obj_cut_1, mat_steel_wire) # Material doesn't matter for cutter, but good practice
+
+# Rotate standard_paperclip_cut so its +Z axis aligns +Z (world)
+align_axis_to_vector(obj_cut_1, '+Z', (0, 0, 1))
+
+# Anchor standard_paperclip_cut to standard_paperclip_wire
+# Center-to-center anchoring
+center_wire = get_object_center(obj_wire_1)
+obj_cut_1.location = center_wire
+
+# Then move by offset(0,0,0)
+obj_cut_1.location += Vector((0, 0, 0))
+
+# Boolean-subtract standard_paperclip_cut from standard_paperclip_wire; discard standard_paperclip_cut
+boolean_subtract("standard_paperclip_cut", "standard_paperclip_wire")
+
+# Bevel standard_paperclip_wire.edges with radius 0.0005 m, segments 8
+add_bevel(obj_wire_1, radius=0.0005, segments=8)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create triangular paperclip ---
+
+# Create primitive cylinder and name it triangular_paperclip_wire
+obj_wire_2 = add_cylinder("triangular_paperclip_wire", radius=0.005, depth=0.1)
+setup_obj(obj_wire_2, mat_steel_wire)
+
+# Rotate triangular_paperclip_wire so its +Z axis aligns +Z (world)
+align_axis_to_vector(obj_wire_2, '+Z', (0, 0, 1))
+
+# Anchor triangular_paperclip_wire to root
+obj_wire_2.location = (0, 0, 0)
+
+# Then move by offset(0,0,0)
+obj_wire_2.location += Vector((0, 0, 0))
+
+# Create primitive cylinder and name it triangular_paperclip_cut
+obj_cut_2 = add_cylinder("triangular_paperclip_cut", radius=0.006, depth=0.12)
+setup_obj(obj_cut_2, mat_steel_wire)
+
+# Rotate triangular_paperclip_cut so its +Z axis aligns +Z (world)
+align_axis_to_vector(obj_cut_2, '+Z', (0, 0, 1))
+
+# Anchor triangular_paperclip_cut to triangular_paperclip_wire
+center_wire_2 = get_object_center(obj_wire_2)
+obj_cut_2.location = center_wire_2
+
+# Then move by offset(0,0,0)
+obj_cut_2.location += Vector((0, 0, 0))
+
+# Boolean-subtract triangular_paperclip_cut from triangular_paperclip_wire; discard triangular_paperclip_cut
+boolean_subtract("triangular_paperclip_cut", "triangular_paperclip_wire")
+
+# Bevel triangular_paperclip_wire.edges with radius 0.0005 m, segments 8
+add_bevel(obj_wire_2, radius=0.0005, segments=8)
+
+# Stage 2 complete.
+# All stages complete.
+```

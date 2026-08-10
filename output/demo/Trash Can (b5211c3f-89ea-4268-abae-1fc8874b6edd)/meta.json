@@ -1,0 +1,42 @@
+{
+  "id": "b5211c3f-89ea-4268-abae-1fc8874b6edd",
+  "name": "Trash Can",
+  "instruction": "Design a trash can. \n\nIt should have a simple, cylindrical shape.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a trash can.",
+        "The trash can has a simple cylindrical shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height and diameter of the trash can should be proportionate to maintain stability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical shape allows for uniform distribution of volume.",
+        "The base of the trash can should be wider than the top for stability."
+      ],
+      "Object distance and contact": [
+        "The trash can should have a flat base to ensure it stands upright."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design follows the instruction to create a simple cylindrical trash can.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

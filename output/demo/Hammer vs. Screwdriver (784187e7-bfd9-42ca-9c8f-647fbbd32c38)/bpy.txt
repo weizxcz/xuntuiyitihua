@@ -1,0 +1,362 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def clear_scene():
+    """Delete all existing objects in the scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, but delete usually handles it
+    # Ensure we are left with just the default camera/light if needed, 
+    # but for pure script generation, empty scene is fine.
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(type, name, size, location, rotation_euler):
+    """Add a primitive mesh object with specific transforms."""
+    if type == 'CUBE':
+        bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    elif type == 'CYLINDER':
+        # Blender cylinder radius is half diameter, height is length
+        radius = size[0] / 2.0
+        height = size[1]
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location)
+    elif type == 'CONE':
+        radius = size[0] / 2.0
+        height = size[1]
+        bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=height, location=location)
+    elif type == 'UVSPHERE':
+        radius = size[0] / 2.0
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Rotate object so its local axis aligns with target world vector."""
+    # Current direction of the axis
+    current_dir = obj.matrix_world.to_3x3() @ axis_to_align
+    
+    # Calculate rotation matrix
+    # We want to rotate current_dir to target_vector
+    # Use mathutils rotation
+    rot_mat = current_dir.to_track_quat('Z', 'Y').inverted() @ target_vector.to_track_quat('Z', 'Y')
+    
+    # Apply rotation
+    obj.rotation_euler = rot_mat.to_euler()
+    obj.update_tag()
+
+def get_face_center(obj, face_type='center'):
+    """
+    Get the world location of a specific face or center of an object.
+    face_type: 'center', 'left_face', 'right_face', 'top_face', 'bottom_face', 'front_face', 'back_face'
+    Assumes object is axis-aligned in its local space before rotation.
+    """
+    # Get local bounds
+    min_x, min_y, min_z = obj.dimensions[0]/-2, obj.dimensions[1]/-2, obj.dimensions[2]/-2
+    max_x, max_y, max_z = obj.dimensions[0]/2, obj.dimensions[1]/2, obj.dimensions[2]/2
+    
+    # Local center
+    local_center = Vector((0, 0, 0))
+    
+    # Define local face centers based on standard Blender orientation (Z up, Y forward/back)
+    # Note: The prompt implies specific face names. We need to map them to local axes.
+    # Usually: X=Right/Left, Y=Front/Back, Z=Top/Bottom.
+    # Let's assume standard:
+    # right_face: max X
+    # left_face: min X
+    # top_face: max Z
+    # bottom_face: min Z
+    # front_face: max Y
+    # back_face: min Y
+    
+    if face_type == 'center':
+        local_pt = Vector((0, 0, 0))
+    elif face_type == 'right_face':
+        local_pt = Vector((max_x, 0, 0))
+    elif face_type == 'left_face':
+        local_pt = Vector((min_x, 0, 0))
+    elif face_type == 'top_face':
+        local_pt = Vector((0, 0, max_z))
+    elif face_type == 'bottom_face':
+        local_pt = Vector((0, 0, min_z))
+    elif face_type == 'front_face':
+        local_pt = Vector((0, max_y, 0))
+    elif face_type == 'back_face':
+        local_pt = Vector((0, min_y, 0))
+    else:
+        local_pt = Vector((0, 0, 0))
+        
+    # Transform to world
+    world_pt = obj.matrix_world @ local_pt
+    return world_pt
+
+def boolean_union(target, cutter):
+    """Perform boolean union of cutter into target."""
+    # Add Boolean Modifier to target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_subtract(target, cutter):
+    """Perform boolean subtraction of cutter from target."""
+    # Add Boolean Modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def align_faces(obj_a, face_a, obj_b, face_b):
+    """
+    Align obj_a's face_a to obj_b's face_b.
+    Assumes both objects have same orientation.
+    Moves obj_a so face_a center coincides with face_b center.
+    """
+    center_b = get_face_center(obj_b, face_b)
+    center_a = get_face_center(obj_a, face_a)
+    
+    # Calculate offset needed
+    offset = center_b - center_a
+    
+    # Apply offset to obj_a
+    obj_a.location += offset
+
+def anchor_to_object(obj, anchor_obj, anchor_face='center'):
+    """
+    Anchor obj to anchor_obj's face.
+    If anchor_face is 'center', aligns centers.
+    If specific face, aligns obj's center to that face's center? 
+    Prompt says: "Anchor flat_face_cylinder to root.left_face".
+    Usually means: Place obj such that its reference point (often center or specific face) matches the anchor.
+    Given "Align ... to ... left_face" is used later for face-to-face, 
+    "Anchor" might imply center-to-face or center-to-center.
+    Let's assume "Anchor to root.left_face" means: Move obj so its CENTER is at root's left_face center.
+    """
+    anchor_loc = get_face_center(anchor_obj, anchor_face)
+    obj.location = anchor_loc
+
+def offset_object(obj, offset_vector):
+    """Move object by offset_vector in world space."""
+    obj.location += offset_vector
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    clear_scene()
+    set_units()
+
+    # Block 1: Materials
+    mat_hammer_head = make_material("mat_hammer_head", (0.4, 0.4, 0.4, 1.0))
+    mat_hammer_handle = make_material("mat_hammer_handle", (0.6, 0.3, 0.1, 1.0))
+    mat_screwdriver_handle = make_material("mat_screwdriver_handle", (0.9, 0.2, 0.1, 1.0))
+    mat_screwdriver_shaft = make_material("mat_screwdriver_shaft", (0.5, 0.5, 0.5, 1.0))
+
+    # Create a dummy "root" object to serve as the anchor reference point (0,0,0)
+    # Since no root object exists, we create an empty or just use (0,0,0) logic.
+    # The prompt references "root.left_face". A cube of size 0 at origin is a good proxy for "root" if it has faces.
+    # Let's create a tiny invisible cube at 0,0,0 to act as 'root' for anchoring purposes.
+    root = add_primitive('CUBE', 'root', (0.001, 0.001, 0.001), (0, 0, 0), (0, 0, 0))
+    root.hide_viewport = True
+    root.hide_render = True
+
+    # --- SECTION 1 – Create Hammer Head Body ---
+    # Create primitive cylinder with diameter 0.050 m and length 0.020 m
+    # Name: flat_face_cylinder
+    # Rotate so +Z aligns +X (world)
+    # Anchor to root.left_face
+    # Offset (0.15, 0, 0)
+    
+    ffc = add_primitive('CYLINDER', 'flat_face_cylinder', (0.050, 0.020), (0, 0, 0), (0, 0, 0))
+    ffc.data.materials.append(mat_hammer_head)
+    
+    # Rotate +Z to +X
+    # Z is (0,0,1), X is (1,0,0). Rotation is -90 deg around Y.
+    align_axis_to_vector(ffc, Vector((0, 0, 1)), Vector((1, 0, 0)))
+    
+    # Anchor to root.left_face
+    # root.left_face is at min X of root. Root is tiny cube at 0,0,0. Left face is approx 0.
+    anchor_to_object(ffc, root, 'left_face')
+    
+    # Offset
+    offset_object(ffc, Vector((0.15, 0, 0)))
+
+    # --- SECTION 2 – Create Hammer Claw ---
+    # Create primitive cuboid 0.050x0.020x0.040
+    # Name: claw_prism
+    # Rotate +Z to +X
+    # Align claw_prism.right_face to flat_face_cylinder.left_face
+    # Offset (0.010, 0, 0)
+    # Boolean union into flat_face_cylinder, discard claw_prism, rename to hammer_head
+    
+    cp = add_primitive('CUBE', 'claw_prism', (0.050, 0.020, 0.040), (0, 0, 0), (0, 0, 0))
+    cp.data.materials.append(mat_hammer_head)
+    
+    # Rotate +Z to +X
+    align_axis_to_vector(cp, Vector((0, 0, 1)), Vector((1, 0, 0)))
+    
+    # Align right_face of cp to left_face of ffc
+    align_faces(cp, 'right_face', ffc, 'left_face')
+    
+    # Offset
+    offset_object(cp, Vector((0.010, 0, 0)))
+    
+    # Boolean Union
+    boolean_union(ffc, cp)
+    
+    # Rename
+    ffc.name = 'hammer_head'
+    hammer_head = ffc
+
+    # --- SECTION 3 – Create Hammer Handle ---
+    # Create primitive cylinder diameter 0.020, length 0.300
+    # Name: hammer_handle
+    # Rotate +Z to +X
+    # Align hammer_handle.right_face to hammer_head.center
+    # Offset (0.035, 0, 0)
+    # Boolean union into hammer_head, discard hammer_handle, rename to hammer_assembly
+    
+    hh = add_primitive('CYLINDER', 'hammer_handle', (0.020, 0.300), (0, 0, 0), (0, 0, 0))
+    hh.data.materials.append(mat_hammer_handle)
+    
+    # Rotate +Z to +X
+    align_axis_to_vector(hh, Vector((0, 0, 1)), Vector((1, 0, 0)))
+    
+    # Align right_face of hh to center of hammer_head
+    align_faces(hh, 'right_face', hammer_head, 'center')
+    
+    # Offset
+    offset_object(hh, Vector((0.035, 0, 0)))
+    
+    # Boolean Union
+    boolean_union(hammer_head, hh)
+    
+    # Rename
+    hammer_head.name = 'hammer_assembly'
+    hammer_assembly = hammer_head
+
+    # --- SECTION 4 – Create Screwdriver Shaft ---
+    # Create primitive cylinder diameter 0.005, length 0.150
+    # Name: screwdriver_shaft
+    # Rotate +Z to +X
+    # Anchor to root.left_face
+    # Offset (-0.15, 0, 0)
+    
+    sds = add_primitive('CYLINDER', 'screwdriver_shaft', (0.005, 0.150), (0, 0, 0), (0, 0, 0))
+    sds.data.materials.append(mat_screwdriver_shaft)
+    
+    # Rotate +Z to +X
+    align_axis_to_vector(sds, Vector((0, 0, 1)), Vector((1, 0, 0)))
+    
+    # Anchor to root.left_face
+    anchor_to_object(sds, root, 'left_face')
+    
+    # Offset
+    offset_object(sds, Vector((-0.15, 0, 0)))
+
+    # --- SECTION 5 – Create Screwdriver Head ---
+    # Create primitive cuboid 0.005x0.005x0.020
+    # Name: screwdriver_head
+    # Rotate +Z to +X
+    # Align screwdriver_head.left_face to screwdriver_shaft.right_face
+    # Offset (0.0025, 0, 0)
+    # Boolean union into screwdriver_shaft, discard screwdriver_head, rename to screwdriver_head_part
+    
+    sdh = add_primitive('CUBE', 'screwdriver_head', (0.005, 0.005, 0.020), (0, 0, 0), (0, 0, 0))
+    sdh.data.materials.append(mat_screwdriver_shaft)
+    
+    # Rotate +Z to +X
+    align_axis_to_vector(sdh, Vector((0, 0, 1)), Vector((1, 0, 0)))
+    
+    # Align left_face of sdh to right_face of sds
+    align_faces(sdh, 'left_face', sds, 'right_face')
+    
+    # Offset
+    offset_object(sdh, Vector((0.0025, 0, 0)))
+    
+    # Boolean Union
+    boolean_union(sds, sdh)
+    
+    # Rename
+    sds.name = 'screwdriver_head_part'
+    screwdriver_head_part = sds
+
+    # --- SECTION 6 – Create Screwdriver Handle ---
+    # Create primitive cuboid 0.025x0.025x0.080
+    # Name: screwdriver_handle
+    # Rotate +Z to +X
+    # Align screwdriver_handle.left_face to screwdriver_shaft.left_face
+    # Offset (-0.0025, 0, 0)
+    # Boolean union into screwdriver_shaft, discard screwdriver_handle, rename to screwdriver_assembly
+    
+    sdhndl = add_primitive('CUBE', 'screwdriver_handle', (0.025, 0.025, 0.080), (0, 0, 0), (0, 0, 0))
+    sdhndl.data.materials.append(mat_screwdriver_handle)
+    
+    # Rotate +Z to +X
+    align_axis_to_vector(sdhndl, Vector((0, 0, 1)), Vector((1, 0, 0)))
+    
+    # Align left_face of sdhndl to left_face of screwdriver_head_part (which is sds)
+    align_faces(sdhndl, 'left_face', screwdriver_head_part, 'left_face')
+    
+    # Offset
+    offset_object(sdhndl, Vector((-0.0025, 0, 0)))
+    
+    # Boolean Union
+    boolean_union(screwdriver_head_part, sdhndl)
+    
+    # Rename
+    screwdriver_head_part.name = 'screwdriver_assembly'
+    screwdriver_assembly = screwdriver_head_part
+
+    # --- SECTION 7 – Validation ---
+    # Validate positions relative to root (0,0,0)
+    # hammer_assembly should be at (0.15, 0, 0)
+    # screwdriver_assembly should be at (-0.15, 0, 0)
+    
+    # Note: Due to the nature of boolean operations and alignment, 
+    # the final center might shift slightly depending on geometry, 
+    # but the anchor/offset logic ensures the placement intent.
+    
+    print(f"Hammer Assembly Location: {hammer_assembly.location}")
+    print(f"Screwdriver Assembly Location: {screwdriver_assembly.location}")
+    
+    # Hide root
+    root.hide_viewport = True
+    root.hide_render = True
+
+if __name__ == "__main__":
+    main()
+```

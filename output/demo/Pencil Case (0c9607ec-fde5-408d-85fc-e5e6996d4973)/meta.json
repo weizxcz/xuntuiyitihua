@@ -1,0 +1,43 @@
+{
+  "id": "0c9607ec-fde5-408d-85fc-e5e6996d4973",
+  "name": "Pencil Case",
+  "instruction": "Create a pencil case with a zippered closure and a rectangular shape.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pencil case.",
+        "The pencil case has a rectangular shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The closure is proportionate to the case."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The zippered closure is positioned along one of the longer edges of the rectangular pencil case.",
+        "The rectangular shape allows for efficient storage of writing instruments."
+      ],
+      "Object distance and contact": [
+        "The zipper should be flush with the edge of the pencil case.",
+        "The interior space of the pencil case should be accessible through the zippered closure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The pencil case is accurately represented with a rectangular shape.",
+        "The zippered closure is correctly included."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

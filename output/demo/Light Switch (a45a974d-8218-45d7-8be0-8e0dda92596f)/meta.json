@@ -1,0 +1,45 @@
+{
+  "id": "a45a974d-8218-45d7-8be0-8e0dda92596f",
+  "name": "Light Switch",
+  "instruction": "Create a 3D model of a light switch. The switch should be rectangular with a toggle in the center.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a light switch.",
+        "The switch is rectangular in shape.",
+        "The toggle is positioned in the center of the switch."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The toggle is proportionate to the size of the switch."
+      ],
+      "Texture and surface detail": [
+        "The surface of the switch should be smooth.",
+        "The toggle may have a slightly raised texture for ease of use."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The toggle is correctly centered within the rectangular switch.",
+        "The switch has a flat profile suitable for wall mounting."
+      ],
+      "Object distance and contact": [
+        "The toggle does not overlap with the edges of the switch.",
+        "There is no gap between the toggle and the switch surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The model adheres to the instruction of being rectangular with a central toggle."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

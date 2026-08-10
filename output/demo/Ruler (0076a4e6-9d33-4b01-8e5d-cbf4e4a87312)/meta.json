@@ -1,0 +1,46 @@
+{
+  "id": "0076a4e6-9d33-4b01-8e5d-cbf4e4a87312",
+  "name": "Ruler",
+  "instruction": "Create a 3D model of a ruler. The ruler should be 12 inches long and 1 inch wide, with clear markings for each inch and centimeter.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a ruler.",
+        "The ruler is rectangular in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The total length of the ruler is 12 inches.",
+        "The total width of the ruler is 1 inch."
+      ],
+      "Proportion": [
+        "The length is significantly greater than the width, maintaining a proper aspect ratio for a ruler."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The ruler is displayed in a flat orientation.",
+        "The markings are evenly spaced along the length of the ruler.",
+        "The ruler maintains a consistent thickness throughout."
+      ],
+      "Object distance and contact": [
+        "There is no overlap with other objects in the scene.",
+        "The markings are positioned accurately along the length of the ruler."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The length and width match the provided dimensions.",
+        "The markings for inches and centimeters are included as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

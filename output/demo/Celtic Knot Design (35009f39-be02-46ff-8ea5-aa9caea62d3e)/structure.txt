@@ -1,0 +1,50 @@
+-- MATERIAL LIBRARY --
+celt_knot_mat | diffuse_color=(0.15,0.15,0.15,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of four quadrants forming a symmetrical Celtic knot | assembly_order=[quad_0, quad_1, quad_2, quad_3]; create_method=union |
+
+Layer 1 – Primary Structure (Quadrants)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| quad_0 | Top-Right Quadrant of the knot | Align(XY) quad_0.center to root.center; offset(0.15, 0.15, 0); assembly_order=[q0_core, q0_weave]; create_method=union |
+| quad_1 | Top-Left Quadrant of the knot | Align(XY) quad_1.center to root.center; offset(-0.15, 0.15, 0); assembly_order=[q1_core, q1_weave]; create_method=union |
+| quad_2 | Bottom-Left Quadrant of the knot | Align(XY) quad_2.center to root.center; offset(-0.15, -0.15, 0); assembly_order=[q2_core, q2_weave]; create_method=union |
+| quad_3 | Bottom-Right Quadrant of the knot | Align(XY) quad_3.center to root.center; offset(0.15, -0.15, 0); assembly_order=[q3_core, q3_weave]; create_method=union |
+
+Layer 2 – Quadrant Components (Core & Weave)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| q0_core | Central square block for Top-Right | cylinder Ø0.08×0.02; Align(XY) q0_core.center to quad_0.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q1_core | Central square block for Top-Left | cylinder Ø0.08×0.02; Align(XY) q1_core.center to quad_1.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q2_core | Central square block for Bottom-Left | cylinder Ø0.08×0.02; Align(XY) q2_core.center to quad_2.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q3_core | Central square block for Bottom-Right | cylinder Ø0.08×0.02; Align(XY) q3_core.center to quad_3.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q0_weave | Interlocking loops for Top-Right | composite of 4 torus segments; Align(XY) q0_weave.center to quad_0.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=union |
+| q1_weave | Interlocking loops for Top-Left | composite of 4 torus segments; Align(XY) q1_weave.center to quad_1.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=union |
+| q2_weave | Interlocking loops for Bottom-Left | composite of 4 torus segments; Align(XY) q2_weave.center to quad_2.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=union |
+| q3_weave | Interlocking loops for Bottom-Right | composite of 4 torus segments; Align(XY) q3_weave.center to quad_3.center; offset(0,0,0); orientation=axis:+Z; mat=celt_knot_mat; create_method=union |
+
+Layer 3 – Weave Details (Torus Segments)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| q0_w1 | Loop 1 Top-Right | torus R=0.04 r=0.005; Align(XY) q0_w1.center to q0_core.center; offset(0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q0_w2 | Loop 2 Top-Right | torus R=0.04 r=0.005; Align(XY) q0_w2.center to q0_core.center; offset(0, 0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q0_w3 | Loop 3 Top-Right | torus R=0.04 r=0.005; Align(XY) q0_w3.center to q0_core.center; offset(-0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q0_w4 | Loop 4 Top-Right | torus R=0.04 r=0.005; Align(XY) q0_w4.center to q0_core.center; offset(0, -0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q1_w1 | Loop 1 Top-Left | torus R=0.04 r=0.005; Align(XY) q1_w1.center to q1_core.center; offset(0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q1_w2 | Loop 2 Top-Left | torus R=0.04 r=0.005; Align(XY) q1_w2.center to q1_core.center; offset(0, 0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q1_w3 | Loop 3 Top-Left | torus R=0.04 r=0.005; Align(XY) q1_w3.center to q1_core.center; offset(-0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q1_w4 | Loop 4 Top-Left | torus R=0.04 r=0.005; Align(XY) q1_w4.center to q1_core.center; offset(0, -0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q2_w1 | Loop 1 Bottom-Left | torus R=0.04 r=0.005; Align(XY) q2_w1.center to q2_core.center; offset(0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q2_w2 | Loop 2 Bottom-Left | torus R=0.04 r=0.005; Align(XY) q2_w2.center to q2_core.center; offset(0, 0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q2_w3 | Loop 3 Bottom-Left | torus R=0.04 r=0.005; Align(XY) q2_w3.center to q2_core.center; offset(-0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q2_w4 | Loop 4 Bottom-Left | torus R=0.04 r=0.005; Align(XY) q2_w4.center to q2_core.center; offset(0, -0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q3_w1 | Loop 1 Bottom-Right | torus R=0.04 r=0.005; Align(XY) q3_w1.center to q3_core.center; offset(0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q3_w2 | Loop 2 Bottom-Right | torus R=0.04 r=0.005; Align(XY) q3_w2.center to q3_core.center; offset(0, 0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q3_w3 | Loop 3 Bottom-Right | torus R=0.04 r=0.005; Align(XY) q3_w3.center to q3_core.center; offset(-0.04, 0, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+| q3_w4 | Loop 4 Bottom-Right | torus R=0.04 r=0.005; Align(XY) q3_w4.center to q3_core.center; offset(0, -0.04, 0); orientation=axis:+Z; mat=celt_knot_mat; create_method=primitive |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,44 @@
+{
+  "id": "c65bc730-34b3-40a3-b211-dd38ab31fcc5",
+  "name": "Dog Toy",
+  "instruction": "Please design a dog toy that is engaging and safe for chewing. The toy should be shaped like a bone and feature multiple textures to keep the dog interested. It should be about 8 inches long and have rounded edges to avoid any sharp points. Consider including a small compartment where treats can be hidden to add an extra element of fun.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is shaped like a bone.",
+        "The bone has rounded edges to avoid sharp points."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The length of the toy is approximately 8 inches."
+      ],
+      "Proportion": [
+        "The proportions of the bone shape are balanced and realistic.",
+        "The rounded edges maintain a consistent proportion with the overall length."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The toy maintains a consistent bone shape in three dimensions.",
+        "The rounded edges are smoothly integrated into the overall structure."
+      ],
+      "Object distance and contact": [
+        "The textures are evenly distributed across the surface of the toy.",
+        "The small compartment for treats is easily accessible without compromising the toy's integrity."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes, including shape, size, and safety features, are accurately represented.",
+        "The inclusion of multiple textures and a treat compartment aligns with the instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

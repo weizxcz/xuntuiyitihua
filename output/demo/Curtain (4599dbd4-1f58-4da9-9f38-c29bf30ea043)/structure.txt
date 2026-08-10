@@ -1,0 +1,36 @@
+-- MATERIAL LIBRARY --
+fabric_curtain | diffuse_color=(0.85,0.85,0.90,1.0)
+metal_rod | diffuse_color=(0.80,0.80,0.80,1.0)
+wood_bracket | diffuse_color=(0.50,0.30,0.10,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| curtain_assembly | Composite of rod_assembly + curtain_panel + brackets | assembly_order=[rod_assembly, curtain_panel, brackets] |
+
+Layer 1 – Primary Structure (Rod & Brackets)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rod_assembly | Composite of rod_main + rod_ends | assembly_order=[rod_main, rod_ends] |
+| rod_main | Cylinder Ø0.025×1.8 m (standard window width) | pos=(0, 0, 2.4); orientation=axis:+X; mat=metal_rod; create_method=primitive |
+| rod_ends | Composite of finial_L + finial_R | assembly_order=[finial_L, finial_R] |
+| finial_L | Sphere Ø0.05 m | Align(XYZ) finial_L.center to rod_main.left_face.center; offset(-0.0125,0,0); orientation=axis:+X; mat=metal_rod; create_method=primitive |
+| finial_R | Sphere Ø0.05 m | Align(XYZ) finial_R.center to rod_main.right_face.center; offset(0.0125,0,0); orientation=axis:+X; mat=metal_rod; create_method=primitive |
+| brackets | Composite of bracket_L + bracket_R | assembly_order=[bracket_L, bracket_R] |
+| bracket_L | Composite of wall_plate_L + support_arm_L | assembly_order=[wall_plate_L, support_arm_L] |
+| wall_plate_L | Cube 0.05×0.02×0.01 m | pos=(-0.9, -0.05, 2.35); orientation=axis:+Y; mat=wood_bracket; create_method=primitive |
+| support_arm_L | Cylinder Ø0.01×0.05 m | Align(XYZ) support_arm_L.bottom_face to wall_plate_L.top_face.center; offset(0,0,0.01); orientation=axis:+Y; mat=wood_bracket; create_method=primitive |
+| bracket_R | Composite of wall_plate_R + support_arm_R | assembly_order=[wall_plate_R, support_arm_R] |
+| wall_plate_R | Cube 0.05×0.02×0.01 m | pos=(0.9, -0.05, 2.35); orientation=axis:+Y; mat=wood_bracket; create_method=primitive |
+| support_arm_R | Cylinder Ø0.01×0.05 m | Align(XYZ) support_arm_R.bottom_face to wall_plate_R.top_face.center; offset(0,0,0.01); orientation=axis:+Y; mat=wood_bracket; create_method=primitive |
+
+Layer 2 – Curtain Panel
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| curtain_panel | Composite of fabric_main + header_hem | assembly_order=[header_hem, fabric_main] |
+| header_hem | Cube 1.8×0.1×0.02 m (top hem for rod insertion) | Align(XYZ) header_hem.bottom_face to fabric_main.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=fabric_curtain; create_method=primitive |
+| fabric_main | Cube 1.8×2.0×0.01 m (main drape) | pos=(0, -0.005, 1.4); orientation=axis:+Z; mat=fabric_curtain; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

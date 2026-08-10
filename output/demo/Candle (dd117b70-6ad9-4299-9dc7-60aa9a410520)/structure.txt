@@ -1,0 +1,18 @@
+-- MATERIAL LIBRARY --
+candle_wax | diffuse_color=(255,255,220,1)
+wick_cotton | diffuse_color=(20,20,20,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| candle_base | Composite of wax_body + wick | (1) execute 'wax_body': Align(XY) candle_base.center to world.origin; orientation=axis:+Z; mat=candle_wax; create_method=primitive; (2) execute 'wick': Align(XY) wick.center to candle_base.center; Align(Z) wick.bottom_face to candle_base.top_face; offset(0,0,0.002); orientation=axis:+Z; mat=wick_cotton; create_method=primitive |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wax_body | Cylinder Ø0.080×0.150 m | Align(XY) wax_body.center to world.origin; orientation=axis:+Z; mat=candle_wax; create_method=primitive |
+| wick | Cylinder Ø0.002×0.020 m | Align(XY) wick.center to wax_body.center; Align(Z) wick.bottom_face to wax_body.top_face; offset(0,0,0.002); orientation=axis:+Z; mat=wick_cotton; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

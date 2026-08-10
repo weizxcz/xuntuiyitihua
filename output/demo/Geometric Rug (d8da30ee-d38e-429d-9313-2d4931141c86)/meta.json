@@ -1,0 +1,42 @@
+{
+  "id": "d8da30ee-d38e-429d-9313-2d4931141c86",
+  "name": "Geometric Rug",
+  "instruction": "Compare two geometric rug designs. The first design should have hexagonal patterns, while the second design should feature triangles. Use a monochromatic color scheme for both.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The first rug design features hexagonal patterns.",
+        "The second rug design features triangular patterns."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The patterns are proportionate to the rug."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hexagons in the first design are oriented correctly.",
+        "The triangles in the second design are aligned properly."
+      ],
+      "Object distance and contact": [
+        "The two rugs do not overlap each other"
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both rug designs are accurately represented as per the instruction.",
+        "The comparison between hexagonal and triangular patterns is clear."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

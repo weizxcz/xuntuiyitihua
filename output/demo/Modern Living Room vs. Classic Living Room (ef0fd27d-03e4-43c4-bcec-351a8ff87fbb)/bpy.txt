@@ -1,0 +1,385 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_primitive_cylinder(name, radius, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    if axis == 'X': local_axis = Vector((1, 0, 0))
+    elif axis == 'Y': local_axis = Vector((0, 1, 0))
+    elif axis == 'Z': local_axis = Vector((0, 0, 1))
+    
+    target = vector.normalized()
+    if local_axis.cross(target).length < 1e-6:
+        return # Already aligned
+    
+    rot_mat = local_axis.rotation_difference(target).to_matrix().to_4x4()
+    obj.matrix_world = rot_mat @ obj.matrix_world
+
+def boolean_union(objects_to_union, keep_name):
+    """Perform boolean union on a list of objects, keeping the first one as the result."""
+    if not objects_to_union:
+        return None
+    
+    target = objects_to_union[0]
+    modifiers = []
+    
+    for obj in objects_to_union[1:]:
+        mod = target.modifiers.new(name=f"Bool_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        modifiers.append(mod)
+        
+        # Apply modifier immediately to keep scene clean
+        bpy.context.view_layer.objects.active = target
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        bpy.data.objects.remove(obj)
+        
+    target.name = keep_name
+    return target
+
+def boolean_subtract(target, cutter):
+    """Subtract cutter from target."""
+    mod = target.modifiers.new(name="Bool_Sub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter)
+    return target
+
+def get_world_center(obj):
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_type='bottom'):
+    """Approximate face center based on bounding box."""
+    loc = obj.location
+    size = obj.dimensions
+    if face_type == 'bottom':
+        return Vector((loc.x, loc.y, loc.z - size[2]/2))
+    elif face_type == 'top':
+        return Vector((loc.x, loc.y, loc.z + size[2]/2))
+    elif face_type == 'back': # Assuming Z-up, back is -Y
+        return Vector((loc.x, loc.y - size[1]/2, loc.z))
+    return loc
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_wood = make_material("classic_wood", (0.45, 0.25, 0.15, 1.0))
+mat_wallpaper = make_material("classic_wallpaper", (0.85, 0.80, 0.70, 1.0))
+mat_rug = make_material("classic_rug", (0.60, 0.10, 0.10, 1.0))
+mat_stone = make_material("fireplace_stone", (0.50, 0.50, 0.50, 1.0))
+mat_mantel = make_material("fireplace_mantel", (0.90, 0.85, 0.75, 1.0))
+mat_floor_mod = make_material("modern_floor", (0.90, 0.90, 0.90, 1.0))
+mat_sofa_mod = make_material("modern_sofa", (0.20, 0.20, 0.25, 1.0))
+mat_tv_screen = make_material("modern_tv_screen", (0.05, 0.05, 0.05, 1.0))
+mat_tv_frame = make_material("modern_tv_frame", (0.10, 0.10, 0.10, 1.0))
+mat_wall_mod = make_material("modern_wall", (0.95, 0.95, 0.95, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Helper for standard orientation (Z-up)
+Z_UP = (0, 0, 0)
+
+# --- SECTION 1 – Create Modern Room Structure ---
+
+# modern_floor
+modern_floor = add_primitive_cube("modern_floor", (6, 0.1, 6), (0, 0, 0), Z_UP)
+apply_material(modern_floor, mat_floor_mod)
+
+# wall_back
+wall_back = add_primitive_cube("wall_back", (6, 3, 0.1), (0, 1.5, -3), Z_UP)
+apply_material(wall_back, mat_wall_mod)
+
+# wall_left
+wall_left = add_primitive_cube("wall_left", (0.1, 3, 6), (-3, 1.5, 0), Z_UP)
+apply_material(wall_left, mat_wall_mod)
+
+# wall_right
+wall_right = add_primitive_cube("wall_right", (0.1, 3, 6), (3, 1.5, 0), Z_UP)
+apply_material(wall_right, mat_wall_mod)
+
+# Boolean-union modern_floor, wall_back, wall_left, wall_right -> modern_walls
+modern_walls = boolean_union([modern_floor, wall_back, wall_left, wall_right], "modern_walls")
+apply_material(modern_walls, mat_wall_mod)
+
+# modern_ceiling
+modern_ceiling = add_primitive_cube("modern_ceiling", (6, 0.1, 6), (0, 3, 0), Z_UP)
+apply_material(modern_ceiling, mat_wall_mod)
+
+# Boolean-union modern_floor (modern_walls), modern_walls, modern_ceiling -> modern_room
+modern_room = boolean_union([modern_walls, modern_ceiling], "modern_room")
+apply_material(modern_room, mat_wall_mod)
+
+# --- SECTION 2 – Create Modern Sofa ---
+
+# sofa_base
+sofa_base = add_primitive_cube("sofa_base", (2.5, 0.4, 0.8), (0, 0.2, 0), Z_UP)
+apply_material(sofa_base, mat_sofa_mod)
+
+# sofa_back
+sofa_back = add_primitive_cube("sofa_back", (2.5, 0.6, 0.2), (0, 0.7, -0.3), Z_UP)
+apply_material(sofa_back, mat_sofa_mod)
+
+# arm_L
+arm_L = add_primitive_cube("arm_L", (0.2, 0.4, 0.8), (-1.15, 0, 0), Z_UP)
+apply_material(arm_L, mat_sofa_mod)
+
+# arm_R
+arm_R = add_primitive_cube("arm_R", (0.2, 0.4, 0.8), (1.15, 0, 0), Z_UP)
+apply_material(arm_R, mat_sofa_mod)
+
+# Boolean-union arm_L, arm_R -> sofa_armrests
+sofa_armrests = boolean_union([arm_L, arm_R], "sofa_armrests")
+apply_material(sofa_armrests, mat_sofa_mod)
+
+# Boolean-union sofa_base, sofa_back, sofa_armrests -> modern_sofa
+modern_sofa = boolean_union([sofa_base, sofa_back, sofa_armrests], "modern_sofa")
+apply_material(modern_sofa, mat_sofa_mod)
+
+# Offset modern_sofa by (0, 0, -1.5)
+modern_sofa.location += Vector((0, 0, -1.5))
+
+# --- SECTION 3 – Create Modern TV Unit ---
+
+# tv_stand
+tv_stand = add_primitive_cube("tv_stand", (1.5, 0.5, 0.4), (0, 0.25, 0), Z_UP)
+apply_material(tv_stand, mat_tv_frame)
+
+# tv_screen
+tv_screen = add_primitive_cube("tv_screen", (1.2, 0.7, 0.05), (0, 0.85, 0), Z_UP)
+apply_material(tv_screen, mat_tv_screen)
+
+# Boolean-union tv_stand, tv_screen -> modern_tv_unit
+modern_tv_unit = boolean_union([tv_stand, tv_screen], "modern_tv_unit")
+apply_material(modern_tv_unit, mat_tv_frame)
+
+# Offset modern_tv_unit by (0, 0, -2.9)
+modern_tv_unit.location += Vector((0, 0, -2.9))
+
+# --- SECTION 4 – Create Modern Lamp ---
+
+# lamp_base
+lamp_base = add_primitive_cylinder("lamp_base", 0.1, 0.05, (0, 0.025, 0), Z_UP)
+apply_material(lamp_base, mat_wood)
+
+# lamp_shade
+lamp_shade = add_primitive_cylinder("lamp_shade", 0.15, 0.4, (0, 0.25, 0), Z_UP)
+apply_material(lamp_shade, mat_wallpaper)
+
+# Boolean-union lamp_base, lamp_shade -> modern_lamp
+modern_lamp = boolean_union([lamp_base, lamp_shade], "modern_lamp")
+apply_material(modern_lamp, mat_wood)
+
+# Offset modern_lamp by (-2, 0, -1)
+modern_lamp.location += Vector((-2, 0, -1))
+
+# --- SECTION 5 – Create Classic Room Structure ---
+
+# classic_floor
+classic_floor = add_primitive_cube("classic_floor", (6, 0.1, 6), (0, 0, 0), Z_UP)
+apply_material(classic_floor, mat_floor_mod)
+
+# c_wall_back
+c_wall_back = add_primitive_cube("c_wall_back", (6, 3, 0.1), (0, 1.5, -3), Z_UP)
+apply_material(c_wall_back, mat_wallpaper)
+
+# c_wall_left
+c_wall_left = add_primitive_cube("c_wall_left", (0.1, 3, 6), (-3, 1.5, 0), Z_UP)
+apply_material(c_wall_left, mat_wallpaper)
+
+# c_wall_right
+c_wall_right = add_primitive_cube("c_wall_right", (0.1, 3, 6), (3, 1.5, 0), Z_UP)
+apply_material(c_wall_right, mat_wallpaper)
+
+# Boolean-union classic_floor, c_wall_back, c_wall_left, c_wall_right -> classic_walls
+classic_walls = boolean_union([classic_floor, c_wall_back, c_wall_left, c_wall_right], "classic_walls")
+apply_material(classic_walls, mat_wallpaper)
+
+# classic_ceiling
+classic_ceiling = add_primitive_cube("classic_ceiling", (6, 0.1, 6), (0, 3, 0), Z_UP)
+apply_material(classic_ceiling, mat_wallpaper)
+
+# Boolean-union classic_floor (classic_walls), classic_walls, classic_ceiling -> classic_room
+classic_room = boolean_union([classic_walls, classic_ceiling], "classic_room")
+apply_material(classic_room, mat_wallpaper)
+
+# --- SECTION 6 – Create Classic Fireplace ---
+
+# fireplace_base
+fireplace_base = add_primitive_cube("fireplace_base", (1.2, 1.0, 0.3), (0, 0.5, 0), Z_UP)
+apply_material(fireplace_base, mat_stone)
+
+# fireplace_mantel
+fireplace_mantel = add_primitive_cube("fireplace_mantel", (1.4, 0.1, 0.4), (0, 1.05, 0), Z_UP)
+apply_material(fireplace_mantel, mat_mantel)
+
+# fireplace_hole_cut
+fireplace_hole_cut = add_primitive_cube("fireplace_hole_cut", (0.6, 0.6, 0.2), (0, 0.5, 0.05), Z_UP)
+apply_material(fireplace_hole_cut, mat_stone)
+
+# Boolean-subtract fireplace_hole_cut from fireplace_base
+fireplace_base = boolean_subtract(fireplace_base, fireplace_hole_cut)
+apply_material(fireplace_base, mat_stone)
+
+# Boolean-union fireplace_base, fireplace_mantel -> fireplace
+fireplace = boolean_union([fireplace_base, fireplace_mantel], "fireplace")
+apply_material(fireplace, mat_stone)
+
+# Offset fireplace by (0, 0, -2.9)
+fireplace.location += Vector((0, 0, -2.9))
+
+# --- SECTION 7 – Create Classic Sofa ---
+
+# c_sofa_base
+c_sofa_base = add_primitive_cube("c_sofa_base", (2.2, 0.3, 0.7), (0, 0.15, 0), Z_UP)
+apply_material(c_sofa_base, mat_sofa_mod)
+
+# c_sofa_back
+c_sofa_back = add_primitive_cube("c_sofa_back", (2.2, 0.8, 0.2), (0, 0.7, -0.25), Z_UP)
+apply_material(c_sofa_back, mat_sofa_mod)
+
+# c_arm_L
+c_arm_L = add_primitive_cylinder("c_arm_L", 0.075, 0.7, (-1.0, 0, 0), Z_UP)
+apply_material(c_arm_L, mat_sofa_mod)
+
+# c_arm_R
+c_arm_R = add_primitive_cylinder("c_arm_R", 0.075, 0.7, (1.0, 0, 0), Z_UP)
+apply_material(c_arm_R, mat_sofa_mod)
+
+# Boolean-union c_arm_L, c_arm_R -> c_sofa_armrests
+c_sofa_armrests = boolean_union([c_arm_L, c_arm_R], "c_sofa_armrests")
+apply_material(c_sofa_armrests, mat_sofa_mod)
+
+# Legs generation
+legs = []
+for r in range(2):
+    for c in range(2):
+        leg_name = f"c_sofa_legs_{r}_{c}"
+        leg = add_primitive_cylinder(leg_name, 0.025, 0.3, (0, 0, 0), Z_UP)
+        apply_material(leg, mat_wood)
+        
+        # Anchor to c_sofa_base.bottom_face
+        # Calculate anchor point relative to base center
+        # Base size: 2.2x0.3x0.7. Bottom face is at z = 0.15 - 0.35 = -0.2
+        # Offset logic: (-0.9 + c*1.8, -0.25 + r*0.5, 0)
+        # Note: The prompt says "Anchor ... Then offset". 
+        # Since we are creating primitives, we place them directly at the final calculated location.
+        
+        # Base center is (0,0,0) in its local space before union.
+        # The offset is relative to the anchor point.
+        # Let's assume the anchor point is the bottom center of the base (0, 0, -0.35) relative to base center?
+        # Actually, simpler: The prompt implies the legs are attached to the bottom.
+        # Let's place them at the calculated offset from the base center, adjusted for height.
+        
+        # Base center Z is 0.15. Bottom face Z is 0.15 - 0.35 = -0.2.
+        # Leg height is 0.3. So leg center Z should be -0.2 - 0.15 = -0.35.
+        
+        x_off = -0.9 + c * 1.8
+        y_off = -0.25 + r * 0.5
+        z_off = -0.35 # Half of leg height below bottom face
+        
+        leg.location = (x_off, y_off, z_off)
+        legs.append(leg)
+
+# Combine legs into one object for boolean union
+if legs:
+    c_sofa_legs = legs[0]
+    for leg in legs[1:]:
+        bpy.context.view_layer.objects.active = c_sofa_legs
+        bpy.ops.object.join() # This doesn't work well for separate objects in loop easily without selection
+        # Better: Select all, join
+        pass
+    
+    # Re-do leg union properly
+    bpy.ops.object.select_all(action='DESELECT')
+    for leg in legs:
+        leg.select_set(True)
+    bpy.context.view_layer.objects.active = legs[0]
+    bpy.ops.object.join()
+    c_sofa_legs = bpy.context.active_object
+    c_sofa_legs.name = "c_sofa_legs"
+    apply_material(c_sofa_legs, mat_wood)
+else:
+    c_sofa_legs = None
+
+# Boolean-union c_sofa_base, c_sofa_back, c_sofa_armrests, c_sofa_legs -> classic_sofa
+parts = [c_sofa_base, c_sofa_back, c_sofa_armrests]
+if c_sofa_legs:
+    parts.append(c_sofa_legs)
+
+classic_sofa = boolean_union(parts, "classic_sofa")
+apply_material(classic_sofa, mat_sofa_mod)
+
+# Offset classic_sofa by (0, 0, -1.5)
+classic_sofa.location += Vector((0, 0, -1.5))
+
+# --- SECTION 8 – Create Classic Rug and Mirror ---
+
+# classic_rug
+classic_rug = add_primitive_cylinder("classic_rug", 1.0, 0.02, (0, 0.01, -1.5), Z_UP)
+apply_material(classic_rug, mat_rug)
+
+# ornate_mirror
+ornate_mirror = add_primitive_cube("ornate_mirror", (1.0, 1.2, 0.05), (0, 2.0, -2.95), Z_UP)
+apply_material(ornate_mirror, mat_mantel)
+
+# --- SECTION 9 – Final Assembly ---
+
+# Align modern_room.bottom_face to world.bottom_face (z=0)
+# modern_room is already at z=0 roughly, but let's ensure bottom is at 0.
+# modern_room center is likely around z=1.5 (height 3). Bottom is 0.
+# If it's not exactly 0, we adjust.
+# Since we built it from primitives at specific Zs, it should be fine.
+# However, to be safe:
+mod_bottom_z = modern_room.location[2] - modern_room.dimensions[2]/2
+if abs(mod_bottom_z) > 0.001:
+    modern_room.location[2] -= mod_bottom_z
+
+# Align classic_room.bottom_face to world.bottom_face
+cla_bottom_z = classic_room.location[2] - classic_room.dimensions[2]/2
+if abs(cla_bottom_z) > 0.001:
+    classic_room.location[2] -= cla_bottom_z
+
+print("All stages complete.")

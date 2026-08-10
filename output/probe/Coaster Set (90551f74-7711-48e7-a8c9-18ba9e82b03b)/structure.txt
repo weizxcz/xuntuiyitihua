@@ -1,0 +1,36 @@
+-- MATERIAL LIBRARY --
+mat_cork | diffuse_color=(0.6,0.4,0.2,1.0)
+mat_cork_pad | diffuse_color=(0.8,0.6,0.4,1.0)
+mat_wood | diffuse_color=(0.4,0.2,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_set | Composite of 4 coasters arranged in a square pattern | assembly_order=[coaster_0_0, coaster_0_1, coaster_1_0, coaster_1_1]; mat=-; create_method=union |
+
+Layer 1 – Primary Structure (Coasters)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_0_0 | Single coaster unit | assembly_order=[coaster_0_0_base, coaster_0_0_pad]; mat=-; create_method=union |
+| coaster_0_1 | Single coaster unit | assembly_order=[coaster_0_1_base, coaster_0_1_pad]; mat=-; create_method=union |
+| coaster_1_0 | Single coaster unit | assembly_order=[coaster_1_0_base, coaster_1_0_pad]; mat=-; create_method=union |
+| coaster_1_1 | Single coaster unit | assembly_order=[coaster_1_1_base, coaster_1_1_pad]; mat=-; create_method=union |
+
+Layer 2 – Component Decomposition (Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_0_0_base | Circular wooden base | cylinder Ø0.090×0.005 m; Align(XY) coaster_0_0_base.center to coaster_set.center; offset(-0.050, -0.050, 0); orientation=axis:+Z; mat=wood; create_method=primitive |
+| coaster_0_1_base | Circular wooden base | cylinder Ø0.090×0.005 m; Align(XY) coaster_0_1_base.center to coaster_set.center; offset(0.050, -0.050, 0); orientation=axis:+Z; mat=wood; create_method=primitive |
+| coaster_1_0_base | Circular wooden base | cylinder Ø0.090×0.005 m; Align(XY) coaster_1_0_base.center to coaster_set.center; offset(-0.050, 0.050, 0); orientation=axis:+Z; mat=wood; create_method=primitive |
+| coaster_1_1_base | Circular wooden base | cylinder Ø0.090×0.005 m; Align(XY) coaster_1_1_base.center to coaster_set.center; offset(0.050, 0.050, 0); orientation=axis:+Z; mat=wood; create_method=primitive |
+
+Layer 3 – Component Decomposition (Pad)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_0_0_pad | Cork pad on top of base | cylinder Ø0.080×0.002 m; Align(XY) coaster_0_0_pad.center to coaster_0_0_base.center; Align(Z) coaster_0_0_pad.bottom_face to coaster_0_0_base.top_face; offset(0,0,0.0025); orientation=axis:+Z; mat=cork; create_method=primitive |
+| coaster_0_1_pad | Cork pad on top of base | cylinder Ø0.080×0.002 m; Align(XY) coaster_0_1_pad.center to coaster_0_1_base.center; Align(Z) coaster_0_1_pad.bottom_face to coaster_0_1_base.top_face; offset(0,0,0.0025); orientation=axis:+Z; mat=cork; create_method=primitive |
+| coaster_1_0_pad | Cork pad on top of base | cylinder Ø0.080×0.002 m; Align(XY) coaster_1_0_pad.center to coaster_1_0_base.center; Align(Z) coaster_1_0_pad.bottom_face to coaster_1_0_base.top_face; offset(0,0,0.0025); orientation=axis:+Z; mat=cork; create_method=primitive |
+| coaster_1_1_pad | Cork pad on top of base | cylinder Ø0.080×0.002 m; Align(XY) coaster_1_1_pad.center to coaster_1_1_base.center; Align(Z) coaster_1_1_pad.bottom_face to coaster_1_1_base.top_face; offset(0,0,0.0025); orientation=axis:+Z; mat=cork; create_method=primitive |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,47 @@
+{
+  "id": "86f15ffe-14ba-4e37-9ae0-c96b8d25a0cd",
+  "name": "Paper Towel Holder",
+  "instruction": "Design a paper towel holder with a central rod and a base.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a paper towel holder.",
+        "The holder features a central vertical rod.",
+        "The base is circular or rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the rod is proportionate to the size of the base.",
+        "The base is wide enough to support the height of the rod."
+      ],
+      "Texture and surface detail": [
+        "The rod has a smooth finish for easy paper towel dispensing.",
+        "The base may have a non-slip texture."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The central rod is positioned vertically and centered on the base.",
+        "The base provides a stable foundation for the rod.",
+        "The design allows for easy access to the paper towels."
+      ],
+      "Object distance and contact": [
+        "The rod does not overlap with the base.",
+        "There is a secure connection between the rod and the base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (central rod and base) are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

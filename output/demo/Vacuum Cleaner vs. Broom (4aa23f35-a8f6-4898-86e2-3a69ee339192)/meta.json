@@ -1,0 +1,49 @@
+{
+  "id": "4aa23f35-a8f6-4898-86e2-3a69ee339192",
+  "name": "Vacuum Cleaner vs. Broom",
+  "instruction": "Design a 3D model comparing a vacuum cleaner and a broom. The vacuum cleaner should have a cylindrical body with a hose and a nozzle, while the broom should have a long handle with bristles at the end. Position them side by side.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The vacuum cleaner has a cylindrical body.",
+        "The vacuum cleaner includes a hose.",
+        "The vacuum cleaner has a nozzle.",
+        "The broom has a long handle.",
+        "The broom features bristles at the end."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The vacuum cleaner's hose should be appropriately sized relative to the body.",
+        "The broom's bristles should be proportionate to the length of the handle."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The vacuum cleaner is positioned next to the broom.",
+        "The hose of the vacuum cleaner should not obstruct the broom.",
+        "The bristles of the broom are clearly visible at the end of the handle."
+      ],
+      "Object distance and contact": [
+        "There is a clear space between the vacuum cleaner and the broom.",
+        "The vacuum cleaner and broom are not overlapping.",
+        "The nozzle of the vacuum cleaner is directed away from the broom."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the vacuum cleaner and broom are accurately represented.",
+        "The positioning of the objects side by side is correctly executed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,50 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_main; diffuse_color = (0.85,0.15,0.15,1.0).
+Define material fur_pom; diffuse_color = (0.95,0.95,0.90,1.0).
+Define material fur_trim; diffuse_color = (0.95,0.95,0.90,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create hat body  ---
+Create primitive cylinder with radius 0.110 m and height 0.200 m and name it hat_body.
+Rotate hat_body so its +Z axis aligns +Z (world).
+Anchor hat_body to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create ear flaps  ---
+Create primitive cylinder with radius 0.040 m and height 0.150 m and name it flap_L.
+Rotate flap_L so its +Z axis aligns +Y (world).
+Align flap_L.center to hat_body.side_at(180°).
+Then move by offset(0,0,-0.050).
+
+Create primitive cylinder with radius 0.040 m and height 0.150 m and name it flap_R.
+Rotate flap_R so its +Z axis aligns +Y (world).
+Align flap_R.center to hat_body.side_at(0°).
+Then move by offset(0,0,-0.050).
+Stage 2 complete.
+
+---  SECTION 3 – Create pom-pom and trim ring  ---
+Create primitive sphere with radius 0.050 m and name it pom_pom.
+Rotate pom_pom so its +Z axis aligns +Z (world).
+Align pom_pom.bottom to hat_body.top.
+Then move by offset(0,0,0.020).
+
+Create primitive torus with major radius 0.110 m and minor radius 0.015 m and name it trim_ring.
+Rotate trim_ring so its +Z axis aligns +Z (world).
+Align trim_ring.center to hat_body.top.
+Then move by offset(0,0,0.001).
+Stage 3 complete.
+
+All stages complete.

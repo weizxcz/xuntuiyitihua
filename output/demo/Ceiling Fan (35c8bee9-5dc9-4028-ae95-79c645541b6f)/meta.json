@@ -1,0 +1,47 @@
+{
+  "id": "35c8bee9-5dc9-4028-ae95-79c645541b6f",
+  "name": "Ceiling Fan",
+  "instruction": "Could you create a ceiling fan for me? It should have three blades and be mounted on a short rod. The blades should be evenly spaced and slightly curved.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The blades are evenly spaced around the central hub.",
+        "The blades are slightly curved."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blades are proportionate to the size of the fan's hub.",
+        "The length of the rod is proportionate to the overall height of the fan."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blades are mounted evenly around the central hub.",
+        "The fan is properly oriented for ceiling installation.",
+        "The rod supports the fan at an appropriate height."
+      ],
+      "Object distance and contact": [
+        "The blades do not overlap with each other.",
+        "There is adequate space between the blades and the ceiling.",
+        "The rod connects securely to the fan hub."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the requirement of three blades.",
+        "The blades are mounted on a short rod as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

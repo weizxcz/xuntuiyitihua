@@ -1,0 +1,16 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| fruit_bowl | Composite of bowl_body + base_foot; A shallow ceramic bowl with a small central foot | assembly_order=[bowl_body], [base_foot] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bowl_body | Cylinder Ø0.250×0.080 m (outer diameter 0.250 m, height 0.080 m) | pos=(0,0,0); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| base_foot | Cylinder Ø0.060×0.010 m (diameter 0.060 m, height 0.010 m) | Align(XY) base_foot.top_face to bowl_body.bottom_face; offset(0,0,-0.005); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,64 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_neoprene; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material plastic_housing; diffuse_color = (0.9,0.9,0.9,1.0).
+Define material plastic_translucent; diffuse_color = (0.8,0.8,0.8,0.3).
+Define material screen_lcd; diffuse_color = (0.1,0.2,0.1,1.0).
+Define material velcro_hook; diffuse_color = (0.2,0.2,0.2,1.0).
+Define material velcro_loop; diffuse_color = (0.3,0.3,0.3,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create cuff base  ---
+Create primitive cylinder with diameter 0.15 m and length 0.35 m and name it cuff_base.
+Rotate cuff_base so its +Z axis aligns +Z (world).
+Move cuff_base to (0,0,0).
+
+---  SECTION 2 – Create inflation bladder  ---
+Create primitive cylinder with diameter 0.12 m and length 0.30 m and name it inflation_bladder.
+Rotate inflation_bladder so its +Z axis aligns +Z (world).
+Align inflation_bladder.center to cuff_base.center using axes XY.
+Then move by offset(0,0,0.005).
+
+---  SECTION 3 – Create velcro strap  ---
+Create primitive box with size 0.04×0.02×0.002 m and name it velcro_strap.
+Rotate velcro_strap so its +Z axis aligns +Z (world).
+Align velcro_strap.center to cuff_base.right_face using axes XY.
+Then move by offset(0.02,0,0.01).
+
+---  SECTION 4 – Create velcro loop  ---
+Create primitive box with size 0.04×0.02×0.002 m and name it velcro_loop.
+Rotate velcro_loop so its +Z axis aligns +Z (world).
+Align velcro_loop.center to velcro_strap.left_face using axes XY.
+Then move by offset(-0.001,0,0).
+
+---  SECTION 5 – Create display housing  ---
+Create primitive box with size 0.06×0.04×0.01 m and name it display_housing.
+Rotate display_housing so its +Z axis aligns +Z (world).
+Align display_housing.center to cuff_base.top_face using axes XY.
+Then move by offset(0,0.02,0.015).
+
+---  SECTION 6 – Create LCD screen  ---
+Create primitive box with size 0.05×0.03×0.001 m and name it lcd_screen.
+Rotate lcd_screen so its +Z axis aligns +Z (world).
+Align lcd_screen.center to display_housing.front_face using axes XY.
+Then move by offset(0,0,0.005).
+
+---  SECTION 7 – Create display protector  ---
+Create primitive box with size 0.052×0.032×0.001 m and name it display_protector.
+Rotate display_protector so its +Z axis aligns +Z (world).
+Align display_protector.center to lcd_screen.center using axes XY.
+Then move by offset(0,0,0.001).
+
+Stage 1 complete.
+All stages complete.

@@ -1,0 +1,281 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix, Euler
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color=(0.8, 0.8, 0.8, 1.0)):
+    """Create a new Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_text_object(text, name, location=(0,0,0), size=0.1):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.size = size
+    obj.data.body = text
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius=0.5, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (cylinder with depth 0)."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top=0.0, radius_bottom=0.5, depth=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone primitive."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius=0.5, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a world vector."""
+    vec = mathutils.Vector(vector).normalized()
+    if axis == 'Z':
+        # Align local Z to world vector
+        current_z = mathutils.Vector((0,0,1))
+        rot_quat = current_z.rotation_difference(vec)
+        obj.rotation_euler = rot_quat.to_euler()
+    elif axis == 'X':
+        current_x = mathutils.Vector((1,0,0))
+        rot_quat = current_x.rotation_difference(vec)
+        obj.rotation_euler = rot_quat.to_euler()
+    elif axis == 'Y':
+        current_y = mathutils.Vector((0,1,0))
+        rot_quat = current_y.rotation_difference(vec)
+        obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to create invisible locator objects for anchoring."""
+    def __init__(self, name, location=(0,0,0)):
+        self.name = name
+        # Create a small cube as a locator
+        bpy.ops.mesh.primitive_cube_add(size=0.001, location=location)
+        self.obj = bpy.context.active_object
+        self.obj.name = name
+        self.obj.hide_viewport = True
+        self.obj.hide_render = True
+
+    def center_world(self):
+        return self.obj.location.copy()
+
+    def face_center_world(self, face_index=0):
+        """Get the center of a specific face in world space."""
+        # This is a simplified approach assuming standard primitives or requiring mesh evaluation
+        # For robustness with primitives, we calculate based on geometry if possible,
+        # or rely on the object's bounding box if mesh data is complex.
+        # Here we assume the caller knows the geometry or we use a simpler bounding box center for now.
+        # A more robust implementation would require mesh data access.
+        # For this script, we will use the object's location as a fallback or specific logic per shape.
+        return self.obj.location.copy()
+
+    def radial_point_world(self, angle=0):
+        """Get a point on the radial edge."""
+        # Placeholder for radial anchoring logic
+        return self.obj.location.copy()
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract operation."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target is active for modifier addition
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Clean up cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    """Perform a boolean union operation."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union, do_unlink=True)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_wood_dark = make_material("mat_wood_dark", diffuse_color=(0.25, 0.15, 0.10, 1.0))
+mat_wood_light = make_material("mat_wood_light", diffuse_color=(0.80, 0.70, 0.50, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create seat panel ---
+# Create primitive cube with size 0.40×0.40×0.04 m and name it seat_panel.
+# Note: Blender cube 'size' is total width. So half_size = 0.2.
+seat_panel = add_cube("seat_panel", size=0.40, location=(0,0,0), rotation=(0,0,0))
+seat_panel.scale = (1, 1, 0.1) # Adjust Z to match 0.04 height (0.4 * 0.1 = 0.04)
+
+# Rotate seat_panel so its +Z axis aligns +Z (world).
+# Default cube Z is already +Z, so no rotation needed.
+align_axis_to_vector(seat_panel, 'Z', (0,0,1))
+
+# Anchor seat_panel to footstool_root.center.
+# Since footstool_root doesn't exist yet, we assume it's the origin or we create a locator for it.
+# The prompt implies anchoring to a conceptual root. We'll place it at origin first.
+# "Anchor seat_panel to footstool_root.center" -> Place at (0,0,0)
+seat_panel.location = (0, 0, 0)
+
+# Then move by offset(0,0,0.02).
+seat_panel.location += Vector((0, 0, 0.02))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create front-left leg ---
+# Create primitive cylinder with diameter 0.04 m and height 0.30 m and name it leg_fl.
+# Radius = 0.02, Depth = 0.30
+leg_fl = add_cylinder("leg_fl", radius=0.02, depth=0.30, location=(0,0,0), rotation=(0,0,0))
+
+# Rotate leg_fl so its +Z axis aligns -Z (world).
+# Cylinder default Z is up. We want it to point down.
+align_axis_to_vector(leg_fl, 'Z', (0,0,-1))
+
+# Anchor leg_fl to seat_panel.bottom_face.
+# seat_panel is at Z=0.02, height 0.04. Bottom face is at Z=0.02 - 0.02 = 0.0.
+# leg_fl height is 0.30. If +Z is -Z world, the "top" of the cylinder (local Z max) is at the anchor point?
+# Let's visualize: Cylinder Z axis points down. Local Z=0 is bottom, Local Z=0.3 is top.
+# If we anchor the "top" of the leg to the "bottom" of the seat:
+# Seat bottom is at Z=0.0.
+# Leg top should be at Z=0.0.
+# Leg bottom should be at Z=-0.3.
+# So leg location should be at Z=0.0.
+
+# Get seat_panel bottom face center
+# Seat panel center is (0,0,0.02). Half height is 0.02.
+# Bottom face center is (0,0,0.0).
+anchor_loc = Vector((0, 0, 0.0))
+leg_fl.location = anchor_loc
+
+# Then move by offset(0.15,-0.15,0).
+# Offsets are in reference local axes. Since leg is rotated, local axes are different.
+# However, usually offsets in these prompts are relative to the object's local space AFTER rotation.
+# Leg local X is world X, Local Y is world -Y, Local Z is world -Z.
+# Offset (0.15, -0.15, 0) in local space:
+# Local X (0.15) -> World X +0.15
+# Local Y (-0.15) -> World -Y * -0.15 = World Y +0.15? No.
+# Let's stick to the prompt's likely intent: Cartesian offsets relative to the anchored position,
+# often interpreted as local axes if the object is rotated.
+# If local Y is -Z world, and local X is X world...
+# Let's assume the offset is applied in the object's LOCAL coordinate system.
+offset = Vector((0.15, -0.15, 0))
+# Transform offset to world space based on current rotation
+world_offset = leg_fl.matrix_world.to_3x3() @ offset
+leg_fl.location += world_offset
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create front-right leg ---
+leg_fr = add_cylinder("leg_fr", radius=0.02, depth=0.30, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(leg_fr, 'Z', (0,0,-1))
+leg_fr.location = anchor_loc
+offset = Vector((-0.15, -0.15, 0))
+world_offset = leg_fr.matrix_world.to_3x3() @ offset
+leg_fr.location += world_offset
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create back-left leg ---
+leg_bl = add_cylinder("leg_bl", radius=0.02, depth=0.30, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(leg_bl, 'Z', (0,0,-1))
+leg_bl.location = anchor_loc
+offset = Vector((0.15, 0.15, 0))
+world_offset = leg_bl.matrix_world.to_3x3() @ offset
+leg_bl.location += world_offset
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Create back-right leg ---
+leg_br = add_cylinder("leg_br", radius=0.02, depth=0.30, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(leg_br, 'Z', (0,0,-1))
+leg_br.location = anchor_loc
+offset = Vector((-0.15, 0.15, 0))
+world_offset = leg_br.matrix_world.to_3x3() @ offset
+leg_br.location += world_offset
+
+# Stage 5 complete.
+
+# All stages complete.
+```

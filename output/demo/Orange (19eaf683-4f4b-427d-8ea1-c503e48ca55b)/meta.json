@@ -1,0 +1,42 @@
+{
+  "id": "19eaf683-4f4b-427d-8ea1-c503e48ca55b",
+  "name": "Orange",
+  "instruction": "Design an orange that is spherical and about 3 inches in diameter. The skin should be a bright orange color.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an orange.",
+        "The orange is spherical in shape."
+      ],
+      "Color representation": [
+        "The skin color of the orange is bright orange."
+      ],
+      "Size": [
+        "The diameter of the orange is approximately 3 inches."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The orange maintains a consistent spherical shape.",
+        "The surface of the orange is evenly rounded."
+      ],
+      "Object distance and contact": [
+        "There are no overlaps or gaps in the spherical shape."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The orange meets the size and color specifications."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

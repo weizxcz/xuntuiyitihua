@@ -1,0 +1,75 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_body; diffuse_color = (0.85, 0.85, 0.85, 1.0).
+Define material mat_mouthpiece; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create body shell  ---
+Create primitive cuboid with size 0.120×0.040×0.020 m and name it body_shell.
+Rotate body_shell so its +Z axis aligns +Z (world).
+Anchor body_shell to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create reed plate  ---
+Create primitive cuboid with size 0.120×0.038×0.002 m and name it reed_plate.
+Rotate reed_plate so its +Z axis aligns +Z (world).
+Align reed_plate.top_face to body_shell.bottom_face.
+Then move by offset(0,0,-0.001).
+Stage 2 complete.
+
+---  SECTION 3 – Create hole cutters  ---
+For i in 1…10:
+  Create primitive cylinder with radius 0.003 m and height 0.020 m and name it hole_i.
+  Rotate hole_i so its +Z axis aligns +Z (world).
+  Align hole_i.center to body_shell.center.
+  Then move by offset(dx,0,0) where dx is:
+    i=1: 0.045
+    i=2: 0.035
+    i=3: 0.025
+    i=4: 0.015
+    i=5: 0.005
+    i=6: -0.005
+    i=7: -0.015
+    i=8: -0.025
+    i=9: -0.035
+    i=10: -0.045
+
+Boolean-subtract hole_1 from body_shell; discard hole_1.
+Boolean-subtract hole_2 from body_shell; discard hole_2.
+Boolean-subtract hole_3 from body_shell; discard hole_3.
+Boolean-subtract hole_4 from body_shell; discard hole_4.
+Boolean-subtract hole_5 from body_shell; discard hole_5.
+Boolean-subtract hole_6 from body_shell; discard hole_6.
+Boolean-subtract hole_7 from body_shell; discard hole_7.
+Boolean-subtract hole_8 from body_shell; discard hole_8.
+Boolean-subtract hole_9 from body_shell; discard hole_9.
+Boolean-subtract hole_10 from body_shell; discard hole_10.
+Stage 3 complete.
+
+---  SECTION 4 – Create mouthpiece base  ---
+Create primitive cuboid with size 0.030×0.040×0.020 m and name it mouthpiece_base.
+Rotate mouthpiece_base so its +Z axis aligns +Z (world).
+Align mouthpiece_base.right_face to body_shell.left_face.
+Then move by offset(-0.015,0,0).
+Stage 4 complete.
+
+---  SECTION 5 – Create mouthpiece grip  ---
+Create primitive cuboid with size 0.010×0.040×0.020 m and name it mouthpiece_grip.
+Rotate mouthpiece_grip so its +Z axis aligns +Z (world).
+Align mouthpiece_grip.right_face to mouthpiece_base.left_face.
+Then move by offset(-0.005,0,0).
+Stage 5 complete.
+
+All stages complete.

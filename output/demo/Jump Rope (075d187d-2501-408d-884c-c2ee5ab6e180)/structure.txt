@@ -1,0 +1,32 @@
+-- MATERIAL LIBRARY --
+mat_black_grip | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_cable | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_handle_body | diffuse_color=(0.2,0.2,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| jump_rope | Composite assembly of two handles and a connecting cable | assembly_order=[handle_group], [cable_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_group | Composite of left and right handle assemblies | assembly_order=[handle_L], [handle_R] |
+| handle_L | Left handle assembly | Composite of grip, shaft, and connector |
+| handle_R | Right handle assembly | Composite of grip, shaft, and connector |
+| cable_group | The main jumping cable | Single long flexible cylinder |
+
+Layer 2 – Component Decomposition
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_L_grip | Ergonomic grip for left handle | cylinder Ø0.035×0.15 m; mat=mat_black_grip; create_method=primitive; Align(XY) handle_L_grip.center to handle_L_body.center; Align(Z) handle_L_grip.top_face to handle_L_body.top_face; offset(0,0,0.075) |
+| handle_L_body | Main shaft of left handle | cylinder Ø0.020×0.10 m; mat=mat_handle_body; create_method=primitive; Align(XY) handle_L_body.center to handle_L_grip.center; Align(Z) handle_L_body.bottom_face to handle_L_grip.bottom_face; offset(0,0,-0.125) |
+| handle_L_connector | Attachment point for cable on left handle | cylinder Ø0.010×0.02 m; mat=mat_handle_body; create_method=primitive; Align(XY) handle_L_connector.center to handle_L_body.center; Align(Z) handle_L_connector.bottom_face to handle_L_body.bottom_face; offset(0,0,-0.06) |
+| handle_R_grip | Ergonomic grip for right handle | cylinder Ø0.035×0.15 m; mat=mat_black_grip; create_method=primitive; Align(XY) handle_R_grip.center to handle_R_body.center; Align(Z) handle_R_grip.top_face to handle_R_body.top_face; offset(0,0,0.075) |
+| handle_R_body | Main shaft of right handle | cylinder Ø0.020×0.10 m; mat=mat_handle_body; create_method=primitive; Align(XY) handle_R_body.center to handle_R_grip.center; Align(Z) handle_R_body.bottom_face to handle_R_grip.bottom_face; offset(0,0,-0.125) |
+| handle_R_connector | Attachment point for cable on right handle | cylinder Ø0.010×0.02 m; mat=mat_handle_body; create_method=primitive; Align(XY) handle_R_connector.center to handle_R_body.center; Align(Z) handle_R_connector.bottom_face to handle_R_body.bottom_face; offset(0,0,-0.06) |
+| jump_cable | Main cable connecting the handles | cylinder Ø0.004×1.8 m; mat=mat_cable; create_method=primitive; orientation=axis:+Y; Align(XY) jump_cable.center to Avg(handle_L_connector.center, handle_R_connector.center); Align(Z) jump_cable.bottom_face to Avg(handle_L_connector.bottom_face, handle_R_connector.bottom_face); offset(0,0,-0.9) |
+
+# ----------  END_GRAPH  ----------

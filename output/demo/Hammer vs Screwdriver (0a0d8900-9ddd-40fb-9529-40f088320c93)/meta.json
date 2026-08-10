@@ -1,0 +1,47 @@
+{
+  "id": "0a0d8900-9ddd-40fb-9529-40f088320c93",
+  "name": "Hammer vs Screwdriver",
+  "instruction": "Compare a 3D model of a hammer with a screwdriver. The hammer should have a handle and a flat head. The screwdriver should have a handle and a flat blade. Place them side by side for comparison.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The hammer has a handle and a flat head.",
+        "The screwdriver has a handle and a flat blade."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hammer's head is appropriately sized for its handle.",
+        "The screwdriver's blade is appropriately sized for its handle."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hammer is positioned upright with the head at the top.",
+        "The screwdriver is positioned upright with the blade at the top.",
+        "Both tools are placed side by side for comparison.",
+        "The handles of both tools are aligned at the bottom."
+      ],
+      "Object distance and contact": [
+        "There is a small gap between the hammer and screwdriver for clear comparison.",
+        "The handles of both tools do not overlap.",
+        "The heads of the hammer and screwdriver are at the same level."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both tools are accurately represented as per the instruction.",
+        "The hammer and screwdriver are placed side by side for comparison."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

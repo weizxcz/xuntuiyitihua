@@ -1,0 +1,53 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_dark; diffuse_color = (0.25,0.15,0.10,1.0).
+Define material mat_wood_light; diffuse_color = (0.80,0.70,0.50,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create seat panel  ---
+Create primitive cube with size 0.40×0.40×0.04 m and name it seat_panel.
+Rotate seat_panel so its +Z axis aligns +Z (world).
+Anchor seat_panel to footstool_root.center.
+Then move by offset(0,0,0.02).
+Stage 1 complete.
+
+---  SECTION 2 – Create front-left leg  ---
+Create primitive cylinder with diameter 0.04 m and height 0.30 m and name it leg_fl.
+Rotate leg_fl so its +Z axis aligns -Z (world).
+Anchor leg_fl to seat_panel.bottom_face.
+Then move by offset(0.15,-0.15,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create front-right leg  ---
+Create primitive cylinder with diameter 0.04 m and height 0.30 m and name it leg_fr.
+Rotate leg_fr so its +Z axis aligns -Z (world).
+Anchor leg_fr to seat_panel.bottom_face.
+Then move by offset(-0.15,-0.15,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create back-left leg  ---
+Create primitive cylinder with diameter 0.04 m and height 0.30 m and name it leg_bl.
+Rotate leg_bl so its +Z axis aligns -Z (world).
+Anchor leg_bl to seat_panel.bottom_face.
+Then move by offset(0.15,0.15,0).
+Stage 4 complete.
+
+---  SECTION 5 – Create back-right leg  ---
+Create primitive cylinder with diameter 0.04 m and height 0.30 m and name it leg_br.
+Rotate leg_br so its +Z axis aligns -Z (world).
+Anchor leg_br to seat_panel.bottom_face.
+Then move by offset(-0.15,0.15,0).
+Stage 5 complete.
+
+All stages complete.

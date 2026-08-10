@@ -1,0 +1,39 @@
+-- MATERIAL LIBRARY --
+food_safe_plastic | diffuse_color=(0.9, 0.9, 0.9, 1.0)
+metal_steel | diffuse_color=(0.7, 0.7, 0.75, 1.0)
+rubber_grip | diffuse_color=(0.1, 0.1, 0.1, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| juicer_root | Composite assembly of base, motor, feed tube, and pulp collector | assembly_order=[base_group], [motor_group], [tube_group], [collector_group] |
+
+Layer 1 – Primary Structure (Base & Motor)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| base_plate | Composite of main housing + rubber feet | assembly_order=[housing], [feet]; mat=food_safe_plastic; create_method=boolean_union |
+| housing | Cuboid main body Ø0.15×0.25 m | size=(0.15, 0.15, 0.25); pos=(0,0,0.125); mat=food_safe_plastic; create_method=primitive |
+| feet | 4x Cylinder rubber grips | size=(Ø0.02×0.01); pos=(±0.06, ±0.06, 0.005); mat=rubber_grip; create_method=primitive |
+| motor_unit | Cylinder motor housing + shaft | size=(Ø0.12×0.10); pos=(0,0,0.30); mat=metal_steel; create_method=primitive |
+| drive_shaft | Cylinder connecting motor to blade | size=(Ø0.01×0.05); pos=(0,0,0.375); mat=metal_steel; create_method=primitive |
+
+Layer 2 – Processing Assembly (Blade & Filter)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| blade_assembly | Composite of rotating blade + hub | assembly_order=[hub], [blades]; mat=metal_steel; create_method=boolean_union |
+| hub | Cylinder central hub | size=(Ø0.03×0.02); pos=(0,0,0.40); mat=metal_steel; create_method=primitive |
+| blades | 4x Curved metal blades | size=(Ø0.10×0.002); pos=(0,0,0.41); mat=metal_steel; create_method=primitive |
+| filter_cone | Cone-shaped stainless steel filter | size=(Ø0.14×0.15); pos=(0,0,0.475); mat=metal_steel; create_method=primitive |
+| juice_spout | Curved spout for juice output | size=(Ø0.03×0.05); pos=(0.06, 0, 0.55); mat=food_safe_plastic; create_method=primitive |
+
+Layer 3 – Feed & Collection (Tube & Pulp Collector)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| feed_tube | Vertical cylinder for fruit insertion | size=(Ø0.05×0.20); pos=(0,0,0.60); mat=food_safe_plastic; create_method=primitive |
+| pusher | Cylinder plunger for feed tube | size=(Ø0.045×0.10); pos=(0,0,0.75); mat=food_safe_plastic; create_method=primitive |
+| pulp_collector | Rectangular bin with handle | size=(0.10×0.08×0.15); pos=(-0.12, 0, 0.075); mat=food_safe_plastic; create_method=primitive |
+| juice_container | Cylindrical jug for juice | size=(Ø0.08×0.12); pos=(0.06, 0, 0.06); mat=food_safe_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

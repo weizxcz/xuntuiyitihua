@@ -1,0 +1,1 @@
+Design a power distribution unit (PDU). Start with a rectangular housing that can be mounted in a server rack. Include multiple power outlets along the front panel. Add a digital display to show the current load and voltage. Ensure the PDU has circuit breakers for protection. Include mounting brackets and ensure the design is practical for data center use.

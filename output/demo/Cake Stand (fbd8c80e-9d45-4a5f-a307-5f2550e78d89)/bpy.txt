@@ -1,0 +1,274 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure collections are clean
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units_metres():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, name, material=None):
+    """Add a cylinder primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_disc(radius, name, material=None):
+    """Add a disc (cylinder with depth 0) primitive, centered at origin."""
+    # Blender's primitive_cylinder_add with depth=0 creates a mesh with two faces
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.0, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(size, name, material=None):
+    """Add a cube primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, name, material=None):
+    """Add a cone/tapered primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(radius, name, material=None, segments=32, rings=16):
+    """Add a UV sphere primitive, centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=segments, ring_count=rings, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_bevel(obj, width, segments=5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this generator context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis_to_align='Z', vector=Vector((0, 0, 1))):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Ensure vector is normalized
+    v = vector.normalized()
+    
+    # Define the axis vector in local space
+    if axis_to_align == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+        
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(v)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+        self._update_matrix()
+
+    def _update_matrix(self):
+        # Ensure we are using world space matrix
+        self.matrix_world = self.obj.matrix_world.copy()
+        self.center_world = self.matrix_world.to_translation()
+        
+        # Calculate face centers based on bounding box or mesh bounds
+        # For simple primitives, we can infer face centers from dimensions
+        self.face_centers = {}
+        if self.obj.type == 'MESH':
+            # Get bounds
+            min_b = self.matrix_world @ self.obj.bound_box[0]
+            max_b = self.matrix_world @ self.obj.bound_box[6]
+            
+            # Define faces relative to center
+            cx, cy, cz = self.center_world
+            
+            # Top face (usually +Z for cylinders/cones if aligned)
+            # Bottom face (usually -Z)
+            # We need to detect orientation. 
+            # Simplified: Assume standard orientation unless rotated.
+            # For robustness, we calculate normals of faces closest to global axes.
+            
+            # Let's just return the bounding box extremes for anchoring
+            self.min_world = min_b
+            self.max_world = max_b
+            
+            # Top face center (max Z)
+            self.face_centers['+Z_face'] = Vector((cx, cy, max_b.z))
+            # Bottom face center (min Z)
+            self.face_centers['-Z_face'] = Vector((cx, cy, min_b.z))
+            # Right face center (max X)
+            self.face_centers['+X_face'] = Vector((max_b.x, cy, cz))
+            # Left face center (min X)
+            self.face_centers['-X_face'] = Vector((min_b.x, cy, cz))
+            # Front face center (max Y)
+            self.face_centers['+Y_face'] = Vector((cx, max_b.y, cz))
+            # Back face center (min Y)
+            self.face_centers['-Y_face'] = Vector((cx, min_b.y, cz))
+
+    def center_world(self):
+        return self.center_world
+
+    def face_center_world(self, face_name):
+        return self.face_centers.get(face_name, self.center_world)
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract operation using the cutter on the target."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Select target
+    bpy.context.view_layer.objects.active = target
+    target.select_set(True)
+    cutter.select_set(True)
+    
+    # Add Boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Deselect all
+    bpy.ops.object.select_all(action='DESELECT')
+
+def boolean_union(union_name, target_name):
+    """Perform a boolean union operation using the union object on the target."""
+    target = bpy.data.objects[target_name]
+    union_obj = bpy.data.objects[union_name]
+    
+    # Select target
+    bpy.context.view_layer.objects.active = target
+    target.select_set(True)
+    union_obj.select_set(True)
+    
+    # Add Boolean modifier to target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Deselect all
+    bpy.ops.object.select_all(action='DESELECT')
+
+# ==============================================================================
+# MAIN SCRIPT
+# ==============================================================================
+
+def main():
+    # Block 0: Scene Reset & Units
+    clear_scene()
+    set_units_metres()
+
+    # Block 1: Materials
+    mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95, 1.0))
+    mat_wood_oak = make_material("wood_oak", (0.6, 0.4, 0.2, 1.0))
+
+    # Block 2: Stage-by-Stage Operations
+
+    # --- SECTION 1 – Create base pillar ---
+    # Create primitive cylinder with radius 0.075 m and height 0.200 m and name it base_pillar.
+    base_pillar = add_cylinder(radius=0.075, depth=0.200, name="base_pillar", material=mat_ceramic_white)
+    
+    # Rotate base_pillar so its +Z axis aligns +Z (world).
+    # It is created aligned to Z by default, but we enforce it.
+    align_axis_to_vector(base_pillar, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor base_pillar to world origin.
+    # Move object so its center is at (0,0,0)
+    base_pillar.location = (0, 0, 0)
+    
+    # Then move by offset(0,0,0).
+    offset = Vector((0, 0, 0))
+    base_pillar.location += offset
+
+    # --- SECTION 2 – Create top plate ---
+    # Create primitive cylinder with radius 0.150 m and height 0.020 m and name it top_plate.
+    top_plate = add_cylinder(radius=0.150, depth=0.020, name="top_plate", material=mat_ceramic_white)
+    
+    # Rotate top_plate so its +Z axis aligns +Z (world).
+    align_axis_to_vector(top_plate, 'Z', Vector((0, 0, 1)))
+    
+    # Align top_plate.+Z_face to base_pillar.+Z_face.
+    # Create locators
+    loc_base = Locator(base_pillar)
+    loc_top = Locator(top_plate)
+    
+    # Get the +Z face center of base_pillar
+    base_top_face = loc_base.face_center_world('+Z_face')
+    
+    # Get the +Z face center of top_plate (before moving)
+    # Note: top_plate is currently at origin. Its +Z face is at z = height/2 = 0.010
+    top_top_face_local = Vector((0, 0, 0.010))
+    
+    # We want to move top_plate such that its +Z face coincides with base_pillar's +Z face.
+    # Current position of top_plate's +Z face: top_top_face_local
+    # Target position: base_top_face
+    
+    # Calculate the translation vector needed
+    # New location of top_plate = base_top_face - top_top_face_local
+    new_location = base_top_face - top_top_face_local
+    
+    # Apply location
+    top_plate.location = new_location
+    
+    # Then move by offset(0,0,0).
+    offset = Vector((0, 0, 0))
+    top_plate.location += offset
+
+if __name__ == "__main__":
+    main()
+```

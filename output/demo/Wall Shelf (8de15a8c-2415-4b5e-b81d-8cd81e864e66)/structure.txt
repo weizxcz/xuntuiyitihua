@@ -1,0 +1,22 @@
+-- MATERIAL LIBRARY --
+mat_white_paint | diffuse_color=(0.95,0.95,0.95,1.0)
+mat_wood_oak | diffuse_color=(0.75,0.60,0.40,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wall_shelf | Composite of shelf_panel + bracket_L + bracket_R | assembly_order=[shelf_panel], [bracket_L, bracket_R] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shelf_panel | Cuboid 0.914×0.203×0.025 m (L×D×T) | pos=(0, 0, 0); orientation=axis:+Z; mat=mat_wood_oak; create_method=primitive |
+| bracket_L | Composite of vertical_plate + horizontal_plate | assembly_order=[vertical_plate, horizontal_plate] |
+| vertical_plate | Cuboid 0.025×0.150×0.025 m (W×H×T) | Align(XZ) vertical_plate.back_face to shelf_panel.bottom_face; offset(0, 0, -0.025); orientation=axis:+Z; mat=mat_white_paint; create_method=primitive |
+| horizontal_plate | Cuboid 0.203×0.025×0.025 m (L×W×T) | Align(XZ) horizontal_plate.top_face to vertical_plate.bottom_face; offset(0, 0, 0); orientation=axis:+Z; mat=mat_white_paint; create_method=primitive |
+| bracket_R | Composite of vertical_plate + horizontal_plate | assembly_order=[vertical_plate, horizontal_plate] |
+| vertical_plate | Cuboid 0.025×0.150×0.025 m (W×H×T) | Align(XZ) vertical_plate.back_face to shelf_panel.bottom_face; offset(0.711, 0, -0.025); orientation=axis:+Z; mat=mat_white_paint; create_method=primitive |
+| horizontal_plate | Cuboid 0.203×0.025×0.025 m (L×W×T) | Align(XZ) horizontal_plate.top_face to vertical_plate.bottom_face; offset(0, 0, 0); orientation=axis:+Z; mat=mat_white_paint; create_method=primitive |
+# ----------  END_GRAPH  ----------

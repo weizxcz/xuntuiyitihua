@@ -1,0 +1,48 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_black_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_chrome | diffuse_color=(0.9,0.9,0.95,1.0)
+mat_dark_grey | diffuse_color=(0.3,0.3,0.3,1.0)
+mat_red_paint | diffuse_color=(0.8,0.1,0.1,1.0)
+mat_rubber | diffuse_color=(0.15,0.15,0.15,1.0)
+mat_steel | diffuse_color=(0.5,0.5,0.55,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| motorcycle | Composite of chassis, wheels, handlebars, and seat | assembly_order=[chassis_group, wheel_group, controls_group, seating_group] |
+
+Layer 1 – Primary Structure (Chassis Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| chassis_group | Composite of frame, engine block, and fuel tank | assembly_order=[frame, engine, tank] |
+| frame | Composite of main tube, swingarm pivot, and steering head | A. Composite of main_tube + swingarm_pivot + steering_head; steel tubular structure |
+| main_tube | Main backbone tube connecting steering head to swingarm pivot | cylinder Ø0.030×0.800 m; orientation=axis:+X; mat=steel; create_method=primitive; pos=(0, 0.1, 0) |
+| steering_head | Steering head fork mount | cylinder Ø0.040×0.100 m; orientation=axis:+Z; mat=steel; create_method=primitive; pos=(0, 0.1, 0.4) |
+| swingarm_pivot | Rear swingarm mounting point | cylinder Ø0.030×0.050 m; orientation=axis:+X; mat=steel; create_method=primitive; pos=(0, 0.1, -0.4) |
+| engine | Engine block and cylinder head | box 0.300×0.250×0.200 m; mat=dark_grey; create_method=primitive; pos=(0, 0.1, 0); constraint=fit between frame tubes |
+| tank | Fuel tank | box 0.400×0.150×0.100 m; mat=red_paint; create_method=primitive; pos=(0, 0.25, 0.2); constraint=align to frame top |
+
+Layer 2 – Wheels Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_group | Composite of front and rear wheels | assembly_order=[front_wheel, rear_wheel] |
+| front_wheel | Front wheel assembly | cylinder Ø0.600×0.050 m; orientation=axis:+X; mat=rubber; create_method=primitive; pos=(0, 0.1, 0.8); constraint=align to steering_head |
+| rear_wheel | Rear wheel assembly | cylinder Ø0.600×0.050 m; orientation=axis:+X; mat=rubber; create_method=primitive; pos=(0, 0.1, -0.4); constraint=align to swingarm_pivot |
+
+Layer 3 – Controls Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| controls_group | Composite of handlebars and mirrors | assembly_order=[handlebars, mirrors] |
+| handlebars | Handlebar grip and stem | cylinder Ø0.020×0.600 m; orientation=axis:+Y; mat=black_plastic; create_method=primitive; pos=(0, 0.3, 0.4); constraint=align to steering_head top |
+| mirrors | Left and right mirrors | cylinder Ø0.010×0.100 m; orientation=axis:+Z; mat=chrome; create_method=primitive; pos=(0.3, 0.35, 0.4); constraint=align to handlebars end |
+
+Layer 4 – Seating Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| seating_group | Composite of seat and tail section | assembly_order=[seat, tail] |
+| seat | Rider seat | box 0.300×0.100×0.050 m; mat=black_plastic; create_method=primitive; pos=(0, 0.2, -0.1); constraint=align to frame top rear |
+| tail | Tail section | box 0.200×0.080×0.050 m; mat=red_paint; create_method=primitive; pos=(0, 0.2, -0.3); constraint=align to seat rear |
+# ----------  END_GRAPH  ----------

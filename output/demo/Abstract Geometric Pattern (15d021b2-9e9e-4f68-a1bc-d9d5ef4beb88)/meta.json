@@ -1,0 +1,48 @@
+{
+  "id": "15d021b2-9e9e-4f68-a1bc-d9d5ef4beb88",
+  "name": "Abstract Geometric Pattern",
+  "instruction": "Could you design a 3D model of an abstract geometric pattern for me? I envision a series of interlocking shapes, such as triangles, circles, and squares, creating a visually intriguing and complex pattern. The design should be symmetrical and have a sense of depth and layering. Can you make this pattern appear as if it's floating in space?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The model features interlocking shapes including triangles, circles, and squares.",
+        "The geometric pattern is abstract in nature.",
+        "The shapes are arranged to create a complex pattern."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The shapes in the pattern is proportionate to the pattern."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The shapes are positioned to create a sense of depth.",
+        "The interlocking nature of the shapes contributes to a three-dimensional feel.",
+        "The arrangement allows for visibility from multiple angles."
+      ],
+      "Object distance and contact": [
+        "The shapes are interlocked without overlapping inappropriately.",
+        "There is a clear distinction between each shape, maintaining visual clarity.",
+        "The layering of shapes does not obscure the overall pattern."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the request for interlocking geometric shapes.",
+        "The symmetrical aspect of the design is successfully implemented.",
+        "The sense of depth and layering is effectively portrayed.",
+        "The floating appearance is achieved as per the instruction."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

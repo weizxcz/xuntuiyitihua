@@ -1,0 +1,43 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material candle_wax; diffuse_color = (1.00, 1.00, 0.94, 1).
+Define material wick_cotton; diffuse_color = (0.20, 0.16, 0.12, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create candle body  ---
+Create primitive cylinder with radius 0.040 m and height 0.150 m and name it candle_body.
+Rotate candle_body so its +Z axis aligns +Z (world).
+Align candle_body.center to candle_root.center.
+Align candle_body.bottom_face to candle_root.bottom_face.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create wick  ---
+Create primitive cylinder with radius 0.002 m and height 0.020 m and name it wick.
+Rotate wick so its +Z axis aligns +Z (world).
+Align wick.center to candle_body.center.
+Align wick.bottom_face to candle_body.top_face.
+Then move by offset(0,0,0.002).
+Stage 2 complete.
+
+---  SECTION 3 – Assemble root  ---
+Align candle_root.center to candle_body.center.
+Align candle_root.bottom_face to candle_body.bottom_face.
+Align wick.center to candle_body.center.
+Align wick.bottom_face to candle_body.top_face.
+Then move by offset(0,0,0.002).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

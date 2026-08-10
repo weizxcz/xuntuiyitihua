@@ -1,0 +1,1 @@
+Can you create a 3D model of a guitar? It should have six strings and a classic body shape.

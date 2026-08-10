@@ -1,0 +1,1 @@
+Create 3D models of both a food processor and a blender. The food processor should have a wide base with a bowl on top and a lid with a feed tube. The blender should have a tall, narrow jar with a lid and a base with control buttons.

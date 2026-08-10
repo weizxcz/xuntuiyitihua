@@ -1,0 +1,44 @@
+{
+  "id": "8422cf1f-c86e-4861-8378-b90501b45026",
+  "name": "Calendar Icon",
+  "instruction": "Create a 3D model of a calendar icon. It should be a square with a small rectangle at the top representing the binding. Add the numbers \"1\" in the center.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a calendar icon.",
+        "The calendar icon is square in shape.",
+        "There is a small rectangle at the top representing the binding."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The rectangle at the top is appropriately sized relative to the square."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The rectangle is positioned correctly at the top of the square.",
+        "The number '1' is centered within the square."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the rectangle and the square.",
+        "The rectangle is securely attached to the square."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The model adheres to the instruction without deviations."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

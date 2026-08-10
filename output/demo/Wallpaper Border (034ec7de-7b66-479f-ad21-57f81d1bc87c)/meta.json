@@ -1,0 +1,43 @@
+{
+  "id": "034ec7de-7b66-479f-ad21-57f81d1bc87c",
+  "name": "Wallpaper Border",
+  "instruction": "Design a wallpaper border. The border should be 6 inches in height and feature a repeating pattern of stars and moons.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a wallpaper border.",
+        "The border has a consistent height of 6 inches.",
+        "The border is designed to be continuous in length."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The height of the border is accurately represented as 6 inches."
+      ],
+      "Proportion": [
+        "The size of the stars and moons is proportionate to the height of the border."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The stars and moons are aligned properly within the 6-inch height.",
+        "The repeating pattern flows seamlessly along the length of the border."
+      ],
+      "Object distance and contact": [
+        "The patterns of moons and stars not overlap with each other."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The height of the border is accurately represented as 6 inches.",
+        "The repeating pattern of stars and moons is correctly implemented."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

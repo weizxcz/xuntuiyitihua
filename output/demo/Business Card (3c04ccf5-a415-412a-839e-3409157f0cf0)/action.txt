@@ -1,0 +1,53 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_card_stock; diffuse_color = (1.0, 1.0, 1.0, 1).
+Define material mat_ink_black; diffuse_color = (0.0, 0.0, 0.0, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create card stock base  ---
+Create primitive cuboid with size 0.085×0.055×0.0008 m and name it card_stock.
+Rotate card_stock so its +Z axis aligns +Z (world).
+Anchor card_stock to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create name text element  ---
+Create primitive cuboid with size 0.04×0.005×0.0001 m and name it name_text.
+Rotate name_text so its +Z axis aligns +Z (world).
+Align name_text.+Z_face to card_stock.+Z_face.
+Then move by offset(0, 0.015, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create title text element  ---
+Create primitive cuboid with size 0.03×0.003×0.0001 m and name it title_text.
+Rotate title_text so its +Z axis aligns +Z (world).
+Align title_text.+Z_face to card_stock.+Z_face.
+Then move by offset(0, 0.005, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create phone text element  ---
+Create primitive cuboid with size 0.03×0.003×0.0001 m and name it phone_text.
+Rotate phone_text so its +Z axis aligns +Z (world).
+Align phone_text.+Z_face to card_stock.+Z_face.
+Then move by offset(0, -0.005, 0).
+Stage 4 complete.
+
+---  SECTION 5 – Create email text element  ---
+Create primitive cuboid with size 0.035×0.003×0.0001 m and name it email_text.
+Rotate email_text so its +Z axis aligns +Z (world).
+Align email_text.+Z_face to card_stock.+Z_face.
+Then move by offset(0, -0.015, 0).
+Stage 5 complete.
+
+All stages complete.

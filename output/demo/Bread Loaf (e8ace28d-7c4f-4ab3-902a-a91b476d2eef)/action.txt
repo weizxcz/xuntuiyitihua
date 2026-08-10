@@ -1,0 +1,71 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material bread_crumb; diffuse_color = (0.85, 0.75, 0.55, 1.0).
+Define material bread_crumb_dark; diffuse_color = (0.65, 0.50, 0.35, 1.0).
+Define material bread_crumb_light; diffuse_color = (0.95, 0.90, 0.80, 1.0).
+Define material filling_cheese; diffuse_color = (0.95, 0.85, 0.10, 1.0).
+Define material filling_meat; diffuse_color = (0.70, 0.30, 0.25, 1.0).
+Define material filling_veggie; diffuse_color = (0.20, 0.60, 0.20, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create loaf_top_slice  ---
+Create primitive cuboid with size 0.150×0.100×0.020 m and name it loaf_top_slice.
+Rotate loaf_top_slice so its +Z axis aligns +Z (world).
+Anchor loaf_top_slice to loaf_base.top_face.
+Align loaf_top_slice.XY_face to loaf_base.top_face.XY_face.
+Then move by offset(0,0,0.005).
+
+---  SECTION 2 – Create loaf_bottom_slice  ---
+Create primitive cuboid with size 0.150×0.100×0.020 m and name it loaf_bottom_slice.
+Rotate loaf_bottom_slice so its +Z axis aligns +Z (world).
+Anchor loaf_bottom_slice to loaf_base.center.
+Align loaf_bottom_slice.XY_face to loaf_base.center.XY_face.
+
+---  SECTION 3 – Create meat_slice  ---
+Create primitive cuboid with size 0.140×0.090×0.003 m and name it meat_slice.
+Rotate meat_slice so its +Z axis aligns +Z (world).
+Anchor meat_slice to loaf_bottom_slice.center.
+Align meat_slice.XY_face to loaf_bottom_slice.center.XY_face.
+Then move by offset(0,0,0.001).
+
+---  SECTION 4 – Create cheese_slice  ---
+Create primitive cuboid with size 0.140×0.090×0.002 m and name it cheese_slice.
+Rotate cheese_slice so its +Z axis aligns +Z (world).
+Anchor cheese_slice to meat_slice.center.
+Align cheese_slice.XY_face to meat_slice.center.XY_face.
+Then move by offset(0,0,0.003).
+
+---  SECTION 5 – Create veggie_slice  ---
+Create primitive cuboid with size 0.140×0.090×0.002 m and name it veggie_slice.
+Rotate veggie_slice so its +Z axis aligns +Z (world).
+Anchor veggie_slice to cheese_slice.center.
+Align veggie_slice.XY_face to cheese_slice.center.XY_face.
+Then move by offset(0,0,0.002).
+
+---  SECTION 6 – Assemble Filling Layer  ---
+Boolean-union meat_slice, cheese_slice, and veggie_slice to form filling_layer.
+Assembly guideline satisfied.
+
+---  SECTION 7 – Assemble Loaf Base  ---
+Boolean-subtract loaf_top_slice from loaf_bottom_slice using a gap of 0.005m to create loaf_base.
+Assembly guideline satisfied.
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+Stage 4 complete.
+Stage 5 complete.
+Stage 6 complete.
+Stage 7 complete.
+All stages complete.

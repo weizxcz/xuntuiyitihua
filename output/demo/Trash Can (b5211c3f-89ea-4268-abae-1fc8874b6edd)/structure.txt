@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+mat_plastic_grey | diffuse_color=(0.5,0.5,0.5,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| trash_can | Composite of base + body + rim; simple cylindrical trash can | assembly_order=[base, body, rim] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base | Cylinder Ø0.30×0.01 m | Align(XY) base.center to trash_can.center; orientation=axis:+Z; mat=mat_plastic_grey; create_method=primitive |
+| body | Cylinder Ø0.30×0.40 m | Align(XY) body.center to trash_can.center; Align(Z) body.bottom_face to base.top_face; orientation=axis:+Z; mat=mat_plastic_grey; create_method=primitive |
+| rim | Cylinder Ø0.32×0.01 m | Align(XY) rim.center to trash_can.center; Align(Z) rim.bottom_face to body.top_face; orientation=axis:+Z; mat=mat_plastic_grey; create_method=primitive |
+# ----------  END_GRAPH  ----------

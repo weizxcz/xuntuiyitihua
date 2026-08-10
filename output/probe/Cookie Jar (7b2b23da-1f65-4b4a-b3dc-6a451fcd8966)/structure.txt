@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+mat_lid | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| jar_base | Composite of jar_body + jar_lid; a cylindrical cookie jar with a fitted lid | assembly_order=[jar_body], [jar_lid] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| jar_body | Hollow cylinder Ø0.200×0.250 m (outer diameter 0.200 m, height 0.250 m, wall thickness 0.015 m) | Align(XY) jar_body.center to jar_base.center; Align(Z) jar_body.bottom_face to jar_base.bottom_face; orientation=axis:+Z; mat=ceramic_white; create_method=boolean_subtract; constraint=outer_cylinder Ø0.200×0.250 + inner_cylinder Ø0.170×0.250 (subtracted); assembly_order=[jar_body] |
+| jar_lid | Hollow cylinder Ø0.200×0.040 m (outer diameter 0.200 m, height 0.040 m, wall thickness 0.015 m) | Align(XY) jar_lid.center to jar_body.top_face.center; Align(Z) jar_lid.bottom_face to jar_body.top_face; offset(0,0,0.002); orientation=axis:+Z; mat=mat_lid; create_method=boolean_subtract; constraint=outer_cylinder Ø0.200×0.040 + inner_cylinder Ø0.170×0.040 (subtracted); assembly_order=[jar_lid] |
+# ----------  END_GRAPH  ----------

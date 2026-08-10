@@ -1,0 +1,168 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def boolean_union(objects, keep_name):
+    """Perform boolean union on a list of objects, keeping the first one as the result."""
+    if not objects:
+        return None
+    target = objects[0]
+    modifiers = []
+    
+    # Apply modifiers in reverse order to ensure correct dependency
+    for i, obj in enumerate(objects[1:], 1):
+        mod = target.modifiers.new(name=f"Union_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        modifiers.append(mod)
+        
+    # Apply all modifiers
+    for mod in modifiers:
+        bpy.context.view_layer.objects.active = target
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+    # Hide and delete the source objects used for boolean
+    for obj in objects[1:]:
+        obj.hide_viewport = True
+        obj.hide_render = True
+        # We don't delete them immediately to avoid dependency issues in some versions, 
+        # but for this script we can just leave them hidden or delete if not needed.
+        # To be safe and clean, we'll just hide them.
+        
+    return target
+
+def align_z_to_world_z(obj):
+    """Ensure object's local Z axis aligns with world Z axis (no rotation around X/Y)."""
+    obj.rotation_euler = (0, 0, 0)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_fabric_main = make_material("fabric_main", (0.2, 0.2, 0.2, 1.0))
+mat_fabric_lining = make_material("fabric_lining", (0.8, 0.8, 0.8, 1.0))
+mat_metal_zipper = make_material("metal_zipper", (0.7, 0.7, 0.7, 1.0))
+mat_plastic_puller = make_material("plastic_puller", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create fabric shell (front and back panels) ---
+
+# Create front_panel
+front_panel = add_cube("front_panel", (0.200, 0.100, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_main)
+align_z_to_world_z(front_panel)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+front_panel.location = (0, 0, 0)
+
+# Create back_panel
+back_panel = add_cube("back_panel", (0.200, 0.100, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_main)
+align_z_to_world_z(back_panel)
+# Anchor to world origin
+# Offset (0,0,0.002)
+back_panel.location = (0, 0, 0.002)
+
+# Create side_gusset
+side_gusset = add_cube("side_gusset", (0.200, 0.050, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_main)
+align_z_to_world_z(side_gusset)
+# Anchor to world origin
+# Offset (0,0,-0.025)
+side_gusset.location = (0, 0, -0.025)
+
+# Boolean-union front_panel, back_panel, and side_gusset; keep front_panel as fabric_shell
+fabric_shell = boolean_union([front_panel, back_panel, side_gusset], "fabric_shell")
+fabric_shell.name = "fabric_shell"
+
+# --- SECTION 2 – Create lining shell (front and back panels) ---
+
+# Create front_lining
+front_lining = add_cube("front_lining", (0.190, 0.090, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_lining)
+align_z_to_world_z(front_lining)
+# Anchor to world origin
+# Offset (0,0,0.001)
+front_lining.location = (0, 0, 0.001)
+
+# Create back_lining
+back_lining = add_cube("back_lining", (0.190, 0.090, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_lining)
+align_z_to_world_z(back_lining)
+# Anchor to world origin
+# Offset (0,0,-0.001)
+back_lining.location = (0, 0, -0.001)
+
+# Boolean-union front_lining and back_lining; keep front_lining as lining_shell
+lining_shell = boolean_union([front_lining, back_lining], "lining_shell")
+lining_shell.name = "lining_shell"
+
+# --- SECTION 3 – Create zipper track (left and right tracks) ---
+
+# Create left_track
+left_track = add_cube("left_track", (0.200, 0.005, 0.002), (0, 0, 0), (0, 0, 0), mat_metal_zipper)
+align_z_to_world_z(left_track)
+# Anchor to world origin
+# Offset (-0.100,0,0.050)
+left_track.location = (-0.100, 0, 0.050)
+
+# Create right_track
+right_track = add_cube("right_track", (0.200, 0.005, 0.002), (0, 0, 0), (0, 0, 0), mat_metal_zipper)
+align_z_to_world_z(right_track)
+# Anchor to world origin
+# Offset (0.100,0,0.050)
+right_track.location = (0.100, 0, 0.050)
+
+# Boolean-union left_track and right_track; keep left_track as zipper_track
+zipper_track = boolean_union([left_track, right_track], "zipper_track")
+zipper_track.name = "zipper_track"
+
+# --- SECTION 4 – Create pullers (left and right pullers) ---
+
+# Create left_puller
+left_puller = add_cube("left_puller", (0.010, 0.005, 0.002), (0, 0, 0), (0, 0, 0), mat_plastic_puller)
+align_z_to_world_z(left_puller)
+# Anchor to world origin
+# Offset (-0.100,0,0.052)
+left_puller.location = (-0.100, 0, 0.052)
+
+# Create right_puller
+right_puller = add_cube("right_puller", (0.010, 0.005, 0.002), (0, 0, 0), (0, 0, 0), mat_plastic_puller)
+align_z_to_world_z(right_puller)
+# Anchor to world origin
+# Offset (0.100,0,0.052)
+right_puller.location = (0.100, 0, 0.052)
+
+# Boolean-union left_puller and right_puller; keep left_puller as pullers
+pullers = boolean_union([left_puller, right_puller], "pullers")
+pullers.name = "pullers"
+
+print("All stages complete.")
+```

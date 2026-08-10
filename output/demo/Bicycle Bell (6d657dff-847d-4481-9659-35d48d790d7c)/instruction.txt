@@ -1,0 +1,1 @@
+Design a bicycle bell. The bell is a simple dome shape with a diameter of 2 inches. It has a small lever on the side for ringing. Attach a clamp underneath for securing it to the handlebars.

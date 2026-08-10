@@ -1,0 +1,208 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add an UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, depth):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def align_axis_to_vector(obj, axis, vector):
+    """Rotate object so its local axis aligns with a world vector."""
+    # Current axis vectors
+    if axis == 'X':
+        current = Vector((1, 0, 0))
+    elif axis == 'Y':
+        current = Vector((0, 1, 0))
+    elif axis == 'Z':
+        current = Vector((0, 0, 1))
+    else:
+        return
+
+    target = vector.normalized()
+    
+    # Calculate rotation
+    if current.normalized().dot(target) > 0.9999:
+        return # Already aligned
+    
+    rot_quat = current.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def align_center_to_center(obj_a, obj_b):
+    """Align center of obj_a to center of obj_b."""
+    loc_b = obj_b.location
+    loc_a = obj_a.location
+    obj_a.location = loc_b
+
+def align_bottom_face_to_top_face(obj_bottom, obj_top):
+    """Align bottom face of obj_bottom to top face of obj_top along Z."""
+    # Get bounds
+    min_b, max_b = obj_bottom.bound_box, obj_bottom.bound_box
+    min_t, max_t = obj_top.bound_box, obj_top.bound_box
+    
+    # Calculate heights in local space relative to center
+    # Note: bound_box is in local space. We need to transform to world to be safe or assume Z-up orientation.
+    # Since we align Z to Z, local Z is world Z.
+    
+    # Height of bottom object
+    h_bottom = max_b[4][2] - min_b[0][2] # Top Z - Bottom Z in local
+    # Height of top object
+    h_top = max_t[4][2] - min_t[0][2]
+    
+    # Center of top object
+    center_top = obj_top.location
+    top_face_z = center_top[2] + (h_top / 2)
+    
+    # We want bottom face of bottom object to be at top_face_z
+    # Bottom face Z in local is min_b[0][2]
+    # Current bottom face Z in world is obj_bottom.location[2] + min_b[0][2]
+    
+    # Target location for bottom object
+    target_loc_z = top_face_z - min_b[0][2]
+    
+    obj_bottom.location[2] = target_loc_z
+
+def offset_object(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        return self.obj.location
+    
+    def face_center_world(self, face_index):
+        # Simplified: returns center of the object for now as generic locator
+        # For precise face center, we'd need mesh data access
+        return self.obj.location
+
+    def radial_point_world(self, angle, radius):
+        # Placeholder for radial positioning
+        return Vector((math.cos(angle)*radius, math.sin(angle)*radius, 0))
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_cork = make_material("mat_cork", (0.6, 0.4, 0.2, 1.0))
+mat_pattern = make_material("mat_pattern", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create coaster base
+
+# 1. Create base_disc
+# Diameter 0.1016 m -> Radius 0.0508 m
+# Height 0.005 m
+base_disc = add_cylinder("base_disc", radius=0.0508, depth=0.005)
+
+# Rotate base_disc so its +Z axis aligns +Z (world)
+# Default cylinder is Z-up, so this is effectively a no-op or identity, but we follow instructions.
+align_axis_to_vector(base_disc, 'Z', Vector((0, 0, 1)))
+
+# Anchor base_disc to world origin
+base_disc.location = Vector((0, 0, 0))
+
+# Move by offset(0,0,0)
+offset_object(base_disc, Vector((0, 0, 0)))
+
+# Apply material mat_cork
+apply_material(base_disc, mat_cork)
+
+# 2. Create pattern_ring
+# Diameter 0.080 m -> Radius 0.040 m
+# Height 0.005 m
+pattern_ring = add_cylinder("pattern_ring", radius=0.040, depth=0.005)
+
+# Rotate pattern_ring so its +Z axis aligns +Z (world)
+align_axis_to_vector(pattern_ring, 'Z', Vector((0, 0, 1)))
+
+# Align pattern_ring.center to base_disc.center
+align_center_to_center(pattern_ring, base_disc)
+
+# Align pattern_ring.bottom_face to base_disc.top_face
+align_bottom_face_to_top_face(pattern_ring, base_disc)
+
+# Move by offset(0,0,0.000)
+offset_object(pattern_ring, Vector((0, 0, 0.000)))
+
+# Apply material mat_pattern
+apply_material(pattern_ring, mat_pattern)
+
+# Assembly guideline satisfied.
+# Stage 1 complete.
+# All stages complete.
+```

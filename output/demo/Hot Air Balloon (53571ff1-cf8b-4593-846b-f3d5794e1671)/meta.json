@@ -1,0 +1,50 @@
+{
+  "id": "53571ff1-cf8b-4593-846b-f3d5794e1671",
+  "name": "Hot Air Balloon",
+  "instruction": "Design a 3D model of a hot air balloon. The balloon should be large and rounded, with a basket attached below it. Include ropes connecting the basket to the balloon. Add a burner system for heating the air inside the balloon.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a hot air balloon.",
+        "The balloon is large and rounded.",
+        "The basket is rectangular and located below the balloon.",
+        "The burner system is attached to the top of the basket."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the balloon is proportionate to the basket.",
+        "The burner system is adequately sized for the balloon."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The balloon is positioned above the basket.",
+        "The basket is securely attached to the balloon.",
+        "The ropes are properly connecting the basket to the balloon.",
+        "The burner system is correctly placed above the basket."
+      ],
+      "Object distance and contact": [
+        "The ropes do not overlap with the balloon.",
+        "There is no gap between the basket and the balloon.",
+        "The burner system is in contact with the basket."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a burner system as instructed.",
+        "The ropes connecting the basket to the balloon are included."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

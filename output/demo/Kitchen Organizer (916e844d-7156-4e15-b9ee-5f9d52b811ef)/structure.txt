@@ -1,0 +1,32 @@
+-- MATERIAL LIBRARY --
+mat_black_polypropylene | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_clear_acrylic | diffuse_color=(0.9,0.9,0.95,0.3)
+mat_cork | diffuse_color=(0.6,0.4,0.2,1.0)
+mat_stainless_steel | diffuse_color=(0.7,0.7,0.75,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Composite base unit | Composite of base_body + cork_pad; mat=mat_black_polypropylene; create_method=boolean_union; assembly_order=[base_body, cork_pad] |
+| base_body | Rectangular base tray | cube 0.400×0.250×0.015 m; pos=(0,0,0); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| cork_pad | Non-slip cork layer | cube 0.400×0.250×0.003 m; pos=(0,0,-0.009); orientation=axis:+Z; mat=mat_cork; create_method=primitive |
+| divider_frame | Main vertical structure | Composite of back_panel + left_wall + right_wall + middle_wall; mat=mat_black_polypropylene; create_method=boolean_union; assembly_order=[back_panel, left_wall, right_wall, middle_wall] |
+| back_panel | Rear vertical divider | cube 0.400×0.180×0.005 m; pos=(0,0.1225,0.015); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| left_wall | Left vertical divider | cube 0.005×0.180×0.180 m; pos=(-0.1975,0.06,0.015); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| right_wall | Right vertical divider | cube 0.005×0.180×0.180 m; pos=(0.1975,0.06,0.015); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| middle_wall | Center vertical divider | cube 0.005×0.180×0.180 m; pos=(0,0.06,0.015); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| utensil_tray | Left compartment tray | cube 0.190×0.180×0.010 m; pos=(-0.095,0.06,0.025); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| knife_slot_base | Knife section base | cube 0.190×0.180×0.010 m; pos=(0.095,0.06,0.025); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| knife_insert | Knife slot divider | cube 0.003×0.170×0.150 m; pos=(0.095,0.06,0.095); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| drawer_unit | Small drawer assembly | Composite of drawer_box + drawer_front + drawer_handle; mat=mat_black_polypropylene; create_method=boolean_union; assembly_order=[drawer_box, drawer_front, drawer_handle] |
+| drawer_box | Drawer container | cube 0.100×0.150×0.040 m; pos=(0.095,0.06,0.035); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| drawer_front | Drawer face panel | cube 0.100×0.005×0.040 m; pos=(0.095,0.135,0.035); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| drawer_handle | Small pull handle | cylinder Ø0.008×0.030 m; pos=(0.095,0.140,0.035); orientation=axis:+Y; mat=mat_stainless_steel; create_method=primitive |
+| utensil_dividers | Internal utensil dividers | Composite of u_div_1 + u_div_2; mat=mat_black_polypropylene; create_method=boolean_union; assembly_order=[u_div_1, u_div_2] |
+| u_div_1 | First utensil divider | cube 0.003×0.170×0.150 m; pos=(-0.030,0.06,0.025); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| u_div_2 | Second utensil divider | cube 0.003×0.170×0.150 m; pos=(-0.160,0.06,0.025); orientation=axis:+Z; mat=mat_black_polypropylene; create_method=primitive |
+| drawer_tray | Drawer bottom liner | cube 0.090×0.140×0.002 m; pos=(0.095,0.06,0.001); orientation=axis:+Z; mat=mat_clear_acrylic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

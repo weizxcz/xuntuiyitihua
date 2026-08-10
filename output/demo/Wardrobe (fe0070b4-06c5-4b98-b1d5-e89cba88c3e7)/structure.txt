@@ -1,0 +1,53 @@
+-- MATERIAL LIBRARY --
+mat_wood_dark | diffuse_color=(0.20,0.15,0.10,1.0)
+mat_wood_light | diffuse_color=(0.80,0.70,0.60,1.0)
+mat_metal_silver | diffuse_color=(0.70,0.70,0.75,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wardrobe_root | Composite of all wardrobe components | assembly_order=[frame_group], [shelves_group], [rod_group], [drawer_group], [door_group] |
+
+Layer 1 – Primary Structure (Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| side_panel_L | Cuboid 0.600×2.200×0.020 m (W×H×D) | pos=(-0.300, 1.100, 0.000); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| side_panel_R | Cuboid 0.600×2.200×0.020 m (W×H×D) | pos=(0.300, 1.100, 0.000); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| top_panel | Cuboid 0.600×0.020×0.600 m (W×H×D) | Align(XY) top_panel.bottom_face to Avg(side_panel_L.top_face, side_panel_R.top_face); offset(0,0,0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| bottom_panel | Cuboid 0.600×0.020×0.600 m (W×H×D) | Align(XY) bottom_panel.top_face to Avg(side_panel_L.bottom_face, side_panel_R.bottom_face); offset(0,0,0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| back_panel | Cuboid 0.560×2.160×0.005 m (W×H×D) | Align(XY) back_panel.front_face to Avg(side_panel_L.back_face, side_panel_R.back_face); offset(0,0,0.010); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| center_stile | Cuboid 0.020×2.160×0.020 m (W×H×D) | Align(XY) center_stile.left_face to Avg(side_panel_L.right_face, side_panel_R.left_face); offset(0,0,0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+
+Layer 2 – Shelves Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shelf_1 | Cuboid 0.560×0.020×0.560 m (W×H×D) | Align(XY) shelf_1.bottom_face to Avg(side_panel_L.right_face, side_panel_R.left_face); offset(0,0.800,0); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| shelf_2 | Cuboid 0.560×0.020×0.560 m (W×H×D) | Align(XY) shelf_2.bottom_face to Avg(side_panel_L.right_face, side_panel_R.left_face); offset(0,1.400,0); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+
+Layer 3 – Hanging Rod Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rod_holder_L | Cylinder Ø0.010×0.050 m (D×H) | Align(XY) rod_holder_L.center to side_panel_L.right_face; offset(0,1.800,0); orientation=axis:+X; mat=mat_metal_silver; create_method=primitive |
+| rod_holder_R | Cylinder Ø0.010×0.050 m (D×H) | Align(XY) rod_holder_R.center to side_panel_R.left_face; offset(0,1.800,0); orientation=axis:+X; mat=mat_metal_silver; create_method=primitive |
+| hanging_rod | Cylinder Ø0.020×0.560 m (D×W) | Align(XY) hanging_rod.center to Avg(rod_holder_L.center, rod_holder_R.center); offset(0,0,0); orientation=axis:+X; mat=mat_metal_silver; create_method=primitive |
+
+Layer 4 – Drawer Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| drawer_box_bottom | Cuboid 0.540×0.015×0.500 m (W×H×D) | Align(XY) drawer_box_bottom.top_face to bottom_panel.top_face; offset(0,0.015,0.030); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| drawer_box_front | Cuboid 0.540×0.150×0.020 m (W×H×D) | Align(XY) drawer_box_front.bottom_face to drawer_box_bottom.top_face; offset(0,0.075,0.240); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| drawer_box_back | Cuboid 0.540×0.150×0.020 m (W×H×D) | Align(XY) drawer_box_back.bottom_face to drawer_box_bottom.top_face; offset(0,0.075,-0.240); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| drawer_box_left | Cuboid 0.020×0.150×0.500 m (W×H×D) | Align(XY) drawer_box_left.bottom_face to drawer_box_bottom.top_face; offset(-0.260,0.075,0); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| drawer_box_right | Cuboid 0.020×0.150×0.500 m (W×H×D) | Align(XY) drawer_box_right.bottom_face to drawer_box_bottom.top_face; offset(0.260,0.075,0); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive |
+| drawer_handle | Cylinder Ø0.010×0.080 m (D×H) | Align(XY) drawer_handle.center to drawer_box_front.center; offset(0,0.075,0.010); orientation=axis:+Y; mat=mat_metal_silver; create_method=primitive |
+
+Layer 5 – Door Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_L | Cuboid 0.280×2.100×0.020 m (W×H×D) | Align(XY) door_L.right_face to center_stile.left_face; offset(-0.010,0,0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| door_R | Cuboid 0.280×2.100×0.020 m (W×H×D) | Align(XY) door_R.left_face to center_stile.right_face; offset(0.010,0,0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| door_handle_L | Cylinder Ø0.010×0.080 m (D×H) | Align(XY) door_handle_L.center to door_L.left_face; offset(-0.010,1.000,0); orientation=axis:+Y; mat=mat_metal_silver; create_method=primitive |
+| door_handle_R | Cylinder Ø0.010×0.080 m (D×H) | Align(XY) door_handle_R.center to door_R.right_face; offset(0.010,1.000,0); orientation=axis:+Y; mat=mat_metal_silver; create_method=primitive |
+# ----------  END_GRAPH  ----------

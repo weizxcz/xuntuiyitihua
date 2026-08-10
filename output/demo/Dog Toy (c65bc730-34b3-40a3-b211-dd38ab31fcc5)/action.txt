@@ -1,0 +1,46 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_durable_rubber; diffuse_color = (0.8, 0.1, 0.1, 1.0).
+Define material mat_treat_compartment; diffuse_color = (0.2, 0.2, 0.2, 1.0).
+Define material mat_textured_bumps; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create core bone  ---
+Create primitive cuboid with size 0.203×0.05×0.03 m and name it core_bone.
+Rotate core_bone so its +Z axis aligns +X (world).
+Anchor core_bone to world origin.
+Then move by offset(0,0,0).
+Bevel core_bone edges with radius 0.01 m, segments 8.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create treat hollow  ---
+Create primitive cuboid with size 0.05×0.03×0.02 m and name it treat_hollow_cut.
+Rotate treat_hollow_cut so its +Z axis aligns +Z (world).
+Anchor treat_hollow_cut to core_bone.center.
+Then move by offset(0,0,0.015).
+Boolean-subtract treat_hollow_cut from core_bone; discard treat_hollow_cut.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create texture layer  ---
+Create primitive cuboid with size 0.203×0.05×0.005 m and name it texture_layer.
+Rotate texture_layer so its +Z axis aligns +Z (world).
+Anchor texture_layer to core_bone.center.
+Then move by offset(0,0,0.015).
+Boolean-union texture_layer to core_bone; discard texture_layer.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

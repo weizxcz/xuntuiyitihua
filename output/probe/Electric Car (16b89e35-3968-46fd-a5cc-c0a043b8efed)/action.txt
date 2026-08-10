@@ -1,0 +1,130 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material car_body_paint; diffuse_color = (0.15,0.15,0.2,1.0).
+Define material charging_port_plastic; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material chrome_trim; diffuse_color = (0.8,0.8,0.85,1.0).
+Define material glass; diffuse_color = (0.2,0.3,0.4,0.3).
+Define material rubber_tire; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material steel_rim; diffuse_color = (0.6,0.6,0.65,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Body Shell (Cabin, Hood, Trunk)  ---
+Create primitive cuboid with size 1.8×0.5×1.5 m and name it cabin_block.
+Rotate cabin_block so its +Z axis aligns +Z (world).
+Align cabin_block.XY_face to car_root.XY_face.
+Align cabin_block.Z_face to car_root.Z_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 1.8×0.15×0.8 m and name it hood_block.
+Rotate hood_block so its +Z axis aligns +Z (world).
+Align hood_block.XY_face to cabin_block.front_face.XY_face.
+Align hood_block.Z_face to cabin_block.top_face.Z_face.
+Then move by offset(0,0,0.25).
+
+Create primitive cuboid with size 1.8×0.15×0.7 m and name it trunk_block.
+Rotate trunk_block so its +Z axis aligns +Z (world).
+Align trunk_block.XY_face to cabin_block.back_face.XY_face.
+Align trunk_block.Z_face to cabin_block.top_face.Z_face.
+Then move by offset(0,0,-0.25).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Glass Panels and Grille  ---
+Create primitive cuboid with size 1.6×0.4×0.01 m and name it windshield.
+Rotate windshield so its +Z axis aligns +Z (world).
+Align windshield.XY_face to hood_block.front_face.XY_face.
+Align windshield.Z_face to hood_block.top_face.Z_face.
+Then move by offset(0,0,0.05).
+
+Create primitive cuboid with size 1.6×0.4×0.01 m and name it rear_window.
+Rotate rear_window so its +Z axis aligns +Z (world).
+Align rear_window.XY_face to trunk_block.back_face.XY_face.
+Align rear_window.Z_face to trunk_block.top_face.Z_face.
+Then move by offset(0,0,-0.05).
+
+Create primitive cuboid with size 0.01×0.3×1.2 m and name it side_windows.
+Rotate side_windows so its +Z axis aligns +Z (world).
+Align side_windows.XY_face to cabin_block.left_face.XY_face.
+Align side_windows.Z_face to cabin_block.bottom_face.Z_face.
+Then move by offset(0,0,0.25).
+
+Create primitive cuboid with size 1.2×0.3×0.02 m and name it front_grille.
+Rotate front_grille so its +Z axis aligns +Z (world).
+Align front_grille.XY_face to hood_block.front_face.XY_face.
+Align front_grille.Z_face to hood_block.bottom_face.Z_face.
+Then move by offset(0,0,0.01).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Wheel Assemblies  ---
+Create primitive cylinder with diameter 0.3 m and length 0.2 m and name it wheel_fl.
+Rotate wheel_fl so its +Z axis aligns +Y (world).
+Align wheel_fl.XY_face to cabin_block.left_face.XY_face.
+Align wheel_fl.Z_face to car_root.bottom_face.Z_face.
+Then move by offset(0.7,0,-0.2).
+
+Create primitive cylinder with diameter 0.3 m and length 0.2 m and name it wheel_fr.
+Rotate wheel_fr so its +Z axis aligns +Y (world).
+Align wheel_fr.XY_face to cabin_block.right_face.XY_face.
+Align wheel_fr.Z_face to car_root.bottom_face.Z_face.
+Then move by offset(-0.7,0,-0.2).
+
+Create primitive cylinder with diameter 0.3 m and length 0.2 m and name it wheel_rl.
+Rotate wheel_rl so its +Z axis aligns +Y (world).
+Align wheel_rl.XY_face to cabin_block.left_face.XY_face.
+Align wheel_rl.Z_face to car_root.bottom_face.Z_face.
+Then move by offset(0.7,0,0.2).
+
+Create primitive cylinder with diameter 0.3 m and length 0.2 m and name it wheel_rr.
+Rotate wheel_rr so its +Z axis aligns +Y (world).
+Align wheel_rr.XY_face to cabin_block.right_face.XY_face.
+Align wheel_rr.Z_face to car_root.bottom_face.Z_face.
+Then move by offset(-0.7,0,0.2).
+
+Create primitive cylinder with diameter 0.25 m and length 0.15 m and name it rim_fl.
+Rotate rim_fl so its +Z axis aligns +Y (world).
+Align rim_fl.XY_face to wheel_fl.XY_face.
+Align rim_fl.Z_face to wheel_fl.Z_face.
+Then move by offset(0,0,0.05).
+
+Create primitive cylinder with diameter 0.25 m and length 0.15 m and name it rim_fr.
+Rotate rim_fr so its +Z axis aligns +Y (world).
+Align rim_fr.XY_face to wheel_fr.XY_face.
+Align rim_fr.Z_face to wheel_fr.Z_face.
+Then move by offset(0,0,0.05).
+
+Create primitive cylinder with diameter 0.25 m and length 0.15 m and name it rim_rl.
+Rotate rim_rl so its +Z axis aligns +Y (world).
+Align rim_rl.XY_face to wheel_rl.XY_face.
+Align rim_rl.Z_face to wheel_rl.Z_face.
+Then move by offset(0,0,0.05).
+
+Create primitive cylinder with diameter 0.25 m and length 0.15 m and name it rim_rr.
+Rotate rim_rr so its +Z axis aligns +Y (world).
+Align rim_rr.XY_face to wheel_rr.XY_face.
+Align rim_rr.Z_face to wheel_rr.Z_face.
+Then move by offset(0,0,0.05).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Charging Port  ---
+Create primitive cuboid with size 0.1×0.1×0.05 m and name it charging_port.
+Rotate charging_port so its +Z axis aligns +Z (world).
+Align charging_port.XY_face to cabin_block.right_face.XY_face.
+Align charging_port.Z_face to cabin_block.bottom_face.Z_face.
+Then move by offset(0,0,0.1).
+
+Stage 4 complete.
+
+All stages complete.

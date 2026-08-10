@@ -1,0 +1,47 @@
+{
+  "id": "3c04ccf5-a415-412a-839e-3409157f0cf0",
+  "name": "Business Card",
+  "instruction": "Create a business card. The card should be rectangular and contain the following details: a name, a job title, a phone number, and an email address. The name should be the most prominent text on the card. Arrange the information in a clean and organized layout.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a rectangular business card."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The card contains a name.",
+        "The card includes a job title.",
+        "The card has a phone number.",
+        "The card features an email address."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The name is placed at the top or center for prominence.",
+        "The job title is positioned below the name.",
+        "The phone number is located in a clear position.",
+        "The email address is easily accessible and visible."
+      ],
+      "Object distance and contact": [
+        "There is adequate spacing between each text element.",
+        "The text size is proportionate to the card size."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified details are included on the card.",
+        "The layout is clean and organized as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

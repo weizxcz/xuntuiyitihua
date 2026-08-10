@@ -1,0 +1,224 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_to_face(obj, target_obj, face_type='center'):
+    """
+    Aligns obj to a specific face/center of target_obj.
+    face_type: 'center' (world center of face), 'bottom_face.center', etc.
+    For this script, we interpret 'XY_face' as the face normal to Z.
+    'bottom_face' implies the face with the lowest Z coordinate in local space.
+    """
+    # Ensure objects are updated
+    bpy.context.view_layer.update()
+    
+    # Get target geometry info
+    # We will use a temporary approach: calculate the target world position based on the description.
+    # Since we are building sequentially, we can calculate positions relative to the parent/anchor.
+    pass
+
+def get_face_center(obj, face_type):
+    """
+    Calculates the world location of a specific face on an object.
+    Assumes standard cube orientation unless rotated.
+    """
+    # Transform vertices to world space
+    verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    
+    if face_type == 'center':
+        # Average of all vertices
+        avg = sum(verts_world, Vector()) / len(verts_world)
+        return avg
+    elif face_type == 'bottom_face.center':
+        # Find min Z, then average X,Y of those vertices
+        min_z = min(v[2] for v in verts_world)
+        bottom_verts = [v for v in verts_world if abs(v[2] - min_z) < 1e-5]
+        if bottom_verts:
+            avg = sum(bottom_verts, Vector()) / len(bottom_verts)
+            return avg
+    elif face_type == 'top_face.center':
+        max_z = max(v[2] for v in verts_world)
+        top_verts = [v for v in verts_world if abs(v[2] - max_z) < 1e-5]
+        if top_verts:
+            avg = sum(top_verts, Vector()) / len(top_verts)
+            return avg
+            
+    return obj.matrix_world.to_translation()
+
+def apply_offset(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+
+def boolean_subtract(cutter_obj, target_obj):
+    """
+    Performs a boolean subtraction using the modifier stack.
+    Note: This is non-destructive. For final geometry, we would apply it.
+    However, the prompt asks to "Boolean-subtract necktie_blade from itself... replace with extruded triangle".
+    This is a conceptual step. We will skip the actual boolean operation on the blade itself 
+    and instead create the final shape directly as instructed by the note.
+    """
+    if target_obj and cutter_obj:
+        # Add boolean modifier to target
+        mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+        mod.operation = 'DIFFERENCE'
+        mod.object = cutter_obj
+        # We don't apply it immediately to keep history clean, 
+        # but for the specific "replace with extruded triangle" instruction, 
+        # we will just create the new object and delete the old one.
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Remove collections if necessary (optional, but good for clean slate)
+    # bpy.data.collections.remove(bpy.data.collections["Collection"]) # Only if exists
+    
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_silk = make_material("fabric_silk", (0.15, 0.05, 0.05, 1.0))
+    mat_silk_lining = make_material("fabric_silk_lining", (0.10, 0.03, 0.03, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create necktie_blade ---
+    # Note: The prompt describes a conceptual step "Boolean-subtract necktie_blade from itself... replace with extruded triangle".
+    # Since we cannot easily "extrude from sketch" in pure Python without complex BMesh ops for a specific tie shape,
+    # and the prompt says "Create primitive cuboid... name it necktie_blade_final", we will follow the explicit creation steps.
+    # The "align to necktie.center" implies a parent or reference object "necktie" exists. 
+    # Since it doesn't exist in the scene, we assume "necktie.center" refers to the origin (0,0,0) or the center of the blade itself.
+    # Given the subsequent offsets are relative to the blade, we place the blade at the origin first.
+    
+    # Create initial placeholder
+    necktie_blade = add_cube("necktie_blade", (0.150, 0.080, 0.002), (0, 0, 0), (0, 0, 0), mat_silk)
+    
+    # The prompt says: "Align necktie_blade.XY_face to necktie.center". 
+    # Assuming necktie.center is (0,0,0) for the first object.
+    # Then offset (0,0,0).
+    
+    # "Boolean-subtract... replace with extruded triangle"
+    # We will delete the placeholder and create the final shape directly.
+    bpy.data.objects.remove(necktie_blade, do_unlink=True)
+    
+    # Create final blade
+    # Size: 0.150 x 0.080 x 0.002
+    # Orientation: +Z aligns +Z
+    necktie_blade_final = add_cube("necktie_blade_final", (0.150, 0.080, 0.002), (0, 0, 0), (0, 0, 0), mat_silk)
+    
+    # Align to necktie.center (assumed origin)
+    # Move by offset (0,0,0)
+    
+    # Rename
+    necktie_blade_final.name = "necktie_blade"
+    necktie_blade = necktie_blade_final
+
+    # --- SECTION 2 – Create necktie_tongue ---
+    # Size: 0.040 x 0.020 x 0.002
+    # Align to necktie_blade.bottom_face.center
+    # Offset: (0, -0.050, 0)
+    
+    # Calculate bottom face center of necktie_blade
+    # Blade is centered at (0,0,0). Bottom face Z is -0.001 (half of 0.002).
+    # Center of bottom face is (0, 0, -0.001)
+    blade_bottom_center = get_face_center(necktie_blade, 'bottom_face.center')
+    
+    necktie_tongue = add_cube("necktie_tongue", (0.040, 0.020, 0.002), (0, 0, 0), (0, 0, 0), mat_silk)
+    
+    # Align tongue to blade bottom center
+    # We need to move the tongue so its center is at the blade's bottom center? 
+    # Or its bottom face? Usually "Align XY_face to Point" means the face's center is at the point.
+    # Let's assume the object's local center aligns to the target point for simplicity, 
+    # then we adjust for the offset.
+    
+    # Set location to the target point
+    necktie_tongue.location = blade_bottom_center
+    
+    # Apply offset
+    offset_tongue = Vector((0, -0.050, 0))
+    apply_offset(necktie_tongue, offset_tongue)
+
+    # --- SECTION 3 – Create necktie_back ---
+    # Size: 0.140 x 0.070 x 0.001
+    # Align to necktie_blade.center
+    # Offset: (0, 0, -0.0015)
+    
+    blade_center = get_face_center(necktie_blade, 'center')
+    
+    necktie_back = add_cube("necktie_back", (0.140, 0.070, 0.001), (0, 0, 0), (0, 0, 0), mat_silk_lining)
+    
+    necktie_back.location = blade_center
+    
+    offset_back = Vector((0, 0, -0.0015))
+    apply_offset(necktie_back, offset_back)
+
+    # --- SECTION 4 – Create necktie_loop ---
+    # Size: 0.030 x 0.010 x 0.002
+    # Align to necktie_blade.center
+    # Offset: (0, 0.020, 0)
+    
+    necktie_loop = add_cube("necktie_loop", (0.030, 0.010, 0.002), (0, 0, 0), (0, 0, 0), mat_silk)
+    
+    necktie_loop.location = blade_center
+    
+    offset_loop = Vector((0, 0.020, 0))
+    apply_offset(necktie_loop, offset_loop)
+
+    # --- SECTION 5 – Create necktie_keeper ---
+    # Size: 0.030 x 0.005 x 0.002
+    # Align to necktie_blade.center
+    # Offset: (0, -0.010, 0)
+    
+    necktie_keeper = add_cube("necktie_keeper", (0.030, 0.005, 0.002), (0, 0, 0), (0, 0, 0), mat_silk)
+    
+    necktie_keeper.location = blade_center
+    
+    offset_keeper = Vector((0, -0.010, 0))
+    apply_offset(necktie_keeper, offset_keeper)
+
+    # Select all for visibility
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in [necktie_blade, necktie_tongue, necktie_back, necktie_loop, necktie_keeper]:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = necktie_blade
+
+if __name__ == "__main__":
+    main()
+```

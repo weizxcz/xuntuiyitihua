@@ -1,0 +1,61 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_arm_band; diffuse_color = (0.86, 0.86, 0.86, 1).
+Define material mat_buckle; diffuse_color = (0.12, 0.12, 0.12, 1).
+Define material mat_display_casing; diffuse_color = (0.20, 0.20, 0.20, 1).
+Define material mat_display_screen; diffuse_color = (0.00, 0.00, 0.00, 1).
+Define material mat_inner_pad; diffuse_color = (1.00, 1.00, 1.00, 1).
+Define material mat_sleeve; diffuse_color = (0.94, 0.94, 0.94, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create sleeve assembly (sleeve_main and inner_pad)  ---
+Create primitive cuboid with size 0.350×0.120×0.002 m and name it sleeve_main.
+Rotate sleeve_main so its +Z axis aligns +Z (world).
+Anchor sleeve_main to world origin.
+Move sleeve_main by offset(0,0,0).
+
+Create primitive cuboid with size 0.340×0.110×0.005 m and name it inner_pad.
+Rotate inner_pad so its +Z axis aligns +Z (world).
+Align inner_pad.XY_face to sleeve_main.XY_face.
+Move inner_pad by offset(0,0,0.001).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create closure system (velcro_strap and buckle_frame)  ---
+Create primitive cuboid with size 0.200×0.040×0.002 m and name it velcro_strap.
+Rotate velcro_strap so its +Z axis aligns +Z (world).
+Align velcro_strap.Z_face to sleeve_main.top_face.
+Move velcro_strap by offset(0,0,0.001).
+
+Create primitive cuboid with size 0.050×0.030×0.010 m and name it buckle_frame.
+Rotate buckle_frame so its +Z axis aligns +Z (world).
+Align buckle_frame.XY_face to sleeve_main.left_face.
+Move buckle_frame by offset(0.025,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create display module (display_unit and screen_panel)  ---
+Create primitive cuboid with size 0.080×0.060×0.015 m and name it display_unit.
+Rotate display_unit so its +Z axis aligns +Z (world).
+Align display_unit.XY_face to sleeve_main.top_face.
+Move display_unit by offset(0.100,0,0.002).
+
+Create primitive cuboid with size 0.070×0.050×0.001 m and name it screen_panel.
+Rotate screen_panel so its +Z axis aligns +Z (world).
+Align screen_panel.XY_face to display_unit.top_face.
+Move screen_panel by offset(0,0,0.008).
+
+Stage 3 complete.
+
+All stages complete.

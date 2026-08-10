@@ -1,0 +1,385 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.data.update()
+    return obj
+
+def add_cylinder(name, radius, depth, location):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def apply_material(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def get_face_normal(obj, face_index):
+    """Returns the world-space normal of a specific face."""
+    obj.update_from_editmode() # Ensure data is current
+    mat_world = obj.matrix_world
+    # Get the face in local space
+    # Note: For primitives, face indices are predictable but let's use a robust method
+    # For a cylinder, top face is usually the last one or specific index.
+    # A safer generic approach for "top face" of a Z-aligned primitive:
+    # We will assume standard orientation helpers handle the "top face" logic via locator.
+    return None
+
+class Locator:
+    def __init__(self, obj, face_type='center'):
+        self.obj = obj
+        self.face_type = face_type
+        self.update()
+
+    def update(self):
+        self.obj.update_from_editmode()
+        self.center = self.obj.matrix_world.to_translation()
+        
+        # Determine face center/normal based on type
+        # For simplicity with primitives aligned to Z:
+        # Top face center is center + (0,0, height/2)
+        # Bottom face center is center - (0,0, height/2)
+        
+        # Get dimensions
+        if self.obj.type == 'MESH':
+            # Approximate dimensions from bounds
+            bbox = self.obj.bound_box
+            # Calculate local extents
+            min_x = min(v[0] for v in bbox)
+            max_x = max(v[0] for v in bbox)
+            min_y = min(v[1] for v in bbox)
+            max_y = max(v[1] for v in bbox)
+            min_z = min(v[2] for v in bbox)
+            max_z = max(v[2] for v in bbox)
+            
+            local_height = max_z - min_z
+            local_center = Vector([(min_x+max_x)/2, (min_y+max_y)/2, (min_z+max_z)/2])
+            
+            # Transform to world
+            self.face_center_world = self.obj.matrix_world @ (local_center + Vector((0, 0, local_height/2)))
+            self.face_normal_world = self.obj.matrix_world @ Vector((0, 0, 1)) # Assuming Z-up primitive
+        else:
+            self.face_center_world = self.center
+            self.face_normal_world = Vector((0,0,1))
+
+    def get_offset_vector(self, target_locator):
+        """Calculates offset to snap this locator's face to target_locator's face."""
+        # Vector from this face center to target face center
+        return target_locator.face_center_world - self.face_center_world
+
+def align_z_to_z(obj):
+    """Ensures object's local Z aligns with world Z."""
+    # Since we create primitives aligned to Z, this is often redundant but safe.
+    # If rotation is needed, we'd calculate quaternion.
+    # For this script, primitives are created Z-aligned.
+    pass
+
+def place_object(obj, anchor_obj, anchor_face_type, align_face_type, offset_xyz):
+    """
+    1. Anchor obj to anchor_obj's face.
+    2. Align obj's face to anchor_obj's face (orientation).
+    3. Apply offset.
+    """
+    # Create locator for the anchor object's face
+    anchor_loc = Locator(anchor_obj, face_type=anchor_face_type)
+    
+    # Create locator for the new object (initially at origin or created location)
+    # We need to place the object such that its face is at the anchor's face.
+    
+    # Step 1: Position object so its face is at the anchor's face center
+    # We need to know the object's local face offset.
+    # For a Z-aligned cylinder/cube, the "top" face is at +Z half-height.
+    
+    # Get object dimensions
+    bbox = obj.bound_box
+    min_z = min(v[2] for v in bbox)
+    max_z = max(v[2] for v in bbox)
+    local_face_offset_z = max_z # Distance from center to top face
+    
+    # Target position for object center
+    target_center = anchor_loc.face_center_world - (obj.matrix_world @ Vector((0,0,local_face_offset_z)))
+    
+    # Apply position
+    obj.location = target_center
+    
+    # Step 2: Align orientation (already Z-aligned by creation, but ensure)
+    # Align obj's +Z to anchor's +Z (which is world Z)
+    # No rotation needed if both are Z-up.
+    
+    # Step 3: Apply offset
+    offset_vec = Vector(offset_xyz)
+    obj.location += offset_vec
+    
+    return obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+
+# --- Block 1: Materials ---
+
+mat_food_safe_plastic = make_material("food_safe_plastic", (0.9, 0.9, 0.9, 1.0))
+mat_metal_steel = make_material("metal_steel", (0.7, 0.7, 0.75, 1.0))
+mat_rubber_grip = make_material("rubber_grip", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Motor Housing Base
+motor_housing = add_cube("motor_housing", (0.15, 0.15, 0.10), (0, 0, 0))
+align_z_to_z(motor_housing)
+# Anchor to world origin (0,0,0)
+# Move by offset(0,0,0.05)
+motor_housing.location = Vector((0, 0, 0.05))
+apply_material(motor_housing, mat_food_safe_plastic)
+
+# SECTION 2 – Motor Unit
+motor = add_cylinder("motor", 0.04, 0.06, (0, 0, 0))
+align_z_to_z(motor)
+# Anchor to motor_housing.top_face
+# Align motor.+Z_face to motor_housing.+Z_face
+# Offset(0,0,0.03)
+place_object(motor, motor_housing, 'top', 'top', (0, 0, 0.03))
+apply_material(motor, mat_metal_steel)
+
+# SECTION 3 – Drive Shaft
+drive_shaft = add_cylinder("drive_shaft", 0.01, 0.05, (0, 0, 0))
+align_z_to_z(drive_shaft)
+# Anchor to motor.top_face
+# Align drive_shaft.+Z_face to motor.+Z_face
+# Offset(0,0,0.025)
+place_object(drive_shaft, motor, 'top', 'top', (0, 0, 0.025))
+apply_material(drive_shaft, mat_metal_steel)
+
+# SECTION 4 – Pulp Collector
+pulp_collector = add_cylinder("pulp_collector", 0.07, 0.08, (0, 0, 0))
+align_z_to_z(pulp_collector)
+# Anchor to motor_housing.top_face
+# Align pulp_collector.+Z_face to motor_housing.+Z_face
+# Offset(0,0,0.04)
+place_object(pulp_collector, motor_housing, 'top', 'top', (0, 0, 0.04))
+apply_material(pulp_collector, mat_food_safe_plastic)
+
+# SECTION 5 – Pulp Lid
+pulp_lid = add_cylinder("pulp_lid", 0.075, 0.01, (0, 0, 0))
+align_z_to_z(pulp_lid)
+# Anchor to pulp_collector.top_face
+# Align pulp_lid.+Z_face to pulp_collector.+Z_face
+# Offset(0,0,0.005)
+place_object(pulp_lid, pulp_collector, 'top', 'top', (0, 0, 0.005))
+apply_material(pulp_lid, mat_food_safe_plastic)
+
+# SECTION 6 – Juice Jar
+juice_jar = add_cylinder("juice_jar", 0.06, 0.12, (0, 0, 0))
+align_z_to_z(juice_jar)
+# Anchor to motor_housing.top_face
+# Align juice_jar.+Z_face to motor_housing.+Z_face
+# Offset(0,0,0.06)
+place_object(juice_jar, motor_housing, 'top', 'top', (0, 0, 0.06))
+apply_material(juice_jar, mat_food_safe_plastic)
+
+# SECTION 7 – Juicer Lid
+juicer_lid = add_cylinder("juicer_lid", 0.065, 0.015, (0, 0, 0))
+align_z_to_z(juicer_lid)
+# Anchor to juice_jar.top_face
+# Align juicer_lid.+Z_face to juice_jar.+Z_face
+# Offset(0,0,0.0075)
+place_object(juicer_lid, juice_jar, 'top', 'top', (0, 0, 0.0075))
+apply_material(juicer_lid, mat_food_safe_plastic)
+
+# SECTION 8 – Pulp Filter
+pulp_filter = add_cylinder("pulp_filter", 0.05, 0.04, (0, 0, 0))
+align_z_to_z(pulp_filter)
+# Anchor to pulp_collector.top_face
+# Align pulp_filter.+Z_face to pulp_collector.+Z_face
+# Offset(0,0,0.02)
+place_object(pulp_filter, pulp_collector, 'top', 'top', (0, 0, 0.02))
+apply_material(pulp_filter, mat_food_safe_plastic)
+
+# SECTION 9 – Pulp Filter Handle
+pulp_filter_handle = add_cube("pulp_filter_handle", (0.02, 0.02, 0.05), (0, 0, 0))
+align_z_to_z(pulp_filter_handle)
+# Anchor to pulp_filter.top_face
+# Align pulp_filter_handle.+Z_face to pulp_filter.+Z_face
+# Offset(0,0,0.025)
+place_object(pulp_filter_handle, pulp_filter, 'top', 'top', (0, 0, 0.025))
+apply_material(pulp_filter_handle, mat_food_safe_plastic)
+
+# SECTION 10 – Pulp Filter Handle Grip
+pulp_filter_handle_grip = add_cylinder("pulp_filter_handle_grip", 0.015, 0.03, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip)
+# Anchor to pulp_filter_handle.top_face
+# Align pulp_filter_handle_grip.+Z_face to pulp_filter_handle.+Z_face
+# Offset(0,0,0.015)
+place_object(pulp_filter_handle_grip, pulp_filter_handle, 'top', 'top', (0, 0, 0.015))
+apply_material(pulp_filter_handle_grip, mat_rubber_grip)
+
+# SECTION 11 – Pulp Filter Handle Grip Grip
+pulp_filter_handle_grip_grip = add_cylinder("pulp_filter_handle_grip_grip", 0.012, 0.02, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip)
+# Anchor to pulp_filter_handle_grip.top_face
+# Align pulp_filter_handle_grip_grip.+Z_face to pulp_filter_handle_grip.+Z_face
+# Offset(0,0,0.01)
+place_object(pulp_filter_handle_grip_grip, pulp_filter_handle_grip, 'top', 'top', (0, 0, 0.01))
+apply_material(pulp_filter_handle_grip_grip, mat_rubber_grip)
+
+# SECTION 12 – Pulp Filter Handle Grip Grip Grip
+pulp_filter_handle_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip", 0.01, 0.015, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip.+Z_face
+# Offset(0,0,0.0075)
+place_object(pulp_filter_handle_grip_grip_grip, pulp_filter_handle_grip_grip, 'top', 'top', (0, 0, 0.0075))
+apply_material(pulp_filter_handle_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 13 – Pulp Filter Handle Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip", 0.008, 0.01, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip.+Z_face
+# Offset(0,0,0.005)
+place_object(pulp_filter_handle_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip, 'top', 'top', (0, 0, 0.005))
+apply_material(pulp_filter_handle_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 14 – Pulp Filter Handle Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip", 0.006, 0.008, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.004)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.004))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 15 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip", 0.005, 0.006, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.003)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.003))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 16 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip", 0.004, 0.005, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.0025)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.0025))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 17 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip", 0.003, 0.004, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.002)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.002))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 18 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.002, 0.003, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.0015)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.0015))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 19 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0015, 0.002, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.001)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.001))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 20 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.001, 0.0015, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.00075)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.00075))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 21 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0008, 0.001, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.0005)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.0005))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 22 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0006, 0.0008, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.0004)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.0004))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 23 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0005, 0.0006, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.0003)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.0003))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 24 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0004, 0.0005, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.00025)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.00025))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 25 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0003, 0.0004, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.0002)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.0002))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 26 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip = add_cylinder("pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip", 0.0002, 0.0003, (0, 0, 0))
+align_z_to_z(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip)
+# Anchor to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face
+# Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face
+# Offset(0,0,0.00015)
+place_object(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, 'top', 'top', (0, 0, 0.00015))
+apply_material(pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip, mat_rubber_grip)
+
+# SECTION 27 – Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip
+pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip

@@ -1,0 +1,50 @@
+{
+  "id": "0a94c2fb-8309-4c47-9953-d7635b9bafe3",
+  "name": "Fountain Pen",
+  "instruction": "Design a fountain pen. Start with the barrel: it's cylindrical and tapers slightly towards the end. The cap is detachable and fits snugly over the nib. The nib is pointed and extends from the grip section, which is textured for better hold. Include a clip on the cap for attaching the pen to a pocket. The pen should be functional, with all parts fitting together seamlessly.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a fountain pen.",
+        "The barrel is cylindrical and tapers slightly towards the end.",
+        "The cap is detachable.",
+        "The nib is pointed.",
+        "The grip section is textured."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the barrel is proportionate to the nib.",
+        "The cap fits proportionately over the nib."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cap fits snugly over the nib.",
+        "The nib extends properly from the grip section.",
+        "The clip is positioned correctly on the cap for functionality."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the cap and the nib when attached.",
+        "The grip section connects seamlessly with the barrel.",
+        "The clip does not interfere with the cap's fit."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes all necessary components: barrel, cap, nib, grip section, and clip.",
+        "The pen is functional with all parts fitting together seamlessly."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

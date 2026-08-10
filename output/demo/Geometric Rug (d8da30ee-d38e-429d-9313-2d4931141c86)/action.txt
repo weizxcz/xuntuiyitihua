@@ -1,0 +1,72 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_hex_blue; diffuse_color = (0.15,0.25,0.45,1.0).
+Define material mat_tri_blue; diffuse_color = (0.15,0.25,0.45,1.0).
+Define material mat_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Hexagonal Base  ---
+Create primitive cuboid with size 1.0×1.0×0.02 m and name it hex_base.
+Rotate hex_base so its +Z axis aligns +Z (world).
+Anchor hex_base to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create Hexagonal Tiles  ---
+For r in 0…4 and c in 0…4:
+  Create primitive cylinder with diameter 0.18 m and height 0.005 m and name it hexagon_prism_r_c.
+  Rotate hexagon_prism_r_c so its +Z axis aligns +Z (world).
+  Anchor hexagon_prism_r_c to hex_base.top_face.
+  Then offset(0.1 + c*0.2, 0.1 + r*0.1732, 0.01).
+
+---  SECTION 3 – Assemble Hexagonal Rug Section  ---
+Boolean-union hex_base and all hexagon_prism_r_c objects; keep hex_base as the resulting object named rug_hex.
+Rotate rug_hex so its +Z axis aligns +Z (world).
+Align rug_hex.center to world origin (0,0).
+Then move by offset(0,0,0).
+Apply material mat_white to rug_hex.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create Triangular Base  ---
+Create primitive cuboid with size 1.0×1.0×0.02 m and name it tri_base.
+Rotate tri_base so its +Z axis aligns +Z (world).
+Anchor tri_base to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 5 – Create Triangular Tiles  ---
+For r in 0…4 and c in 0…4:
+  Create primitive cylinder with diameter 0.18 m and height 0.005 m and name it triangle_prism_r_c.
+  Rotate triangle_prism_r_c so its +Z axis aligns +Z (world).
+  Anchor triangle_prism_r_c to tri_base.top_face.
+  Then offset(0.1 + c*0.2, 0.1 + r*0.1732, 0.01).
+
+---  SECTION 6 – Assemble Triangular Rug Section  ---
+Boolean-union tri_base and all triangle_prism_r_c objects; keep tri_base as the resulting object named rug_tri.
+Rotate rug_tri so its +Z axis aligns +Z (world).
+Align rug_tri.center to position (2,0,0).
+Then move by offset(0,0,0).
+Apply material mat_white to rug_tri.
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Assemble Composite Rug Base  ---
+Boolean-union rug_hex and rug_tri; keep rug_hex as the resulting object named rug_base.
+Rotate rug_base so its +Z axis aligns +Z (world).
+Align rug_base.center to Avg(rug_hex.center, rug_tri.center).
+Then move by offset(0,0,0).
+Apply material mat_white to rug_base.
+Assembly guideline satisfied.
+Stage 7 complete.
+
+All stages complete.

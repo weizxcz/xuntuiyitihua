@@ -1,0 +1,1 @@
+Design a toiletry bag with multiple compartments for organizing toiletries. It should have a main compartment for larger items, smaller pockets for accessories, and a secure zipper closure. The bag should be compact and easy to carry.

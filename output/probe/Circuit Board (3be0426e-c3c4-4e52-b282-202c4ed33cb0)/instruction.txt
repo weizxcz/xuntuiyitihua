@@ -1,0 +1,9 @@
+Create a 3D model of a circuit board. 
+
+The board should be rectangular with various electronic components. 
+
+Include resistors, capacitors, and integrated circuits. 
+
+Add a few LEDs for visual indication. 
+
+Finally, place connectors on the edges for external connections.

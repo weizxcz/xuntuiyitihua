@@ -1,0 +1,279 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with a specific diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Ensure Z-up
+    return obj
+
+def add_disc(radius, segments=32, name="Disc"):
+    """Add a flat disc oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube centered at origin."""
+    # size is total width/height/depth
+    half = size / 2.0
+    bpy.ops.mesh.primitive_cube_add(size=half, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, segments=32, name="Cone"):
+    """Add a cone oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_uvsphere(radius, width_seg=16, height_seg=16, name="UVSphere"):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=5, name="Bevel"):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name=name, type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def boolean_subtract(target, cutter, name="BooleanSubtract"):
+    """Perform a boolean subtract using a cutter object."""
+    # Ensure cutter is active for the operator or use modifiers
+    # Using modifiers is more robust for scripting
+    mod = target.modifiers.new(name=name, type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    # Apply immediately to keep scene clean
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    return target
+
+def boolean_union(target, cutter, name="BooleanUnion"):
+    """Perform a boolean union using a cutter object."""
+    mod = target.modifiers.new(name=name, type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    return target
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Align an object's local axis to a world vector."""
+    # This is a simplified helper. For strict Z-up, we just ensure rotation is (0,0,0)
+    # or use quaternion rotation.
+    if axis == 'Z':
+        obj.rotation_euler = (0, 0, 0)
+    elif axis == 'X':
+        obj.rotation_euler = (0, -1.5708, 0)
+    elif axis == 'Y':
+        obj.rotation_euler = (1.5708, 0, 0)
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        """Return the world position of the object's center."""
+        return self.obj.location.copy()
+
+    def face_center_world(self, face_index=0):
+        """Return the world position of the center of a specific face."""
+        # Requires mesh data
+        if self.obj.data.polygons:
+            # Get the center of the first polygon in world space
+            # Note: This assumes the object is not scaled/rotated in a complex way relative to its local mesh
+            # For simple primitives, local center of face mapped to world is sufficient.
+            poly = self.obj.data.polygons[face_index]
+            # Local center
+            local_center = Vector((0, 0, 0))
+            for v_idx in poly.vertices:
+                local_center += self.obj.data.vertices[v_idx].co
+            local_center /= len(poly.vertices)
+            
+            # Transform to world
+            world_center = self.obj.matrix_world @ local_center
+            return world_center
+        return self.center_world()
+
+    def radial_point_world(self, angle=0, radius=1):
+        """Return a point on the radial axis."""
+        # Simplified: returns a point along X axis at radius
+        return Vector((radius * 1, 0, 0)) # Placeholder for specific radial needs
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_plastic_white = make_material("plastic_white", (240/255, 240/255, 240/255, 1.0))
+mat_ink_black = make_material("ink_black", (0/255, 0/255, 0/255, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create ruler body ---
+
+# Create primitive cuboid with size 0.3048×0.0254×0.003 m
+ruler_body = add_cube(0.3048, name="ruler_body")
+# Note: add_cube creates a cube of size 'size' in each dimension. 
+# The prompt asks for 0.3048x0.0254x0.003. 
+# add_cube(size) creates a cube of size x size x size.
+# To get a cuboid, we scale it.
+ruler_body.scale = (0.3048, 0.0254, 0.003)
+
+# Rotate ruler_body so its +Z axis aligns +Z (world).
+# Default cube is Z-up, so no rotation needed.
+align_axis_to_vector(ruler_body, 'Z', (0, 0, 1))
+
+# Move ruler_body to pos=(0,0,0).
+ruler_body.location = (0, 0, 0)
+
+# Assign material
+if ruler_body.data.materials:
+    ruler_body.data.materials[0] = mat_plastic_white
+else:
+    ruler_body.data.materials.append(mat_plastic_white)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create inch tick marks ---
+
+# Create a cutter for boolean subtraction or just add cubes?
+# The prompt says "Create primitive cuboid... Align... Move".
+# It does not explicitly say "boolean subtract". It implies adding tick marks.
+# However, tick marks are usually protrusions or engravings.
+# Given "Create primitive cuboid", I will add them as separate objects or join them.
+# Let's add them as separate objects named inch_i.
+
+# Anchor: ruler_body.top_face.
+# For a cube centered at 0,0,0 with scale (X,Y,Z), the top face (Z+) is at Z = Z/2.
+# The ruler body is 0.003m thick. Top face Z = 0.0015.
+# The tick marks are 0.0005m high.
+# We need to align inch_i.bottom_face to ruler_body.top_face.
+# inch_i size: 0.001x0.015x0.0005.
+# If centered, bottom face is at Z = -0.00025.
+# We want bottom face Z = 0.0015.
+# So center Z should be 0.0015 + 0.00025 = 0.00175.
+
+# Let's create a helper to place the tick marks.
+# We will create them, align, then offset.
+
+for i in range(13): # 0...12
+    # Create primitive cuboid with size 0.001×0.015×0.0005 m
+    tick = add_cube(1.0, name=f"inch_{i}") # Start with unit cube
+    tick.scale = (0.001, 0.015, 0.0005)
+    
+    # Rotate inch_i so its +Z axis aligns +Z (world).
+    align_axis_to_vector(tick, 'Z', (0, 0, 1))
+    
+    # Align inch_i.bottom_face to ruler_body.top_face.
+    # Ruler body top face Z world:
+    ruler_loc = ruler_body.location
+    ruler_z_half = ruler_body.scale[2] / 2.0
+    ruler_top_z = ruler_loc[2] + ruler_z_half
+    
+    # Tick height is 0.0005. Half height is 0.00025.
+    # Bottom face is at center_z - 0.00025.
+    # We want center_z - 0.00025 = ruler_top_z.
+    # center_z = ruler_top_z + 0.00025.
+    tick_loc_z = ruler_top_z + 0.00025
+    
+    # Move by offset(i*0.0254, 0, 0).
+    # The offset is relative to the anchor.
+    # The anchor is the top face of the ruler.
+    # The ruler is centered at 0,0,0.
+    # The tick marks should be placed along the length of the ruler (X axis).
+    # Offset is in reference local axes. Ruler local X is world X.
+    offset_x = i * 0.0254
+    
+    tick.location = (offset_x, 0, tick_loc_z)
+    
+    # Assign material
+    if tick.data.materials:
+        tick.data.materials[0] = mat_plastic_white
+    else:
+        tick.data.materials.append(mat_plastic_white)
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create centimeter tick marks ---
+
+for i in range(31): # 0...30
+    # Create primitive cuboid with size 0.001×0.010×0.0005 m
+    tick = add_cube(1.0, name=f"cm_{i}")
+    tick.scale = (0.001, 0.010, 0.0005)
+    
+    # Rotate cm_i so its +Z axis aligns +Z (world).
+    align_axis_to_vector(tick, 'Z', (0, 0, 1))
+    
+    # Align cm_i.bottom_face to ruler_body.top_face.
+    ruler_loc = ruler_body.location
+    ruler_z_half = ruler_body.scale[2] / 2.0
+    ruler_top_z = ruler_loc[2] + ruler_z_half
+    
+    tick_height = 0.0005
+    tick_half_height = tick_height / 2.0
+    tick_loc_z = ruler_top_z + tick_half_height
+    
+    # Move by offset(i*0.01, 0, 0).
+    offset_x = i * 0.01
+    
+    tick.location = (offset_x, 0, tick_loc_z)
+    
+    # Assign material
+    if tick.data.materials:
+        tick.data.materials[0] = mat_plastic_white
+    else:
+        tick.data.materials.append(mat_plastic_white)
+
+# Stage 3 complete.
+
+# All stages complete.
+```

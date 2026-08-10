@@ -1,0 +1,52 @@
+{
+  "id": "5e2cd477-2dbd-4822-a07d-9e747453283a",
+  "name": "Iron",
+  "instruction": "Can you create a 3D model of an iron? The iron should have a flat soleplate with steam holes. Add a handle on top with a dial for temperature control. Include a water tank with a fill cap. Add buttons for steam and spray functions. Make sure the power cord is visible.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an iron.",
+        "The iron has a flat soleplate.",
+        "The soleplate includes steam holes.",
+        "The handle is positioned on top of the iron.",
+        "The water tank is integrated into the design."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The handle is proportionate to the body of the iron.",
+        "The water tank is appropriately sized relative to the iron's body."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The soleplate is positioned flat against the surface.",
+        "The handle is securely attached to the top of the iron.",
+        "The water tank is positioned at the back or side of the iron.",
+        "The buttons for steam and spray functions are easily accessible."
+      ],
+      "Object distance and contact": [
+        "The soleplate does not overlap with the handle.",
+        "There is a clear space between the water tank and the soleplate.",
+        "The power cord is visibly connected without obstruction."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The steam holes are included in the soleplate.",
+        "The temperature control dial is present on the handle.",
+        "Buttons for steam and spray functions are included."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "20ea5ac6-a6f3-4462-bb1d-657b9d568986",
+  "name": "Birdhouse",
+  "instruction": "Design a birdhouse with a simple rectangular shape. Include a circular entrance hole and a small perch below the entrance.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a birdhouse.",
+        "The birdhouse has a simple rectangular shape.",
+        "The entrance hole is circular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The entrance hole and perch are proportioante to the birdhouse"
+      ],
+      "Texture and surface detail": [
+        "The birdhouse appears to be made of wood or similar material."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The entrance hole is correctly placed on the front face of the birdhouse.",
+        "The perch is positioned directly below the entrance hole.",
+        "The birdhouse maintains a stable rectangular structure."
+      ],
+      "Object distance and contact": [
+        "The entrance hole does not overlap with the edges of the birdhouse.",
+        "The perch is securely attached and does not interfere with the entrance hole."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design follows the instruction for a simple rectangular shape."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

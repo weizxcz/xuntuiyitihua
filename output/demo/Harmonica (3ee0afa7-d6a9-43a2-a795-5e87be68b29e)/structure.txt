@@ -1,0 +1,37 @@
+-- MATERIAL LIBRARY --
+mat_body | diffuse_color=(0.85,0.85,0.85,1.0)
+mat_mouthpiece | diffuse_color=(0.1,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| harmonica_root | Composite of body + mouthpiece + reed_plate + holes | assembly_order=[body_group], [mouthpiece_group]; mat=-> |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_group | Composite of body_shell + reed_plate + hole_cutters | assembly_order=[body_shell], [reed_plate], [hole_cutters]; mat=-> |
+| body_shell | Rectangular prism 0.120×0.040×0.020 m (L×W×H) | pos=(0,0,0); orientation=axis:+Z; mat=mat_body; create_method=primitive; constraint=box 0.120 0.040 0.020 |
+| reed_plate | Rectangular prism 0.120×0.038×0.002 m (L×W×H) | Align(XY) reed_plate.top_face to body_shell.bottom_face; offset(0,0,-0.001); orientation=axis:+Z; mat=mat_body; create_method=primitive; constraint=box 0.120 0.038 0.002 |
+| hole_cutters | Composite of 10 cylindrical cutters | assembly_order=[hole_1, hole_2, hole_3, hole_4, hole_5, hole_6, hole_7, hole_8, hole_9, hole_10]; mat=-> |
+| hole_1 | Cylinder Ø0.006×0.020 m | Align(XY) hole_1.center to body_shell.center; offset(0.045,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_2 | Cylinder Ø0.006×0.020 m | Align(XY) hole_2.center to body_shell.center; offset(0.035,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_3 | Cylinder Ø0.006×0.020 m | Align(XY) hole_3.center to body_shell.center; offset(0.025,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_4 | Cylinder Ø0.006×0.020 m | Align(XY) hole_4.center to body_shell.center; offset(0.015,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_5 | Cylinder Ø0.006×0.020 m | Align(XY) hole_5.center to body_shell.center; offset(0.005,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_6 | Cylinder Ø0.006×0.020 m | Align(XY) hole_6.center to body_shell.center; offset(-0.005,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_7 | Cylinder Ø0.006×0.020 m | Align(XY) hole_7.center to body_shell.center; offset(-0.015,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_8 | Cylinder Ø0.006×0.020 m | Align(XY) hole_8.center to body_shell.center; offset(-0.025,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_9 | Cylinder Ø0.006×0.020 m | Align(XY) hole_9.center to body_shell.center; offset(-0.035,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+| hole_10 | Cylinder Ø0.006×0.020 m | Align(XY) hole_10.center to body_shell.center; offset(-0.045,0,0); orientation=axis:+Z; mat=->; create_method=primitive; constraint=cylinder 0.003 0.020 |
+
+Layer 2 – Mouthpiece Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| mouthpiece_group | Composite of mouthpiece_base + mouthpiece_grip | assembly_order=[mouthpiece_base], [mouthpiece_grip]; mat=-> |
+| mouthpiece_base | Rectangular prism 0.030×0.040×0.020 m (L×W×H) | Align(XY) mouthpiece_base.right_face to body_shell.left_face; offset(-0.015,0,0); orientation=axis:+Z; mat=mat_mouthpiece; create_method=primitive; constraint=box 0.030 0.040 0.020 |
+| mouthpiece_grip | Rectangular prism 0.010×0.040×0.020 m (L×W×H) | Align(XY) mouthpiece_grip.right_face to mouthpiece_base.left_face; offset(-0.005,0,0); orientation=axis:+Z; mat=mat_mouthpiece; create_method=primitive; constraint=box 0.010 0.040 0.020 |
+
+# ----------  END_GRAPH  ----------

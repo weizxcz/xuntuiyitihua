@@ -1,0 +1,102 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_exterior; diffuse_color = (0.8, 0.2, 0.2, 1.0).
+Define material fabric_interior; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+Define material zipper_track; diffuse_color = (0.5, 0.5, 0.5, 1.0).
+Define material zipper_pull; diffuse_color = (0.8, 0.8, 0.8, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create exterior shell front and back panels  ---
+Create primitive cuboid with size 0.200×0.150×0.002 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Anchor front_panel to world origin.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.200×0.150×0.002 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Anchor back_panel to world origin.
+Then move by offset(0,0,0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create exterior shell bottom panel  ---
+Create primitive cuboid with size 0.200×0.100×0.002 m and name it bottom_panel.
+Rotate bottom_panel so its +Z axis aligns +Z (world).
+Anchor bottom_panel to world origin.
+Then move by offset(0,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create exterior shell side gusset  ---
+Create primitive cuboid with size 0.100×0.150×0.002 m and name it side_gusset.
+Rotate side_gusset so its +Z axis aligns +Z (world).
+Anchor side_gusset to world origin.
+Then move by offset(0,0,0).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create interior lining front and back panels  ---
+Create primitive cuboid with size 0.190×0.140×0.001 m and name it front_lining.
+Rotate front_lining so its +Z axis aligns +Z (world).
+Anchor front_lining to world origin.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.190×0.140×0.001 m and name it back_lining.
+Rotate back_lining so its +Z axis aligns +Z (world).
+Anchor back_lining to world origin.
+Then move by offset(0,0,0).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create interior lining bottom panel  ---
+Create primitive cuboid with size 0.190×0.090×0.001 m and name it bottom_lining.
+Rotate bottom_lining so its +Z axis aligns +Z (world).
+Anchor bottom_lining to world origin.
+Then move by offset(0,0,0).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create zipper track  ---
+Create primitive cuboid with size 0.200×0.010×0.005 m and name it zipper_track.
+Rotate zipper_track so its +Z axis aligns +X (world).
+Anchor zipper_track to world origin.
+Then move by offset(0,0,0.075).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create zipper pull  ---
+Create primitive cuboid with size 0.020×0.010×0.002 m and name it zipper_pull.
+Rotate zipper_pull so its +Z axis aligns +Z (world).
+Anchor zipper_pull to world origin.
+Then move by offset(0.100,0,0.075).
+
+Stage 7 complete.
+
+---  SECTION 8 – Create internal divider A  ---
+Create primitive cuboid with size 0.190×0.140×0.001 m and name it divider_A.
+Rotate divider_A so its +Z axis aligns +Z (world).
+Anchor divider_A to world origin.
+Then move by offset(0,0,0).
+
+Stage 8 complete.
+
+---  SECTION 9 – Create internal divider B  ---
+Create primitive cuboid with size 0.190×0.140×0.001 m and name it divider_B.
+Rotate divider_B so its +Z axis aligns +Z (world).
+Anchor divider_B to world origin.
+Then move by offset(0,0,0).
+
+Stage 9 complete.
+
+All stages complete.

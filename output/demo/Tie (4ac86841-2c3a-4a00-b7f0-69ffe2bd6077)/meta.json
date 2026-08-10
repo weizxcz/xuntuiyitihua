@@ -1,0 +1,44 @@
+{
+  "id": "4ac86841-2c3a-4a00-b7f0-69ffe2bd6077",
+  "name": "Tie",
+  "instruction": "Make a simple tie.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a tie.",
+        "The tie has a long, narrow shape.",
+        "The tie tapers at one end."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tie hangs down in a vertical position when worn.",
+        "The tapered end is positioned correctly relative to the wider end."
+      ],
+      "Object distance and contact": [
+        "The tie does not overlap itself when tied.",
+        "The tie should rest against the collar of the shirt."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The instruction to make a simple tie is clear.",
+        "The design does not include complex features."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

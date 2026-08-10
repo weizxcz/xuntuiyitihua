@@ -1,0 +1,135 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.75, 0.75, 0.75, 1.0).
+Define material mat_black_plastic; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+Define material mat_copper; diffuse_color = (0.85, 0.37, 0.2, 1.0).
+Define material mat_green_plastic; diffuse_color = (0.1, 0.5, 0.1, 1.0).
+Define material mat_white_plastic; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main_shell (Outer Enclosure)  ---
+Create primitive cylinder with diameter 0.400 m and height 0.150 m and name it main_shell.
+Rotate main_shell so its +Z axis aligns +Z (world).
+Anchor main_shell to world origin.
+Then move by offset(0,0,0).
+Create primitive cuboid with size 0.400×0.300×0.150 m and name it main_shell_cut.
+Rotate main_shell_cut so its +Z axis aligns +Z (world).
+Anchor main_shell_cut to main_shell.
+Then move by offset(0,0,0).
+Boolean-subtract main_shell_cut from main_shell; discard main_shell_cut.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create inner_chassis (Inner Support Frame)  ---
+Create primitive cylinder with diameter 0.380 m and height 0.140 m and name it inner_chassis.
+Rotate inner_chassis so its +Z axis aligns +Z (world).
+Anchor inner_chassis to main_shell.
+Then move by offset(0,0,0.005).
+Create primitive cuboid with size 0.380×0.280×0.140 m and name it inner_chassis_cut.
+Rotate inner_chassis_cut so its +Z axis aligns +Z (world).
+Anchor inner_chassis_cut to inner_chassis.
+Then move by offset(0,0,0).
+Boolean-subtract inner_chassis_cut from inner_chassis; discard inner_chassis_cut.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create door (Hinged Front Cover)  ---
+Create primitive cuboid with size 0.400×0.300×0.005 m and name it door.
+Rotate door so its +Z axis aligns +Z (world).
+Anchor door to main_shell.
+Then move by offset(0,0.152,0).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create busbar_main (Main Power Distribution Bar)  ---
+Create primitive cuboid with size 0.350×0.020×0.005 m and name it busbar_main.
+Rotate busbar_main so its +Z axis aligns +Z (world).
+Anchor busbar_main to inner_chassis.
+Then move by offset(0,0,0.05).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create breaker_1 (Circuit Breaker Unit 1)  ---
+Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_1.
+Rotate breaker_1 so its +Z axis aligns +Z (world).
+Anchor breaker_1 to busbar_main.
+Then move by offset(-0.15,0,0.07).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create breaker_2 (Circuit Breaker Unit 2)  ---
+Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_2.
+Rotate breaker_2 so its +Z axis aligns +Z (world).
+Anchor breaker_2 to busbar_main.
+Then move by offset(-0.05,0,0.07).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Create breaker_3 (Circuit Breaker Unit 3)  ---
+Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_3.
+Rotate breaker_3 so its +Z axis aligns +Z (world).
+Anchor breaker_3 to busbar_main.
+Then move by offset(0.05,0,0.07).
+Assembly guideline satisfied.
+Stage 7 complete.
+
+---  SECTION 8 – Create breaker_4 (Circuit Breaker Unit 4)  ---
+Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_4.
+Rotate breaker_4 so its +Z axis aligns +Z (world).
+Anchor breaker_4 to busbar_main.
+Then move by offset(0.15,0,0.07).
+Assembly guideline satisfied.
+Stage 8 complete.
+
+---  SECTION 9 – Create handle_1 (Toggle Handle for Breaker 1)  ---
+Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_1.
+Rotate handle_1 so its +Z axis aligns +Z (world).
+Anchor handle_1 to breaker_1.
+Then move by offset(-0.15,0.015,0.09).
+Assembly guideline satisfied.
+Stage 9 complete.
+
+---  SECTION 10 – Create handle_2 (Toggle Handle for Breaker 2)  ---
+Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_2.
+Rotate handle_2 so its +Z axis aligns +Z (world).
+Anchor handle_2 to breaker_2.
+Then move by offset(-0.05,0.015,0.09).
+Assembly guideline satisfied.
+Stage 10 complete.
+
+---  SECTION 11 – Create handle_3 (Toggle Handle for Breaker 3)  ---
+Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_3.
+Rotate handle_3 so its +Z axis aligns +Z (world).
+Anchor handle_3 to breaker_3.
+Then move by offset(0.05,0.015,0.09).
+Assembly guideline satisfied.
+Stage 11 complete.
+
+---  SECTION 12 – Create handle_4 (Toggle Handle for Breaker 4)  ---
+Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_4.
+Rotate handle_4 so its +Z axis aligns +Z (world).
+Anchor handle_4 to breaker_4.
+Then move by offset(0.15,0.015,0.09).
+Assembly guideline satisfied.
+Stage 12 complete.
+
+---  SECTION 13 – Create label_plate (Identification Plate)  ---
+Create primitive cuboid with size 0.100×0.050×0.001 m and name it label_plate.
+Rotate label_plate so its +Z axis aligns +Z (world).
+Anchor label_plate to door.
+Then move by offset(0,0.152,0.001).
+Assembly guideline satisfied.
+Stage 13 complete.
+
+All stages complete.

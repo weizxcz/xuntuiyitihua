@@ -1,0 +1,48 @@
+{
+  "id": "cc9ebe9d-1a26-47a9-84c4-aa6a12ff5c3e",
+  "name": "Sushi Roll",
+  "instruction": "Describe a sushi roll featuring a cylindrical shape, filled with rice, fish, and vegetables, and wrapped in seaweed.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a sushi roll.",
+        "The sushi roll has a cylindrical shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The ratio of rice to fish and vegetables is balanced.",
+        "The thickness of the seaweed wrap is appropriate for the contents."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical shape is maintained throughout the roll.",
+        "The filling is evenly distributed within the roll.",
+        "The seaweed wrap encases the filling without gaps."
+      ],
+      "Object distance and contact": [
+        "The seaweed is in direct contact with the rice and filling.",
+        "There are no visible gaps between the seaweed and the contents.",
+        "The ends of the sushi roll are neatly sealed."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The cylindrical shape is correctly depicted.",
+        "The filling of rice, fish, and vegetables is clearly shown.",
+        "The wrapping in seaweed is properly illustrated."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

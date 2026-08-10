@@ -1,0 +1,44 @@
+{
+  "id": "b1ddd7ba-14d0-4592-b68e-0b05ace6d896",
+  "name": "Candle Holder",
+  "instruction": "Design a 3D model of a candle holder that can hold a single candle. The base should be circular and stable.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a candle holder.",
+        "The base is circular.",
+        "The holder is designed to accommodate a single candle."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The holder is proportionate to the candle"
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The candle holder has a defined height and width.",
+        "The candle fits securely within the holder."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the candle and the holder.",
+        "The base is in direct contact with the surface it rests on."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the requirement of holding a single candle."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "e7574983-4ef7-43a9-8cdb-0f482fdd4708",
+  "name": "Power Cable",
+  "instruction": "Could you create a 3D model of a power cable? Thanks.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a power cable.",
+        "The power cable has a cylindrical shape.",
+        "The ends of the cable are slightly tapered."
+      ],
+      "Color representation": [
+        "The cable is represented in a standard black color."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cable is depicted in a realistic, flexible manner.",
+        "The connectors are positioned correctly at both ends of the cable.",
+        "The cable appears to have a natural curve."
+      ],
+      "Object distance and contact": [
+        "The connectors do not overlap with the cable body.",
+        "There is a clear distinction between the cable and the connectors."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The model accurately represents a power cable as requested.",
+        "All specified attributes are included in the design."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,1 @@
+Design a paint palette with a rectangular shape and multiple wells for holding different colors of paint. The palette should have a thumb hole for easy handling and a flat surface for mixing colors. Include a brush holder along one edge of the palette.

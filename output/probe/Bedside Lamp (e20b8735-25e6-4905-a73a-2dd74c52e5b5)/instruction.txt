@@ -1,0 +1,1 @@
+Design a bedside lamp. The base is circular with a diameter of 6 inches. The lamp has a straight, vertical stand, 12 inches tall, with a conical shade at the top.

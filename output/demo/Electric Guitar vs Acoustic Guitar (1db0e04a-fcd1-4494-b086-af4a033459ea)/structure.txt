@@ -1,0 +1,47 @@
+-- MATERIAL LIBRARY --
+acoustic_wood | diffuse_color=(0.65,0.45,0.25,1.0)
+electric_body_paint | diffuse_color=(0.1,0.1,0.9,1.0)
+fretboard_wood | diffuse_color=(0.15,0.08,0.05,1.0)
+metal_strings | diffuse_color=(0.8,0.8,0.8,1.0)
+metal_hardware | diffuse_color=(0.7,0.7,0.7,1.0)
+pearl_inlay | diffuse_color=(0.95,0.95,0.9,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite assembly of two guitars for comparison | assembly_order=[electric_guitar], [acoustic_guitar]; pos=(0,0,0); orientation=axis:+Z |
+
+Layer 1 – Primary Structure (Electric Guitar)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| electric_guitar | Composite of electric body, neck, headstock, hardware, strings, and inlays | assembly_order=[electric_body], [electric_neck_assembly], [electric_hardware], [electric_strings]; pos=(-0.2, 0, 0); orientation=axis:+Z |
+| electric_body | Solid body block | size=0.5×0.15×0.05 m; mat=electric_body_paint; create_method=primitive; orientation=axis:+Z |
+| electric_neck_assembly | Composite of neck, fretboard, and headstock | assembly_order=[electric_neck], [electric_fretboard], [electric_headstock]; pos=(0, 0.25, 0); orientation=axis:+Z |
+| electric_neck | Neck block | size=0.05×0.4×0.03 m; mat=acoustic_wood; create_method=primitive; orientation=axis:+Z |
+| electric_fretboard | Fretboard block | size=0.04×0.35×0.005 m; mat=fretboard_wood; create_method=primitive; orientation=axis:+Z |
+| electric_headstock | Headstock block | size=0.06×0.1×0.02 m; mat=electric_body_paint; create_method=primitive; orientation=axis:+Z |
+| electric_hardware | Composite of pickups, bridge, and tuning pegs | assembly_order=[electric_pickups], [electric_bridge], [electric_tuning_pegs]; pos=(0, 0, 0); orientation=axis:+Z |
+| electric_pickups | Two rectangular pickup blocks | size=0.02×0.01×0.005 m each; mat=metal_hardware; create_method=primitive; orientation=axis:+Z |
+| electric_bridge | Bridge block | size=0.05×0.02×0.01 m; mat=metal_hardware; create_method=primitive; orientation=axis:+Z |
+| electric_tuning_pegs | Six tuning pegs | size=0.01×0.01×0.01 m each; mat=metal_hardware; create_method=primitive; orientation=axis:+Z |
+| electric_strings | Six string lines | length=0.6 m; mat=metal_strings; create_method=path_sweep; orientation=axis:+Z |
+| electric_inlays | Dot inlays on fretboard | size=0.005×0.005×0.001 m each; mat=pearl_inlay; create_method=primitive; orientation=axis:+Z |
+
+Layer 1 – Primary Structure (Acoustic Guitar)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| acoustic_guitar | Composite of acoustic body, neck, headstock, hardware, strings, and inlays | assembly_order=[acoustic_body], [acoustic_neck_assembly], [acoustic_hardware], [acoustic_strings], [acoustic_inlays]; pos=(0.2, 0, 0); orientation=axis:+Z |
+| acoustic_body | Hollow body with sound hole | size=0.5×0.2×0.1 m; mat=acoustic_wood; create_method=primitive; orientation=axis:+Z |
+| acoustic_neck_assembly | Composite of neck, fretboard, and headstock | assembly_order=[acoustic_neck], [acoustic_fretboard], [acoustic_headstock]; pos=(0, 0.25, 0); orientation=axis:+Z |
+| acoustic_neck | Neck block | size=0.05×0.4×0.03 m; mat=acoustic_wood; create_method=primitive; orientation=axis:+Z |
+| acoustic_fretboard | Fretboard block | size=0.04×0.35×0.005 m; mat=fretboard_wood; create_method=primitive; orientation=axis:+Z |
+| acoustic_headstock | Headstock block | size=0.06×0.1×0.02 m; mat=acoustic_wood; create_method=primitive; orientation=axis:+Z |
+| acoustic_hardware | Composite of bridge and tuning pegs | assembly_order=[acoustic_bridge], [acoustic_tuning_pegs]; pos=(0, 0, 0); orientation=axis:+Z |
+| acoustic_bridge | Bridge block | size=0.05×0.02×0.01 m; mat=acoustic_wood; create_method=primitive; orientation=axis:+Z |
+| acoustic_tuning_pegs | Six tuning pegs | size=0.01×0.01×0.01 m each; mat=metal_hardware; create_method=primitive; orientation=axis:+Z |
+| acoustic_strings | Six string lines | length=0.6 m; mat=metal_strings; create_method=path_sweep; orientation=axis:+Z |
+| acoustic_inlays | Dot inlays on fretboard | size=0.005×0.005×0.001 m each; mat=pearl_inlay; create_method=primitive; orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

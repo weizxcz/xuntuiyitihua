@@ -1,0 +1,48 @@
+{
+  "id": "f18954a3-85ae-49ee-abac-d45f119124f3",
+  "name": "Tape Measure",
+  "instruction": "Create a 3D model of a tape measure.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a tape measure.",
+        "The tape measure has a rectangular body.",
+        "The tape extends from a spool."
+      ],
+      "Color representation": [
+        "The body of the tape measure is typically yellow.",
+        "The measuring tape is marked with black measurements."
+      ],
+      "Size": [
+        "The tape length should be at least 5 meters."
+      ],
+      "Proportion": [
+        "The width of the tape should be consistent with standard tape measures.",
+        "The spool should be adequately sized to hold the tape."
+      ],
+      "Texture and surface detail": [
+        "The body may have a smooth plastic texture.",
+        "The tape should have a matte finish for visibility."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tape should extend outward from the spool.",
+        "The tape should retract smoothly back into the body.",
+        "The hook at the end of the tape should be visible and functional."
+      ],
+      "Object distance and contact": [
+        "The tape should not overlap with the body when retracted.",
+        "The hook should connect securely to the edge of the tape."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The tape measure is accurately represented as per the instruction.",
+        "All specified attributes of a tape measure are included."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

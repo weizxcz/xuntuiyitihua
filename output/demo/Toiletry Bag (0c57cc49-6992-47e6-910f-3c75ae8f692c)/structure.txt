@@ -1,0 +1,40 @@
+-- MATERIAL LIBRARY --
+fabric_main | diffuse_color=(0.8,0.8,0.8,1.0)
+fabric_lining | diffuse_color=(0.9,0.9,0.9,1.0)
+zipper_track | diffuse_color=(0.2,0.2,0.2,1.0)
+zipper_pull | diffuse_color=(0.7,0.7,0.7,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| toiletry_bag | Composite of main_body, divider, pockets, zipper_system, handle | assembly_order=[main_body], [divider], [pockets], [zipper_system], [handle] |
+
+Layer 1 – Primary Structure (Main Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| main_body | Composite of front_panel, back_panel, bottom_panel, side_gusset | assembly_order=[front_panel], [back_panel], [bottom_panel], [side_gusset] |
+| front_panel | Flat rectangular panel 0.25×0.15 m | mat=fabric_main; create_method=primitive; size=(0.25, 0.15, 0.005); pos=(0, 0, 0); orientation=axis:+Z |
+| back_panel | Flat rectangular panel 0.25×0.15 m | mat=fabric_main; create_method=primitive; size=(0.25, 0.15, 0.005); pos=(0, 0, -0.005); orientation=axis:+Z |
+| bottom_panel | Flat rectangular panel 0.25×0.10 m | mat=fabric_main; create_method=primitive; size=(0.25, 0.005, 0.10); pos=(0, -0.075, 0); orientation=axis:+Y |
+| side_gusset | Flat rectangular strip 0.10×0.15 m | mat=fabric_main; create_method=primitive; size=(0.005, 0.15, 0.10); pos=(-0.125, 0, 0); orientation=axis:+X |
+
+Layer 2 – Internal Organization (Dividers & Pockets)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| divider | Flat rectangular panel 0.25×0.10 m | mat=fabric_lining; create_method=primitive; size=(0.25, 0.005, 0.10); pos=(0, 0, 0.05); orientation=axis:+Y; constraint=sewn_to front_panel and back_panel |
+| small_pocket_A | Small rectangular pouch 0.10×0.08 m | mat=fabric_lining; create_method=primitive; size=(0.10, 0.005, 0.08); pos=(-0.05, 0.05, 0.05); orientation=axis:+Y; constraint=sewn_to divider |
+| small_pocket_B | Small rectangular pouch 0.10×0.08 m | mat=fabric_lining; create_method=primitive; size=(0.10, 0.005, 0.08); pos=(0.05, 0.05, 0.05); orientation=axis:+Y; constraint=sewn_to divider |
+
+Layer 3 – Closure System (Zipper)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| zipper_track | Long thin strip 0.25×0.02 m | mat=zipper_track; create_method=primitive; size=(0.25, 0.002, 0.02); pos=(0, 0.075, 0); orientation=axis:+Y; constraint=sewn_to top edges of front_panel and back_panel |
+| zipper_pull | Small rectangular tab 0.02×0.01 m | mat=zipper_pull; create_method=primitive; size=(0.02, 0.002, 0.01); pos=(0.12, 0.075, 0); orientation=axis:+Y; constraint=attached_to zipper_track |
+
+Layer 4 – Carrying Mechanism (Handle)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle | Curved strip 0.15×0.02 m | mat=fabric_main; create_method=primitive; size=(0.15, 0.005, 0.02); pos=(0, 0.075, 0.05); orientation=axis:+Y; constraint=attached_to back_panel top edge |
+# ----------  END_GRAPH  ----------

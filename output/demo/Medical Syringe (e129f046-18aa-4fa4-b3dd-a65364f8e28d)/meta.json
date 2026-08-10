@@ -1,0 +1,46 @@
+{
+  "id": "e129f046-18aa-4fa4-b3dd-a65364f8e28d",
+  "name": "Medical Syringe",
+  "instruction": "Imagine a medical syringe. It should have a cylindrical body with measurement markings, a plunger that can be pushed and pulled, and a needle at the end. The needle should be thin and long. The syringe should be capable of holding up to 10 milliliters of liquid. Consider adding a safety cap for the needle.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a medical syringe.",
+        "The syringe has a cylindrical body.",
+        "The plunger is designed to be pushed and pulled.",
+        "The needle is thin and long."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The syringe is capable of holding up to 10 milliliters of liquid."
+      ],
+      "Proportion": [
+        "The plunger and needle are proportionate to the medical syringe"
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The plunger fits correctly within the cylindrical body.",
+        "The needle is positioned at the end of the syringe.",
+        "The safety cap fits securely over the needle."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the plunger and the body of the syringe.",
+        "The needle does not overlap with the body of the syringe."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the syringe are accurately represented.",
+        "The syringe design adheres to the provided specifications."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

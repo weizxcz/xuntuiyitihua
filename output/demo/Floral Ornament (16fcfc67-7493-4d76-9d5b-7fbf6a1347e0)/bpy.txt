@@ -1,0 +1,174 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_face_to_face(obj_source, obj_target):
+    """Aligns the center of obj_source to obj_target and matches their Z-up orientation."""
+    # Move source to target center
+    obj_source.location = obj_target.location
+    
+    # Align Z axes (assuming both are roughly Z-up initially or need to be forced)
+    # Since we create them with Z-up, we just ensure they are aligned.
+    # If specific face alignment is needed beyond centering, we'd use normals.
+    # Here, "Align petal_0.XY_face to floral_orament.XY_face" implies coplanar Z=0 plane.
+    # Since we place them at the same location, they are already aligned in Z.
+    pass
+
+def polar_to_cartesian(angle_deg, radius):
+    angle_rad = math.radians(angle_deg)
+    x = radius * math.cos(angle_rad)
+    y = radius * math.sin(angle_rad)
+    return (x, y, 0)
+
+def boolean_union(objects_to_union, keep_obj_name):
+    """Performs a boolean union on a list of objects, keeping the first one."""
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+    
+    # Apply modifiers if any (safety)
+    for obj in objects_to_union:
+        for mod in obj.modifiers:
+            if mod.type == 'BOOLEAN':
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # Perform Boolean Union
+    bpy.ops.object.boolean_union()
+    
+    # The result is the active object (which was the first selected/active)
+    result = bpy.context.active_object
+    result.name = keep_obj_name
+    
+    # Deselect others
+    for obj in objects_to_union:
+        if obj != result:
+            obj.select_set(False)
+            bpy.data.objects.remove(obj, do_unlink=True)
+            
+    return result
+
+def boolean_subtract(target, cutter):
+    """Subtracts cutter from target using boolean modifier."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    target.select_set(True)
+    cutter.select_set(False)
+    
+    # Add boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.length_unit = 'METRES'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_leaf_green = make_material("leaf_green", (0.15, 0.45, 0.15, 1.0))
+mat_petal_pink = make_material("petal_pink", (0.95, 0.65, 0.75, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Create a dummy "floral_orament" anchor object at origin to satisfy alignment requirements
+# The prompt implies "floral_orament" exists as an anchor for alignment.
+# We create it at (0,0,0) with Z-up to serve as the reference frame.
+anchor_obj = add_cube("floral_orament_anchor", (0.001, 0.001, 0.001), (0,0,0), (0,0,0))
+anchor_obj.hide_viewport = True
+anchor_obj.hide_render = True
+
+# --- SECTION 1 – Create petals group ---
+
+petal_size = (0.050, 0.020, 0.002)
+petal_rot = (0, 0, 0) # Z aligns Z
+petals = []
+
+for i in range(5):
+    name = f"petal_{i}"
+    # Create at origin first
+    obj = add_cube(name, petal_size, (0,0,0), petal_rot, mat_petal_pink)
+    
+    # Align to anchor
+    align_face_to_face(obj, anchor_obj)
+    
+    # Polar positioning
+    angle = i * 72
+    radius = 0.025
+    loc = polar_to_cartesian(angle, radius)
+    obj.location = loc
+    
+    petals.append(obj)
+
+# Boolean union petals
+petals_group = boolean_union(petals, "petals_group")
+
+# --- SECTION 2 – Create leaves group ---
+
+leaf_size = (0.040, 0.015, 0.001)
+leaf_rot = (0, 0, 0)
+leaves = []
+
+for i in range(3):
+    name = f"leaf_{i}"
+    # Create at origin first
+    obj = add_cube(name, leaf_size, (0,0,0), leaf_rot, mat_leaf_green)
+    
+    # Align to anchor
+    align_face_to_face(obj, anchor_obj)
+    
+    # Polar positioning: i*120 + 36 degrees, radius 0.020
+    angle = i * 120 + 36
+    radius = 0.020
+    loc = polar_to_cartesian(angle, radius)
+    obj.location = loc
+    
+    leaves.append(obj)
+
+# Boolean union leaves
+leaves_group = boolean_union(leaves, "leaves_group")
+
+# --- SECTION 3 – Assemble floral ornament ---
+
+# Boolean union petals_group and leaves_group
+final_objects = [petals_group, leaves_group]
+floral_orament = boolean_union(final_objects, "floral_orament")
+
+# Cleanup anchor
+bpy.data.objects.remove(anchor_obj, do_unlink=True)

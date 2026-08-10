@@ -1,0 +1,16 @@
+{
+  "ncti_path_config": {
+    "dllpath": "/mnt/data/workspace/wuhongqing/tools/YanHe_GMDE_SDK_2026.1.1.2_Beta_Linux_x86-64",
+    "Ncti_api_path": "/mnt/data/workspace/wuhongqing/tools/YanHe_GMDE_SDK_2026.1.1.2_Beta_Linux_x86-64",
+    "python_path": "/mnt/data/workspace/wuhongqing/tools/YanHe_GMDE_SDK_2026.1.1.2_Beta_Linux_x86-64",
+    "init_path": "/mnt/data/workspace/wuhongqing/tools/YanHe_GMDE_SDK_2026.1.1.2_Beta_Linux_x86-64"
+  },
+  "linux_libraries": [
+    "libncti_base.so",
+    "libncti_object.so",
+    "libncti_pubfun.so",
+    "libncti_command.so",
+    "libncti_occ_plugin.so",
+    "libncti.so"
+  ]
+}

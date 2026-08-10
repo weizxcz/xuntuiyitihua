@@ -1,0 +1,88 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material concrete_grey; diffuse_color = (0.6,0.6,0.6,1.0).
+Define material steel_blue; diffuse_color = (0.2,0.3,0.5,1.0).
+Define material steel_grey; diffuse_color = (0.4,0.4,0.4,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base group  ---
+Create primitive cuboid with size 4.0×4.0×0.5 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Anchor base_plate to world origin.
+Then move by offset(0,0,0).
+
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.1×0.6 m and name it anchor_bolts_r_c.
+  Rotate anchor_bolts_r_c so its +Z axis aligns +Z (world).
+  Align anchor_bolts_r_c.+Z_face to base_plate.+Z_face.
+  Then move by offset(-1.5 + c·3.0, -1.5 + r·3.0, 0.01).
+
+---  SECTION 2 – Create tower group  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.3×12.0 m and name it tower_columns_r_c.
+  Rotate tower_columns_r_c so its +Z axis aligns +Z (world).
+  Align tower_columns_r_c.+Z_face to base_plate.+Z_face.
+  Then move by offset(-1.0 + c·2.0, -1.0 + r·2.0, 0.25).
+
+For r in 0…3 and c in 0…3:
+  Create primitive cuboid with size 1.0×1.0×1.0 m and name it tower_rings_r_c.
+  Rotate tower_rings_r_c so its +Z axis aligns +Z (world).
+  Align tower_rings_r_c.+Z_face to Avg(tower_columns_0_0.center, tower_columns_0_1.center, tower_columns_1_0.center, tower_columns_1_1.center).
+  Then move by offset(-0.5 + c·1.0, -0.5 + r·1.0, 3.0).
+
+For r in 0…3 and c in 0…1:
+  Create primitive cylinder with Ø0.1×2.8 m and name it diagonal_struts_r_c.
+  Rotate diagonal_struts_r_c so its +Z axis aligns +Z (world).
+  Align diagonal_struts_r_c.center to Avg(tower_columns_0_0.center, tower_columns_0_1.center, tower_columns_1_0.center, tower_columns_1_1.center).
+  Then move by offset(-1.0 + c·2.0, 0.0 + r·3.0, 0).
+
+---  SECTION 3 – Create jib group  ---
+Create primitive cuboid with size 15.0×0.5×0.5 m and name it main_beam.
+Rotate main_beam so its +Z axis aligns +X (world).
+Align main_beam.left_face to tower_sections.right_face.
+Then move by offset(0.25,0,0).
+
+Create primitive cuboid with size 0.5×0.5×0.5 m and name it pulley_block.
+Rotate pulley_block so its +Z axis aligns +X (world).
+Align pulley_block.left_face to main_beam.right_face.
+Then move by offset(0.25,0,0).
+
+Create primitive cylinder with Ø0.05×2.0 m and name it hook_cable.
+Rotate hook_cable so its +Z axis aligns +X (world).
+Align hook_cable.left_face to pulley_block.right_face.
+Then move by offset(0.25,0,0).
+
+Create primitive cuboid with size 0.8×0.6×0.4 m and name it trolley.
+Rotate trolley so its +Z axis aligns +Z (world).
+Align trolley.left_face to main_beam.top_face.
+Then move by offset(5.0,0.25,0).
+
+Create primitive cuboid with size 5.0×0.5×0.5 m and name it counter_jib.
+Rotate counter_jib so its +Z axis aligns +X (world).
+Align counter_jib.right_face to tower_sections.left_face.
+Then move by offset(-0.25,0,0).
+
+---  SECTION 4 – Create hook group  ---
+Create primitive cuboid with size 0.4×0.3×0.3 m and name it hook_block.
+Rotate hook_block so its +Z axis aligns +Z (world).
+Align hook_block.left_face to trolley.bottom_face.
+Then move by offset(0,-0.3,0).
+
+Create primitive cylinder with Ø0.02×1.5 m and name it load_chain.
+Rotate load_chain so its +Z axis aligns +X (world).
+Align load_chain.left_face to hook_block.right_face.
+Then move by offset(0.2,0,0).
+
+Stage 4 complete.
+All stages complete.

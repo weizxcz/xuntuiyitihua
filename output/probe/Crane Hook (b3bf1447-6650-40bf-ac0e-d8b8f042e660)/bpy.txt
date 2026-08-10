@@ -1,0 +1,298 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, end_fill_type='TRIFAN')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_torus(name, major_radius, minor_radius, segments=32, minor_segments=16):
+    """Add a torus oriented along Z, centered at origin."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=segments, minor_segments=minor_segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def align_face_to_face(obj_target, obj_source, axis='Z'):
+    """
+    Aligns the positive face of obj_source to the positive face of obj_target along the specified axis.
+    Assumes objects are oriented such that their local Z (or X/Y) points 'up' or 'out'.
+    Moves obj_source so its face center matches obj_target's face center.
+    """
+    # Get world matrix of target
+    target_mat = obj_target.matrix_world
+    source_mat = obj_source.matrix_world
+    
+    # Define direction vector based on axis
+    if axis == 'Z':
+        dir_vec = Vector((0, 0, 1))
+    elif axis == 'X':
+        dir_vec = Vector((1, 0, 0))
+    elif axis == 'Y':
+        dir_vec = Vector((0, 1, 0))
+    else:
+        raise ValueError("Unsupported axis")
+
+    # Transform direction to world space
+    world_dir = dir_vec @ target_mat.to_3x3()
+    
+    # Get target face center (center + half height in direction)
+    # Note: For cylinders/torus, center is geometric center. 
+    # "Face" usually implies the top cap for Z-aligned objects.
+    # We need the bounding box or specific geometry info. 
+    # Simplification: For primitives centered at origin, the "top face" is at +height/2.
+    
+    # Calculate offset vector
+    # Target Face Center = Target Center + (Half Extent * World Dir)
+    # Source Face Center = Source Center + (Half Extent * World Dir)
+    
+    # We want: Source Center_new + HalfSource*Dir = Target Center + HalfTarget*Dir
+    # Source Center_new = Target Center + (HalfTarget - HalfSource)*Dir
+    
+    # Get half extents in world space
+    # Since objects are axis aligned locally, we can approximate or use bounds.
+    # For robustness with primitives:
+    
+    # Target half extent in world direction
+    # This requires knowing the object's geometry. 
+    # Let's use a simpler approach: Align centers first, then shift by difference in half-heights.
+    
+    # Actually, the prompt says "Align hook_neck.+Z_face to hook_upper_shank.+Z_face".
+    # This implies the bottom of neck touches top of shank.
+    
+    # Let's get the world position of the target's +Z face center.
+    # We need the object's half-height in the Z direction.
+    
+    # Helper to get half-extent in world direction for an object
+    def get_face_center_world(obj, axis):
+        # Get local bounds
+        min_b, max_b = obj.bound_box
+        # Find max extent in local axis
+        if axis == 'Z':
+            local_max = max(v[2] for v in min_b)
+            local_min = min(v[2] for v in min_b)
+            half_h = (local_max - local_min) / 2.0
+            center_local = Vector((0,0,0)) # Primitives are centered
+            # World position of top face
+            # Top face is at local Z = half_h
+            local_point = Vector((0, 0, half_h))
+            return obj.matrix_world @ local_point
+        elif axis == 'X':
+            local_max = max(v[0] for v in min_b)
+            half_h = local_max # Assuming centered
+            local_point = Vector((half_h, 0, 0))
+            return obj.matrix_world @ local_point
+        elif axis == 'Y':
+            local_max = max(v[1] for v in min_b)
+            half_h = local_max
+            local_point = Vector((0, half_h, 0))
+            return obj.matrix_world @ local_point
+        return obj.matrix_world.to_translation()
+
+    target_face_center = get_face_center_world(obj_target, axis)
+    
+    # We want source's +Z face to be at target_face_center.
+    # Source's +Z face is at Source_Local_Z_max.
+    # Source_Local_Z_max in world is (Source_Local_Z_max * World_Z) + Source_Center.
+    
+    # Let's find Source's local Z max
+    min_b_s, max_b_s = obj_source.bound_box
+    if axis == 'Z':
+        local_z_max = max(v[2] for v in min_b_s)
+    elif axis == 'X':
+        local_z_max = max(v[0] for v in min_b_s)
+    elif axis == 'Y':
+        local_z_max = max(v[1] for v in min_b_s)
+        
+    # We want: Source_Center_new + (local_z_max * World_Z) = target_face_center
+    # Source_Center_new = target_face_center - (local_z_max * World_Z)
+    
+    world_z_dir = axis @ obj_source.matrix_world.to_3x3() # This is wrong, axis is local.
+    # The object is oriented. The "Z face" is along the object's local Z axis.
+    # We need the world direction of the object's local Z axis.
+    local_axis = Vector((0,0,1)) if axis=='Z' else (Vector((1,0,0)) if axis=='X' else Vector((0,1,0)))
+    world_axis = local_axis @ obj_source.matrix_world.to_3x3()
+    
+    obj_source.location = target_face_center - (local_z_max * world_axis)
+
+def apply_offset(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+
+def boolean_union(objects, target_name):
+    """
+    Perform boolean union on a list of objects.
+    The first object in the list becomes the target (renamed to target_name).
+    Others are modifiers.
+    """
+    if not objects:
+        return None
+    
+    target = objects[0]
+    target.name = target_name
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects:
+        obj.select_set(True)
+    target.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    # Apply boolean union modifier for each other object
+    for i, obj in enumerate(objects[1:], 1):
+        mod = target.modifiers.new(name=f"BoolUnion_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        
+        # Apply modifier
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove the source object
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+def boolean_subtract(target, cutter, cutter_name):
+    """Subtract cutter from target using boolean modifier."""
+    mod = target.modifiers.new(name=f"BoolSub_{cutter_name}", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- BLOCK 1: Materials ---
+
+mat_steel_hardened = make_material("steel_hardened", (0.3, 0.3, 0.35, 1.0))
+mat_steel_spring = make_material("steel_spring", (0.2, 0.2, 0.25, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1 – Create hook_upper_shank ---
+hook_upper_shank = add_cylinder("hook_upper_shank", radius=0.02, depth=0.15)
+hook_upper_shank.data.materials.append(mat_steel_hardened)
+# Rotate so +Z aligns +Z (already default)
+# Anchor to world origin (already at 0,0,0)
+# Offset(0,0,0.075)
+apply_offset(hook_upper_shank, Vector((0, 0, 0.075)))
+
+# --- SECTION 2 – Create hook_neck ---
+hook_neck = add_cylinder("hook_neck", radius=0.02, depth=0.02)
+hook_neck.data.materials.append(mat_steel_hardened)
+# Rotate so +Z aligns +Z (already default)
+# Align hook_neck.+Z_face to hook_upper_shank.+Z_face
+align_face_to_face(hook_upper_shank, hook_neck, axis='Z')
+# Offset(0,0,0)
+apply_offset(hook_neck, Vector((0, 0, 0)))
+
+# --- SECTION 3 – Create hook_bow_curve ---
+hook_bow_curve = add_torus("hook_bow_curve", major_radius=0.06, minor_radius=0.02)
+hook_bow_curve.data.materials.append(mat_steel_hardened)
+# Rotate so +Z aligns +Z (already default)
+# Align hook_bow_curve.+Z_face to hook_neck.+Z_face
+align_face_to_face(hook_neck, hook_bow_curve, axis='Z')
+# Offset(0,0,0)
+apply_offset(hook_bow_curve, Vector((0, 0, 0)))
+
+# --- SECTION 4 – Create latch_pin ---
+latch_pin = add_cylinder("latch_pin", radius=0.005, depth=0.05)
+latch_pin.data.materials.append(mat_steel_hardened)
+# Rotate so +Z aligns +Z (already default)
+# Align latch_pin.+Z_face to hook_bow_curve.+Z_face
+align_face_to_face(hook_bow_curve, latch_pin, axis='Z')
+# Offset(0,0,0.06)
+apply_offset(latch_pin, Vector((0, 0, 0.06)))
+
+# --- SECTION 5 – Create latch_spring ---
+latch_spring = add_cylinder("latch_spring", radius=0.0075, depth=0.03)
+latch_spring.data.materials.append(mat_steel_spring)
+# Rotate so +Z aligns +Z (already default)
+# Align latch_spring.+Z_face to hook_bow_curve.+Z_face
+align_face_to_face(hook_bow_curve, latch_spring, axis='Z')
+# Offset(0,0,0.05)
+apply_offset(latch_spring, Vector((0, 0, 0.05)))
+
+# --- SECTION 6 – Create latch_arm ---
+latch_arm = add_cube("latch_arm", size=0.01) # Size is total width, so half-extent is 0.005. 
+# Prompt says size 0.01x0.01x0.08. add_cube takes 'size' as total width.
+# So we need to scale or use a different method. 
+# Let's create a cube of size 1 and scale it.
+bpy.ops.mesh.primitive_cube_add(size=1)
+latch_arm = bpy.context.active_object
+latch_arm.name = "latch_arm"
+latch_arm.scale = (0.01, 0.01, 0.08)
+latch_arm.data.materials.append(mat_steel_hardened)
+# Rotate so +Z aligns +Z (already default)
+# Align latch_arm.+Z_face to hook_bow_curve.+Z_face
+align_face_to_face(hook_bow_curve, latch_arm, axis='Z')
+# Offset(0,0,0.06)
+apply_offset(latch_arm, Vector((0, 0, 0.06)))
+
+# --- SECTION 7 – Create latch_tip ---
+latch_tip = add_cylinder("latch_tip", radius=0.005, depth=0.02)
+latch_tip.data.materials.append(mat_steel_hardened)
+# Rotate so +Z aligns +Z (already default)
+# Align latch_tip.+Z_face to latch_arm.+Z_face
+align_face_to_face(latch_arm, latch_tip, axis='Z')
+# Offset(0,0,0.04)
+apply_offset(latch_tip, Vector((0, 0, 0.04)))
+
+# --- SECTION 8 – Assemble Crane Hook ---
+# Boolean-union hook_upper_shank, hook_neck, hook_bow_curve, latch_pin, latch_spring, latch_arm, and latch_tip to form crane_hook.
+assembly_objects = [
+    hook_upper_shank, 
+    hook_neck, 
+    hook_bow_curve, 
+    latch_pin, 
+    latch_spring, 
+    latch_arm, 
+    latch_tip
+]
+
+boolean_union(assembly_objects, "crane_hook")
+
+# Assign material to final object
+if "crane_hook" in bpy.data.objects:
+    crane_hook_obj = bpy.data.objects["crane_hook"]
+    crane_hook_obj.data.materials.clear()
+    crane_hook_obj.data.materials.append(mat_steel_hardened)
+```

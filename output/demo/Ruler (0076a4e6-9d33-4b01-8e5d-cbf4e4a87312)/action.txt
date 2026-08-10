@@ -1,0 +1,40 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material plastic_white; diffuse_color = (240,240,240,255).
+Define material ink_black; diffuse_color = (0,0,0,255).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create ruler body  ---
+Create primitive cuboid with size 0.3048×0.0254×0.003 m and name it ruler_body.
+Rotate ruler_body so its +Z axis aligns +Z (world).
+Move ruler_body to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create inch tick marks  ---
+For i in 0…12:
+  Create primitive cuboid with size 0.001×0.015×0.0005 m and name it inch_i.
+  Rotate inch_i so its +Z axis aligns +Z (world).
+  Align inch_i.bottom_face to ruler_body.top_face.
+  Then move by offset(i*0.0254, 0, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create centimeter tick marks  ---
+For i in 0…30:
+  Create primitive cuboid with size 0.001×0.010×0.0005 m and name it cm_i.
+  Rotate cm_i so its +Z axis aligns +Z (world).
+  Align cm_i.bottom_face to ruler_body.top_face.
+  Then move by offset(i*0.01, 0, 0).
+Stage 3 complete.
+
+All stages complete.

@@ -1,0 +1,47 @@
+{
+  "id": "2baa73ff-64c0-46d9-902b-359935ac2710",
+  "name": "Ornamental Frame",
+  "instruction": "Hello! I'd like you to create a 3D model of an ornamental frame. The frame should have intricate, decorative patterns along the edges, reminiscent of Baroque style. Make sure the inner part of the frame is rectangular and can hold a picture or a mirror.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an ornamental frame.",
+        "The frame has a rectangular inner part designed to hold a picture or mirror.",
+        "The outer shape of the frame is consistent with traditional frame designs."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The inner rectangular part is proportionate to the overall frame size.",
+        "The decorative patterns are evenly distributed along the edges."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The frame's edges are designed to be visually appealing from multiple angles.",
+        "The inner rectangular part is properly centered within the outer frame.",
+        "The decorative patterns are raised or carved to create a three-dimensional effect."
+      ],
+      "Object distance and contact": [
+        "There are no overlaps between the decorative patterns and the inner rectangular area.",
+        "The frame maintains a consistent thickness around the inner part."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented in the model.",
+        "The Baroque style is clearly reflected in the decorative patterns.",
+        "The inner rectangular part is designed to hold a picture or mirror as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

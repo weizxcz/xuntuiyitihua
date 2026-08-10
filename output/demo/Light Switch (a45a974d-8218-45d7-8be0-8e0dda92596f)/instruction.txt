@@ -1,0 +1,1 @@
+Create a 3D model of a light switch. The switch should be rectangular with a toggle in the center.

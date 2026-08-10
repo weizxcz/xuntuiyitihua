@@ -1,0 +1,1 @@
+Design a 3D model of a curtain rod. It should be a long, straight rod with decorative finials on both ends. Include mounting brackets for attaching it to a wall.

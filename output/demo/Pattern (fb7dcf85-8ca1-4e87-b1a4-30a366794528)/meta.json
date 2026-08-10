@@ -1,0 +1,44 @@
+{
+  "id": "fb7dcf85-8ca1-4e87-b1a4-30a366794528",
+  "name": "Pattern",
+  "instruction": "Design a pattern that can be used for wallpaper.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pattern is suitable for wallpaper.",
+        "The design incorporates repeating elements.",
+        "The pattern may include floral, geometric, or abstract motifs."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "Elements within the pattern should be proportionate to each other."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The elements of the pattern should repeat seamlessly.",
+        "The layout should ensure continuity across the wallpaper."
+      ],
+      "Object distance and contact": [
+        "The distribution of elements should create a balanced look.",
+        "Negative space should be utilized effectively."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design adheres to the requirement for wallpaper.",
+        "All specified attributes are considered in the design."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

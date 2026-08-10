@@ -1,0 +1,107 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum_silver; diffuse_color = (0.75,0.75,0.80,1.0).
+Define material mat_black_plastic; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_black_screen; diffuse_color = (0.01,0.01,0.02,1.0).
+Define material mat_blue_led; diffuse_color = (0.0,0.2,1.0,1.0).
+Define material mat_glass_translucent; diffuse_color = (0.9,0.95,1.0,0.1).
+Define material mat_port_gold; diffuse_color = (0.8,0.6,0.2,1.0).
+Define material mat_port_black; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create screen panel  ---
+Create primitive cuboid with size 0.600×0.340×0.005 m and name it screen_panel.
+Rotate screen_panel so its +Z axis aligns +Z (world).
+Move screen_panel to pos=(0, 0.170, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create bezel frame  ---
+Create primitive cuboid with size 0.620×0.360×0.008 m and name it bezel_frame.
+Rotate bezel_frame so its +Z axis aligns +Z (world).
+Align bezel_frame.center to screen_panel.center.
+Align bezel_frame.front_face to screen_panel.front_face.
+Then move by offset(0,0,0.002).
+Stage 2 complete.
+
+---  SECTION 3 – Create stand base  ---
+Create primitive cylinder with diameter 0.150 m and height 0.010 m and name it stand_base.
+Rotate stand_base so its +Z axis aligns +Z (world).
+Move stand_base to pos=(0, -0.180, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create stand pillar  ---
+Create primitive cylinder with diameter 0.020 m and height 0.150 m and name it stand_pillar.
+Rotate stand_pillar so its +Z axis aligns +Z (world).
+Align stand_pillar.center to stand_base.center.
+Align stand_pillar.bottom_face to stand_base.top_face.
+Then move by offset(0,0,0.005).
+Stage 4 complete.
+
+---  SECTION 5 – Create stand connector  ---
+Create primitive cuboid with size 0.040×0.030×0.020 m and name it stand_connector.
+Rotate stand_connector so its +Z axis aligns +Z (world).
+Align stand_connector.center to stand_pillar.center.
+Align stand_connector.bottom_face to stand_pillar.top_face.
+Then move by offset(0,0,0.010).
+Stage 5 complete.
+
+---  SECTION 6 – Create back panel  ---
+Create primitive cuboid with size 0.600×0.340×0.005 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Align back_panel.center to screen_panel.center.
+Align back_panel.back_face to screen_panel.back_face.
+Then move by offset(0,0,-0.002).
+Stage 6 complete.
+
+---  SECTION 7 – Create HDMI port housing  ---
+Create primitive cuboid with size 0.030×0.015×0.010 m and name it port_housing_hdmi.
+Rotate port_housing_hdmi so its +Z axis aligns +Z (world).
+Align port_housing_hdmi.center to back_panel.center.
+Align port_housing_hdmi.front_face to back_panel.back_face.
+Then move by offset(-0.150, 0.100, -0.002).
+Stage 7 complete.
+
+---  SECTION 8 – Create DisplayPort housing  ---
+Create primitive cuboid with size 0.030×0.015×0.010 m and name it port_housing_dp.
+Rotate port_housing_dp so its +Z axis aligns +Z (world).
+Align port_housing_dp.center to back_panel.center.
+Align port_housing_dp.front_face to back_panel.back_face.
+Then move by offset(-0.150, 0.080, -0.002).
+Stage 8 complete.
+
+---  SECTION 9 – Create USB-A port housing  ---
+Create primitive cuboid with size 0.015×0.010×0.010 m and name it port_housing_usb.
+Rotate port_housing_usb so its +Z axis aligns +Z (world).
+Align port_housing_usb.center to back_panel.center.
+Align port_housing_usb.front_face to back_panel.back_face.
+Then move by offset(-0.150, 0.060, -0.002).
+Stage 9 complete.
+
+---  SECTION 10 – Create power button  ---
+Create primitive cylinder with diameter 0.010 m and height 0.005 m and name it button_power.
+Rotate button_power so its +Z axis aligns +X (world).
+Align button_power.center to bezel_frame.right_face.
+Align button_power.center to bezel_frame.center.
+Then move by offset(0.005, 0, 0).
+Stage 10 complete.
+
+---  SECTION 11 – Create LED indicator  ---
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it indicator_led.
+Rotate indicator_led so its +Z axis aligns +Z (world).
+Align indicator_led.center to button_power.center.
+Align indicator_led.center to button_power.center.
+Then move by offset(0, 0, 0.003).
+Stage 11 complete.
+
+All stages complete.

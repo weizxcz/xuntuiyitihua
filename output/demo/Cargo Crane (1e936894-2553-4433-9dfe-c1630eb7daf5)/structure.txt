@@ -1,0 +1,29 @@
+-- MATERIAL LIBRARY --
+concrete_dark | diffuse_color=(0.4,0.4,0.4,1.0)
+steel_blue | diffuse_color=(0.2,0.3,0.6,1.0)
+steel_grey | diffuse_color=(0.5,0.5,0.5,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Composite of base_footprint + counterweight_block + central_hub | A. Composite of base_footprint + counterweight_block + central_hub; offset(0,0,0); mat=concrete_dark; create_method=boolean_union; assembly_order=base_footprint, counterweight_block, central_hub |
+| central_hub | Composite of main_pylon_base + slewing_ring + pylon_tower | A. Composite of main_pylon_base + slewing_ring + pylon_tower; offset(0,0,0); mat=steel_grey; create_method=boolean_union; assembly_order=main_pylon_base, slewing_ring, pylon_tower |
+| jib_assembly | Composite of jib_arm + jib_cable + hook_block + hook_cable + hook | A. Composite of jib_arm + jib_cable + hook_block + hook_cable + hook; offset(0,0,0); mat=steel_blue; create_method=boolean_union; assembly_order=jib_arm, jib_cable, hook_block, hook_cable, hook |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_footprint | Large rectangular concrete slab for stability | cylinder Ø2.0×0.3 m; Align(XY) base_footprint.center to (0,0); orientation=axis:+Z; mat=concrete_dark; create_method=cylinder; assembly_order=- |
+| counterweight_block | Heavy block on the rear of the crane to balance the load | cube 1.5×1.0×0.8 m; Align(XY) counterweight_block.center to base_footprint.center; offset(0,-1.2,0.4); orientation=axis:+Z; mat=concrete_dark; create_method=cube; assembly_order=- |
+| main_pylon_base | Short, thick cylinder connecting base to tower | cylinder Ø0.8×0.5 m; Align(XY) main_pylon_base.center to base_footprint.center; offset(0,0,0.4); orientation=axis:+Z; mat=steel_grey; create_method=cylinder; assembly_order=- |
+| slewing_ring | Circular bearing allowing rotation | cylinder Ø1.2×0.1 m; Align(XY) slewing_ring.center to main_pylon_base.center; offset(0,0,0.75); orientation=axis:+Z; mat=steel_grey; create_method=cylinder; assembly_order=- |
+| pylon_tower | Tall lattice or box-section tower | cylinder Ø0.6×8.0 m; Align(XY) pylon_tower.center to main_pylon_base.center; offset(0,0,0.8); orientation=axis:+Z; mat=steel_grey; create_method=cylinder; assembly_order=- |
+| jib_arm | Long horizontal arm extending from the top of the tower | cylinder Ø0.4×6.0 m; Align(XY) jib_arm.center to pylon_tower.center; offset(0,0,8.3); orientation=axis:+X; mat=steel_blue; create_method=cylinder; assembly_order=- |
+| jib_cable | Support cable from top of tower to end of jib | cylinder Ø0.05×5.0 m; Align(XY) jib_cable.center to pylon_tower.center; offset(0,0,8.3); orientation=axis:+X; mat=steel_grey; create_method=cylinder; assembly_order=- |
+| hook_block | Metal block holding the hook | cube 0.3×0.3×0.3 m; Align(XY) hook_block.center to jib_arm.center; offset(3.0,0,0); orientation=axis:+Z; mat=steel_grey; create_method=cube; assembly_order=- |
+| hook_cable | Cable connecting hook block to jib arm | cylinder Ø0.02×0.5 m; Align(XY) hook_cable.center to hook_block.center; offset(0,0,0.3); orientation=axis:+Z; mat=steel_grey; create_method=cylinder; assembly_order=- |
+| hook | Curved lifting hook | cylinder Ø0.1×0.2 m; Align(XY) hook.center to hook_block.center; offset(0,0,-0.3); orientation=axis:+Z; mat=steel_grey; create_method=cylinder; assembly_order=- |
+
+# ----------  END_GRAPH  ----------

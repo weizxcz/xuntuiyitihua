@@ -1,0 +1,1 @@
+Create a 3D model of a pen. It should have a cylindrical body and a pointed tip.

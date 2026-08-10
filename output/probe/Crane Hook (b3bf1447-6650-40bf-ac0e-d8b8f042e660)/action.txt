@@ -1,0 +1,65 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material steel_hardened; diffuse_color = (0.3,0.3,0.35,1.0).
+Define material steel_spring; diffuse_color = (0.2,0.2,0.25,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create hook_upper_shank  ---
+Create primitive cylinder with diameter 0.04 m and height 0.15 m and name it hook_upper_shank.
+Rotate hook_upper_shank so its +Z axis aligns +Z (world).
+Anchor hook_upper_shank to world origin.
+Then move by offset(0,0,0.075).
+
+---  SECTION 2 – Create hook_neck  ---
+Create primitive cylinder with diameter 0.04 m and height 0.02 m and name it hook_neck.
+Rotate hook_neck so its +Z axis aligns +Z (world).
+Align hook_neck.+Z_face to hook_upper_shank.+Z_face.
+Then move by offset(0,0,0).
+
+---  SECTION 3 – Create hook_bow_curve  ---
+Create primitive torus with major radius 0.06 m and minor radius 0.02 m and name it hook_bow_curve.
+Rotate hook_bow_curve so its +Z axis aligns +Z (world).
+Align hook_bow_curve.+Z_face to hook_neck.+Z_face.
+Then move by offset(0,0,0).
+
+---  SECTION 4 – Create latch_pin  ---
+Create primitive cylinder with diameter 0.01 m and height 0.05 m and name it latch_pin.
+Rotate latch_pin so its +Z axis aligns +Z (world).
+Align latch_pin.+Z_face to hook_bow_curve.+Z_face.
+Then move by offset(0,0,0.06).
+
+---  SECTION 5 – Create latch_spring  ---
+Create primitive cylinder with diameter 0.015 m and height 0.03 m and name it latch_spring.
+Rotate latch_spring so its +Z axis aligns +Z (world).
+Align latch_spring.+Z_face to hook_bow_curve.+Z_face.
+Then move by offset(0,0,0.05).
+
+---  SECTION 6 – Create latch_arm  ---
+Create primitive box with size 0.01×0.01×0.08 m and name it latch_arm.
+Rotate latch_arm so its +Z axis aligns +Z (world).
+Align latch_arm.+Z_face to hook_bow_curve.+Z_face.
+Then move by offset(0,0,0.06).
+
+---  SECTION 7 – Create latch_tip  ---
+Create primitive cylinder with diameter 0.01 m and height 0.02 m and name it latch_tip.
+Rotate latch_tip so its +Z axis aligns +Z (world).
+Align latch_tip.+Z_face to latch_arm.+Z_face.
+Then move by offset(0,0,0.04).
+
+---  SECTION 8 – Assemble Crane Hook  ---
+Boolean-union hook_upper_shank, hook_neck, hook_bow_curve, latch_pin, latch_spring, latch_arm, and latch_tip to form crane_hook.
+Assembly guideline satisfied.
+Stage 8 complete.
+
+All stages complete.

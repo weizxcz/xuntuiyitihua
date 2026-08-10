@@ -1,0 +1,42 @@
+{
+  "id": "012621e6-7809-4a14-a474-566b95def944",
+  "name": "Fish Bowl",
+  "instruction": "Design a fish bowl that has a round shape and an open top.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The fish bowl is round in shape.",
+        "The bowl has an open top."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The base and the open top are proportionate to the entire bowl."
+      ],
+      "Texture and surface detail": [
+        "The surface of the bowl is smooth and clear."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The round shape is consistent throughout the height of the bowl.",
+        "The open top allows for easy access to the interior."
+      ],
+      "Object distance and contact": [
+        "There are no overlaps or gaps in the structure of the bowl."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the round shape and open top as specified.",
+        "All specified attributes are represented without deviation."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

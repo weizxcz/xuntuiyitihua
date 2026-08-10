@@ -1,0 +1,116 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create page_base  ---
+Create primitive cuboid with size 0.210×0.297×0.001 m and name it page_base.
+Rotate page_base so its +Z axis aligns +Z (world).
+Anchor page_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create border_frame  ---
+---  SUB-SECTION 2.1 – Create top_strip  ---
+Create primitive cuboid with size 0.210×0.0254×0.001 m and name it top_strip.
+Rotate top_strip so its +Z axis aligns +Z (world).
+Align top_strip.bottom_face to page_base.top_face.
+Then move by offset(0,0,0).
+---  SUB-SECTION 2.2 – Create bottom_strip  ---
+Create primitive cuboid with size 0.210×0.0254×0.001 m and name it bottom_strip.
+Rotate bottom_strip so its +Z axis aligns +Z (world).
+Align bottom_strip.top_face to page_base.bottom_face.
+Then move by offset(0,0,0).
+---  SUB-SECTION 2.3 – Create left_strip  ---
+Create primitive cuboid with size 0.0254×0.297×0.001 m and name it left_strip.
+Rotate left_strip so its +Z axis aligns +Z (world).
+Align left_strip.right_face to page_base.left_face.
+Then move by offset(0,0,0).
+---  SUB-SECTION 2.4 – Create right_strip  ---
+Create primitive cuboid with size 0.0254×0.297×0.001 m and name it right_strip.
+Rotate right_strip so its +Z axis aligns +Z (world).
+Align right_strip.left_face to page_base.right_face.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create inner_void  ---
+Create primitive cuboid with size 0.1592×0.2462×0.001 m and name it inner_void.
+Rotate inner_void so its +Z axis aligns +Z (world).
+Align inner_void.bottom_face to page_base.top_face.
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create pattern_unit  ---
+---  SUB-SECTION 4.1 – Create triangle  ---
+Create primitive triangle with side length 0.0127 m and name it triangle.
+Rotate triangle so its +Z axis aligns +Z (world).
+Anchor triangle to world origin.
+Then move by offset(0,0,0).
+---  SUB-SECTION 4.2 – Create square  ---
+Create primitive cuboid with size 0.0127×0.0127×0.001 m and name it square.
+Rotate square so its +Z axis aligns +Z (world).
+Anchor square to world origin.
+Then move by offset(0.0127,0,0).
+Stage 4 complete.
+
+---  SECTION 5 – Apply pattern_top  ---
+For i in 0…15:
+  Create primitive triangle with side length 0.0127 m and name it pattern_top_triangle_i.
+  Rotate pattern_top_triangle_i so its +Z axis aligns +Z (world).
+  Align pattern_top_triangle_i.bottom_face to top_strip.top_face.
+  Then position at polar(0°; dr=0.105 - i*0.0127).
+  Create primitive cuboid with size 0.0127×0.0127×0.001 m and name it pattern_top_square_i.
+  Rotate pattern_top_square_i so its +Z axis aligns +Z (world).
+  Align pattern_top_square_i.bottom_face to top_strip.top_face.
+  Then position at polar(0°; dr=0.105 - i*0.0127 + 0.0127).
+Stage 5 complete.
+
+---  SECTION 6 – Apply pattern_bottom  ---
+For i in 0…15:
+  Create primitive triangle with side length 0.0127 m and name it pattern_bottom_triangle_i.
+  Rotate pattern_bottom_triangle_i so its +Z axis aligns +Z (world).
+  Align pattern_bottom_triangle_i.top_face to bottom_strip.bottom_face.
+  Then position at polar(0°; dr=0.105 - i*0.0127).
+  Create primitive cuboid with size 0.0127×0.0127×0.001 m and name it pattern_bottom_square_i.
+  Rotate pattern_bottom_square_i so its +Z axis aligns +Z (world).
+  Align pattern_bottom_square_i.top_face to bottom_strip.bottom_face.
+  Then position at polar(0°; dr=0.105 - i*0.0127 + 0.0127).
+Stage 6 complete.
+
+---  SECTION 7 – Apply pattern_left  ---
+For i in 0…23:
+  Create primitive triangle with side length 0.0127 m and name it pattern_left_triangle_i.
+  Rotate pattern_left_triangle_i so its +Z axis aligns +Z (world).
+  Align pattern_left_triangle_i.right_face to left_strip.left_face.
+  Then position at polar(90°; dr=0.1485 - i*0.0127).
+  Create primitive cuboid with size 0.0127×0.0127×0.001 m and name it pattern_left_square_i.
+  Rotate pattern_left_square_i so its +Z axis aligns +Z (world).
+  Align pattern_left_square_i.right_face to left_strip.left_face.
+  Then position at polar(90°; dr=0.1485 - i*0.0127 + 0.0127).
+Stage 7 complete.
+
+---  SECTION 8 – Apply pattern_right  ---
+For i in 0…23:
+  Create primitive triangle with side length 0.0127 m and name it pattern_right_triangle_i.
+  Rotate pattern_right_triangle_i so its +Z axis aligns +Z (world).
+  Align pattern_right_triangle_i.left_face to right_strip.right_face.
+  Then position at polar(270°; dr=0.1485 - i*0.0127).
+  Create primitive cuboid with size 0.0127×0.0127×0.001 m and name it pattern_right_square_i.
+  Rotate pattern_right_square_i so its +Z axis aligns +Z (world).
+  Align pattern_right_square_i.left_face to right_strip.right_face.
+  Then position at polar(270°; dr=0.1485 - i*0.0127 + 0.0127).
+Stage 8 complete.
+
+All stages complete.

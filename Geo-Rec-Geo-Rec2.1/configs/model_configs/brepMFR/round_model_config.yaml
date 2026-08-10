@@ -1,0 +1,14 @@
+# BrepMFR 模型配置
+num_classes: 2
+batch_size: 64
+num_workers: 0  # Windows 建议设为 0
+max_epochs: 150
+dropout: 0.3
+attention_dropout: 0.3
+act_dropout: 0.3
+d_model: 512
+dim_node: 256
+n_heads: 32
+n_layers_encode: 8
+domain_adapt_max_epochs: 40
+domain_adapt_experiment_name: "BrepMFR_DA"

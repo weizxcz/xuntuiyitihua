@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bowl_root | Composite of bowl_shell + base_plate; assembled into a single stable unit | assembly_order=[bowl_shell, base_plate] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bowl_shell | Cylinder Ø0.203×0.076 m (Diameter 8", Depth 3") | Align(XY) bowl_shell.center to bowl_root.center; Align(Z) bowl_shell.bottom_face to bowl_root.base_plate.top_face; offset(0,0,0.001); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| base_plate | Cylinder Ø0.203×0.005 m (Diameter 8", Thickness 5mm) | Align(XY) base_plate.center to bowl_root.center; orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

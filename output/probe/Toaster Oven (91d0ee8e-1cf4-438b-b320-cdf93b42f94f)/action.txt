@@ -1,0 +1,93 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material metal_silver; diffuse_color = (0.75,0.75,0.80,1.0).
+Define material plastic_black; diffuse_color = (0.10,0.10,0.10,1.0).
+Define material glass_transparent; diffuse_color = (0.90,0.95,0.95,0.3).
+Define material metal_heating; diffuse_color = (0.80,0.20,0.10,1.0).
+Define material chrome; diffuse_color = (0.90,0.90,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Body Group (Chassis & Top Cover)  ---
+Create primitive cuboid with size 0.40×0.30×0.25 m and name it chassis.
+Rotate chassis so its +Z axis aligns +Z (world).
+Anchor chassis to world origin.
+Then move by offset(0, 0.15, 0).
+
+Create primitive cuboid with size 0.40×0.30×0.005 m and name it top_cover.
+Rotate top_cover so its +Z axis aligns +Z (world).
+Align top_cover.-Z_face to chassis.+Z_face.
+Then move by offset(0, 0, 0.005).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Door Assembly (Frame, Glass, Handle, Hinge)  ---
+Create primitive cuboid with size 0.38×0.28×0.02 m and name it door_frame.
+Rotate door_frame so its +Z axis aligns +Z (world).
+Align door_frame.center to chassis.+X_face.center.
+Then move by offset(0, 0, 0.002).
+
+Create primitive cuboid with size 0.30×0.20×0.004 m and name it door_glass.
+Rotate door_glass so its +Z axis aligns +Z (world).
+Align door_glass.center to door_frame.center.
+Then move by offset(0, 0, 0.001).
+
+Create primitive cylinder with diameter 0.01 m and length 0.25 m and name it door_handle.
+Rotate door_handle so its +Z axis aligns +X (world).
+Align door_handle.center to door_frame.-Z_face.center.
+Then move by offset(0, 0, 0.015).
+
+Create primitive cuboid with size 0.02×0.02×0.01 m and name it door_hinge.
+Rotate door_hinge so its +Z axis aligns +Z (world).
+Align door_hinge.center to door_frame.+Z_face.center.
+Then move by offset(0, 0, 0.001).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Interior Components (Heating Elements & Rack)  ---
+Create primitive cylinder with diameter 0.005 m and length 0.30 m and name it heating_element_top.
+Rotate heating_element_top so its +Z axis aligns +Z (world).
+Align heating_element_top.center to chassis.+Z_face.center.
+Then move by offset(0, 0, -0.02).
+
+Create primitive cylinder with diameter 0.005 m and length 0.30 m and name it heating_element_bottom.
+Rotate heating_element_bottom so its +Z axis aligns +Z (world).
+Align heating_element_bottom.center to chassis.-Z_face.center.
+Then move by offset(0, 0, 0.02).
+
+Create primitive cuboid with size 0.30×0.20×0.002 m and name it food_rack.
+Rotate food_rack so its +Z axis aligns +Z (world).
+Align food_rack.center to chassis.center.
+Then move by offset(0, 0, 0.05).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Controls (Panel & Dials)  ---
+Create primitive cuboid with size 0.10×0.05×0.005 m and name it control_panel.
+Rotate control_panel so its +Z axis aligns +Z (world).
+Align control_panel.center to chassis.+Z_face.center.
+Then move by offset(0, 0, 0.01).
+
+Create primitive cylinder with diameter 0.02 m and height 0.01 m and name it dial_temp.
+Rotate dial_temp so its +Z axis aligns +Z (world).
+Align dial_temp.center to control_panel.-X_face.center.
+Then move by offset(0, 0, 0.005).
+
+Create primitive cylinder with diameter 0.02 m and height 0.01 m and name it dial_timer.
+Rotate dial_timer so its +Z axis aligns +Z (world).
+Align dial_timer.center to control_panel.+X_face.center.
+Then move by offset(0, 0, 0.005).
+
+Stage 4 complete.
+
+All stages complete.

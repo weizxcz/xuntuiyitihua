@@ -1,0 +1,1 @@
+Design a wallpaper border. The border should be 6 inches in height and feature a repeating pattern of stars and moons.

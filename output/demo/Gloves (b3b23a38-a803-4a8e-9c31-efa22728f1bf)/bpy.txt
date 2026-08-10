@@ -1,0 +1,386 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects in the scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units_metres():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_torus(name, major_radius, minor_radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a torus primitive."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, target_vector):
+    """
+    Orient an object so its local +Z axis aligns with the target_vector.
+    Uses quaternion rotation.
+    """
+    # Current up vector is (0,0,1)
+    current_up = Vector((0, 0, 1))
+    target_up = target_vector.normalized()
+    
+    # Calculate rotation quaternion
+    rot_quat = current_up.rotation_difference(target_up)
+    
+    # Apply rotation
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = rot_quat
+
+def get_face_center(obj, face_type='center'):
+    """
+    Get the world location of a specific face or center of an object.
+    face_type: 'center', 'top_face', 'bottom_face', 'left_face', 'right_face'
+    Assumes standard orientation: Z is up, Y is forward/back, X is left/right.
+    """
+    # We need to calculate the face center in world space based on the object's transform
+    # Since we are building primitives, we can calculate relative to the object's local bounds
+    # and then transform to world.
+    
+    # Get object's world matrix
+    wm = obj.matrix_world
+    
+    # Get local bounds
+    min_x, min_y, min_z = obj.bound_box[0]
+    max_x, max_y, max_z = obj.bound_box[6]
+    
+    # Calculate local face centers
+    if face_type == 'center':
+        local_center = Vector((0, 0, 0))
+    elif face_type == 'top_face':
+        # Assuming Z is up
+        local_center = Vector((0, 0, max_z))
+    elif face_type == 'bottom_face':
+        local_center = Vector((0, 0, min_z))
+    elif face_type == 'left_face':
+        # Assuming X is right, so left is min_x
+        local_center = Vector((min_x, 0, 0))
+    elif face_type == 'right_face':
+        local_center = Vector((max_x, 0, 0))
+    elif face_type == 'front_face':
+        local_center = Vector((0, max_y, 0))
+    elif face_type == 'back_face':
+        local_center = Vector((0, min_y, 0))
+    else:
+        local_center = Vector((0, 0, 0))
+        
+    # Transform to world space
+    world_center = wm @ local_center
+    return world_center
+
+def align_to_face(obj_target, obj_source, face_type):
+    """
+    Align obj_source so its center matches the specified face of obj_target.
+    """
+    target_loc = get_face_center(obj_target, face_type)
+    obj_source.location = target_loc
+
+def boolean_union(objects, name):
+    """
+    Perform boolean union on a list of objects and return the resulting object.
+    """
+    if not objects:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+    # Apply modifiers if any (clean up)
+    # Note: In a script, it's safer to use BMesh for boolean operations to avoid dependency on modifiers
+    # However, for simplicity and standard Blender API usage, we can use the boolean modifier approach
+    # or BMesh. Given the strict "self-contained" rule, BMesh is more robust without UI interaction.
+    
+    # Let's use BMesh for robust boolean union
+    bm = bmesh.new()
+    
+    # We need to collect all meshes
+    # First, ensure all objects are in edit mode or use their data directly
+    # BMesh.from_mesh works on the mesh data.
+    
+    # To handle transforms correctly, we must apply them or transform the mesh data.
+    # Applying transforms is easier for this script.
+    
+    applied_objects = []
+    for obj in objects:
+        # Apply transforms
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        mesh = obj.data.copy()
+        bm.from_mesh(mesh)
+        applied_objects.append(obj)
+        
+    # Merge all vertices
+    bmesh.ops.connect_verts_concave(bm)
+    
+    # Create new object from BMesh
+    new_mesh = bpy.data.meshes.new(name + "_mesh")
+    bm.to_mesh(new_mesh)
+    bm.free()
+    
+    new_obj = bpy.data.objects.new(name, new_mesh)
+    bpy.context.collection.objects.link(new_obj)
+    
+    # Delete original objects
+    for obj in applied_objects:
+        bpy.context.collection.objects.unlink(obj)
+        bpy.data.objects.remove(obj)
+        
+    return new_obj
+
+def average_vectors(vectors):
+    """Calculate the average of a list of vectors."""
+    if not vectors:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for v in vectors:
+        avg += v
+    return avg / len(vectors)
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+mat_fabric_main = make_material("fabric_main", (0.8, 0.8, 0.8, 1.0))
+mat_elastic_band = make_material("elastic_band", (0.2, 0.2, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create Left Glove Base Components ---
+
+# 1.1 palm_L
+palm_L = add_cylinder("palm_L", radius=0.075, depth=0.005, location=(0,0,0), rotation=(0,0,0))
+apply_material(palm_L, mat_fabric_main)
+# Rotate so +Z aligns +Z (already default)
+align_axis_to_vector(palm_L, Vector((0,0,1)))
+# Align center to (0,0,0)
+palm_L.location = Vector((0,0,0))
+# Offset (0,0,0)
+palm_L.location += Vector((0,0,0))
+
+# 1.2 back_L
+back_L = add_cylinder("back_L", radius=0.07, depth=0.005, location=(0,0,0), rotation=(0,0,0))
+apply_material(back_L, mat_fabric_main)
+align_axis_to_vector(back_L, Vector((0,0,1)))
+# Align center to palm_L.center
+back_L.location = palm_L.location
+# Offset (0,0,0)
+back_L.location += Vector((0,0,0))
+
+# 1.3 thumb_L
+thumb_L = add_cylinder("thumb_L", radius=0.015, depth=0.08, location=(0,0,0), rotation=(0,0,0))
+apply_material(thumb_L, mat_fabric_main)
+# Rotate so +Z aligns -X
+align_axis_to_vector(thumb_L, Vector((-1,0,0)))
+# Align center to palm_L.left_face
+align_to_face(palm_L, thumb_L, 'left_face')
+# Offset (0,0,0)
+thumb_L.location += Vector((0,0,0))
+
+# 1.4 index_L
+index_L = add_cylinder("index_L", radius=0.0125, depth=0.08, location=(0,0,0), rotation=(0,0,0))
+apply_material(index_L, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(index_L, Vector((0,1,0)))
+# Align center to palm_L.top_face
+align_to_face(palm_L, index_L, 'top_face')
+# Offset (0,0,0)
+index_L.location += Vector((0,0,0))
+
+# 1.5 middle_L
+middle_L = add_cylinder("middle_L", radius=0.0125, depth=0.09, location=(0,0,0), rotation=(0,0,0))
+apply_material(middle_L, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(middle_L, Vector((0,1,0)))
+# Align center to palm_L.top_face
+align_to_face(palm_L, middle_L, 'top_face')
+# Offset (0,0,0)
+middle_L.location += Vector((0,0,0))
+
+# 1.6 ring_L
+ring_L = add_cylinder("ring_L", radius=0.012, depth=0.085, location=(0,0,0), rotation=(0,0,0))
+apply_material(ring_L, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(ring_L, Vector((0,1,0)))
+# Align center to palm_L.top_face
+align_to_face(palm_L, ring_L, 'top_face')
+# Offset (0,0,0)
+ring_L.location += Vector((0,0,0))
+
+# 1.7 pinky_L
+pinky_L = add_cylinder("pinky_L", radius=0.011, depth=0.07, location=(0,0,0), rotation=(0,0,0))
+apply_material(pinky_L, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(pinky_L, Vector((0,1,0)))
+# Align center to palm_L.top_face
+align_to_face(palm_L, pinky_L, 'top_face')
+# Offset (0,0,0)
+pinky_L.location += Vector((0,0,0))
+
+# 1.8 cuff_L
+cuff_L = add_torus("cuff_L", major_radius=0.08, minor_radius=0.01, location=(0,0,0), rotation=(0,0,0))
+apply_material(cuff_L, mat_elastic_band)
+# Rotate so +Z aligns +Z (default)
+align_axis_to_vector(cuff_L, Vector((0,0,1)))
+# Align center to palm_L.bottom_face
+align_to_face(palm_L, cuff_L, 'bottom_face')
+# Offset (0,0,0)
+cuff_L.location += Vector((0,0,0))
+
+# --- SECTION 2 – Create Right Glove Base Components ---
+
+# 2.1 palm_R
+palm_R = add_cylinder("palm_R", radius=0.075, depth=0.005, location=(0,0,0), rotation=(0,0,0))
+apply_material(palm_R, mat_fabric_main)
+align_axis_to_vector(palm_R, Vector((0,0,1)))
+# Align center to (0.3,0,0)
+palm_R.location = Vector((0.3,0,0))
+# Offset (0,0,0)
+palm_R.location += Vector((0,0,0))
+
+# 2.2 back_R
+back_R = add_cylinder("back_R", radius=0.07, depth=0.005, location=(0,0,0), rotation=(0,0,0))
+apply_material(back_R, mat_fabric_main)
+align_axis_to_vector(back_R, Vector((0,0,1)))
+# Align center to palm_R.center
+back_R.location = palm_R.location
+# Offset (0,0,0)
+back_R.location += Vector((0,0,0))
+
+# 2.3 thumb_R
+thumb_R = add_cylinder("thumb_R", radius=0.015, depth=0.08, location=(0,0,0), rotation=(0,0,0))
+apply_material(thumb_R, mat_fabric_main)
+# Rotate so +Z aligns +X
+align_axis_to_vector(thumb_R, Vector((1,0,0)))
+# Align center to palm_R.right_face
+align_to_face(palm_R, thumb_R, 'right_face')
+# Offset (0,0,0)
+thumb_R.location += Vector((0,0,0))
+
+# 2.4 index_R
+index_R = add_cylinder("index_R", radius=0.0125, depth=0.08, location=(0,0,0), rotation=(0,0,0))
+apply_material(index_R, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(index_R, Vector((0,1,0)))
+# Align center to palm_R.top_face
+align_to_face(palm_R, index_R, 'top_face')
+# Offset (0,0,0)
+index_R.location += Vector((0,0,0))
+
+# 2.5 middle_R
+middle_R = add_cylinder("middle_R", radius=0.0125, depth=0.09, location=(0,0,0), rotation=(0,0,0))
+apply_material(middle_R, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(middle_R, Vector((0,1,0)))
+# Align center to palm_R.top_face
+align_to_face(palm_R, middle_R, 'top_face')
+# Offset (0,0,0)
+middle_R.location += Vector((0,0,0))
+
+# 2.6 ring_R
+ring_R = add_cylinder("ring_R", radius=0.012, depth=0.085, location=(0,0,0), rotation=(0,0,0))
+apply_material(ring_R, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(ring_R, Vector((0,1,0)))
+# Align center to palm_R.top_face
+align_to_face(palm_R, ring_R, 'top_face')
+# Offset (0,0,0)
+ring_R.location += Vector((0,0,0))
+
+# 2.7 pinky_R
+pinky_R = add_cylinder("pinky_R", radius=0.011, depth=0.07, location=(0,0,0), rotation=(0,0,0))
+apply_material(pinky_R, mat_fabric_main)
+# Rotate so +Z aligns +Y
+align_axis_to_vector(pinky_R, Vector((0,1,0)))
+# Align center to palm_R.top_face
+align_to_face(palm_R, pinky_R, 'top_face')
+# Offset (0,0,0)
+pinky_R.location += Vector((0,0,0))
+
+# 2.8 cuff_R
+cuff_R = add_torus("cuff_R", major_radius=0.08, minor_radius=0.01, location=(0,0,0), rotation=(0,0,0))
+apply_material(cuff_R, mat_elastic_band)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(cuff_R, Vector((0,0,1)))
+# Align center to palm_R.bottom_face
+align_to_face(palm_R, cuff_R, 'bottom_face')
+# Offset (0,0,0)
+cuff_R.location += Vector((0,0,0))
+
+# --- SECTION 3 – Assemble Left Glove ---
+glove_L_assembled = boolean_union([palm_L, back_L, thumb_L, index_L, middle_L, ring_L, pinky_L, cuff_L], "glove_L_assembled")
+apply_material(glove_L_assembled, mat_fabric_main)
+# Align center to (0,0,0)
+glove_L_assembled.location = Vector((0,0,0))
+# Offset (0,0,0)
+glove_L_assembled.location += Vector((0,0,0))
+
+# --- SECTION 4 – Assemble Right Glove ---
+glove_R_assembled = boolean_union([palm_R, back_R, thumb_R, index_R, middle_R, ring_R, pinky_R, cuff_R], "glove_R_assembled")
+apply_material(glove_R_assembled, mat_fabric_main)
+# Align center to (0.3,0,0)
+glove_R_assembled.location = Vector((0.3,0,0))
+# Offset (0,0,0)
+glove_R_assembled.location += Vector((0,0,0))
+
+# --- SECTION 5 – Final Pair Assembly ---
+# Calculate average center
+avg_center = average_vectors([glove_L_assembled.location, glove_R_assembled.location])
+# Align gloves_pair.center to Avg(...)
+# Since we are creating a new object, we can place it directly at the average center
+gloves_pair = boolean_union([glove_L_assembled, glove_R_assembled], "gloves_pair")
+apply_material(gloves_pair, mat_fabric_main)
+gloves_pair.location = avg_center
+# Offset (0,0,0)
+gloves_pair.location += Vector((0,0,0))
+
+```

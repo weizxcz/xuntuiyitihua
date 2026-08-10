@@ -1,0 +1,370 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material leaf_green; diffuse_color = (0.15,0.45,0.15,1.0).
+Define material leaf_stem; diffuse_color = (0.1,0.3,0.1,1.0).
+Define material wallpaper_base; diffuse_color = (0.95,0.95,0.9,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create wallpaper base substrate  ---
+Create primitive cuboid with size 1.0×1.0×0.001 m and name it wallpaper_base.
+Rotate wallpaper_base so its +Z axis aligns +Z (world).
+Anchor wallpaper_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create leaf template geometry  ---
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_template.
+Rotate leaf_template so its +Z axis aligns +Z (world).
+Anchor leaf_template to world origin.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Instantiate leaf instances  ---
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_1.
+Rotate leaf_instance_1 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_1 to world origin.
+Then move by offset(0.1,0.1,0.001).
+Rotate leaf_instance_1 so its local +Z axis achieves rotation=axis:Z,15°.
+Scale leaf_instance_1 to (0.8,0.8,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_2.
+Rotate leaf_instance_2 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_2 to world origin.
+Then move by offset(0.3,0.2,0.001).
+Rotate leaf_instance_2 so its local +Z axis achieves rotation=axis:Z,45°.
+Scale leaf_instance_2 to (1.2,1.2,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_3.
+Rotate leaf_instance_3 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_3 to world origin.
+Then move by offset(0.5,0.1,0.001).
+Rotate leaf_instance_3 so its local +Z axis achieves rotation=axis:Z,300°.
+Scale leaf_instance_3 to (0.9,0.9,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_4.
+Rotate leaf_instance_4 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_4 to world origin.
+Then move by offset(0.7,0.3,0.001).
+Rotate leaf_instance_4 so its local +Z axis achieves rotation=axis:Z,60°.
+Scale leaf_instance_4 to (1.1,1.1,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_5.
+Rotate leaf_instance_5 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_5 to world origin.
+Then move by offset(0.9,0.2,0.001).
+Rotate leaf_instance_5 so its local +Z axis achieves rotation=axis:Z,270°.
+Scale leaf_instance_5 to (0.7,0.7,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_6.
+Rotate leaf_instance_6 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_6 to world origin.
+Then move by offset(0.2,0.4,0.001).
+Rotate leaf_instance_6 so its local +Z axis achieves rotation=axis:Z,120°.
+Scale leaf_instance_6 to (1.0,1.0,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_7.
+Rotate leaf_instance_7 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_7 to world origin.
+Then move by offset(0.4,0.5,0.001).
+Rotate leaf_instance_7 so its local +Z axis achieves rotation=axis:Z,200°.
+Scale leaf_instance_7 to (0.85,0.85,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_8.
+Rotate leaf_instance_8 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_8 to world origin.
+Then move by offset(0.6,0.6,0.001).
+Rotate leaf_instance_8 so its local +Z axis achieves rotation=axis:Z,330°.
+Scale leaf_instance_8 to (1.15,1.15,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_9.
+Rotate leaf_instance_9 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_9 to world origin.
+Then move by offset(0.8,0.7,0.001).
+Rotate leaf_instance_9 so its local +Z axis achieves rotation=axis:Z,150°.
+Scale leaf_instance_9 to (0.95,0.95,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_10.
+Rotate leaf_instance_10 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_10 to world origin.
+Then move by offset(0.1,0.8,0.001).
+Rotate leaf_instance_10 so its local +Z axis achieves rotation=axis:Z,240°.
+Scale leaf_instance_10 to (1.05,1.05,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_11.
+Rotate leaf_instance_11 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_11 to world origin.
+Then move by offset(0.3,0.9,0.001).
+Rotate leaf_instance_11 so its local +Z axis achieves rotation=axis:Z,90°.
+Scale leaf_instance_11 to (0.75,0.75,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_12.
+Rotate leaf_instance_12 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_12 to world origin.
+Then move by offset(0.5,0.8,0.001).
+Rotate leaf_instance_12 so its local +Z axis achieves rotation=axis:Z,315°.
+Scale leaf_instance_12 to (1.1,1.1,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_13.
+Rotate leaf_instance_13 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_13 to world origin.
+Then move by offset(0.7,0.9,0.001).
+Rotate leaf_instance_13 so its local +Z axis achieves rotation=axis:Z,45°.
+Scale leaf_instance_13 to (0.9,0.9,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_14.
+Rotate leaf_instance_14 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_14 to world origin.
+Then move by offset(0.9,0.8,0.001).
+Rotate leaf_instance_14 so its local +Z axis achieves rotation=axis:Z,210°.
+Scale leaf_instance_14 to (1.0,1.0,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_15.
+Rotate leaf_instance_15 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_15 to world origin.
+Then move by offset(0.2,0.6,0.001).
+Rotate leaf_instance_15 so its local +Z axis achieves rotation=axis:Z,180°.
+Scale leaf_instance_15 to (0.8,0.8,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_16.
+Rotate leaf_instance_16 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_16 to world origin.
+Then move by offset(0.4,0.7,0.001).
+Rotate leaf_instance_16 so its local +Z axis achieves rotation=axis:Z,270°.
+Scale leaf_instance_16 to (1.2,1.2,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_17.
+Rotate leaf_instance_17 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_17 to world origin.
+Then move by offset(0.6,0.8,0.001).
+Rotate leaf_instance_17 so its local +Z axis achieves rotation=axis:Z,30°.
+Scale leaf_instance_17 to (0.95,0.95,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_18.
+Rotate leaf_instance_18 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_18 to world origin.
+Then move by offset(0.8,0.6,0.001).
+Rotate leaf_instance_18 so its local +Z axis achieves rotation=axis:Z,300°.
+Scale leaf_instance_18 to (1.05,1.05,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_19.
+Rotate leaf_instance_19 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_19 to world origin.
+Then move by offset(0.1,0.5,0.001).
+Rotate leaf_instance_19 so its local +Z axis achieves rotation=axis:Z,135°.
+Scale leaf_instance_19 to (0.85,0.85,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_20.
+Rotate leaf_instance_20 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_20 to world origin.
+Then move by offset(0.3,0.3,0.001).
+Rotate leaf_instance_20 so its local +Z axis achieves rotation=axis:Z,225°.
+Scale leaf_instance_20 to (1.1,1.1,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_21.
+Rotate leaf_instance_21 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_21 to world origin.
+Then move by offset(0.5,0.4,0.001).
+Rotate leaf_instance_21 so its local +Z axis achieves rotation=axis:Z,345°.
+Scale leaf_instance_21 to (0.9,0.9,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_22.
+Rotate leaf_instance_22 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_22 to world origin.
+Then move by offset(0.7,0.5,0.001).
+Rotate leaf_instance_22 so its local +Z axis achieves rotation=axis:Z,75°.
+Scale leaf_instance_22 to (1.15,1.15,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_23.
+Rotate leaf_instance_23 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_23 to world origin.
+Then move by offset(0.9,0.5,0.001).
+Rotate leaf_instance_23 so its local +Z axis achieves rotation=axis:Z,165°.
+Scale leaf_instance_23 to (0.75,0.75,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_24.
+Rotate leaf_instance_24 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_24 to world origin.
+Then move by offset(0.2,0.7,0.001).
+Rotate leaf_instance_24 so its local +Z axis achieves rotation=axis:Z,255°.
+Scale leaf_instance_24 to (1.0,1.0,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_25.
+Rotate leaf_instance_25 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_25 to world origin.
+Then move by offset(0.4,0.2,0.001).
+Rotate leaf_instance_25 so its local +Z axis achieves rotation=axis:Z,345°.
+Scale leaf_instance_25 to (0.8,0.8,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_26.
+Rotate leaf_instance_26 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_26 to world origin.
+Then move by offset(0.6,0.3,0.001).
+Rotate leaf_instance_26 so its local +Z axis achieves rotation=axis:Z,15°.
+Scale leaf_instance_26 to (1.2,1.2,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_27.
+Rotate leaf_instance_27 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_27 to world origin.
+Then move by offset(0.8,0.4,0.001).
+Rotate leaf_instance_27 so its local +Z axis achieves rotation=axis:Z,300°.
+Scale leaf_instance_27 to (0.95,0.95,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_28.
+Rotate leaf_instance_28 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_28 to world origin.
+Then move by offset(0.1,0.3,0.001).
+Rotate leaf_instance_28 so its local +Z axis achieves rotation=axis:Z,195°.
+Scale leaf_instance_28 to (1.05,1.05,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_29.
+Rotate leaf_instance_29 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_29 to world origin.
+Then move by offset(0.3,0.6,0.001).
+Rotate leaf_instance_29 so its local +Z axis achieves rotation=axis:Z,285°.
+Scale leaf_instance_29 to (0.9,0.9,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_30.
+Rotate leaf_instance_30 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_30 to world origin.
+Then move by offset(0.5,0.6,0.001).
+Rotate leaf_instance_30 so its local +Z axis achieves rotation=axis:Z,105°.
+Scale leaf_instance_30 to (1.1,1.1,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_31.
+Rotate leaf_instance_31 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_31 to world origin.
+Then move by offset(0.7,0.2,0.001).
+Rotate leaf_instance_31 so its local +Z axis achieves rotation=axis:Z,225°.
+Scale leaf_instance_31 to (0.85,0.85,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_32.
+Rotate leaf_instance_32 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_32 to world origin.
+Then move by offset(0.9,0.6,0.001).
+Rotate leaf_instance_32 so its local +Z axis achieves rotation=axis:Z,315°.
+Scale leaf_instance_32 to (1.15,1.15,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_33.
+Rotate leaf_instance_33 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_33 to world origin.
+Then move by offset(0.2,0.9,0.001).
+Rotate leaf_instance_33 so its local +Z axis achieves rotation=axis:Z,45°.
+Scale leaf_instance_33 to (0.75,0.75,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_34.
+Rotate leaf_instance_34 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_34 to world origin.
+Then move by offset(0.4,0.1,0.001).
+Rotate leaf_instance_34 so its local +Z axis achieves rotation=axis:Z,135°.
+Scale leaf_instance_34 to (1.0,1.0,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_35.
+Rotate leaf_instance_35 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_35 to world origin.
+Then move by offset(0.6,0.9,0.001).
+Rotate leaf_instance_35 so its local +Z axis achieves rotation=axis:Z,225°.
+Scale leaf_instance_35 to (0.8,0.8,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_36.
+Rotate leaf_instance_36 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_36 to world origin.
+Then move by offset(0.8,0.1,0.001).
+Rotate leaf_instance_36 so its local +Z axis achieves rotation=axis:Z,315°.
+Scale leaf_instance_36 to (1.2,1.2,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_37.
+Rotate leaf_instance_37 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_37 to world origin.
+Then move by offset(0.1,0.7,0.001).
+Rotate leaf_instance_37 so its local +Z axis achieves rotation=axis:Z,105°.
+Scale leaf_instance_37 to (0.95,0.95,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_38.
+Rotate leaf_instance_38 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_38 to world origin.
+Then move by offset(0.3,0.8,0.001).
+Rotate leaf_instance_38 so its local +Z axis achieves rotation=axis:Z,195°.
+Scale leaf_instance_38 to (1.05,1.05,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_39.
+Rotate leaf_instance_39 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_39 to world origin.
+Then move by offset(0.5,0.2,0.001).
+Rotate leaf_instance_39 so its local +Z axis achieves rotation=axis:Z,285°.
+Scale leaf_instance_39 to (0.9,0.9,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_40.
+Rotate leaf_instance_40 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_40 to world origin.
+Then move by offset(0.7,0.7,0.001).
+Rotate leaf_instance_40 so its local +Z axis achieves rotation=axis:Z,75°.
+Scale leaf_instance_40 to (1.1,1.1,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_41.
+Rotate leaf_instance_41 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_41 to world origin.
+Then move by offset(0.9,0.7,0.001).
+Rotate leaf_instance_41 so its local +Z axis achieves rotation=axis:Z,165°.
+Scale leaf_instance_41 to (0.85,0.85,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_42.
+Rotate leaf_instance_42 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_42 to world origin.
+Then move by offset(0.2,0.1,0.001).
+Rotate leaf_instance_42 so its local +Z axis achieves rotation=axis:Z,255°.
+Scale leaf_instance_42 to (1.15,1.15,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_43.
+Rotate leaf_instance_43 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_43 to world origin.
+Then move by offset(0.4,0.9,0.001).
+Rotate leaf_instance_43 so its local +Z axis achieves rotation=axis:Z,345°.
+Scale leaf_instance_43 to (0.75,0.75,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_44.
+Rotate leaf_instance_44 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_44 to world origin.
+Then move by offset(0.6,0.1,0.001).
+Rotate leaf_instance_44 so its local +Z axis achieves rotation=axis:Z,15°.
+Scale leaf_instance_44 to (1.0,1.0,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_45.
+Rotate leaf_instance_45 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_45 to world origin.
+Then move by offset(0.8,0.9,0.001).
+Rotate leaf_instance_45 so its local +Z axis achieves rotation=axis:Z,105°.
+Scale leaf_instance_45 to (0.8,0.8,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_46.
+Rotate leaf_instance_46 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_46 to world origin.
+Then move by offset(0.1,0.6,0.001).
+Rotate leaf_instance_46 so its local +Z axis achieves rotation=axis:Z,195°.
+Scale leaf_instance_46 to (1.2,1.2,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_47.
+Rotate leaf_instance_47 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_47 to world origin.
+Then move by offset(0.3,0.1,0.001).
+Rotate leaf_instance_47 so its local +Z axis achieves rotation=axis:Z,285°.
+Scale leaf_instance_47 to (0.95,0.95,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_48.
+Rotate leaf_instance_48 so its +Z axis aligns +Z (world).
+Anchor leaf_instance_48 to world origin.
+Then move by offset(0.5,0.9,0.001).
+Rotate leaf_instance_48 so its local +Z axis achieves rotation=axis:Z,75°.
+Scale leaf_instance_48 to (1.05,1.05,1.0).
+
+Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_instance_4

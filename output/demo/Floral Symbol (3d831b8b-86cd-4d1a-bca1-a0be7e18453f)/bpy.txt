@@ -1,0 +1,294 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size=(1,1,1), location=(0,0,0)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1, location=(0,0,0)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius=0.5, location=(0,0,0)):
+    """Add a disc (flat cylinder) mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius=0.5, location=(0,0,0)):
+    """Add an UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius=0.5, depth=1, location=(0,0,0)):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, radius=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'WEIGHT'
+    # Apply bevel immediately to keep geometry simple for boolean operations
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return obj
+
+def boolean_union(obj_target, obj_source):
+    """Perform boolean union of obj_source into obj_target."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = obj_target
+    # Add boolean modifier to target
+    mod = obj_target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = obj_source
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Remove source object if it's not needed (optional, but keeps scene clean)
+    # bpy.data.objects.remove(obj_source, do_unlink=True)
+    return obj_target
+
+def boolean_subtract(obj_target, obj_source):
+    """Perform boolean subtract of obj_source from obj_target."""
+    bpy.context.view_layer.objects.active = obj_target
+    mod = obj_target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = obj_source
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return obj_target
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    # Get current rotation
+    rot_euler = obj.rotation_euler
+    # This is a simplified alignment. For robust alignment, we use matrix multiplication.
+    # However, for simple axis alignment (like Z to Z), we can just ensure rotation is identity or specific.
+    # If vector is (0,0,1) and axis is Z, no rotation needed if object is default.
+    if axis == 'Z' and vector == (0,0,1):
+        obj.rotation_euler = (0, 0, 0)
+    elif axis == 'X' and vector == (1,0,0):
+        obj.rotation_euler = (0, 0, math.pi/2)
+    elif axis == 'Y' and vector == (0,1,0):
+        obj.rotation_euler = (-math.pi/2, 0, 0)
+    else:
+        # Generic fallback: align using look-at logic (simplified)
+        # For this script, we assume standard orientations or explicit rotations.
+        pass
+
+def align_center_to_center(obj_source, obj_target):
+    """Align center of obj_source to center of obj_target."""
+    loc = obj_target.location
+    obj_source.location = loc
+
+def align_bottom_face_to_bottom_face(obj_source, obj_target):
+    """Align bottom face of obj_source to bottom face of obj_target.
+    Assumes objects are upright (Z up). Bottom face is at min Z."""
+    # Get bounding box min Z for both
+    # Note: This requires objects to be in their local orientation relative to world
+    # For simple primitives, we can calculate offset based on height.
+    
+    # Get world bounds
+    def get_world_min_z(obj):
+        # Transform vertices to world space
+        verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        return min(v.z for v in verts)
+    
+    def get_height(obj):
+        verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        max_z = max(v.z for v in verts)
+        min_z = min(v.z for v in verts)
+        return max_z - min_z
+
+    target_min_z = get_world_min_z(obj_target)
+    source_height = get_height(obj_source)
+    
+    # We want source's bottom face (min_z) to be at target's bottom face (min_z)
+    # Current source location is already aligned center-to-center or needs to be set.
+    # Let's assume we align centers first, then adjust Z.
+    
+    # If we align centers:
+    # source_center_z = target_center_z
+    # source_min_z = source_center_z - source_height/2
+    # We want source_min_z = target_min_z
+    # So source_center_z_new = target_min_z + source_height/2
+    # delta_z = source_center_z_new - source_center_z_old
+    # delta_z = (target_min_z + source_height/2) - target_center_z
+    
+    target_center_z = obj_target.location.z
+    delta_z = (target_min_z + source_height/2) - target_center_z
+    obj_source.location.z += delta_z
+
+def rotate_object(obj, axis='Z', angle=0):
+    """Rotate object around its local axis."""
+    if axis == 'Z':
+        obj.rotation_euler.z += angle
+    elif axis == 'X':
+        obj.rotation_euler.x += angle
+    elif axis == 'Y':
+        obj.rotation_euler.y += angle
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+petal_mat = make_material("petal_mat", diffuse_color=(1.0, 0.84, 0.0, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Check if floral_symbol exists, if not create a dummy or handle error.
+# The prompt implies floral_symbol is an existing anchor.
+# If it doesn't exist, we must create it or assume it's there.
+# Since the prompt says "Align ... to floral_symbol.center", it implies floral_symbol exists.
+# However, in a fresh scene, it doesn't. 
+# To make the script robust, we will create a dummy 'floral_symbol' anchor if it doesn't exist,
+# or we assume the user has created it. Given the "Stage 3" creates it, it's likely an anchor for the petals.
+# Let's create a dummy anchor object named 'floral_symbol' at origin if it doesn't exist, 
+# so the alignment commands work.
+
+if 'floral_symbol' not in bpy.data.objects:
+    # Create a dummy anchor object
+    bpy.ops.mesh.primitive_cube_add(size=0.001, location=(0,0,0))
+    floral_symbol = bpy.context.active_object
+    floral_symbol.name = 'floral_symbol'
+    floral_symbol.hide_viewport = True
+    floral_symbol.hide_render = True
+else:
+    floral_symbol = bpy.data.objects['floral_symbol']
+
+# Helper to apply material
+def apply_material(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+# --- SECTION 1 – Create base petal template (petal_0) ---
+
+# Create primitive plane with size 0.04×0.06 m and name it petal_0.
+# Note: Blender adds cubes/cylinders. To get a plane, we can add a cube and scale Z to 0, 
+# or add a mesh plane. Let's use a cube scaled to be thin.
+petal_0 = add_cube("petal_0", size=(0.04, 0.06, 0.001), location=(0,0,0))
+apply_material(petal_0, petal_mat)
+
+# Rotate petal_0 so its +Z axis aligns +Z (world).
+align_axis_to_vector(petal_0, 'Z', (0,0,1))
+
+# Align petal_0.center to floral_symbol.center.
+align_center_to_center(petal_0, floral_symbol)
+
+# Align petal_0.bottom_face to floral_symbol.bottom_face.
+align_bottom_face_to_bottom_face(petal_0, floral_symbol)
+
+# Then move by offset(0,0,0).
+# No change.
+
+# Bevel petal_0 with radius 0.001 m, segments 4.
+add_bevel(petal_0, radius=0.001, segments=4)
+
+# Boolean-union petal_0 with itself to ensure solid caps (extrude simulation via thickness).
+# This is a bit redundant if we already have thickness, but we follow instructions.
+# We create a cutter that is the same shape but slightly larger/thicker to simulate extrusion?
+# Or just apply a solidify modifier? The prompt says "Boolean-union ... with itself".
+# Unioning an object with itself does nothing geometrically. 
+# "extrude simulation via thickness" suggests we might want to add thickness if it's flat.
+# Since we created it as a thin cube (0.001m), it already has thickness.
+# We will skip the self-union as it's a no-op, or interpret it as ensuring the mesh is watertight.
+# To be safe, we'll just ensure the object is solid.
+
+# --- SECTION 2 – Create rotated petals (petal_1 to petal_4) ---
+
+petal_angles = [
+    ("petal_1", 72),
+    ("petal_2", 144),
+    ("petal_3", 216),
+    ("petal_4", 288)
+]
+
+for name, angle in petal_angles:
+    # Create primitive plane with size 0.04×0.06 m
+    petal = add_cube(name, size=(0.04, 0.06, 0.001), location=(0,0,0))
+    apply_material(petal, petal_mat)
+    
+    # Rotate so +Z aligns +Z
+    align_axis_to_vector(petal, 'Z', (0,0,1))
+    
+    # Align center to floral_symbol.center
+    align_center_to_center(petal, floral_symbol)
+    
+    # Align bottom face to floral_symbol.bottom_face
+    align_bottom_face_to_bottom_face(petal, floral_symbol)
+    
+    # Move by offset(0,0,0)
+    
+    # Bevel
+    add_bevel(petal, radius=0.001, segments=4)
+    
+    # Boolean-union with itself (no-op, but acknowledged)
+    
+    # Rotate so its local +Z axis achieves orientation=axis:+Z (spin=Z, angle)
+    rotate_object(petal, axis='Z', angle=math.radians(angle))
+
+# --- SECTION 3 – Assemble floral symbol ---
+
+# Boolean-union petal_0, petal_1, petal_2, petal_3, petal_4 into floral_symbol.
+# Since floral_symbol is a dummy anchor, we should probably create a new object for the final symbol
+# or merge the petals into a new object.
+# The prompt says "Boolean-union ... into floral_symbol".
+# If floral_symbol is the anchor, we might want to keep it separate or replace it.
+# Let's create a new object 'floral_symbol_final' or just merge them into one object named 'floral_symbol'.
+
+# Select all petals
+bpy.ops.object.select_all(action='DESELECT')
+petals = [petal_0] + [bpy.data.objects[name] for name, _ in petal_angles]
+for p in petals:
+    p.select_set(True)
+
+# Join them into one object
+bpy.context.view_layer.objects.active = petals[0]
+bpy.ops.object.join()
+final_symbol = bpy.context.active_object
+final_symbol.name = 'floral_symbol'
+apply_material(final_symbol, petal_mat)
+
+# Hide the dummy anchor if it's still there
+if 'floral_symbol' in bpy.data.objects and bpy.data.objects['floral_symbol'] != final_symbol:
+    bpy.data.objects['floral_symbol'].hide_viewport = True
+    bpy.data.objects['floral_symbol'].hide_render = True
+
+# Deselect all
+bpy.ops.object.select_all(action='DESELECT')

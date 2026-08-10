@@ -1,0 +1,1 @@
+Model a basic fuse. It should be cylindrical with metal caps on both ends.

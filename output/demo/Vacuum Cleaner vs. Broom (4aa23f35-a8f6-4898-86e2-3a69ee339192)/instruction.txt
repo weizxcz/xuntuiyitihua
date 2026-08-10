@@ -1,0 +1,1 @@
+Design a 3D model comparing a vacuum cleaner and a broom. The vacuum cleaner should have a cylindrical body with a hose and a nozzle, while the broom should have a long handle with bristles at the end. Position them side by side.

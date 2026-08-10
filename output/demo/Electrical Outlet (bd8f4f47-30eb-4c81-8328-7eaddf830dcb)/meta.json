@@ -1,0 +1,44 @@
+{
+  "id": "bd8f4f47-30eb-4c81-8328-7eaddf830dcb",
+  "name": "Electrical Outlet",
+  "instruction": "Create a standard electrical outlet. It should have two vertical slots and a round hole for the grounding pin.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an electrical outlet.",
+        "The outlet features two vertical slots.",
+        "The outlet includes a round hole for the grounding pin."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The slots and grounding hole are proportionate to the overall size of the outlet."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The slots and grounding hole are positioned correctly within the outlet.",
+        "The outlet is designed to fit into a standard electrical box."
+      ],
+      "Object distance and contact": [
+        "The slots and grounding hole do not overlap.",
+        "There is adequate space between the slots and the grounding hole."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The outlet design matches the description provided."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

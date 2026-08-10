@@ -1,0 +1,33 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material glass_transparent; diffuse_color = (0.8,0.9,1.0,0.3).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create glass_body  ---
+Create primitive cylinder with radius 0.012 m and height 0.150 m and name it glass_body.
+Rotate glass_body so its +Z axis aligns +Z (world).
+Move glass_body to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create bottom_cap  ---
+Create full_sphere with radius 0.012 m and name it bottom_cap.
+Rotate bottom_cap so its +Z axis aligns +Z (world).
+Create plane_cutter and name it bottom_cap_cut with size 0.024×0.024 m; orientation=axis:+Z.
+Boolean-subtract bottom_cap_cut from bottom_cap; keep bottom_cap. // produces hemisphere
+Rotate bottom_cap so its curved face points +Z.
+Align bottom_cap.XY_face to glass_body.bottom_face.
+Align bottom_cap.Z_face to glass_body.bottom_face.
+Stage 2 complete.
+
+All stages complete.

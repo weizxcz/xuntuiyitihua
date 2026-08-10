@@ -1,0 +1,102 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_blue; diffuse_color = (0.2,0.4,0.8,1.0).
+Define material mat_green; diffuse_color = (0.2,0.7,0.2,1.0).
+Define material mat_red; diffuse_color = (0.8,0.2,0.2,1.0).
+Define material mat_yellow; diffuse_color = (0.9,0.8,0.1,1.0).
+Define material mat_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Blue Pawn Piece  ---
+Create primitive cylinder with diameter 0.02 m and height 0.005 m and name it base_cylinder.
+Rotate base_cylinder so its +Z axis aligns +Z (world).
+Anchor base_cylinder to root.origin.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.015 m and height 0.02 m and name it body_cylinder.
+Rotate body_cylinder so its +Z axis aligns +Z (world).
+Align body_cylinder.bottom_face to base_cylinder.top_face.
+Then move by offset(0,0,0.0125).
+
+Create primitive sphere with diameter 0.012 m and name it head_sphere.
+Rotate head_sphere so its +Z axis aligns +Z (world).
+Align head_sphere.bottom to body_cylinder.top.
+Then move by offset(0,0,0.0275).
+
+Boolean-union base_cylinder, body_cylinder, and head_sphere; keep union result named blue_piece.
+Rotate blue_piece so its +Z axis aligns +Z (world).
+Anchor blue_piece to root.origin.
+Then move by offset(0.05, 0.05, 0.01).
+Apply material mat_blue to blue_piece.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create Green Cone Piece  ---
+Create primitive cylinder with diameter 0.02 m and height 0.005 m and name it base_cylinder_green.
+Rotate base_cylinder_green so its +Z axis aligns +Z (world).
+Anchor base_cylinder_green to root.origin.
+Then move by offset(0,0,0).
+
+Create primitive cone with diameter 0.015 m and height 0.025 m and name it cone_body.
+Rotate cone_body so its +Z axis aligns +Z (world).
+Align cone_body.bottom_face to base_cylinder_green.top_face.
+Then move by offset(0,0,0.015).
+
+Boolean-union base_cylinder_green and cone_body; keep union result named green_piece.
+Rotate green_piece so its +Z axis aligns +Z (world).
+Anchor green_piece to root.origin.
+Then move by offset(0.15, 0.02, 0.01).
+Apply material mat_green to green_piece.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create Red Cube Piece  ---
+Create primitive cylinder with diameter 0.02 m and height 0.005 m and name it base_cylinder_red.
+Rotate base_cylinder_red so its +Z axis aligns +Z (world).
+Anchor base_cylinder_red to root.origin.
+Then move by offset(0,0,0).
+
+Create primitive cube with size 0.015×0.015×0.015 m and name it cube_body.
+Rotate cube_body so its +Z axis aligns +Z (world).
+Align cube_body.bottom_face to base_cylinder_red.top_face.
+Then move by offset(0,0,0.0125).
+
+Boolean-union base_cylinder_red and cube_body; keep union result named red_piece.
+Rotate red_piece so its +Z axis aligns +Z (world).
+Anchor red_piece to root.origin.
+Then move by offset(0.02, 0.12, 0.01).
+Apply material mat_red to red_piece.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create Yellow Star Piece  ---
+Create primitive cylinder with diameter 0.02 m and height 0.005 m and name it base_cylinder_yellow.
+Rotate base_cylinder_yellow so its +Z axis aligns +Z (world).
+Anchor base_cylinder_yellow to root.origin.
+Then move by offset(0,0,0).
+
+Create 5-point star prism with outer diameter 0.015 m, inner diameter 0.006 m (radius 0.003), height 0.005 m and name it star_prism.
+Rotate star_prism so its +Z axis aligns +Z (world).
+Align star_prism.bottom_face to base_cylinder_yellow.top_face.
+Then move by offset(0,0,0.0125).
+
+Boolean-union base_cylinder_yellow and star_prism; keep union result named yellow_piece.
+Rotate yellow_piece so its +Z axis aligns +Z (world).
+Anchor yellow_piece to root.origin.
+Then move by offset(0.12, 0.10, 0.01).
+Apply material mat_yellow to yellow_piece.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

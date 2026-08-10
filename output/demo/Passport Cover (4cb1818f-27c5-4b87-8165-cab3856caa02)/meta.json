@@ -1,0 +1,43 @@
+{
+  "id": "4cb1818f-27c5-4b87-8165-cab3856caa02",
+  "name": "Passport Cover",
+  "instruction": "Create a passport cover. It should be rectangular and slightly larger than a standard passport. ",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a passport cover.",
+        "The passport cover is rectangular in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The dimensions of the passport cover are proportionate to its intended use."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The passport cover is designed to hold a passport securely.",
+        "The cover opens and closes properly without obstruction."
+      ],
+      "Object distance and contact": [
+        "The edges of the passport cover align properly when closed.",
+        "There is no gap between the cover and the passport when inserted."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The passport cover accurately reflects the rectangular shape specified.",
+        "The size of the cover is appropriately larger than a standard passport."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

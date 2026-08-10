@@ -1,0 +1,28 @@
+-- MATERIAL LIBRARY --
+mat_plastic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+mat_wood_brown | diffuse_color=(0.55,0.35,0.15,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| palette_base | Composite of mixing_surface + wells + thumb_hole_cutout + brush_holder_mount | A. Composite of mixing_surface + wells + thumb_hole_cutout + brush_holder_mount; create_method=boolean_subtract; mat=mat_plastic_white; assembly_order=[mixing_surface], [wells], [thumb_hole_cutout], [brush_holder_mount] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| mixing_surface | Cube 0.300×0.200×0.010 m (W×H×T) | primitive=cube; size=(0.300, 0.200, 0.010); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; assembly_order=[mixing_surface] |
+| wells | Composite of well_1 to well_4 | A. Composite of well_1 + well_2 + well_3 + well_4; create_method=boolean_subtract; mat=mat_plastic_white; assembly_order=[wells] |
+| thumb_hole_cutout | Cylinder Ø0.025×0.010 m (D×H) | primitive=cylinder; size=(0.025, 0.010); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; assembly_order=[thumb_hole_cutout] |
+| brush_holder_mount | Cube 0.050×0.020×0.015 m (W×H×T) | primitive=cube; size=(0.050, 0.020, 0.015); orientation=axis:+Z; mat=mat_wood_brown; create_method=primitive; assembly_order=[brush_holder_mount] |
+
+Layer 2 – Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| well_1 | Cylinder Ø0.040×0.005 m (D×H) | primitive=cylinder; size=(0.040, 0.005); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; assembly_order=[wells] |
+| well_2 | Cylinder Ø0.040×0.005 m (D×H) | primitive=cylinder; size=(0.040, 0.005); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; assembly_order=[wells] |
+| well_3 | Cylinder Ø0.040×0.005 m (D×H) | primitive=cylinder; size=(0.040, 0.005); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; assembly_order=[wells] |
+| well_4 | Cylinder Ø0.040×0.005 m (D×H) | primitive=cylinder; size=(0.040, 0.005); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; assembly_order=[wells] |
+
+# ----------  END_GRAPH  ----------

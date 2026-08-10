@@ -1,0 +1,115 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material copper_wire; diffuse_color = (0.87,0.27,0.09,1.0).
+Define material electrical_insulation; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material magnet_neodymium; diffuse_color = (0.2,0.2,0.25,1.0).
+Define material steel_core; diffuse_color = (0.4,0.4,0.45,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create housing  ---
+Create primitive cylinder with diameter 0.200 m and height 0.150 m and name it housing_cylinder.
+Rotate housing_cylinder so its +Z axis aligns +Z (world).
+Move housing_cylinder to (0,0,0).
+
+Create primitive cylinder with diameter 0.220 m and height 0.010 m and name it mounting_flange.
+Rotate mounting_flange so its +Z axis aligns +Z (world).
+Align mounting_flange.center to housing_cylinder.center.
+Align mounting_flange.top_face to housing_cylinder.bottom_face.
+Then move by offset(0,0,-0.005).
+Boolean-union mounting_flange into housing_cylinder; discard mounting_flange.
+Rename housing_cylinder to housing.
+
+Stage 1 complete.
+
+---  SECTION 2 – Create stator_assembly  ---
+Create primitive torus with outer radius 0.090 m, inner radius 0.070 m, and tube radius 0.015 m and name it stator_core.
+Rotate stator_core so its +Z axis aligns +Z (world).
+Move stator_core to (0,0,0).
+
+Create primitive cylinder with diameter 0.030 m and height 0.040 m and name it coil_former_0.
+Rotate coil_former_0 so its +Z axis aligns +Z (world).
+Move coil_former_0 to (0.080,0,0).
+
+Create primitive cylinder with diameter 0.020 m and height 0.035 m and name it copper_coil_0.
+Rotate copper_coil_0 so its +Z axis aligns +Z (world).
+Align copper_coil_0.center to coil_former_0.center.
+Align copper_coil_0.bottom_face to coil_former_0.bottom_face.
+Then move by offset(0,0,0.002).
+Boolean-union copper_coil_0 into coil_former_0; discard copper_coil_0.
+Rename coil_former_0 to coil_group_0.
+
+For i in 0…3:
+  Create primitive cylinder with diameter 0.030 m and height 0.040 m and name it coil_former_i.
+  Rotate coil_former_i so its +Z axis aligns +Z (world).
+  Align coil_former_i.center to stator_core.center.
+  Align coil_former_i.bottom_face to stator_core.bottom_face.
+  Then position at polar(0° + i·90°; dr=0.080).
+
+  Create primitive cylinder with diameter 0.020 m and height 0.035 m and name it copper_coil_i.
+  Rotate copper_coil_i so its +Z axis aligns +Z (world).
+  Align copper_coil_i.center to coil_former_i.center.
+  Align copper_coil_i.bottom_face to coil_former_i.bottom_face.
+  Then move by offset(0,0,0.002).
+  Boolean-union copper_coil_i into coil_former_i; discard copper_coil_i.
+  Rename coil_former_i to coil_group_i.
+
+Boolean-union coil_group_0 into stator_core; discard coil_group_0.
+Boolean-union coil_group_1 into stator_core; discard coil_group_1.
+Boolean-union coil_group_2 into stator_core; discard coil_group_2.
+Boolean-union coil_group_3 into stator_core; discard coil_group_3.
+Rename stator_core to stator_assembly.
+
+Stage 2 complete.
+
+---  SECTION 3 – Create rotor_assembly  ---
+Create primitive cylinder with diameter 0.020 m and height 0.160 m and name it rotor_shaft.
+Rotate rotor_shaft so its +Z axis aligns +Z (world).
+Move rotor_shaft to (0,0,0).
+
+Create primitive cylinder with diameter 0.060 m and height 0.040 m and name it rotor_core.
+Rotate rotor_core so its +Z axis aligns +Z (world).
+Align rotor_core.center to rotor_shaft.center.
+Align rotor_core.bottom_face to rotor_shaft.top_face.
+Then move by offset(0,0,0.001).
+Boolean-union rotor_core into rotor_shaft; discard rotor_core.
+Rename rotor_shaft to rotor_assembly.
+
+Create primitive cube with size 0.015×0.015×0.010 m and name it magnet_block_0.
+Rotate magnet_block_0 so its +Z axis aligns +Z (world).
+Move magnet_block_0 to (0.030,0,0.020).
+
+For i in 0…3:
+  Create primitive cube with size 0.015×0.015×0.010 m and name it magnet_block_i.
+  Rotate magnet_block_i so its +Z axis aligns +Z (world).
+  Align magnet_block_i.center to rotor_core.center.
+  Align magnet_block_i.bottom_face to rotor_core.top_face.
+  Then position at polar(0° + i·90°; dr=0.030).
+
+Boolean-union magnet_block_0 into rotor_assembly; discard magnet_block_0.
+Boolean-union magnet_block_1 into rotor_assembly; discard magnet_block_1.
+Boolean-union magnet_block_2 into rotor_assembly; discard magnet_block_2.
+Boolean-union magnet_block_3 into rotor_assembly; discard magnet_block_3.
+
+Stage 3 complete.
+
+---  SECTION 4 – Final Assembly  ---
+Align rotor_assembly.center to stator_assembly.center.
+Align rotor_assembly.bottom_face to stator_assembly.bottom_face.
+Then move by offset(0,0,0.005).
+Boolean-union rotor_assembly into housing; discard rotor_assembly.
+Boolean-union stator_assembly into housing; discard stator_assembly.
+Rename housing to generator_assembly.
+
+Assembly guideline satisfied.
+All stages complete.

@@ -1,0 +1,286 @@
+```python
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size=(1,1,1), location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    else:
+        return
+
+    target = vector.normalized()
+    if local_axis.dot(target) > 0.9999:
+        return # Already aligned
+    
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='top'):
+    """Get the world location of a specific face center."""
+    # Assuming standard orientation where +Z is up
+    if face_type == 'top':
+        # Top face is at Z + height/2
+        return obj.location + Vector((0, 0, obj.dimensions.z / 2))
+    elif face_type == 'bottom':
+        return obj.location + Vector((0, 0, -obj.dimensions.z / 2))
+    return obj.location
+
+def offset_object(obj, offset_vec):
+    """Apply offset to object location in world space (assuming aligned axes)."""
+    obj.location += offset_vec
+
+def create_tile_pattern(root_obj):
+    """Generate the grid of tiles based on specifications."""
+    
+    # Pre-calculate root top face center for anchoring logic if needed, 
+    # but instructions say anchor to root.top_face then offset.
+    # Since root is at 0,0,0 and size 10x10x0.1, top face is at z=0.05.
+    # The offset logic provided: offset(0.25 + c*0.5, 0.25 + r*0.5, 0.01)
+    # This offset is relative to the anchor point.
+    
+    # We need to determine the anchor point on root.top_face.
+    # "Anchor tile_base_r_c to root.top_face" usually implies snapping to the face.
+    # However, the subsequent offset is large (0.25 + c*0.5).
+    # If we anchor to the center of the face, the offset places it in the grid.
+    # Let's assume "Anchor to root.top_face" means the base position is the center of root's top face,
+    # or potentially the corner. Given the offset starts at 0.25 and step is 0.5 for a 10x10 floor,
+    # and tiles are 0.5x0.5, a 20x20 grid covers 10x10.
+    # Center of root is (0,0,0.05).
+    # If we anchor to center, offset (0.25, 0.25, 0.01) puts the first tile at (0.25, 0.25, 0.06).
+    # Tile size 0.5. Center of tile would be at 0.25 + 0.25 = 0.5? No, offset is applied to the object.
+    # Let's assume the anchor point is the center of the root's top face (0,0,0.05).
+    
+    anchor_point = get_face_center(root_obj, 'top')
+    
+    for r in range(20):
+        for c in range(20):
+            # 1. Create tile_base
+            name_base = f"tile_base_{r}_{c}"
+            # Size 0.5x0.5x0.02
+            # Initial location doesn't matter much as we anchor/offset, but let's start at 0,0,0
+            tile_base = add_cube(
+                name=name_base, 
+                size=(0.5, 0.5, 0.02), 
+                location=(0,0,0), 
+                rotation=(0,0,0)
+            )
+            
+            # Rotate so +Z aligns +Z (already default, but explicit per instructions)
+            align_axis_to_vector(tile_base, 'Z', (0,0,1))
+            
+            # Anchor to root.top_face
+            # We move the object so its bottom center is at the anchor point
+            # Bottom center of tile_base is at local (0,0,-0.01)
+            # We want this point to be at anchor_point
+            # So location = anchor_point - (0,0,-0.01) = anchor_point + (0,0,0.01)
+            tile_base.location = anchor_point + Vector((0, 0, 0.01))
+            
+            # Offset(0.25 + c·0.5, 0.25 + r·0.5, 0.01)
+            # Note: The prompt says offset(0.25 + c*0.5, 0.25 + r*0.5, 0.01).
+            # This is in reference local axes. Since aligned to world, it's world axes.
+            off_x = 0.25 + c * 0.5
+            off_y = 0.25 + r * 0.5
+            off_z = 0.01
+            
+            offset_object(tile_base, Vector((off_x, off_y, off_z)))
+            
+            # 2. Create tile_center
+            name_center = f"tile_center_{r}_{c}"
+            # Cylinder Ø0.2 (radius 0.1) x 0.02
+            tile_center = add_cylinder(
+                name=name_center, 
+                radius=0.1, 
+                depth=0.02, 
+                location=(0,0,0), 
+                rotation=(0,0,0)
+            )
+            
+            align_axis_to_vector(tile_center, 'Z', (0,0,1))
+            
+            # Anchor to tile_base_r_c.top_face
+            # Top face of tile_base is at local Z + 0.01
+            # We want bottom of cylinder (local Z - 0.01) to be at tile_base top face
+            # Current tile_base top face world Z: tile_base.location.z + 0.01
+            # So tile_center.location.z = (tile_base.location.z + 0.01) - 0.01 = tile_base.location.z
+            # And X/Y should be centered on tile_base.
+            # Since tile_base is centered at its location, and we want cylinder centered on it:
+            tile_center.location = tile_base.location
+            
+            # Offset(0,0,0)
+            offset_object(tile_center, Vector((0,0,0)))
+            
+            # 3. Create tile_corner
+            name_corner = f"tile_corner_{r}_{c}"
+            # Cuboid 0.1x0.1x0.02
+            tile_corner = add_cube(
+                name=name_corner, 
+                size=(0.1, 0.1, 0.02), 
+                location=(0,0,0), 
+                rotation=(0,0,0)
+            )
+            
+            align_axis_to_vector(tile_corner, 'Z', (0,0,1))
+            
+            # Anchor to tile_base_r_c.top_face
+            # Similar to center, place on top face
+            tile_corner.location = tile_base.location
+            
+            # Offset(0.2, 0.2, 0)
+            offset_object(tile_corner, Vector((0.2, 0.2, 0)))
+
+# --- Main Script Execution ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Set units to metres
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_concrete_grey = make_material("mat_concrete_grey", (0.75, 0.75, 0.75, 1.0))
+    mat_tile_white = make_material("mat_tile_white", (0.95, 0.95, 0.95, 1.0))
+    mat_tile_black = make_material("mat_tile_black", (0.10, 0.10, 0.10, 1.0))
+
+    # Block 2: Stage-by-Stage Operations
+
+    # SECTION 1 – Create Floor Base Platform
+    # Create primitive cuboid with size 10×10×0.1 m and name it root.
+    root = add_cube(
+        name="root", 
+        size=(10, 10, 0.1), 
+        location=(0,0,0), 
+        rotation=(0,0,0),
+        material=mat_concrete_grey
+    )
+    
+    # Rotate root so its +Z axis aligns +Z (world).
+    align_axis_to_vector(root, 'Z', (0,0,1))
+    
+    # Move root by offset(0,0,0).
+    offset_object(root, Vector((0,0,0)))
+
+    # SECTION 2 – Create Pattern Layer Grid
+    # Assign materials to tiles
+    # The prompt doesn't explicitly assign materials to the tiles, but defines them.
+    # I will assign mat_tile_white to tile_base and tile_center, and mat_tile_black to tile_corner
+    # as a reasonable interpretation of "tile" materials, or leave them unassigned if strict.
+    # However, usually materials are applied. Let's apply them to make it visual.
+    
+    # Re-assigning materials to the created objects in the loop would require storing them or re-selecting.
+    # To keep the script clean and strictly following "create... name...", I'll apply materials in the creation step if possible,
+    # or iterate after. The helper `add_cube` takes a material.
+    # I will modify the loop to use materials.
+    
+    # Clear previous creation calls by re-defining the loop with materials
+    # Note: The previous `create_tile_pattern` call above didn't use materials. 
+    # I will call it again or refactor. Since I can't refactor the previous call, 
+    # I will assume the previous call created the objects. 
+    # To apply materials, I'll select by name pattern and assign.
+    
+    # Actually, let's just re-run the logic with materials included in the helper calls for correctness.
+    # I'll delete the objects created by the previous call if I had made one, but I haven't executed it yet in this block.
+    # I will now execute the generation with materials.
+    
+    # Clear scene again to ensure clean state for the detailed generation
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Re-create Root
+    root = add_cube(
+        name="root", 
+        size=(10, 10, 0.1), 
+        location=(0,0,0), 
+        rotation=(0,0,0),
+        material=mat_concrete_grey
+    )
+    align_axis_to_vector(root, 'Z', (0,0,1))
+    offset_object(root, Vector((0,0,0)))
+
+    # Generate Grid with Materials
+    anchor_point = get_face_center(root, 'top')
+    
+    for r in range(20):
+        for c in range(20):
+            # 1. tile_base
+            name_base = f"tile_base_{r}_{c}"
+            tile_base = add_cube(
+                name=name_base, 
+                size=(0.5, 0.5, 0.02), 
+                location=(0,0,0), 
+                rotation=(0,0,0),
+                material=mat_tile_white
+            )
+            align_axis_to_vector(tile_base, 'Z', (0,0,1))
+            tile_base.location = anchor_point + Vector((0, 0, 0.01))
+            offset_object(tile_base, Vector((0.25 + c * 0.5, 0.25 + r * 0.5, 0.01)))
+            
+            # 2. tile_center
+            name_center = f"tile_center_{r}_{c}"
+            tile_center = add_cylinder(
+                name=name_center, 
+                radius=0.1, 
+                depth=0.02, 
+                location=(0,0,0), 
+                rotation=(0,0,0),
+                material=mat_tile_black
+            )
+            align_axis_to_vector(tile_center, 'Z', (0,0,1))
+            tile_center.location = tile_base.location
+            offset_object(tile_center, Vector((0,0,0)))
+            
+            # 3. tile_corner
+            name_corner = f"tile_corner_{r}_{c}"
+            tile_corner = add_cube(
+                name=name_corner, 
+                size=(0.1, 0.1, 0.02), 
+                location=(0,0,0), 
+                rotation=(0,0,0),
+                material=mat_tile_black
+            )
+            align_axis_to_vector(tile_corner, 'Z', (0,0,1))
+            tile_corner.location = tile_base.location
+            offset_object(tile_corner, Vector((0.2, 0.2, 0)))
+
+if __name__ == "__main__":
+    main()
+```

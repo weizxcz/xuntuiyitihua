@@ -1,0 +1,1 @@
+Create a business card. The card should be rectangular and contain the following details: a name, a job title, a phone number, and an email address. The name should be the most prominent text on the card. Arrange the information in a clean and organized layout.

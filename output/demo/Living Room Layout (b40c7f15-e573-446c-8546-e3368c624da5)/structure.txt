@@ -1,0 +1,42 @@
+-- MATERIAL LIBRARY --
+fabric_sofa | diffuse_color=(0.25,0.25,0.30,1.0)
+glass_tv | diffuse_color=(0.10,0.10,0.15,0.9)
+metal_tv_frame | diffuse_color=(0.15,0.15,0.15,1.0)
+wood_bookshelf | diffuse_color=(0.40,0.25,0.15,1.0)
+wood_table | diffuse_color=(0.35,0.20,0.10,1.0)
+fabric_lamp_shade | diffuse_color=(0.90,0.85,0.75,0.8)
+metal_lamp_stand | diffuse_color=(0.80,0.70,0.50,1.0)
+ceramic_pot | diffuse_color=(0.80,0.80,0.75,1.0)
+plant_leaves | diffuse_color=(0.10,0.40,0.10,1.0)
+rug_fabric | diffuse_color=(0.60,0.60,0.65,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| room_shell | Room enclosure (walls, floor, ceiling) | size=6.0×5.0×2.8; mat=white_paint; create_method=primitive; assembly_order=[furniture] |
+
+Layer 1 – Primary Structure (Large Furniture)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sofa_sectional | L-shaped sectional sofa | size=2.8×2.0×0.9; pos=(0.0, 0.0, 0.0); Align(Z) sofa_sectional.bottom_face to room_shell.floor; Align(XY) sofa_sectional.back_corner to room_shell.corner; mat=fabric_sofa; create_method=primitive; assembly_order=[sofa_sectional, coffee_table, tv_stand, lamp, bookshelf] |
+| tv_stand | TV stand unit | size=1.6×0.4×0.5; pos=(0.0, 2.5, 0.0); Align(Z) tv_stand.bottom_face to room_shell.floor; Align(XY) tv_stand.back_face to room_shell.wall_opposite_sofa; mat=wood_bookshelf; create_method=primitive; assembly_order=[tv_stand] |
+| bookshelf | Tall bookshelf | size=0.8×0.3×2.0; pos=(-2.5, 0.0, 0.0); Align(Z) bookshelf.bottom_face to room_shell.floor; Align(XY) bookshelf.back_face to room_shell.side_wall; mat=wood_bookshelf; create_method=primitive; assembly_order=[bookshelf] |
+
+Layer 2 – Secondary Furniture & Decor
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coffee_table | Rectangular coffee table | size=1.2×0.6×0.45; pos=(0.0, 1.2, 0.0); Align(Z) coffee_table.bottom_face to room_shell.floor; Align(XY) coffee_table.center to sofa_sectional.front_center; mat=wood_table; create_method=primitive; assembly_order=[coffee_table] |
+| rug | Area rug | size=2.5×2.0×0.005; pos=(0.0, 0.8, 0.0025); Align(Z) rug.bottom_face to room_shell.floor; Align(XY) rug.center to coffee_table.center; mat=rug_fabric; create_method=primitive; assembly_order=[rug] |
+| floor_lamp | Floor lamp | size=0.3×0.3×1.6; pos=(-1.2, 0.5, 0.0); Align(Z) floor_lamp.bottom_face to room_shell.floor; Align(XY) floor_lamp.base to sofa_sectional.side; mat=metal_lamp_stand; create_method=primitive; assembly_order=[floor_lamp] |
+| tv_screen | Flat-screen TV | size=1.4×0.05×0.8; pos=(0.0, 2.5, 0.9); Align(Z) tv_screen.bottom_face to tv_stand.top_face; Align(XY) tv_screen.center to tv_stand.center; mat=glass_tv; create_method=primitive; assembly_order=[tv_screen] |
+| small_plant | Small potted plant on table | size=0.2×0.2×0.3; pos=(0.3, 1.3, 0.45); Align(Z) small_plant.bottom_face to coffee_table.top_face; Align(XY) small_plant.center to coffee_table.center; mat=ceramic_pot; create_method=primitive; assembly_order=[small_plant] |
+| large_plant | Large floor plant in corner | size=0.5×0.5×1.2; pos=(-2.2, -2.2, 0.0); Align(Z) large_plant.bottom_face to room_shell.floor; Align(XY) large_plant.center to room_shell.corner; mat=ceramic_pot; create_method=primitive; assembly_order=[large_plant] |
+
+Layer 3 – Component Details (Optional for realism)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lamp_shade | Lamp shade | size=0.3×0.3×0.4; pos=(-1.2, 0.5, 1.4); Align(Z) lamp_shade.bottom_face to floor_lamp.top_face; Align(XY) lamp_shade.center to floor_lamp.center; mat=fabric_lamp_shade; create_method=primitive; assembly_order=[lamp_shade] |
+| plant_leaves | Plant foliage | size=0.4×0.4×0.5; pos=(-2.2, -2.2, 0.6); Align(Z) plant_leaves.bottom_face to large_plant.top_face; Align(XY) plant_leaves.center to large_plant.center; mat=plant_leaves; create_method=primitive; assembly_order=[plant_leaves] |
+# ----------  END_GRAPH  ----------

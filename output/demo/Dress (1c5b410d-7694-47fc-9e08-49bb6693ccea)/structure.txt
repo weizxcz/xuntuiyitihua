@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+fabric_black | diffuse_color=(0.05,0.05,0.05,1.0)
+metal_silver | diffuse_color=(0.75,0.75,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| dress_root | Composite of bodice, skirt, sleeves, and zipper; forms the complete dress | assembly_order=[bodice_group], [skirt_group], [sleeve_group], [zipper_group] |
+
+Layer 1 – Primary Structure (Bodice & Skirt)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bodice_group | Composite of upper torso shell and waist seam | assembly_order=[bodice_shell], [waist_seam] |
+| bodice_shell | Torso shell approx 0.36×0.40×0.02 m (Circumference×Height×Thickness) | Align(XY) bodice_shell.center to dress_root.center; Align(Z) bodice_shell.bottom_face to waist_seam.top_face; orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Parametric torus cross-section approximating a human torso. Outer radius R=0.18 m. Cross-section radius r=0.06 m. **Sketch:** Circle of radius 0.06 m centered at (0.18, 0). **Extrude:** Revolve 360° around Z-axis to form hollow cylinder. Height H=0.40 m. Top edge rounded slightly for neck. Bottom edge flat for waist. Caps disabled (hollow). |
+| waist_seam | Thin waist band approx 0.36×0.02×0.005 m | Align(XY) waist_seam.center to bodice_shell.center; Align(Z) waist_seam.top_face to bodice_shell.bottom_face; orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Circle of radius 0.18 m. **Extrude:** Revolve 360° around Z-axis. Height H=0.02 m. Caps disabled. |
+| skirt_group | Composite of knee-length skirt and waist connection | assembly_order=[skirt_shell] |
+| skirt_shell | Flared skirt approx 0.72×0.40×0.02 m (Top Circumference×Length×Thickness) | Align(XY) skirt_shell.center to waist_seam.center; Align(Z) skirt_shell.top_face to waist_seam.bottom_face; orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Trapezoidal profile revolved. Top radius R_top=0.18 m. Bottom radius R_bot=0.36 m. Height H=0.40 m. **Sketch:** Polygon with vertices at (0.18, 0), (0.36, -0.40), (-0.36, -0.40), (-0.18, 0). **Extrude:** Revolve 360° around Z-axis. Caps disabled. |
+
+Layer 2 – Secondary Structure (Sleeves & Zipper)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sleeve_group | Composite of two short sleeves | assembly_order=[sleeve_L], [sleeve_R] |
+| sleeve_L | Left short sleeve approx 0.20×0.15×0.02 m | Align(XY) sleeve_L.center to bodice_shell.side_at(135°); Align(Z) sleeve_L.bottom_face to bodice_shell.top_face; orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Semi-circular cap. Radius R=0.10 m. **Sketch:** Semi-circle centered at (0,0) from angle 0° to 180°. **Extrude:** Revolve 180° around Z-axis to form half-sphere cap. Height H=0.15 m. Caps disabled. |
+| sleeve_R | Right short sleeve approx 0.20×0.15×0.02 m | Align(XY) sleeve_R.center to bodice_shell.side_at(45°); Align(Z) sleeve_R.bottom_face to bodice_shell.top_face; orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Semi-circular cap. Radius R=0.10 m. **Sketch:** Semi-circle centered at (0,0) from angle 0° to 180°. **Extrude:** Revolve 180° around Z-axis to form half-sphere cap. Height H=0.15 m. Caps disabled. |
+| zipper_group | Composite of zipper track and slider | assembly_order=[zipper_track], [zipper_slider] |
+| zipper_track | Back zipper track approx 0.02×0.30×0.002 m | Align(XY) zipper_track.center to bodice_shell.back_face.center; Align(Z) zipper_track.front_face to bodice_shell.back_face; orientation=axis:+Z; mat=metal_silver; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle. Width W=0.02 m. Height H=0.30 m. **Extrude:** Thickness T=0.002 m along +Z. Caps enabled. |
+| zipper_slider | Zipper pull tab approx 0.01×0.02×0.005 m | Align(XY) zipper_slider.center to zipper_track.top_face.center; Align(Z) zipper_slider.bottom_face to zipper_track.top_face; orientation=axis:+Z; mat=metal_silver; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle. Width W=0.01 m. Height H=0.02 m. **Extrude:** Thickness T=0.005 m along +Z. Caps enabled. |
+# ----------  END_GRAPH  ----------

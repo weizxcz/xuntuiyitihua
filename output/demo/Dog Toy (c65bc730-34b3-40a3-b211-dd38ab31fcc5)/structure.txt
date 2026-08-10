@@ -1,0 +1,28 @@
+-- MATERIAL LIBRARY --
+mat_durable_rubber | diffuse_color=(0.8, 0.1, 0.1, 1.0)
+mat_treat_compartment | diffuse_color=(0.2, 0.2, 0.2, 1.0)
+mat_textured_bumps | diffuse_color=(0.9, 0.9, 0.9, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bone_toy | Composite bone-shaped dog toy with integrated treat compartment and textured surface | assembly_order=[core_bone, treat_hollow, texture_layer]; mat=mat_durable_rubber; create_method=boolean_union |
+
+Layer 1 – Primary Structure (Core Bone)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| core_bone | Main structural body of the bone toy | size=0.203m (length) × 0.05m (width) × 0.03m (thickness); orientation=axis:+X; mat=mat_durable_rubber; create_method=primitive; constraint=rounded_edges radius=0.01m; assembly_order=[core_bone] |
+
+Layer 2 – Functional Components (Treat Compartment)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| treat_hollow | Internal cavity for hiding treats | size=0.05m (length) × 0.03m (width) × 0.02m (depth); pos=(0, 0, 0.015); orientation=axis:+Z; mat=mat_treat_compartment; create_method=boolean_subtract; constraint=pierce core_bone; assembly_order=[treat_hollow] |
+
+Layer 3 – Surface Features (Textures)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| texture_layer | External surface with multiple textures for engagement | size=0.203m (length) × 0.05m (width) × 0.005m (thickness); pos=(0, 0, 0.015); orientation=axis:+Z; mat=mat_textured_bumps; create_method=extrude_from_sketch; constraint=sketch_type=patterned_bumps; assembly_order=[texture_layer] |
+
+# ----------  END_GRAPH  ----------

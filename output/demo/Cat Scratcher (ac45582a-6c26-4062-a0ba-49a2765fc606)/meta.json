@@ -1,0 +1,45 @@
+{
+  "id": "ac45582a-6c26-4062-a0ba-49a2765fc606",
+  "name": "Cat Scratcher",
+  "instruction": "Create a simple cat scratcher.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a cat scratcher.",
+        "The scratcher has a rectangular base.",
+        "The scratching surface is vertical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the scratcher is proportionate to the base.",
+        "The scratching surface is large enough for a cat to use comfortably."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The base supports the scratching surface adequately.",
+        "The scratching surface is positioned vertically and securely."
+      ],
+      "Object distance and contact": [
+        "The scratching surface does not wobble when in use.",
+        "There is no gap between the base and the scratching surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The scratcher is simple in design as specified.",
+        "All specified components are included without unnecessary additions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

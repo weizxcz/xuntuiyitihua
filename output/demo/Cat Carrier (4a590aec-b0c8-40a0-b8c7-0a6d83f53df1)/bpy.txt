@@ -1,0 +1,625 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, degrees
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder oriented along Z by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_torus(name, major_radius, minor_radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a torus."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def get_face_normal(obj, face_type):
+    """
+    Returns the world-space normal and center of a specific face type.
+    Assumes standard orientation (Z-up, X-right, Y-forward/back).
+    """
+    # Ensure object is up to date
+    bpy.context.view_layer.update()
+    
+    # Get bounding box to determine face positions
+    # Note: This is a simplified heuristic for axis-aligned objects
+    # For robust face selection, we rely on known orientations from creation steps
+    
+    # Local coordinates of faces relative to center
+    # Cube: X+ (right), X- (left), Y+ (front), Y- (back), Z+ (top), Z- (bottom)
+    # Cylinder: Z+ (top), Z- (bottom)
+    
+    # We will use a Locator approach for alignment as requested
+    return None
+
+class Locator:
+    def __init__(self, obj, face_type='center'):
+        self.obj = obj
+        self.face_type = face_type
+        bpy.context.view_layer.update()
+        
+        # Get world matrix
+        mat = obj.matrix_world
+        
+        # Get local bounds
+        # We need to handle rotation. The helper assumes objects are created with specific rotations.
+        # To find the correct face in world space, we transform local face centers.
+        
+        # Define local face centers for standard primitives
+        # Cube (size s): half_extents = s/2
+        # Cylinder (radius r, depth d): top/bottom at z = +/- d/2
+        
+        local_center = Vector((0,0,0))
+        local_normal = Vector((0,0,0))
+        
+        if obj.type == 'MESH':
+            # Get vertices to calculate bounds accurately
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bm.transform(obj.matrix_local) # Transform to world for easier calculation if needed, but let's stick to local logic transformed
+            
+            # Actually, let's just use the known geometry from creation steps
+            # This is safer than generic bounding box analysis for rotated objects
+            
+            # Re-calculate based on object type and creation params stored in name or logic?
+            # Better: Use the object's data directly.
+            
+            # For this script, we will implement specific face finding logic based on object type
+            # and the assumption that they are axis-aligned in their local space before final placement.
+            
+            # However, the prompt asks for "Align face to face".
+            # We need the world position and normal of the target face.
+            
+            # Let's use a simpler approach:
+            # 1. Get the object's world matrix.
+            # 2. Determine the local face center/normal based on object type.
+            # 3. Transform local center/normal to world space.
+            
+            # Heuristic for face types based on standard creation:
+            # Cube:
+            #   top_face: local (0, 0, size/2), normal (0,0,1)
+            #   bottom_face: local (0, 0, -size/2), normal (0,0,-1)
+            #   left_face: local (-size/2, 0, 0), normal (-1,0,0)
+            #   right_face: local (size/2, 0, 0), normal (1,0,0)
+            #   front_face: local (0, size/2, 0), normal (0,1,0)
+            #   back_face: local (0, -size/2, 0), normal (0,-1,0)
+            
+            # Cylinder (Z-up):
+            #   top_face: local (0, 0, depth/2), normal (0,0,1)
+            #   bottom_face: local (0, 0, -depth/2), normal (0,0,-1)
+            #   center: local (0,0,0)
+            
+            # Torus (XY plane):
+            #   center: local (0,0,0)
+            #   bottom_face: local (0,0,-minor_radius), normal (0,0,-1)
+            
+            # We need to store creation params or infer them.
+            # Since we create them in the script, we can define a helper that takes the object and the known geometry.
+            # To keep it generic, we will use bounding box analysis on the transformed mesh.
+            
+            # Transform mesh to world
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bm.transform(mat)
+            
+            # Calculate bounds
+            min_x = min(v.co.x for v in bm.verts)
+            max_x = max(v.co.x for v in bm.verts)
+            min_y = min(v.co.y for v in bm.verts)
+            max_y = max(v.co.y for v in bm.verts)
+            min_z = min(v.co.z for v in bm.verts)
+            max_z = max(v.co.z for v in bm.verts)
+            
+            center = Vector(((min_x+max_x)/2, (min_y+max_y)/2, (min_z+max_z)/2))
+            
+            if face_type == 'center':
+                self.world_center = center
+                self.world_normal = Vector((0,0,0)) # No normal for center
+            elif face_type == 'top_face':
+                self.world_center = Vector((center.x, center.y, max_z))
+                self.world_normal = Vector((0,0,1))
+            elif face_type == 'bottom_face':
+                self.world_center = Vector((center.x, center.y, min_z))
+                self.world_normal = Vector((0,0,-1))
+            elif face_type == 'left_face':
+                self.world_center = Vector((min_x, center.y, center.z))
+                self.world_normal = Vector((-1,0,0))
+            elif face_type == 'right_face':
+                self.world_center = Vector((max_x, center.y, center.z))
+                self.world_normal = Vector((1,0,0))
+            elif face_type == 'front_face':
+                self.world_center = Vector((center.x, max_y, center.z))
+                self.world_normal = Vector((0,1,0))
+            elif face_type == 'back_face':
+                self.world_center = Vector((center.x, min_y, center.z))
+                self.world_normal = Vector((0,-1,0))
+            elif face_type == 'radial_point':
+                # For cylinders, radial point on the side
+                # Default to X+ side
+                self.world_center = Vector((max_x, center.y, center.z))
+                self.world_normal = Vector((1,0,0))
+                
+            bm.free()
+        else:
+            self.world_center = mat.to_translation()
+            self.world_normal = Vector((0,0,0))
+
+    def center_world(self):
+        return self.world_center
+
+    def face_center_world(self, face_type='top_face'):
+        # Recalculate for specific face
+        # For simplicity in this generated script, we rely on the init calculation
+        # If a different face is needed, we'd need to re-run the bounds logic.
+        # To optimize, we'll just return the stored value if it matches, or re-calc.
+        # Given the strict structure, we can assume the init covers the needed faces.
+        # If not, we'll add a method to get specific face.
+        return self.world_center # Placeholder, see specific usage below
+
+# Override Locator to support specific face queries more robustly
+class RobustLocator:
+    def __init__(self, obj):
+        self.obj = obj
+        bpy.context.view_layer.update()
+        mat = obj.matrix_world
+        
+        # Get bounds in World Space
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bm.transform(mat)
+        
+        self.min_x = min(v.co.x for v in bm.verts)
+        self.max_x = max(v.co.x for v in bm.verts)
+        self.min_y = min(v.co.y for v in bm.verts)
+        self.max_y = max(v.co.y for v in bm.verts)
+        self.min_z = min(v.co.z for v in bm.verts)
+        self.max_z = max(v.co.z for v in bm.verts)
+        
+        self.center = Vector(((self.min_x+self.max_x)/2, (self.min_y+self.max_y)/2, (self.min_z+self.max_z)/2))
+        
+        bm.free()
+
+    def get_face_info(self, face_type):
+        """Returns (center, normal) for the specified face."""
+        if face_type == 'center':
+            return self.center, Vector((0,0,0))
+        elif face_type == 'top_face':
+            return Vector((self.center.x, self.center.y, self.max_z)), Vector((0,0,1))
+        elif face_type == 'bottom_face':
+            return Vector((self.center.x, self.center.y, self.min_z)), Vector((0,0,-1))
+        elif face_type == 'left_face':
+            return Vector((self.min_x, self.center.y, self.center.z)), Vector((-1,0,0))
+        elif face_type == 'right_face':
+            return Vector((self.max_x, self.center.y, self.center.z)), Vector((1,0,0))
+        elif face_type == 'front_face':
+            return Vector((self.center.x, self.max_y, self.center.z)), Vector((0,1,0))
+        elif face_type == 'back_face':
+            return Vector((self.center.x, self.min_y, self.center.z)), Vector((0,-1,0))
+        elif face_type == 'radial_point': # Default X+
+            return Vector((self.max_x, self.center.y, self.center.z)), Vector((1,0,0))
+        return self.center, Vector((0,0,0))
+
+def align_to_face(target_obj, target_face_type, source_obj, source_face_type):
+    """
+    Aligns target_obj's face to source_obj's face.
+    Assumes faces are parallel (normals match).
+    Moves target so its face center coincides with source face center.
+    """
+    t_loc, t_norm = RobustLocator(target_obj).get_face_info(target_face_type)
+    s_loc, s_norm = RobustLocator(source_obj).get_face_info(source_face_type)
+    
+    # Calculate offset
+    offset = s_loc - t_loc
+    
+    # Apply offset
+    target_obj.location += offset
+
+def align_to_center(target_obj, source_obj):
+    """Aligns target center to source center."""
+    t_loc = RobustLocator(target_obj).center
+    s_loc = RobustLocator(source_obj).center
+    offset = s_loc - t_loc
+    target_obj.location += offset
+
+def align_to_avg_center(target_obj, obj_list):
+    """Aligns target center to average of source centers."""
+    avg = Vector((0,0,0))
+    for obj in obj_list:
+        avg += RobustLocator(obj).center
+    avg /= len(obj_list)
+    
+    t_loc = RobustLocator(target_obj).center
+    offset = avg - t_loc
+    target_obj.location += offset
+
+def apply_offset(obj, offset_vec):
+    """Applies a local offset to the object's location."""
+    obj.location += offset_vec
+
+def boolean_union(objects_to_union, keep_name):
+    """
+    Performs boolean union on a list of objects.
+    Keeps the object with keep_name as the active result.
+    """
+    if not objects_to_union:
+        return
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+    # Apply modifiers if any (clean up)
+    for obj in objects_to_union:
+        for mod in obj.modifiers:
+            if mod.type == 'BOOLEAN':
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # Perform Boolean Union
+    # Note: In Blender 3.x, boolean operations are often done via modifiers or the 'BoolTool' addon.
+    # For a script, using the Boolean Modifier is the most reliable programmatic way.
+    
+    # We will use the first object as the base
+    base_obj = objects_to_union[0]
+    
+    # Ensure base has no existing boolean modifiers that might conflict
+    for mod in base_obj.modifiers:
+        if mod.type == 'BOOLEAN':
+            base_obj.modifiers.remove(mod)
+            
+    # Add boolean modifier for each other object
+    for obj in objects_to_union[1:]:
+        mod = base_obj.modifiers.new(name="BoolUnion", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        
+    # Apply the final modifier
+    bpy.context.view_layer.update()
+    mod = base_obj.modifiers[0] # The last one added
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove the helper objects
+    for obj in objects_to_union[1:]:
+        bpy.data.objects.remove(obj, do_unlink=True)
+        
+    # Rename base to keep_name if different
+    if base_obj.name != keep_name:
+        base_obj.name = keep_name
+        
+    return base_obj
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Subtracts cutter from target."""
+    mod = target_obj.modifiers.new(name="BoolSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    bpy.context.view_layer.update()
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def average(points):
+    """Average of a list of vectors."""
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_black_plastic = make_material("mat_black_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_silver_steel = make_material("mat_silver_steel", (0.7, 0.7, 0.8, 1.0))
+mat_translucent_plastic = make_material("mat_translucent_plastic", (0.9, 0.9, 0.9, 0.3))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Base Pan ---
+base_pan = add_cube("base_pan", size=0.5, location=(0,0,0), rotation=(0,0,0))
+# Rotate so +Z aligns +Z (already default)
+# Align base_pan.top_face to world.origin (0,0,0)
+# Top face is at Z = size/2 = 0.01
+# Move so top face is at 0: location.z = -0.01
+base_pan.location = (0, 0, -0.01)
+apply_material(base_pan, mat_black_plastic)
+
+# --- SECTION 2 – Create Side Panels ---
+# side_pan_L
+side_pan_L = add_cube("side_pan_L", size=0.5, location=(0,0,0), rotation=(0,0,0))
+# Size 0.5x0.02x0.3 -> X=0.5, Y=0.02, Z=0.3
+# Wait, add_cube size is total size.
+# The prompt says "size 0.5x0.02x0.3".
+# In Blender, cube size is uniform. We need to scale it.
+side_pan_L.scale = (0.5, 0.02, 0.3)
+# Rotate so +Z aligns +Z (default)
+# Align side_pan_L.right_face to base_pan.left_face
+# base_pan.left_face is at X = -0.25
+# side_pan_L.right_face is at X = 0.25 (local) -> world X = loc.x + 0.25
+# Align right face to left face: loc.x + 0.25 = -0.25 => loc.x = -0.5
+# Align side_pan_L.bottom_face to base_pan.top_face
+# base_pan.top_face is at Z = 0 (since we moved it to -0.01, top is 0)
+# side_pan_L.bottom_face is at Z = -0.15 (local) -> world Z = loc.z - 0.15
+# Align bottom to top: loc.z - 0.15 = 0 => loc.z = 0.15
+side_pan_L.location = (-0.5, 0, 0.15)
+# Offset (0,0,0)
+apply_material(side_pan_L, mat_black_plastic)
+
+# side_pan_R
+side_pan_R = add_cube("side_pan_R", size=0.5, location=(0,0,0), rotation=(0,0,0))
+side_pan_R.scale = (0.5, 0.02, 0.3)
+# Align side_pan_R.left_face to base_pan.right_face
+# base_pan.right_face is at X = 0.25
+# side_pan_R.left_face is at X = -0.25 -> world X = loc.x - 0.25
+# loc.x - 0.25 = 0.25 => loc.x = 0.5
+# Align side_pan_R.bottom_face to base_pan.top_face
+# loc.z - 0.15 = 0 => loc.z = 0.15
+side_pan_R.location = (0.5, 0, 0.15)
+apply_material(side_pan_R, mat_black_plastic)
+
+# --- SECTION 3 – Create Back Panel ---
+back_pan = add_cube("back_pan", size=0.3, location=(0,0,0), rotation=(0,0,0))
+back_pan.scale = (0.3, 0.02, 0.3)
+# Rotate so +Z aligns +Z
+# Align back_pan.front_face to base_pan.back_face
+# base_pan.back_face is at Y = -0.15
+# back_pan.front_face is at Y = 0.01 (local) -> world Y = loc.y + 0.01
+# loc.y + 0.01 = -0.15 => loc.y = -0.16
+# Align back_pan.bottom_face to base_pan.top_face
+# loc.z - 0.15 = 0 => loc.z = 0.15
+back_pan.location = (0, -0.16, 0.15)
+apply_material(back_pan, mat_black_plastic)
+
+# --- SECTION 4 – Create Front Frame Components ---
+# front_left_post
+front_left_post = add_cylinder("front_left_post", radius=0.01, depth=0.3, location=(0,0,0), rotation=(0,0,0))
+# Align front_left_post.center to base_pan.left_face
+# base_pan.left_face center: X=-0.25, Y=0, Z=0
+# front_left_post center: loc
+# loc = (-0.25, 0, 0)
+front_left_post.location = (-0.25, 0, 0)
+# Align front_left_post.bottom_face to base_pan.top_face
+# base_pan.top_face Z=0
+# front_left_post.bottom_face Z = loc.z - 0.15
+# loc.z - 0.15 = 0 => loc.z = 0.15
+front_left_post.location = (-0.25, 0, 0.15)
+# Offset (0.01, 0, 0)
+front_left_post.location += (0.01, 0, 0)
+apply_material(front_left_post, mat_silver_steel)
+
+# front_right_post
+front_right_post = add_cylinder("front_right_post", radius=0.01, depth=0.3, location=(0,0,0), rotation=(0,0,0))
+# Align front_right_post.center to base_pan.right_face
+# base_pan.right_face center: X=0.25, Y=0, Z=0
+front_right_post.location = (0.25, 0, 0)
+# Align front_right_post.bottom_face to base_pan.top_face
+front_right_post.location = (0.25, 0, 0.15)
+# Offset (-0.01, 0, 0)
+front_right_post.location += (-0.01, 0, 0)
+apply_material(front_right_post, mat_silver_steel)
+
+# front_top_bar
+front_top_bar = add_cube("front_top_bar", size=0.3, location=(0,0,0), rotation=(0,0,0))
+front_top_bar.scale = (0.3, 0.02, 0.02)
+# Align front_top_bar.center to Avg(front_left_post.center, front_right_post.center)
+# Left post center: (-0.24, 0, 0.3) (0.15 + 0.15)
+# Right post center: (0.24, 0, 0.3)
+# Avg: (0, 0, 0.3)
+front_top_bar.location = (0, 0, 0.3)
+# Align front_top_bar.bottom_face to front_left_post.top_face
+# front_left_post.top_face Z = 0.15 + 0.15 = 0.3
+# front_top_bar.bottom_face Z = loc.z - 0.01
+# loc.z - 0.01 = 0.3 => loc.z = 0.31
+front_top_bar.location = (0, 0, 0.31)
+# Offset (0,0,0)
+apply_material(front_top_bar, mat_silver_steel)
+
+# front_bottom_bar
+front_bottom_bar = add_cube("front_bottom_bar", size=0.3, location=(0,0,0), rotation=(0,0,0))
+front_bottom_bar.scale = (0.3, 0.02, 0.02)
+# Align front_bottom_bar.center to Avg(front_left_post.center, front_right_post.center)
+front_bottom_bar.location = (0, 0, 0.3)
+# Align front_bottom_bar.top_face to base_pan.top_face
+# base_pan.top_face Z=0
+# front_bottom_bar.top_face Z = loc.z + 0.01
+# loc.z + 0.01 = 0 => loc.z = -0.01
+front_bottom_bar.location = (0, 0, -0.01)
+# Offset (0,0,0)
+apply_material(front_bottom_bar, mat_silver_steel)
+
+# Boolean-union front frame
+boolean_union([front_left_post, front_right_post, front_top_bar, front_bottom_bar], "front_left_post")
+front_left_post = bpy.data.objects["front_left_post"]
+
+# --- SECTION 5 – Create Door Frame Components ---
+# door_left_bar
+door_left_bar = add_cylinder("door_left_bar", radius=0.0075, depth=0.28, location=(0,0,0), rotation=(0,0,0))
+# Align door_left_bar.center to front_left_post.center
+# front_left_post center: (-0.24, 0, 0.3)
+door_left_bar.location = (-0.24, 0, 0.3)
+# Align door_left_bar.bottom_face to front_bottom_bar.top_face
+# front_bottom_bar.top_face Z = -0.01 + 0.01 = 0
+# door_left_bar.bottom_face Z = loc.z - 0.14
+# loc.z - 0.14 = 0 => loc.z = 0.14
+door_left_bar.location = (-0.24, 0, 0.14)
+# Offset (0.015, 0, 0)
+door_left_bar.location += (0.015, 0, 0)
+apply_material(door_left_bar, mat_silver_steel)
+
+# door_right_bar
+door_right_bar = add_cylinder("door_right_bar", radius=0.0075, depth=0.28, location=(0,0,0), rotation=(0,0,0))
+# Align door_right_bar.center to front_right_post.center
+# front_right_post center: (0.24, 0, 0.3)
+door_right_bar.location = (0.24, 0, 0.3)
+# Align door_right_bar.bottom_face to front_bottom_bar.top_face
+door_right_bar.location = (0.24, 0, 0.14)
+# Offset (-0.015, 0, 0)
+door_right_bar.location += (-0.015, 0, 0)
+apply_material(door_right_bar, mat_silver_steel)
+
+# door_top_bar
+door_top_bar = add_cube("door_top_bar", size=0.28, location=(0,0,0), rotation=(0,0,0))
+door_top_bar.scale = (0.28, 0.015, 0.015)
+# Align door_top_bar.center to Avg(door_left_bar.center, door_right_bar.center)
+# Left: (-0.225, 0, 0.28) (0.14+0.14)
+# Right: (0.225, 0, 0.28)
+# Avg: (0, 0, 0.28)
+door_top_bar.location = (0, 0, 0.28)
+# Align door_top_bar.bottom_face to door_left_bar.top_face
+# door_left_bar.top_face Z = 0.14 + 0.14 = 0.28
+# door_top_bar.bottom_face Z = loc.z - 0.0075
+# loc.z - 0.0075 = 0.28 => loc.z = 0.2875
+door_top_bar.location = (0, 0, 0.2875)
+# Offset (0,0,0)
+apply_material(door_top_bar, mat_silver_steel)
+
+# door_bottom_bar
+door_bottom_bar = add_cube("door_bottom_bar", size=0.28, location=(0,0,0), rotation=(0,0,0))
+door_bottom_bar.scale = (0.28, 0.015, 0.015)
+# Align door_bottom_bar.center to Avg(door_left_bar.center, door_right_bar.center)
+door_bottom_bar.location = (0, 0, 0.28)
+# Align door_bottom_bar.top_face to front_bottom_bar.top_face
+# front_bottom_bar.top_face Z = 0
+# door_bottom_bar.top_face Z = loc.z + 0.0075
+# loc.z + 0.0075 = 0 => loc.z = -0.0075
+door_bottom_bar.location = (0, 0, -0.0075)
+# Offset (0,0,0)
+apply_material(door_bottom_bar, mat_silver_steel)
+
+# Boolean-union door frame
+boolean_union([door_left_bar, door_right_bar, door_top_bar, door_bottom_bar], "door_left_bar")
+door_left_bar = bpy.data.objects["door_left_bar"]
+
+# --- SECTION 6 – Create Door Bars Pattern ---
+door_bars = []
+for i in range(5):
+    name = f"door_bars_{i}"
+    bar = add_cylinder(name, radius=0.005, depth=0.28, location=(0,0,0), rotation=(0,0,0))
+    # Align door_bars_i.center to Avg(door_left_bar.center, door_right_bar.center)
+    # Avg center: (0, 0, 0.28)
+    bar.location = (0, 0, 0.28)
+    # Align door_bars_i.bottom_face to door_bottom_bar.top_face
+    # door_bottom_bar.top_face Z = -0.0075 + 0.0075 = 0
+    # bar.bottom_face Z = loc.z - 0.14
+    # loc.z - 0.14 = 0 => loc.z = 0.14
+    bar.location = (0, 0, 0.14)
+    # Offset (-0.1 + i*0.05, 0, 0)
+    bar.location += (-0.1 + i*0.05, 0, 0)
+    apply_material(bar, mat_silver_steel)
+    door_bars.append(bar)
+
+# Boolean-union door bars
+boolean_union(door_bars, "door_bars_0")
+door_bars_0 = bpy.data.objects["door_bars_0"]
+
+# --- SECTION 7 – Create Latch Mechanism ---
+# latch_base
+latch_base = add_cube("latch_base", size=0.04, location=(0,0,0), rotation=(0,0,0))
+latch_base.scale = (0.04, 0.02, 0.02)
+# Align latch_base.center to door_right_bar.center
+# door_right_bar center: (0.225, 0, 0.28)
+latch_base.location = (0.225, 0, 0.28)
+# Align latch_base.bottom_face to door_bottom_bar.top_face
+# door_bottom_bar.top_face Z = 0
+# latch_base.bottom_face Z = loc.z - 0.01
+# loc.z - 0.01 = 0 => loc.z = 0.01
+latch_base.location = (0.225, 0, 0.01)
+# Offset (0.02, 0, 0)
+latch_base.location += (0.02, 0, 0)
+apply_material(latch_base, mat_silver_steel)
+
+# latch_hook
+latch_hook = add_cylinder("latch_hook", radius=0.005, depth=0.03, location=(0,0,0), rotation=(0,0,0))
+# Align latch_hook.center to latch_base.center
+latch_hook.location = latch_base.location
+# Align latch_hook.bottom_face to latch_base.top_face
+# latch_base.top_face Z = 0.01 + 0.01 = 0.02
+# latch_hook.bottom_face Z = loc.z - 0.015
+# loc.z - 0.015 = 0.02 => loc.z = 0.035
+latch_hook.location = (latch_base.location.x, latch_base.location.y, 0.035)
+# Offset (0,0,0)
+apply_material(latch_hook, mat_silver_steel)
+
+# latch_strike
+latch_strike = add_cube("latch_strike", size=0.02, location=(0,0,0), rotation=(0,0,0))
+latch_strike.scale = (0.02, 0.02, 0.01)
+# Align latch_strike.center to door_left_bar.center
+# door_left_bar center: (-0.225, 0, 0.28)
+latch_strike.location = (-0.225, 0, 0.28)
+# Align latch_strike.bottom_face to door_bottom_bar.top_face
+# door_bottom_bar.top_face Z = 0
+# latch_strike.bottom_face Z = loc.z - 0.005
+# loc.z - 0.005 = 0 => loc.z = 0.005
+latch_strike.location = (-0.225, 0, 0.005)
+# Offset (0.02, 0, 0)
+latch_strike.location += (0.02, 0, 0)
+apply_material(latch_strike, mat_silver_steel)
+
+# --- SECTION 8 – Create Ventilation Holes Pattern ---
+vent_holes = []
+for r in range(2):
+    for c in range(5):
+        name = f"ventilation_holes_{r}_{c}"
+        hole = add_cylinder(name, radius=0.01, depth=0.01, location=(0,0,0), rotation=(0,0,0))
+        # Rotate so +Z aligns +X
+        hole.rotation_euler = (0, 0, pi/2)
+        # Align ventilation_holes_r_c.center to side_pan_L.center
+        # side_pan_L center: (-0.5, 0, 0.15)
+        hole.location = (-0.5, 0, 0.15)
+        # Align ventilation_holes_r_c.bottom_face to base_pan.top_face
+        # base_pan.top_face Z = 0
+        # hole.bottom_face (local -Z) -> world?
+        # Since rotated 90 deg around Z, local -Z becomes world -Y?
+        # Let's use Locator to be safe.
+        # But for calculation:
+        # Cylinder Z-up. Rotate Z by 90. New Up is X.
+        # Bottom face is now at -X relative to center.
+        # So "bottom_face" in prompt likely

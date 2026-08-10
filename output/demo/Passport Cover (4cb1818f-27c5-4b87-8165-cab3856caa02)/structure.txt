@@ -1,0 +1,37 @@
+-- MATERIAL LIBRARY --
+leather_brown | diffuse_color=(0.35,0.20,0.10,1.0)
+metal_brass | diffuse_color=(0.85,0.65,0.20,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| passport_cover | Composite of outer_shell + inner_lining + closure_mechanism | A rectangular passport cover slightly larger than a standard passport (approx. 125mm × 95mm). |
+
+Layer 1 – Primary Structure (Outer Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| outer_shell | Composite of front_panel + back_panel + spine + side_flaps | The main structural body of the cover. |
+| front_panel | Flat rectangular plate approx 0.130×0.100×0.004 m | Align(XY) front_panel.center to passport_cover.center; offset(0,0,0.002); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.130, 0.100, 0.004) |
+| back_panel | Flat rectangular plate approx 0.130×0.100×0.004 m | Align(XY) back_panel.center to passport_cover.center; offset(0,0,-0.002); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.130, 0.100, 0.004) |
+| spine | Rectangular block approx 0.010×0.100×0.004 m | Align(XY) spine.center to Avg(front_panel.left_face, back_panel.left_face); offset(0,0,0); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.010, 0.100, 0.004) |
+| side_flaps | Composite of left_flap + right_flap | Flaps extending from the spine to secure the passport. |
+| left_flap | Flat rectangular plate approx 0.040×0.100×0.004 m | Align(XY) left_flap.right_face to spine.left_face; offset(0,0,0); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.040, 0.100, 0.004) |
+| right_flap | Flat rectangular plate approx 0.040×0.100×0.004 m | Align(XY) right_flap.left_face to Avg(front_panel.right_face, back_panel.right_face); offset(0,0,0); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.040, 0.100, 0.004) |
+
+Layer 2 – Inner Lining
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| inner_lining | Composite of front_inner + back_inner | Soft lining material attached to the inner faces of the shell. |
+| front_inner | Flat rectangular plate approx 0.120×0.090×0.002 m | Align(XY) front_inner.center to front_panel.center; offset(0,0,-0.002); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.120, 0.090, 0.002) |
+| back_inner | Flat rectangular plate approx 0.120×0.090×0.002 m | Align(XY) back_inner.center to back_panel.center; offset(0,0,0.002); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.120, 0.090, 0.002) |
+
+Layer 3 – Closure Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| closure_mechanism | Composite of strap + buckle | A simple strap and buckle system to keep the cover closed. |
+| strap | Flat rectangular strip approx 0.020×0.080×0.002 m | Align(XY) strap.center to right_flap.center; offset(0.010,0,0); orientation=axis:+Z; mat=leather_brown; create_method=primitive(cube); constraint=size=(0.020, 0.080, 0.002) |
+| buckle | Small rectangular block approx 0.015×0.015×0.005 m | Align(XY) buckle.center to strap.right_face; offset(0.010,0,0); orientation=axis:+Z; mat=metal_brass; create_method=primitive(cube); constraint=size=(0.015, 0.015, 0.005) |
+
+# ----------  END_GRAPH  ----------

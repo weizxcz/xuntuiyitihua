@@ -1,0 +1,68 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material cable_black; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material cord_white; diffuse_color = (0.95,0.95,0.95,1.00).
+Define material outlet_white; diffuse_color = (0.90,0.90,0.90,1.00).
+Define material plug_black; diffuse_color = (0.15,0.15,0.15,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create cable coil helix  ---
+For i in 0…19:
+  Create primitive cylinder with radius 0.075 m and length 0.15 m and name it cable_segment_i.
+  Rotate cable_segment_i so its +Z axis aligns +Z (world).
+  Then position at polar(i·18°; dr=0.075).
+  Then move by offset(0,0,0.15).
+Boolean-union all cable_segment_i objects into a single mesh and name it cable_coil.
+Rotate cable_coil so its +Z axis aligns +Z (world).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create power plug  ---
+Create primitive cylinder with radius 0.02 m and length 0.06 m and name it plug_body.
+Rotate plug_body so its +Z axis aligns +Z (world).
+Create primitive cuboid with size 0.04×0.04×0.02 m and name it plug_base.
+Rotate plug_base so its +Z axis aligns +Z (world).
+Align plug_base.+Z_face to plug_body.-Z_face.
+Then move by offset(0,0,-0.04).
+Boolean-union plug_base to plug_body and name it plug.
+Align plug.-Z_face to cable_coil.+Z_face.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create outlet strip housing  ---
+Create primitive cuboid with size 0.30×0.05×0.04 m and name it outlet_strip.
+Rotate outlet_strip so its +Z axis aligns +Z (world).
+Align outlet_strip.-Z_face to cable_coil.-Z_face.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create socket array  ---
+For r in 0…0 and c in 0…3:
+  Create primitive cuboid with size 0.04×0.04×0.02 m and name it outlet_r_c.
+  Rotate outlet_r_c so its +Z axis aligns +Z (world).
+  Align outlet_r_c.-Z_face to outlet_strip.+Z_face.
+  Then offset(-0.09 + c·0.06, 0, 0.02).
+Boolean-union all outlet_r_c objects into a single mesh and name it outlets.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create indicator light  ---
+Create primitive cylinder with radius 0.005 m and length 0.005 m and name it indicator_light.
+Rotate indicator_light so its +Z axis aligns +X (world).
+Align indicator_light.+X_face to outlet_strip.+X_face.
+Then move by offset(0.15, 0, 0).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+All stages complete.

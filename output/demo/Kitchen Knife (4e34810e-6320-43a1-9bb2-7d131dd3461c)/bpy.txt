@@ -1,0 +1,368 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        return bpy.data.materials[name]
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object's first material slot."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Clean up collections if necessary, though delete usually suffices for objects
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def add_cylinder(radius, depth, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive."""
+    # size is expected as a tuple (x,y,z) or single value
+    if isinstance(size, (int, float)):
+        sx, sy, sz = size, size, size
+    else:
+        sx, sy, sz = size
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location, rotation=rotation) # size=1, then scale
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (sx, sy, sz)
+    return obj
+
+def add_cone(radius_top, radius_bottom, depth, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone primitive."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_top, radius2=radius_bottom, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, name, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV Sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=2):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using BMesh."""
+    # Ensure target is active for context if needed, but we'll use BMesh directly for robustness
+    # Create a copy of target mesh to modify
+    bm = bmesh.new()
+    bm.from_mesh(target_obj.data)
+    
+    # Create a temporary mesh for the cutter to intersect
+    cutter_bm = bmesh.new()
+    cutter_bm.from_mesh(cutter_obj.data)
+    
+    # Transform cutter bm to world space
+    cutter_bm.transform(cutter_obj.matrix_world)
+    
+    # Perform intersection
+    # Note: bmesh.ops.boolean_union/intersect can be tricky. 
+    # Standard approach: Use BMesh boolean operations if available or use bpy.ops.mesh.boolean_modifier
+    # For script reliability, let's use the modifier approach on a copy or direct modifier application.
+    
+    # Revert to Modifier approach for simplicity and reliability in Blender 3.x
+    # We need to apply the cutter to the target.
+    
+    # Add boolean modifier to target
+    bool_mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    bool_mod.operation = 'DIFFERENCE'
+    bool_mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier="BooleanSub")
+    
+    # Clean up
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    bm.free()
+    
+    # Update mesh
+    target_obj.data.update()
+
+def boolean_union(cutter_obj, target_obj):
+    """Perform boolean union."""
+    bool_mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    bool_mod.operation = 'UNION'
+    bool_mod.object = cutter_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier="BooleanUnion")
+    
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    target_obj.data.update()
+
+def align_face_to_face(obj_a, obj_b, face_a='right', face_b='left'):
+    """
+    Align obj_a's face to obj_b's face.
+    Assumes standard primitives centered at origin.
+    Right face is +X, Left is -X. Top is +Y, Bottom -Y. Front +Z, Back -Z.
+    """
+    # Calculate bounding boxes to find face centers
+    def get_face_center(obj, face_type):
+        # Transform vertices to world space
+        verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        if face_type == 'right':
+            # Max X
+            center = Vector((max(v.x for v in verts), 0, 0))
+            # Average Y and Z for that face
+            y_avg = sum(v.y for v in verts if abs(v.x - max(v.x for v in verts)) < 0.0001) / sum(1 for v in verts if abs(v.x - max(v.x for v in verts)) < 0.0001)
+            z_avg = sum(v.z for v in verts if abs(v.x - max(v.x for v in verts)) < 0.0001) / sum(1 for v in verts if abs(v.x - max(v.x for v in verts)) < 0.0001)
+            return Vector((max(v.x for v in verts), y_avg, z_avg))
+        elif face_type == 'left':
+            # Min X
+            min_x = min(v.x for v in verts)
+            y_avg = sum(v.y for v in verts if abs(v.x - min_x) < 0.0001) / sum(1 for v in verts if abs(v.x - min_x) < 0.0001)
+            z_avg = sum(v.z for v in verts if abs(v.x - min_x) < 0.0001) / sum(1 for v in verts if abs(v.x - min_x) < 0.0001)
+            return Vector((min_x, y_avg, z_avg))
+        elif face_type == 'top':
+            max_y = max(v.y for v in verts)
+            x_avg = sum(v.x for v in verts if abs(v.y - max_y) < 0.0001) / sum(1 for v in verts if abs(v.y - max_y) < 0.0001)
+            z_avg = sum(v.z for v in verts if abs(v.y - max_y) < 0.0001) / sum(1 for v in verts if abs(v.y - max_y) < 0.0001)
+            return Vector((x_avg, max_y, z_avg))
+        elif face_type == 'bottom':
+            min_y = min(v.y for v in verts)
+            x_avg = sum(v.x for v in verts if abs(v.y - min_y) < 0.0001) / sum(1 for v in verts if abs(v.y - min_y) < 0.0001)
+            z_avg = sum(v.z for v in verts if abs(v.y - min_y) < 0.0001) / sum(1 for v in verts if abs(v.y - min_y) < 0.0001)
+            return Vector((x_avg, min_y, z_avg))
+        elif face_type == 'front':
+            max_z = max(v.z for v in verts)
+            x_avg = sum(v.x for v in verts if abs(v.z - max_z) < 0.0001) / sum(1 for v in verts if abs(v.z - max_z) < 0.0001)
+            y_avg = sum(v.y for v in verts if abs(v.z - max_z) < 0.0001) / sum(1 for v in verts if abs(v.z - max_z) < 0.0001)
+            return Vector((x_avg, y_avg, max_z))
+        elif face_type == 'back':
+            min_z = min(v.z for v in verts)
+            x_avg = sum(v.x for v in verts if abs(v.z - min_z) < 0.0001) / sum(1 for v in verts if abs(v.z - min_z) < 0.0001)
+            y_avg = sum(v.y for v in verts if abs(v.z - min_z) < 0.0001) / sum(1 for v in verts if abs(v.z - min_z) < 0.0001)
+            return Vector((x_avg, y_avg, min_z))
+        return Vector((0,0,0))
+
+    # Get centers in world space
+    center_a = get_face_center(obj_a, face_a)
+    center_b = get_face_center(obj_b, face_b)
+    
+    # Calculate offset needed to align them
+    # We want obj_a's face center to match obj_b's face center
+    # obj_a_local_center = obj_a.matrix_world.to_translation()
+    # obj_a_face_local = obj_a.matrix_world.inverted() @ center_a
+    
+    # Simpler: Move obj_a so its face center equals obj_b's face center
+    # delta = center_b - center_a
+    # But center_a is in world space.
+    
+    # Let's calculate the local offset required
+    # obj_a.world_to_local(center_b) gives the target location for obj_a's origin
+    # if obj_a's face was at world center_b.
+    # But obj_a's face is currently at center_a.
+    
+    # Target World Location for obj_a's origin:
+    # We know obj_a's face is at center_a (world).
+    # We want obj_a's face to be at center_b (world).
+    # So we need to move obj_a by (center_b - center_a).
+    
+    delta = center_b - center_a
+    obj_a.location += delta
+
+def align_center_to_center(obj_a, obj_b):
+    """Align center of obj_a to center of obj_b."""
+    center_a = obj_a.matrix_world.to_translation()
+    center_b = obj_b.matrix_world.to_translation()
+    delta = center_b - center_a
+    obj_a.location += delta
+
+def orient_z_to_vector(obj, vector):
+    """Rotate object so its local +Z aligns with world vector."""
+    # Current Z
+    current_z = obj.matrix_world.to_quaternion() @ Vector((0, 0, 1))
+    # Target
+    target = vector.normalized()
+    
+    # Calculate rotation
+    rot_quat = current_z.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_blade_steel = make_material("blade_steel", diffuse_color=(0.706, 0.725, 0.745, 1))
+mat_handle_grip = make_material("handle_grip", diffuse_color=(0.118, 0.118, 0.118, 1))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: Create blade group ---
+
+# 1. Create blade_blank
+# Cuboid 0.200 x 0.040 x 0.003
+# Default cube is centered at 0,0,0. Size is scale.
+# We need to create it, orient it, anchor it.
+blade_blank = add_cube((0.200, 0.040, 0.003), "blade_blank", location=(0,0,0), rotation=(0,0,0))
+apply_material(blade_blank, mat_blade_steel)
+
+# Rotate so +Z aligns +Z (world) -> Already aligned by default creation, but explicit step:
+orient_z_to_vector(blade_blank, Vector((0, 0, 1)))
+
+# Anchor to world origin
+blade_blank.location = (0, 0, 0)
+
+# Offset (0,0,0)
+blade_blank.location += Vector((0, 0, 0))
+
+# 2. Create bevel_left
+# Prism 0.200 x 0.020 x 0.003
+# "Prism" in this context likely means a rectangular cuboid used as a cutter.
+bevel_left = add_cube((0.200, 0.020, 0.003), "bevel_left_cutter", location=(0,0,0), rotation=(0,0,0))
+apply_material(bevel_left, mat_blade_steel)
+
+# Rotate so +Z aligns +Z
+orient_z_to_vector(bevel_left, Vector((0, 0, 1)))
+
+# Align bevel_left.right_face to blade_blank.left_face
+# blade_blank.left_face is at X = -0.100 (half of 0.200)
+# bevel_left.right_face is at X = +0.100 (half of 0.200)
+# We want bevel_left.right_face to touch blade_blank.left_face.
+# So bevel_left.right_face should be at X = -0.100.
+# Currently bevel_left is at 0,0,0. Its right face is at 0.100.
+# We need to move it left by 0.200.
+# Using helper:
+align_face_to_face(bevel_left, blade_blank, face_a='right', face_b='left')
+
+# Offset (0,0,0)
+bevel_left.location += Vector((0, 0, 0))
+
+# Boolean subtract bevel_left from blade_blank
+boolean_subtract(bevel_left, blade_blank)
+
+# 3. Create bevel_right
+bevel_right = add_cube((0.200, 0.020, 0.003), "bevel_right_cutter", location=(0,0,0), rotation=(0,0,0))
+apply_material(bevel_right, mat_blade_steel)
+
+# Rotate so +Z aligns +Z
+orient_z_to_vector(bevel_right, Vector((0, 0, 1)))
+
+# Align bevel_right.left_face to blade_blank.right_face
+# blade_blank.right_face is at X = +0.100
+# bevel_right.left_face is at X = -0.100
+# We want bevel_right.left_face to touch blade_blank.right_face.
+# So bevel_right.left_face should be at X = +0.100.
+# Currently bevel_right is at 0,0,0. Its left face is at -0.100.
+# We need to move it right by 0.200.
+align_face_to_face(bevel_right, blade_blank, face_a='left', face_b='right')
+
+# Offset (0,0,0)
+bevel_right.location += Vector((0, 0, 0))
+
+# Boolean subtract bevel_right from blade_blank
+boolean_subtract(bevel_right, blade_blank)
+
+# Stage 1 complete.
+
+# --- SECTION 2: Create handle group ---
+
+# 1. Create handle_base
+# Cylinder radius 0.0125, length 0.120
+# Default cylinder is along Z.
+# Rotate so +Z aligns +X (world).
+handle_base = add_cylinder(0.0125, 0.120, "handle_base", location=(0,0,0), rotation=(0,0,0))
+apply_material(handle_base, mat_handle_grip)
+
+# Rotate so +Z aligns +X
+orient_z_to_vector(handle_base, Vector((1, 0, 0)))
+
+# Align handle_base.right_face to blade_blank.left_face
+# After rotation, the cylinder's local Z is world X.
+# The "faces" of a cylinder are the circular ends.
+# In local coords, ends are at Z = +/- 0.060.
+# After rotating local Z to world X:
+# Local +Z becomes World +X.
+# Local -Z becomes World -X.
+# So "right_face" (usually +X in local) corresponds to the end at Local Z = +0.060.
+# "left_face" corresponds to Local Z = -0.060.
+# Wait, standard naming:
+# If aligned to X, the face at World +X is the "right" face? Or is it based on local?
+# The prompt says "Align handle_base.right_face".
+# Assuming standard primitive orientation before rotation:
+# Cylinder: Top/Bottom faces are along Z.
+# If we rotate Z to X, the "Top" face (Local +Z) is now at World +X.
+# Let's assume "right_face" means the face with the highest X coordinate in World space.
+# And "left_face" means the face with the lowest X coordinate.
+
+# blade_blank.left_face is at World X = -0.100.
+# handle_base is centered at 0,0,0.
+# Its extent is 0.120 along X.
+# So its faces are at World X = -0.060 and World X = +0.060.
+# We want handle_base.right_face (World +X face) to align to blade_blank.left_face (World X = -0.100).
+# So handle_base.right_face should be at X = -0.100.
+# Currently it is at X = +0.060.
+# We need to move it by -0.160.
+
+# Let's use the helper align_face_to_face.
+# It calculates face centers based on world coordinates.
+# handle_base.right_face (max X) should align to blade_blank.left_face (min X).
+align_face_to_face(handle_base, blade_blank, face_a='right', face_b='left')
+
+# Offset (-0.005, 0, 0)
+handle_base.location += Vector((-0.005, 0, 0))
+
+# 2. Create handle_contour
+# Complex curve size 0.120 x 0.025 x 0.025
+# Interpreted as a cube/prism for boolean subtraction.
+handle_contour = add_cube((0.120, 0.025, 0.025), "handle_contour_cutter", location=(0,0,0), rotation=(0,0,0))
+apply_material(handle_contour, mat_handle_grip)
+
+# Rotate so +Z aligns +X
+orient_z_to_vector(handle_contour, Vector((1, 0, 0)))
+
+# Align handle_contour.center to handle_base.center
+align_center_to_center(handle_contour, handle_base)
+
+# Offset (0,0,0)
+handle_contour.location += Vector((0, 0, 0))
+
+# Boolean subtract handle_contour from handle_base
+boolean_subtract(handle_contour, handle_base)
+
+# Stage 2 complete.
+```

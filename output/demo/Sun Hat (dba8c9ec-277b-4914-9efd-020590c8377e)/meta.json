@@ -1,0 +1,47 @@
+{
+  "id": "dba8c9ec-277b-4914-9efd-020590c8377e",
+  "name": "Sun Hat",
+  "instruction": "Could you create a 3D model of a sun hat? The hat should have a wide brim and a rounded crown. Include a simple band around the base of the crown.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a sun hat.",
+        "The hat features a wide brim.",
+        "The crown of the hat is rounded.",
+        "The band is positioned around the base of the crown."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The width of the brim is proportionate to the height of the crown.",
+        "The band is proportionate to the size of the crown."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The brim extends outward from the crown.",
+        "The crown is properly centered on the brim.",
+        "The band wraps around the crown without gaps."
+      ],
+      "Object distance and contact": [
+        "The brim does not overlap with the crown.",
+        "The band is in contact with the base of the crown."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design follows the instruction for a sun hat."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

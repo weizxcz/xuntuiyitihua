@@ -1,0 +1,454 @@
+```python
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive_cube(name, size, location, rotation_euler):
+    """Add a cube and apply transforms."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    return obj
+
+def add_primitive_cylinder(name, radius, height, location, rotation_euler):
+    """Add a cylinder and apply transforms."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    return obj
+
+def get_face_normal(obj, face_index):
+    """Get world space normal of a specific face."""
+    # Ensure we are in object mode to access data correctly
+    if bpy.context.active_object != obj:
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+    
+    # Get the matrix world
+    mw = obj.matrix_world
+    
+    # Get the face
+    # Note: For simple primitives, face indices are predictable, 
+    # but for robustness we calculate based on geometry if needed.
+    # Here we assume standard orientation or pass specific logic.
+    # For a cube: 0=bottom(-Z), 1=top(+Z), 2=front(+Y), 3=back(-Y), 4=right(+X), 5=left(-X)
+    # For a cylinder: 0=bottom, 1=top
+    return mw @ obj.data.polygons[face_index].normal
+
+def get_face_center(obj, face_index):
+    """Get world space center of a specific face."""
+    mw = obj.matrix_world
+    local_center = obj.data.polygons[face_index].center
+    return mw @ local_center
+
+def align_and_offset(obj, anchor_obj, anchor_face_idx, offset_vec, rotation_euler=(0,0,0)):
+    """
+    Aligns obj's bottom face to anchor_obj's specified face, then applies offset.
+    Assumes obj is created at origin with default orientation before this call.
+    """
+    # 1. Set Rotation
+    obj.rotation_euler = rotation_euler
+    
+    # 2. Calculate Anchor Point and Normal
+    anchor_normal = get_face_normal(anchor_obj, anchor_face_idx)
+    anchor_center = get_face_center(anchor_obj, anchor_face_idx)
+    
+    # 3. Align Object Orientation
+    # We want obj's +Z (top) to align with anchor_normal.
+    # Default cube/cylinder +Z is up.
+    # If anchor_normal is +Z, rotation is (0,0,0).
+    # If anchor_normal is -Z, rotation is (pi, 0, 0).
+    # If anchor_normal is +Y, rotation is (-pi/2, 0, 0).
+    # If anchor_normal is -Y, rotation is (pi/2, 0, 0).
+    
+    # Simple alignment logic for standard axes
+    target_up = anchor_normal.normalized()
+    current_up = Vector((0, 0, 1))
+    
+    if target_up.dot(current_up) < -0.99:
+        obj.rotation_euler = (math.pi, 0, 0)
+    elif target_up.dot(current_up) > 0.99:
+        obj.rotation_euler = (0, 0, 0)
+    elif target_up.dot(Vector((0, 1, 0))) > 0.99:
+        obj.rotation_euler = (-math.pi/2, 0, 0)
+    elif target_up.dot(Vector((0, -1, 0))) > 0.99:
+        obj.rotation_euler = (math.pi/2, 0, 0)
+    elif target_up.dot(Vector((1, 0, 0))) > 0.99:
+        obj.rotation_euler = (0, 0, -math.pi/2)
+    elif target_up.dot(Vector((-1, 0, 0))) > 0.99:
+        obj.rotation_euler = (0, 0, math.pi/2)
+        
+    # 4. Align Position (Snap bottom face to anchor face)
+    # Calculate obj's bottom face normal in world space after rotation
+    # For a cube/cylinder created at origin, bottom face is -Z.
+    # After rotation, we need to find where the bottom face is.
+    
+    # Helper to get bottom face info based on current rotation
+    # Since we just set rotation, we can calculate the offset manually.
+    # Distance from center to bottom face is half height (for cylinder) or half size (for cube).
+    
+    # Let's use a simpler approach: Move object so its bottom face center matches anchor center.
+    # Then apply offset.
+    
+    # Get half-height of object in its local Z axis
+    # For cube: size/2. For cylinder: height/2.
+    # We need to know the object type to get dimensions.
+    
+    half_h = 0
+    if obj.type == 'MESH':
+        # Approximate half height based on bounding box or known creation params
+        # Since we control creation, we can store size or calculate from bounds.
+        # Let's calculate from bounds.
+        min_z = min(v.co.z for v in obj.bound_box)
+        max_z = max(v.co.z for v in obj.bound_box)
+        # This is local space. We need world space projection.
+        # Easier: The object is centered at (0,0,0) locally.
+        # The bottom face is at local Z = -half_h.
+        # We need to find local Z of bottom face.
+        
+        # Re-evaluating: It's safer to define the object's "bottom" relative to its local Z.
+        # If we align +Z to anchor_normal, the bottom is -Z.
+        # The distance from center to bottom face is 'h'.
+        
+        # Let's assume standard primitives created with scale 1 or specific sizes.
+        # We will pass dimensions in the creation step or calculate them.
+        pass
+
+    # Robust Alignment:
+    # 1. Rotate object.
+    # 2. Calculate vector from object center to its bottom face center in World Space.
+    # 3. Move object so bottom face center == anchor center.
+    
+    # Get local bottom face normal (should be -Z for standard primitives)
+    local_bottom_normal = Vector((0, 0, -1))
+    world_bottom_normal = obj.matrix_world.to_3x3() @ local_bottom_normal
+    
+    # Get local bottom face center offset (e.g., -height/2)
+    # We need to know the dimension along Z.
+    # For cube: size[2]/2. For cylinder: height/2.
+    # Let's extract from data if possible, or assume standard.
+    # Since we create them, we can just calculate the position directly.
+    
+    # Let's simplify:
+    # Target Center = Anchor Center - (World Bottom Normal * DistanceFromCenterToBottom)
+    # Then apply Offset.
+    
+    # Determine DistanceFromCenterToBottom
+    # We need to know the object's Z-dimension.
+    # Let's assume the object has been scaled.
+    # We can get the bound box in world space.
+    
+    # Transform bound box to world
+    corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+    # Find min and max Z
+    z_vals = [c.z for c in corners]
+    min_z_world = min(z_vals)
+    max_z_world = max(z_vals)
+    
+    # Current center Z
+    center_z_world = obj.location.z
+    
+    # Distance from center to bottom face (in world space, assuming axis aligned or rotated correctly)
+    # If rotated, the "bottom" face is the one with normal closest to -anchor_normal?
+    # No, we aligned +Z to anchor_normal. So -Z is the bottom.
+    # The face with normal closest to -anchor_normal is the bottom.
+    
+    # Let's find the face index with normal closest to -anchor_normal
+    best_face_idx = -1
+    min_dot = 2.0
+    for i, poly in enumerate(obj.data.polygons):
+        n = (obj.matrix_world.to_3x3() @ poly.normal).normalized()
+        dot = n.dot(-anchor_normal)
+        if dot < min_dot:
+            min_dot = dot
+            best_face_idx = i
+            
+    if best_face_idx != -1:
+        # Get local center of that face
+        local_face_center = obj.data.polygons[best_face_idx].center
+        # Transform to world
+        world_face_center = obj.matrix_world @ local_face_center
+        
+        # Vector from object center to face center
+        vec_to_face = world_face_center - obj.location
+        
+        # We want world_face_center to be at anchor_center
+        # So new_location = anchor_center - vec_to_face
+        new_location = anchor_center - vec_to_face
+        
+        # Apply Offset
+        new_location += offset_vec
+        
+        obj.location = new_location
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_fabric_beige = make_material("fabric_beige", (0.96, 0.92, 0.86, 1.0))
+mat_fabric_cushion = make_material("fabric_cushion", (0.90, 0.85, 0.80, 1.0))
+mat_metal_silver = make_material("metal_silver", (0.70, 0.72, 0.75, 1.0))
+mat_wood_dark = make_material("wood_dark", (0.25, 0.18, 0.12, 1.0))
+mat_wood_light = make_material("wood_light", (0.65, 0.55, 0.45, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Helper to create and assign material
+def create_obj(name, mat, loc, rot, scale=(1,1,1)):
+    obj = bpy.ops.mesh.primitive_cube_add(size=1, location=loc)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = scale
+    obj.rotation_euler = rot
+    apply_material(obj, mat)
+    return obj
+
+def create_cyl(name, mat, radius, height, loc, rot):
+    obj = bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=loc)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rot
+    apply_material(obj, mat)
+    return obj
+
+# --- SECTION 1 – Create wooden slat base ---
+# Size 2.032x0.762x0.05 m
+# Name: wooden_slat_base
+# Pos: (0, 0, 0.025)
+# Rot: +Z aligns +Z (0,0,0)
+wooden_slat_base = create_obj("wooden_slat_base", mat_wood_light, (0, 0, 0.025), (0, 0, 0), (2.032, 0.762, 0.05))
+
+# --- SECTION 2 – Create metal legs ---
+# For r in 0..1 and c in 0..1
+# Name: metal_legs_r_c
+# Radius 0.02, Height 0.4
+# Align bottom to wooden_slat_base.bottom_face
+# Offset: (-0.9 + c*1.8, -0.3 + r*0.6, -0.4)
+
+# wooden_slat_base.bottom_face is face index 0 (assuming default cube orientation: 0=-Z, 1=+Z)
+# Let's verify cube face indices:
+# 0: -Z, 1: +Z, 2: +Y, 3: -Y, 4: +X, 5: -X
+# So bottom is 0.
+
+for r in range(2):
+    for c in range(2):
+        name = f"metal_legs_{r}_{c}"
+        offset_x = -0.9 + c * 1.8
+        offset_y = -0.3 + r * 0.6
+        offset_z = -0.4
+        offset_vec = Vector((offset_x, offset_y, offset_z))
+        
+        # Create cylinder at origin first to align
+        leg = create_cyl(name, mat_metal_silver, 0.02, 0.4, (0, 0, 0), (0, 0, 0))
+        
+        # Align and offset
+        # Anchor: wooden_slat_base, Face: 0 (bottom)
+        align_and_offset(leg, wooden_slat_base, 0, offset_vec, (0, 0, 0))
+
+# --- SECTION 3 – Create storage compartment ---
+# storage_box: 1.8x0.7x0.2 m, Pos (0,0,0.05), Rot (0,0,0)
+storage_box = create_obj("storage_box", mat_wood_dark, (0, 0, 0.05), (0, 0, 0), (1.8, 0.7, 0.2))
+
+# storage_lid: 1.82x0.72x0.02 m
+# Align bottom to storage_box.top_face
+# storage_box.top_face is face index 1 (+Z)
+# Offset (0, 0, 0.01)
+storage_lid = create_obj("storage_lid", mat_wood_dark, (0, 0, 0), (0, 0, 0), (1.82, 0.72, 0.02))
+align_and_offset(storage_lid, storage_box, 1, Vector((0, 0, 0.01)), (0, 0, 0))
+
+# --- SECTION 4 – Create seat cushion ---
+# seat_cushion: 2.032x0.762x0.15 m
+# Align bottom to wooden_slat_base.top_face (face 1)
+# Offset (0, 0, 0.075)
+seat_cushion = create_obj("seat_cushion", mat_fabric_cushion, (0, 0, 0), (0, 0, 0), (2.032, 0.762, 0.15))
+align_and_offset(seat_cushion, wooden_slat_base, 1, Vector((0, 0, 0.075)), (0, 0, 0))
+
+# --- SECTION 5 – Create hinge mechanism ---
+# hinge_base: 2.0x0.05x0.05 m
+# Align bottom to wooden_slat_base.top_face (face 1)
+# Offset (0, -0.35, 0.075)
+hinge_base = create_obj("hinge_base", mat_wood_dark, (0, 0, 0), (0, 0, 0), (2.0, 0.05, 0.05))
+align_and_offset(hinge_base, wooden_slat_base, 1, Vector((0, -0.35, 0.075)), (0, 0, 0))
+
+# hinge_arm: Radius 0.01, Height 0.1
+# Rotate so +Z aligns +Y (world)
+# Align center to hinge_base.center
+# Offset (0, 0.05, 0)
+
+# Create hinge_arm at origin
+hinge_arm = create_cyl("hinge_arm", mat_metal_silver, 0.01, 0.1, (0, 0, 0), (0, 0, 0))
+
+# Align +Z to +Y
+# Rotation: -90 deg around X axis
+hinge_arm.rotation_euler = (-math.pi/2, 0, 0)
+
+# Align center to hinge_base.center
+# We need to move hinge_arm so its center matches hinge_base center
+# Then apply offset
+hinge_base_center = hinge_base.location
+hinge_arm_center_offset = Vector((0, 0.05, 0))
+
+# Move hinge_arm to hinge_base center
+hinge_arm.location = hinge_base_center + hinge_arm_center_offset
+
+# --- SECTION 6 – Create backrest frame and cushion ---
+# backrest_frame: 2.032x0.8x0.1 m
+# Align bottom to hinge_arm.top_face
+# hinge_arm is a cylinder rotated -90 deg around X.
+# Its local +Z is now World +Y.
+# Its local -Z is now World -Y.
+# Its local +X/Y are World -Z/+X?
+# Let's check:
+# Original Cylinder: Axis Z. Top face is +Z.
+# Rotated -90 X:
+# New Up (+Z) is World +Y.
+# New Down (-Z) is World -Y.
+# So "top_face" of hinge_arm is the face with normal closest to World +Y.
+# In local space, that's face index 1 (+Z).
+# In world space, that face normal is (0, 1, 0).
+
+# We need to align backrest_frame.bottom to hinge_arm.top.
+# backrest_frame.bottom is face 0 (-Z).
+# hinge_arm.top is face 1 (+Z).
+
+# But wait, the instruction says "Align backrest_frame.bottom_face to hinge_arm.top_face".
+# This implies the bottom of the frame touches the top of the arm.
+# So we align frame's -Z to arm's +Z.
+
+# However, the arm is vertical (along Y). The frame is likely horizontal (along Z).
+# If frame is horizontal, its bottom is -Z.
+# If arm is vertical, its top is +Y.
+# You can't align -Z to +Y directly with a simple face-to-face snap if they are perpendicular.
+# "Align bottom_face to top_face" usually means the surfaces are coplanar and touching.
+# If hinge_arm is vertical, its "top" is a point or a small circle at the end of the Y axis.
+# The backrest_frame is a cuboid.
+# If we align the bottom of the frame to the top of the arm, we probably mean:
+# The bottom face of the frame is positioned at the top face of the arm.
+# But the arm's top face is perpendicular to the frame's bottom face?
+# No, "Align face to face" implies parallel normals.
+# If hinge_arm is rotated +Z to +Y, its top face normal is +Y.
+# If backrest_frame is rotated +Z to +Z, its bottom face normal is -Z.
+# These are perpendicular.
+# Maybe the backrest_frame is also rotated?
+# "Rotate backrest_frame so its +Z axis aligns +Z (world)." -> No, it's upright.
+# "Align backrest_frame.bottom_face to hinge_arm.top_face."
+# This might mean: Position the frame such that its bottom face is at the location of the arm's top face.
+# And since the arm is vertical, the frame sits on top of it?
+# But the arm is a cylinder along Y. The "top" is at Y=+height/2.
+# The frame is a box. Its bottom is at Z=-height/2.
+# If we align the bottom face of the frame to the top face of the arm, we are aligning a horizontal plane (frame bottom) to a vertical plane (arm side)? No.
+# The arm's top face is a circle in the X-Z plane (at Y=+0.05).
+# The frame's bottom face is a rectangle in the X-Y plane (at Z=-0.05).
+# They are perpendicular.
+# Perhaps "Align ... to ..." means "Position at".
+# Let's assume it means: Move the frame so its bottom face center is at the hinge_arm top face center.
+# And then apply offset.
+
+# Let's re-read carefully: "Align backrest_frame.bottom_face to hinge_arm.top_face."
+# In Blender MCP, this often implies a constraint or a specific alignment logic.
+# If the faces are not parallel, it might just mean "Snap to".
+# Given the context of a backrest, it likely stands vertically behind the seat.
+# The hinge_arm is likely a vertical support.
+# So the backrest_frame sits on top of the hinge_arm?
+# If so, the bottom of the frame touches the top of the arm.
+# The top of the arm is a horizontal circle (if the arm was vertical along Z).
+# But the arm is rotated +Z to +Y. So it's vertical along Y.
+# So its top is a horizontal circle in the X-Z plane.
+# The frame is upright (+Z to +Z). Its bottom is a horizontal rectangle in the X-Y plane.
+# So yes, they are parallel!
+# Frame Bottom Normal: -Z.
+# Arm Top Normal: +Y.
+# Wait.
+# Frame Bottom is -Z. Arm Top is +Y.
+# They are perpendicular.
+# Ah, if the arm is along Y, its top face is in the X-Z plane. Normal is +Y.
+# If the frame is upright, its bottom face is in the X-Y plane. Normal is -Z.
+# These are perpendicular.
+# So "Align face to face" is geometrically impossible for coplanar contact unless one is rotated.
+# Maybe the backrest_frame is rotated?
+# "Rotate backrest_frame so its +Z axis aligns +Z (world)." -> No.
+# Maybe the hinge_arm is not vertical?
+# "Rotate hinge_arm so its +Z axis aligns +Y (world)." -> Yes, it is vertical along Y.
+# Maybe the backrest_frame is lying down?
+# No, "backrest" implies vertical.
+# Maybe "Align bottom_face to top_face" means the bottom face of the frame is positioned at the top face of the arm, but the frame is rotated 90 degrees?
+# No, rotation is specified.
+# Let's look at the offset: "Then offset(0, 0, 0.05)."
+# If we just position the frame's bottom center at the arm's top center:
+# Arm Top Center: (0, 0, 0.05) [since arm height 0.1, center 0, top 0.05]
+# Frame Bottom Center: (0, 0, -0.05) [since frame height 0.1, center 0, bottom -0.05]
+# If we align them, the frame center would be at (0, 0, 0.1).
+# Then offset (0,0,0.05) -> (0,0,0.15).
+# This seems plausible. The "Align" command here likely means "Position the face at the anchor face's location".
+# It doesn't necessarily mean "Make normals parallel".
+# I will implement it as: Move object so its bottom face center is at anchor face center.
+
+# Backrest Frame
+backrest_frame = create_obj("backrest_frame", mat_wood_dark, (0, 0, 0), (0, 0, 0), (2.032, 0.8, 0.1))
+# Align bottom to hinge_arm top (face 1)
+# Note: hinge_arm top face is face 1 (+Z local) which is World +Y.
+# We want backrest_frame bottom (face 0) to be at hinge_arm top center.
+align_and_offset(backrest_frame, hinge_arm, 1, Vector((0, 0, 0.05)), (0, 0, 0))
+
+# Backrest Cushion
+# Size 2.032x0.75x0.1 m
+# Align bottom to backrest_frame.top_face (face 1)
+# Offset (0, 0, 0.05)
+backrest_cushion = create_obj("backrest_cushion", mat_fabric_cushion, (0, 0, 0), (0, 0, 0), (2.032, 0.75, 0.1))
+align_and_offset(backrest_cushion, backrest_frame, 1, Vector((0, 0, 0.05)), (0, 0, 0))
+
+# --- SECTION 7 – Create armrests ---
+# For r in 0..0 and c in 0..1
+# armrest_base: 0.1x0.762x0.4 m
+# Align bottom to wooden_slat_base.top_face (face 1)
+# Offset: (-1.016 + c*2.032, 0, 0.2)
+
+for r in range(1):
+    for c in range(2):
+        name_base = f"armrest_base_{r}_{c}"
+        offset_x = -1.016 + c * 2.032
+        offset_y = 0
+        offset_z = 0.2
+        offset_vec = Vector((offset_x, offset_y, offset_z))
+        
+        arm_base = create_obj(name_base, mat_wood_dark, (0, 0, 0), (0, 0, 0), (0.1, 0.762, 0.4))
+        align_and_offset(arm_base, wooden_slat_base, 1, offset_vec, (0, 0, 0))
+        
+        # armrest_cushion: 0.1x0.75x0.1 m
+        # Align bottom to armrest_base.top_face (face 1)
+        # Offset (0, 0, 0.05)
+        name_cush = f"armrest_cushion_{r}_{c}"
+        arm_cush = create_obj(name_cush, mat_fabric_cushion, (0, 0, 0), (0, 0, 0), (0.1, 0.75, 0.1))
+        align_and_offset(arm_cush, arm_base, 1, Vector((0, 0, 0.05)), (0, 0, 0))
+```

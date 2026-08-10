@@ -1,0 +1,107 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material concrete_light; diffuse_color = (0.85, 0.85, 0.85, 1.0).
+Define material copper_busbar; diffuse_color = (0.95, 0.65, 0.25, 1.0).
+Define material glass_insulator; diffuse_color = (0.15, 0.15, 0.15, 1.0).
+Define material metal_steel; diffuse_color = (0.6, 0.6, 0.65, 1.0).
+Define material oil_transformer; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+Define material wire_copper; diffuse_color = (0.9, 0.6, 0.2, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Foundation Pad  ---
+Create primitive cuboid with size 20×15×0.3 m and name it site_pad.
+Rotate site_pad so its +Z axis aligns +Z (world).
+Anchor site_pad to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Primary Support Structures  ---
+Create primitive cuboid with size 1×1×1 m and name it support_grid_A.
+Rotate support_grid_A so its +Z axis aligns +Z (world).
+Anchor support_grid_A to world origin.
+Then move by offset(-5,0,0).
+
+Create primitive cuboid with size 1×1×1 m and name it support_grid_B.
+Rotate support_grid_B so its +Z axis aligns +Z (world).
+Anchor support_grid_B to world origin.
+Then move by offset(5,0,0).
+
+Create primitive cuboid with size 10×10×1 m and name it fence_perimeter.
+Rotate fence_perimeter so its +Z axis aligns +Z (world).
+Anchor fence_perimeter to world origin.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Install Major Equipment  ---
+Create primitive cuboid with size 2×2×1 m and name it transformer_T1.
+Rotate transformer_T1 so its +Z axis aligns +Z (world).
+Align transformer_T1.base to support_grid_A.top_face.
+Then move by offset(0,0,0.5).
+
+Create primitive cuboid with size 2×2×1 m and name it transformer_T2.
+Rotate transformer_T2 so its +Z axis aligns +Z (world).
+Align transformer_T2.base to support_grid_A.top_face.
+Then move by offset(2,0,0.5).
+
+Create primitive cuboid with size 1×1×1 m and name it circuit_breaker_CB1.
+Rotate circuit_breaker_CB1 so its +Z axis aligns +Z (world).
+Align circuit_breaker_CB1.base to support_grid_B.top_face.
+Then move by offset(0,0,0.8).
+
+Create primitive cuboid with size 1×1×1 m and name it circuit_breaker_CB2.
+Rotate circuit_breaker_CB2 so its +Z axis aligns +Z (world).
+Align circuit_breaker_CB2.base to support_grid_B.top_face.
+Then move by offset(1.5,0,0.8).
+Stage 3 complete.
+
+---  SECTION 4 – Install Electrical Distribution  ---
+Create primitive cuboid with size 5×0.1×0.1 m and name it busbar_main_H.
+Rotate busbar_main_H so its +Z axis aligns +X (world).
+Align busbar_main_H.center to Avg(transformer_T1.top_center, transformer_T2.top_center).
+Then move by offset(0,0,1.5).
+
+Create primitive cylinder with radius 0.1 and height 0.5 m and name it insulator_set_T1.
+Rotate insulator_set_T1 so its +Z axis aligns +Z (world).
+Align insulator_set_T1.base to transformer_T1.top_face.
+Then move by offset(0,0,0.2).
+
+Create primitive cylinder with radius 0.1 and height 0.5 m and name it insulator_set_T2.
+Rotate insulator_set_T2 so its +Z axis aligns +Z (world).
+Align insulator_set_T2.base to transformer_T2.top_face.
+Then move by offset(0,0,0.2).
+
+Create primitive cylinder with radius 0.1 and height 0.5 m and name it insulator_set_CB1.
+Rotate insulator_set_CB1 so its +Z axis aligns +Z (world).
+Align insulator_set_CB1.base to circuit_breaker_CB1.top_face.
+Then move by offset(0,0,0.3).
+Stage 4 complete.
+
+---  SECTION 5 – Install Transmission Lines  ---
+Create primitive cylinder with radius 0.05 and height 2 m and name it line_in_A.
+Rotate line_in_A so its +Z axis aligns +Z (world).
+Align line_in_A.end to insulator_set_T1.top_center.
+Then move by offset(0,0,0.5).
+
+Create primitive cylinder with radius 0.05 and height 2 m and name it line_in_B.
+Rotate line_in_B so its +Z axis aligns +Z (world).
+Align line_in_B.end to insulator_set_T2.top_center.
+Then move by offset(0,0,0.5).
+
+Create primitive cylinder with radius 0.05 and height 2 m and name it line_out_A.
+Rotate line_out_A so its +Z axis aligns +Z (world).
+Align line_out_A.start to insulator_set_CB1.top_center.
+Then move by offset(0,0,0.5).
+Stage 5 complete.
+
+All stages complete.

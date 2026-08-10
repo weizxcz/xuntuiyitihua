@@ -1,0 +1,49 @@
+{
+  "id": "d6d29740-3203-4096-bf5a-4042ba429b2d",
+  "name": "Blender vs. Juicer",
+  "instruction": "Design a 3D model comparing a blender and a juicer. The blender should have a tall container with blades at the bottom, while the juicer should have a spout for juice and a separate container for pulp. Position them side by side.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The blender has a tall cylindrical container.",
+        "The blender features blades positioned at the bottom.",
+        "The juicer has a spout for dispensing juice.",
+        "The juicer includes a separate container for collecting pulp."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blender's container is taller than the juicer's components.",
+        "The size of the pulp container is appropriate relative to the juicer."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blender and juicer are positioned side by side.",
+        "The blades in the blender are correctly placed at the bottom.",
+        "The spout of the juicer is oriented outward for easy access.",
+        "The separate pulp container is adjacent to the juicer."
+      ],
+      "Object distance and contact": [
+        "There is adequate space between the blender and juicer for visual clarity.",
+        "The base of the blender does not overlap with the juicer's components.",
+        "The spout of the juicer does not interfere with the blender's container."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the blender and juicer are accurately represented as per the instructions.",
+        "The specific features of each appliance are included as described."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

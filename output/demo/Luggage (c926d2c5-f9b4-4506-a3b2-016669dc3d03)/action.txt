@@ -1,0 +1,101 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_heavy_duty; diffuse_color = (0.15,0.15,0.2,1).
+Define material fabric_rough; diffuse_color = (0.2,0.2,0.25,1).
+Define material hard_shell; diffuse_color = (0.1,0.1,0.15,1).
+Define material metal_aluminum; diffuse_color = (0.8,0.8,0.85,1).
+Define material metal_dark; diffuse_color = (0.2,0.2,0.25,1).
+Define material plastic_black; diffuse_color = (0.05,0.05,0.05,1).
+Define material plastic_grey; diffuse_color = (0.4,0.4,0.45,1).
+Define material rubber_black; diffuse_color = (0.08,0.08,0.08,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Hard Shell Body  ---
+Create primitive cuboid with size 0.75×0.5×0.3 m and name it hard_shell_body.
+Rotate hard_shell_body so its +Z axis aligns +Z (world).
+Anchor hard_shell_body to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create Handle Assembly  ---
+Create primitive cuboid with size 0.2×0.02×0.1 m and name it handle_base.
+Rotate handle_base so its +Z axis aligns +Z (world).
+Anchor handle_base to hard_shell_body.+Z_face.
+Then move by offset(0,0,0.15).
+
+Create primitive cylinder with size Ø0.01×0.6 m and name it handle_poles.
+Rotate handle_poles so its +Z axis aligns +Y (world).
+Anchor handle_poles to handle_base.+Z_face.
+Then move by offset(0,0,0.01).
+
+Create primitive cylinder with size Ø0.03×0.15 m and name it handle_grip.
+Rotate handle_grip so its +Z axis aligns +Y (world).
+Anchor handle_grip to handle_poles.+Y_face.
+Then move by offset(0,0.3,0).
+
+---  SECTION 3 – Create Wheel Assembly (Hard Shell)  ---
+Create primitive sphere with size Ø0.025 m and name it wheel_FL.
+Rotate wheel_FL so its +Z axis aligns +Z (world).
+Anchor wheel_FL to hard_shell_body.-Z_face.
+Then move by offset(-0.35,-0.25,-0.15).
+
+Create primitive sphere with size Ø0.025 m and name it wheel_FR.
+Rotate wheel_FR so its +Z axis aligns +Z (world).
+Anchor wheel_FR to hard_shell_body.-Z_face.
+Then move by offset(0.35,-0.25,-0.15).
+
+Create primitive sphere with size Ø0.025 m and name it wheel_BL.
+Rotate wheel_BL so its +Z axis aligns +Z (world).
+Anchor wheel_BL to hard_shell_body.-Z_face.
+Then move by offset(-0.35,-0.25,0.15).
+
+Create primitive sphere with size Ø0.025 m and name it wheel_BR.
+Rotate wheel_BR so its +Z axis aligns +Z (world).
+Anchor wheel_BR to hard_shell_body.-Z_face.
+Then move by offset(0.35,-0.25,0.15).
+
+---  SECTION 4 – Create Soft Body (Duffel Bag)  ---
+Create primitive cylinder with size Ø0.3×0.6 m and name it soft_body.
+Rotate soft_body so its +Z axis aligns +X (world).
+Anchor soft_body to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 5 – Create Strap Assembly  ---
+Create primitive torus with size Ø0.02×0.4 m and name it strap_left.
+Rotate strap_left so its +Z axis aligns +Y (world).
+Anchor strap_left to soft_body.-X_face.
+Then move by offset(-0.15,0,0).
+
+Create primitive torus with size Ø0.02×0.4 m and name it strap_right.
+Rotate strap_right so its +Z axis aligns +Y (world).
+Anchor strap_right to soft_body.+X_face.
+Then move by offset(0.15,0,0).
+
+---  SECTION 6 – Create Soft Wheel Assembly  ---
+Create primitive cylinder with size Ø0.02×0.05 m and name it wheel_soft_L.
+Rotate wheel_soft_L so its +Z axis aligns +Z (world).
+Anchor wheel_soft_L to soft_body.-Y_face.
+Then move by offset(-0.25,-0.15,0).
+
+Create primitive cylinder with size Ø0.02×0.05 m and name it wheel_soft_R.
+Rotate wheel_soft_R so its +Z axis aligns +Z (world).
+Anchor wheel_soft_R to soft_body.-Y_face.
+Then move by offset(0.25,-0.15,0).
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+Stage 4 complete.
+Stage 5 complete.
+Stage 6 complete.
+All stages complete.

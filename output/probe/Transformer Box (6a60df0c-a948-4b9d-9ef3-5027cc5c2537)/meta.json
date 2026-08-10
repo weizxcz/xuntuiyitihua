@@ -1,0 +1,45 @@
+{
+  "id": "6a60df0c-a948-4b9d-9ef3-5027cc5c2537",
+  "name": "Transformer Box",
+  "instruction": "Please design a transformer box. It should be a rectangular box with a door on the front and vents on the sides.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a rectangular box.",
+        "The box has a door located on the front.",
+        "The sides of the box feature vents."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The door size should be proportionate to the overall size of the box.",
+        "The vents should be appropriately sized relative to the box."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The door is positioned on the front face of the box.",
+        "The vents are evenly distributed on the sides of the box."
+      ],
+      "Object distance and contact": [
+        "The door should not obstruct the vents.",
+        "The vents should be positioned away from the door to allow for proper airflow."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the transformer box are accurately represented.",
+        "The design adheres to the instruction without deviations."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,75 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_ash_wood; diffuse_color = (0.82, 0.70, 0.55, 1.0).
+Define material mat_black_metal; diffuse_color = (0.10, 0.10, 0.10, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create frame_group (top_panel, rail_L, rail_R)  ---
+Create primitive cuboid with size 0.45×0.35×0.025 m and name it top_panel.
+Rotate top_panel so its +Z axis aligns +Z (world).
+Anchor top_panel to world origin (0,0,0).
+
+Create primitive cuboid with size 0.03×0.35×0.40 m and name it rail_L.
+Rotate rail_L so its +Z axis aligns +Z (world).
+Align rail_L.right_face to top_panel.left_face.
+Align rail_L.top_face to top_panel.bottom_face.
+Then move by offset(0, 0, 0).
+
+Create primitive cuboid with size 0.03×0.35×0.40 m and name it rail_R.
+Rotate rail_R so its +Z axis aligns +Z (world).
+Align rail_R.left_face to rail_L.right_face.
+Align rail_R.top_face to top_panel.bottom_face.
+Then move by offset(0, 0, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create legs (leg_LF, leg_LB, leg_RF, leg_RB)  ---
+Create primitive cuboid with size 0.02×0.02×0.55 m and name it leg_LF.
+Rotate leg_LF so its +Z axis aligns +Z (world).
+Align leg_LF.top_face to rail_L.bottom_face.
+Then move by offset(0.015, 0.015, -0.0125).
+
+Create primitive cuboid with size 0.02×0.02×0.55 m and name it leg_LB.
+Rotate leg_LB so its +Z axis aligns +Z (world).
+Align leg_LB.top_face to rail_L.bottom_face.
+Then move by offset(0.015, -0.015, -0.0125).
+
+Create primitive cuboid with size 0.02×0.02×0.55 m and name it leg_RF.
+Rotate leg_RF so its +Z axis aligns +Z (world).
+Align leg_RF.top_face to rail_R.bottom_face.
+Then move by offset(0.015, 0.015, -0.0125).
+
+Create primitive cuboid with size 0.02×0.02×0.55 m and name it leg_RB.
+Rotate leg_RB so its +Z axis aligns +Z (world).
+Align leg_RB.top_face to rail_R.bottom_face.
+Then move by offset(0.015, -0.015, -0.0125).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create drawer_group (drawer_box, drawer_handle)  ---
+Create primitive cuboid with size 0.40×0.30×0.15 m and name it drawer_box.
+Rotate drawer_box so its +Z axis aligns +Z (world).
+Align drawer_box.back_face to rail_L.front_face.
+Align drawer_box.bottom_face to rail_L.bottom_face.
+Then move by offset(0, 0.015, 0.075).
+
+Create primitive cuboid with size 0.15×0.01×0.01 m and name it drawer_handle.
+Rotate drawer_handle so its +Z axis aligns +Z (world).
+Align drawer_handle.back_face to drawer_box.front_face.
+Align drawer_handle.center to drawer_box.center.
+Then move by offset(0, 0.005, 0).
+
+Stage 3 complete.
+
+All stages complete.

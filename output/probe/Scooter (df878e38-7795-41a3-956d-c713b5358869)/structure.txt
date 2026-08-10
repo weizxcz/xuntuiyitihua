@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_black_rubber | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_chrome | diffuse_color=(0.9,0.9,0.95,1.0)
+mat_red_paint | diffuse_color=(0.8,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| scooter_root | Composite assembly of the entire scooter | assembly_order=[wheels], [deck], [steering]; mat=-; create_method=union |
+
+Layer 1 – Primary Structure (Deck & Steering)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| deck_main | Main deck plate | Align(XY) deck_main.center to (0,0,0); orientation=axis:+Z; size=0.15×0.05×0.005; mat=mat_red_paint; create_method=cube |
+| stem_tube | Vertical steering column | Align(XY) stem_tube.center to (0, 0.15, 0); orientation=axis:+Z; size=0.02×0.02×0.4; mat=mat_aluminum; create_method=cylinder |
+| handlebar_bar | Horizontal handlebar grip | Align(XY) handlebar_bar.center to (0, 0.35, 0); orientation=axis:+X; size=0.4×0.02×0.02; mat=mat_black_rubber; create_method=cylinder |
+| handlebar_stem | Vertical connector for handlebar | Align(XY) handlebar_stem.center to (0, 0.35, 0.2); orientation=axis:+Z; size=0.02×0.02×0.05; mat=mat_aluminum; create_method=cylinder |
+
+Layer 2 – Wheels & Axles
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_front | Front wheel assembly | Align(XY) wheel_front.center to (0, 0.4, 0); orientation=axis:+X; size=0.08×0.02; mat=mat_black_rubber; create_method=cylinder |
+| axle_front | Front axle rod | Align(XY) axle_front.center to (0, 0.4, 0); orientation=axis:+X; size=0.1×0.01; mat=mat_chrome; create_method=cylinder |
+| wheel_rear | Rear wheel assembly | Align(XY) wheel_rear.center to (0, -0.2, 0); orientation=axis:+X; size=0.08×0.02; mat=mat_black_rubber; create_method=cylinder |
+| axle_rear | Rear axle rod | Align(XY) axle_rear.center to (0, -0.2, 0); orientation=axis:+X; size=0.1×0.01; mat=mat_chrome; create_method=cylinder |
+
+# ----------  END_GRAPH  ----------

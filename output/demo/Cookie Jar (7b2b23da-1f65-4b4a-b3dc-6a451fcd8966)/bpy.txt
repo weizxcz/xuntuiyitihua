@@ -1,0 +1,364 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, but delete usually suffices for a reset
+    for col in bpy.data.collections:
+        col.objects.clear()
+
+def set_units():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    # Set roughness to 0 for glossy look if needed, but default is fine for ceramic
+    if "gloss" in name.lower():
+        bsdf.inputs['Roughness'].default_value = 0.1
+    return mat
+
+def apply_material(obj, mat):
+    """Apply a material to an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(radius, depth, name, segments=32):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, name, segments=32, rings=16):
+    """Add a UV Sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=segments, ring_count=rings)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_plane(size, name):
+    """Add a plane primitive."""
+    bpy.ops.mesh.primitive_plane_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def orient_z_to_z(obj):
+    """Rotate object so its local +Z aligns with world +Z."""
+    # By default, cylinders and spheres are already aligned, but this ensures it.
+    obj.rotation_euler = (0, 0, 0)
+
+def get_center_world(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_top_face_center_world(obj):
+    """Get the world location of the top face center of an object.
+    Assumes object is upright (Z-up)."""
+    # For a cylinder/sphere/cube, the top face is at max Z in local space.
+    # We transform the local top point to world space.
+    local_top = Vector((0, 0, obj.dimensions.z / 2))
+    return obj.matrix_world @ local_top
+
+def get_bottom_face_center_world(obj):
+    """Get the world location of the bottom face center of an object.
+    Assumes object is upright (Z-up)."""
+    local_bottom = Vector((0, 0, -obj.dimensions.z / 2))
+    return obj.matrix_world @ local_bottom
+
+def align_to_anchor(obj, anchor_obj, anchor_type='center'):
+    """Align object to anchor object.
+    anchor_type: 'center', 'top_face', 'bottom_face'
+    """
+    if anchor_type == 'center':
+        target_loc = get_center_world(anchor_obj)
+    elif anchor_type == 'top_face':
+        target_loc = get_top_face_center_world(anchor_obj)
+    elif anchor_type == 'bottom_face':
+        target_loc = get_bottom_face_center_world(anchor_obj)
+    else:
+        target_loc = get_center_world(anchor_obj)
+
+    # Calculate offset to move obj's center to target_loc
+    current_center = get_center_world(obj)
+    offset = target_loc - current_center
+    obj.location += offset
+
+def apply_offset(obj, offset_vec):
+    """Apply a local offset to the object."""
+    obj.location += offset_vec
+
+def boolean_subtract(cutter_obj, target_obj, keep_cutter=False):
+    """Perform a boolean subtract operation using the modifier stack."""
+    # Ensure target is active for modifier application if needed, 
+    # but we'll apply modifiers directly to target.
+    
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    if not keep_cutter:
+        bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Perform a boolean union operation."""
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this script context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95, 1.0))
+mat_ceramic_gloss = make_material("ceramic_gloss", (0.98, 0.98, 0.98, 0.8))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Jar Body ---
+
+# 1.1 Create jar_body_outer
+jar_body_outer = add_cylinder(radius=0.10, depth=0.25, name="jar_body_outer")
+orient_z_to_z(jar_body_outer)
+apply_material(jar_body_outer, mat_ceramic_white)
+
+# Anchor to world origin
+align_to_anchor(jar_body_outer, bpy.context.scene.objects["World"], anchor_type='center') # World origin is effectively (0,0,0)
+# Since we just cleared the scene, the world origin is (0,0,0). 
+# Explicitly setting location to 0,0,0 is safer for "Anchor to world origin"
+jar_body_outer.location = (0, 0, 0)
+
+# Offset(0,0,0)
+apply_offset(jar_body_outer, (0, 0, 0))
+
+# 1.2 Create jar_body_inner
+jar_body_inner = add_cylinder(radius=0.09, depth=0.25, name="jar_body_inner")
+orient_z_to_z(jar_body_inner)
+apply_material(jar_body_inner, mat_ceramic_white)
+
+# Anchor to jar_body_outer.center
+align_to_anchor(jar_body_inner, jar_body_outer, anchor_type='center')
+
+# Offset(0,0,0)
+apply_offset(jar_body_inner, (0, 0, 0))
+
+# 1.3 Boolean subtract jar_body_inner from jar_body_outer
+boolean_subtract(jar_body_inner, jar_body_outer, keep_cutter=False)
+
+# --- SECTION 2 – Create Jar Lip ---
+
+# 2.1 Create jar_lip
+jar_lip = add_cylinder(radius=0.10, depth=0.010, name="jar_lip")
+orient_z_to_z(jar_lip)
+apply_material(jar_lip, mat_ceramic_white)
+
+# Align jar_lip.center to jar_body_outer.top_face
+align_to_anchor(jar_lip, jar_body_outer, anchor_type='top_face')
+
+# Align jar_lip.bottom_face to jar_body_outer.top_face
+# This implies we need to shift the lip so its bottom is exactly at the top face of the body.
+# Currently, the center of the lip is at the top face of the body.
+# The bottom face of the lip is at (center_z - height/2).
+# We want bottom_face_z == top_face_z_of_body.
+# So, center_z - height/2 == top_face_z_of_body
+# center_z == top_face_z_of_body + height/2
+# We need to move the lip UP by half its height.
+lip_height = jar_lip.dimensions.z
+apply_offset(jar_lip, (0, 0, lip_height / 2))
+
+# Offset(0,0,0.005)
+apply_offset(jar_lip, (0, 0, 0.005))
+
+# --- SECTION 3 – Create Lid Dome ---
+
+# 3.1 Create lid_dome_sphere
+lid_dome_sphere = add_uvsphere(radius=0.10, name="lid_dome_sphere")
+orient_z_to_z(lid_dome_sphere)
+apply_material(lid_dome_sphere, mat_ceramic_gloss)
+
+# Anchor lid_dome_sphere to jar_body_outer.top_face
+align_to_anchor(lid_dome_sphere, jar_body_outer, anchor_type='top_face')
+
+# Offset(0,0,0.010)
+apply_offset(lid_dome_sphere, (0, 0, 0.010))
+
+# 3.2 Create lid_dome_cut (plane_cutter)
+lid_dome_cut = add_plane(size=0.25, name="lid_dome_cut")
+orient_z_to_z(lid_dome_cut) # Axis +Z aligns +Z
+
+# Anchor lid_dome_cut to lid_dome_sphere.center
+align_to_anchor(lid_dome_cut, lid_dome_sphere, anchor_type='center')
+
+# Offset(0,0,0.05)
+apply_offset(lid_dome_cut, (0, 0, 0.05))
+
+# 3.3 Boolean subtract lid_dome_cut from lid_dome_sphere
+boolean_subtract(lid_dome_cut, lid_dome_sphere, keep_cutter=False)
+
+# 3.4 Rotate lid_dome_sphere so its curved face points +Z
+# The sphere was created with center at jar_body_outer.top_face + offset.
+# The cut removed the top part (since cutter was at center + 0.05 in Z).
+# The remaining part is the bottom hemisphere.
+# The "curved face" of the remaining hemisphere is the bottom part.
+# The flat face is at the top.
+# The instruction says "Rotate ... so its curved face points +Z".
+# This is ambiguous. Usually, a dome sits with the flat face down or up.
+# If it's a lid dome, it likely sits on the jar.
+# If the cutter was at Z+0.05 relative to sphere center, it cut off the top.
+# The remaining object is the bottom hemisphere.
+# The flat face is at the top (Z+). The curved face is at the bottom (Z-).
+# If we want the curved face to point +Z, we might need to flip it or the cut was different.
+# However, "Rotate lid_dome_sphere so its curved face points +Z" might imply orienting the dome such that the bulge is upwards.
+# If we have a bottom hemisphere, the bulge is downwards.
+# Let's assume the intention is to have a dome shape sitting on the jar.
+# If we cut the top half off, we have a bowl shape.
+# If we want a dome (bulge up), we should have cut the bottom half off.
+# But the cutter was at offset (0,0,0.05) from center. Sphere radius is 0.10.
+# Center is at Z=0 (relative). Cutter at Z=0.05.
+# This cuts off the top cap from Z=0.05 to Z=0.10.
+# The remaining part is from Z=-0.10 to Z=0.05.
+# This is not a hemisphere. It's a sphere with the top cap removed.
+# Let's re-read: "Create full_sphere... Anchor... Offset(0,0,0.010)... Cutter... Offset(0,0,0.05)... Boolean-subtract".
+# The cutter is a plane. It cuts everything on one side.
+# By default, a plane's normal points +Z. It cuts the negative side? Or positive?
+# In Blender Boolean, the cutter removes the volume of the cutter object.
+# A plane has no volume. We need to give it thickness or use a cube.
+# The prompt says "plane_cutter ... size 0.25x0.25".
+# To make a boolean work with a plane, it usually needs to be a solid or we use the "Solidify" modifier on the cutter before boolean.
+# Or, we assume the cutter is a thin box.
+# Let's create a thin box for the cutter to ensure boolean works reliably.
+# Re-creating lid_dome_cut as a thin box.
+
+# Re-do Section 3.2 with a solid cutter
+# Remove the plane if it exists (it was removed by boolean_subtract if keep_cutter=False, but let's be safe)
+if "lid_dome_cut" in bpy.data.objects:
+    bpy.data.objects.remove(bpy.data.objects["lid_dome_cut"])
+
+# Create a thin box for the cutter
+lid_dome_cut = add_cube(size=0.25, name="lid_dome_cut")
+# Scale it to be thin in Z
+lid_dome_cut.scale = (1, 1, 0.001)
+orient_z_to_z(lid_dome_cut)
+
+# Anchor lid_dome_cut to lid_dome_sphere.center
+align_to_anchor(lid_dome_cut, lid_dome_sphere, anchor_type='center')
+
+# Offset(0,0,0.05)
+apply_offset(lid_dome_cut, (0, 0, 0.05))
+
+# Boolean subtract again
+boolean_subtract(lid_dome_cut, lid_dome_sphere, keep_cutter=False)
+
+# Now, rotate lid_dome_sphere so its curved face points +Z.
+# The current object is a sphere with the top cap removed.
+# The "curved face" is the main spherical surface.
+# The flat-ish cut surface is at the top.
+# If we want the dome to look like a lid, we probably want the curved part to be the top.
+# This implies we should have kept the top part.
+# But the cutter was at Z+0.05.
+# If we want the top part, we should have cut the bottom.
+# Let's assume the instruction "Rotate ... so its curved face points +Z" is a final orientation step.
+# If the object is currently a sphere with the top cut off, the "curved face" is everywhere except the cut.
+# The "point" of the curved face is arguably the bottom pole.
+# If we rotate it 180 degrees around X, the bottom pole points +Z.
+lid_dome_sphere.rotation_euler = (math.pi, 0, 0)
+
+# --- SECTION 4 – Create Lid Base ---
+
+# 4.1 Create lid_base
+lid_base = add_cylinder(radius=0.095, depth=0.020, name="lid_base")
+orient_z_to_z(lid_base)
+apply_material(lid_base, mat_ceramic_gloss)
+
+# Align lid_base.center to jar_body_outer.top_face
+align_to_anchor(lid_base, jar_body_outer, anchor_type='top_face')
+
+# Align lid_base.bottom_face to jar_body_outer.top_face
+# Similar to jar_lip, we need to shift the base up by half its height so its bottom face is at the top face of the body.
+base_height = lid_base.dimensions.z
+apply_offset(lid_base, (0, 0, base_height / 2))
+
+# Offset(0,0,0.010)
+apply_offset(lid_base, (0, 0, 0.010))
+
+# --- SECTION 5 – Create Lid Knob ---
+
+# 5.1 Create lid_knob
+lid_knob = add_uvsphere(radius=0.015, name="lid_knob")
+orient_z_to_z(lid_knob)
+apply_material(lid_knob, mat_ceramic_gloss)
+
+# Align lid_knob.center to lid_dome_sphere.top_face
+# Note: lid_dome_sphere was rotated 180 deg.
+# Its "top_face" in local space is still the local +Z pole.
+# In world space, due to rotation, the local +Z pole is now pointing down.
+# However, the helper `get_top_face_center_world` uses local dimensions and matrix_world.
+# It calculates the point at local (0,0, radius) and transforms it.
+# So it correctly identifies the geometric "top" of the object in its current orientation.
+align_to_anchor(lid_knob, lid_dome_sphere, anchor_type='top_face')
+
+# Align lid_knob.bottom_face to lid_dome_sphere.top_face
+# Similar to previous steps, shift the knob up by half its height.
+knob_height = lid_knob.dimensions.z # For sphere, dimensions.z = 2*radius
+apply_offset(lid_knob, (0, 0, knob_height / 2))
+
+# Offset(0,0,0.015)
+apply_offset(lid_knob, (0, 0, 0.015))
+
+print("Stage 5 complete.")
+print("All stages complete.")
+```

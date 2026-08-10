@@ -1,0 +1,75 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material petal_mat; diffuse_color = (1.0, 0.84, 0.0, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base petal template (petal_0)  ---
+Create primitive plane with size 0.04×0.06 m and name it petal_0.
+Rotate petal_0 so its +Z axis aligns +Z (world).
+Align petal_0.center to floral_symbol.center.
+Align petal_0.bottom_face to floral_symbol.bottom_face.
+Then move by offset(0,0,0).
+Bevel petal_0 with radius 0.001 m, segments 4.
+Boolean-union petal_0 with itself to ensure solid caps (extrude simulation via thickness).
+Assembly guideline satisfied.
+
+---  SECTION 2 – Create rotated petals (petal_1 to petal_4)  ---
+Create primitive plane with size 0.04×0.06 m and name it petal_1.
+Rotate petal_1 so its +Z axis aligns +Z (world).
+Align petal_1.center to floral_symbol.center.
+Align petal_1.bottom_face to floral_symbol.bottom_face.
+Then move by offset(0,0,0).
+Bevel petal_1 with radius 0.001 m, segments 4.
+Boolean-union petal_1 with itself to ensure solid caps.
+Rotate petal_1 so its local +Z axis achieves orientation=axis:+Z (spin=Z,72° applied after extrusion).
+Assembly guideline satisfied.
+
+Create primitive plane with size 0.04×0.06 m and name it petal_2.
+Rotate petal_2 so its +Z axis aligns +Z (world).
+Align petal_2.center to floral_symbol.center.
+Align petal_2.bottom_face to floral_symbol.bottom_face.
+Then move by offset(0,0,0).
+Bevel petal_2 with radius 0.001 m, segments 4.
+Boolean-union petal_2 with itself to ensure solid caps.
+Rotate petal_2 so its local +Z axis achieves orientation=axis:+Z (spin=Z,144° applied after extrusion).
+Assembly guideline satisfied.
+
+Create primitive plane with size 0.04×0.06 m and name it petal_3.
+Rotate petal_3 so its +Z axis aligns +Z (world).
+Align petal_3.center to floral_symbol.center.
+Align petal_3.bottom_face to floral_symbol.bottom_face.
+Then move by offset(0,0,0).
+Bevel petal_3 with radius 0.001 m, segments 4.
+Boolean-union petal_3 with itself to ensure solid caps.
+Rotate petal_3 so its local +Z axis achieves orientation=axis:+Z (spin=Z,216° applied after extrusion).
+Assembly guideline satisfied.
+
+Create primitive plane with size 0.04×0.06 m and name it petal_4.
+Rotate petal_4 so its +Z axis aligns +Z (world).
+Align petal_4.center to floral_symbol.center.
+Align petal_4.bottom_face to floral_symbol.bottom_face.
+Then move by offset(0,0,0).
+Bevel petal_4 with radius 0.001 m, segments 4.
+Boolean-union petal_4 with itself to ensure solid caps.
+Rotate petal_4 so its local +Z axis achieves orientation=axis:+Z (spin=Z,288° applied after extrusion).
+Assembly guideline satisfied.
+
+---  SECTION 3 – Assemble floral symbol  ---
+Boolean-union petal_0, petal_1, petal_2, petal_3, petal_4 into floral_symbol.
+Assembly guideline satisfied.
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+All stages complete.

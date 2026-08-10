@@ -1,0 +1,1 @@
+Create a 3D model of luggage. The luggage should be rectangular with wheels and a telescoping handle. Compare it with a duffel bag.

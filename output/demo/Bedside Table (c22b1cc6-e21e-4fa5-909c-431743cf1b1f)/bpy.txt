@@ -1,0 +1,287 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube centered at location with given size and rotation."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def align_face_to_face(source_obj, source_face, target_obj, target_face, offset=(0,0,0)):
+    """
+    Aligns a face of source_obj to a face of target_obj.
+    source_face/target_face: 'x+', 'x-', 'y+', 'y-', 'z+', 'z-'
+    """
+    # Ensure objects are in world space for calculation, but we manipulate local if needed.
+    # For simplicity in this script, we assume standard orientation or explicit rotation.
+    
+    # Get bounding box centers and extents in world space
+    src_bbox = source_obj.bound_box
+    tgt_bbox = target_obj.bound_box
+    
+    # Convert bbox points to world space
+    src_world = [source_obj.matrix_world @ Vector(p) for p in src_bbox]
+    tgt_world = [target_obj.matrix_world @ Vector(p) for p in tgt_bbox]
+    
+    # Helper to get face center and normal
+    def get_face_info(bbox_world, face_type):
+        # face_type: 'x+', 'x-', 'y+', 'y-', 'z+', 'z-'
+        if face_type == 'x+':
+            pts = [p for p in bbox_world if abs(p.x - max(p.x for p in bbox_world)) < 1e-5]
+            normal = Vector((1,0,0))
+        elif face_type == 'x-':
+            pts = [p for p in bbox_world if abs(p.x - min(p.x for p in bbox_world)) < 1e-5]
+            normal = Vector((-1,0,0))
+        elif face_type == 'y+':
+            pts = [p for p in bbox_world if abs(p.y - max(p.y for p in bbox_world)) < 1e-5]
+            normal = Vector((0,1,0))
+        elif face_type == 'y-':
+            pts = [p for p in bbox_world if abs(p.y - min(p.y for p in bbox_world)) < 1e-5]
+            normal = Vector((0,-1,0))
+        elif face_type == 'z+':
+            pts = [p for p in bbox_world if abs(p.z - max(p.z for p in bbox_world)) < 1e-5]
+            normal = Vector((0,0,1))
+        elif face_type == 'z-':
+            pts = [p for p in bbox_world if abs(p.z - min(p.z for p in bbox_world)) < 1e-5]
+            normal = Vector((0,0,-1))
+        
+        center = sum(pts, Vector()) / len(pts)
+        return center, normal
+
+    src_center, src_normal = get_face_info(src_world, source_face)
+    tgt_center, tgt_normal = get_face_info(tgt_world, target_face)
+    
+    # Calculate translation vector to align centers
+    # We want src_face_center + src_normal * (distance) = tgt_face_center
+    # Actually, simple alignment: move source so its face center matches target face center
+    # But we need to preserve orientation.
+    
+    # Vector from target face center to source face center
+    diff = src_center - tgt_center
+    
+    # We want to move source_obj by -diff so centers align? 
+    # No, we want the faces to touch.
+    # If we align centers, the faces might not touch if sizes differ.
+    # The prompt says "Align face to face". Usually implies touching.
+    
+    # Let's calculate the required translation to make the faces coincide.
+    # Target Face Plane: P = tgt_center + t * tgt_normal
+    # Source Face Plane: P = src_center + t * src_normal
+    
+    # Assuming normals are opposite (e.g. top to bottom), tgt_normal = -src_normal
+    # We want src_center + translation + src_normal * half_h = tgt_center - tgt_normal * half_h?
+    # Simpler: Move source so its face center is at tgt_center.
+    
+    move_vec = tgt_center - src_center
+    
+    # Apply move in local space? The prompt implies global alignment logic but local offsets.
+    # Let's apply global translation first.
+    source_obj.location += move_vec
+    
+    # Apply offset
+    if offset:
+        offset_vec = Vector(offset)
+        # Transform offset to world if object is rotated? 
+        # Prompt says "offset is in reference local axes".
+        # So we need to rotate the offset vector by the object's rotation.
+        rot_mat = source_obj.rotation_euler.to_matrix()
+        local_offset_world = rot_mat @ offset_vec
+        source_obj.location += local_offset_world
+
+def align_center_to_center(source_obj, target_obj, offset=(0,0,0)):
+    """Align center of source to center of target."""
+    tgt_center = target_obj.location
+    src_center = source_obj.location
+    move_vec = tgt_center - src_center
+    source_obj.location += move_vec
+    
+    if offset:
+        offset_vec = Vector(offset)
+        rot_mat = source_obj.rotation_euler.to_matrix()
+        local_offset_world = rot_mat @ offset_vec
+        source_obj.location += local_offset_world
+
+def align_face_to_center(source_obj, source_face, target_obj, offset=(0,0,0)):
+    """Align a face of source to the center of target."""
+    tgt_center = target_obj.location
+    
+    # Get source face center in world
+    src_bbox = source_obj.bound_box
+    src_world = [source_obj.matrix_world @ Vector(p) for p in src_bbox]
+    
+    if source_face == 'x+':
+        pts = [p for p in src_world if abs(p.x - max(p.x for p in src_world)) < 1e-5]
+    elif source_face == 'x-':
+        pts = [p for p in src_world if abs(p.x - min(p.x for p in src_world)) < 1e-5]
+    elif source_face == 'y+':
+        pts = [p for p in src_world if abs(p.y - max(p.y for p in src_world)) < 1e-5]
+    elif source_face == 'y-':
+        pts = [p for p in src_world if abs(p.y - min(p.y for p in src_world)) < 1e-5]
+    elif source_face == 'z+':
+        pts = [p for p in src_world if abs(p.z - max(p.z for p in src_world)) < 1e-5]
+    elif source_face == 'z-':
+        pts = [p for p in src_world if abs(p.z - min(p.z for p in src_world)) < 1e-5]
+        
+    src_center = sum(pts, Vector()) / len(pts)
+    
+    move_vec = tgt_center - src_center
+    source_obj.location += move_vec
+    
+    if offset:
+        offset_vec = Vector(offset)
+        rot_mat = source_obj.rotation_euler.to_matrix()
+        local_offset_world = rot_mat @ offset_vec
+        source_obj.location += local_offset_world
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_ash_wood = make_material("mat_ash_wood", (0.82, 0.70, 0.55, 1.0))
+mat_black_metal = make_material("mat_black_metal", (0.10, 0.10, 0.10, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create frame_group
+# Create top_panel
+top_panel = add_cube("top_panel", (0.45, 0.35, 0.025), location=(0,0,0), rotation=(0,0,0))
+apply_material(top_panel, mat_ash_wood)
+# Rotate so +Z aligns +Z (already default)
+# Anchor to world origin (already at 0,0,0)
+
+# Create rail_L
+rail_L = add_cube("rail_L", (0.03, 0.35, 0.40), location=(0,0,0), rotation=(0,0,0))
+apply_material(rail_L, mat_ash_wood)
+# Rotate so +Z aligns +Z (already default)
+# Align rail_L.right_face to top_panel.left_face
+# top_panel.left_face is x- (since center is 0, left is negative x)
+# rail_L.right_face is x+
+align_face_to_face(rail_L, 'x+', top_panel, 'x-', offset=(0,0,0))
+
+# Create rail_R
+rail_R = add_cube("rail_R", (0.03, 0.35, 0.40), location=(0,0,0), rotation=(0,0,0))
+apply_material(rail_R, mat_ash_wood)
+# Rotate so +Z aligns +Z (already default)
+# Align rail_R.left_face to rail_L.right_face
+align_face_to_face(rail_R, 'x-', rail_L, 'x+', offset=(0,0,0))
+# Align rail_R.top_face to top_panel.bottom_face
+# top_panel.bottom_face is z-
+# rail_R.top_face is z+
+align_face_to_face(rail_R, 'z+', top_panel, 'z-', offset=(0,0,0))
+# Then move by offset(0, 0, 0) - already done
+
+# SECTION 2 – Create legs
+# leg_LF
+leg_LF = add_cube("leg_LF", (0.02, 0.02, 0.55), location=(0,0,0), rotation=(0,0,0))
+apply_material(leg_LF, mat_black_metal)
+# Rotate so +Z aligns +Z (already default)
+# Align leg_LF.top_face to rail_L.bottom_face
+# rail_L.bottom_face is z-
+# leg_LF.top_face is z+
+align_face_to_face(leg_LF, 'z+', rail_L, 'z-', offset=(0.015, 0.015, -0.0125))
+
+# leg_LB
+leg_LB = add_cube("leg_LB", (0.02, 0.02, 0.55), location=(0,0,0), rotation=(0,0,0))
+apply_material(leg_LB, mat_black_metal)
+# Rotate so +Z aligns +Z (already default)
+# Align leg_LB.top_face to rail_L.bottom_face
+align_face_to_face(leg_LB, 'z+', rail_L, 'z-', offset=(0.015, -0.015, -0.0125))
+
+# leg_RF
+leg_RF = add_cube("leg_RF", (0.02, 0.02, 0.55), location=(0,0,0), rotation=(0,0,0))
+apply_material(leg_RF, mat_black_metal)
+# Rotate so +Z aligns +Z (already default)
+# Align leg_RF.top_face to rail_R.bottom_face
+align_face_to_face(leg_RF, 'z+', rail_R, 'z-', offset=(0.015, 0.015, -0.0125))
+
+# leg_RB
+leg_RB = add_cube("leg_RB", (0.02, 0.02, 0.55), location=(0,0,0), rotation=(0,0,0))
+apply_material(leg_RB, mat_black_metal)
+# Rotate so +Z aligns +Z (already default)
+# Align leg_RB.top_face to rail_R.bottom_face
+align_face_to_face(leg_RB, 'z+', rail_R, 'z-', offset=(0.015, -0.015, -0.0125))
+
+# SECTION 3 – Create drawer_group
+# drawer_box
+drawer_box = add_cube("drawer_box", (0.40, 0.30, 0.15), location=(0,0,0), rotation=(0,0,0))
+apply_material(drawer_box, mat_ash_wood)
+# Rotate so +Z aligns +Z (already default)
+# Align drawer_box.back_face to rail_L.front_face
+# rail_L.front_face is y+ (assuming standard orientation where y is depth)
+# drawer_box.back_face is y-
+align_face_to_face(drawer_box, 'y-', rail_L, 'y+', offset=(0, 0.015, 0.075))
+
+# drawer_handle
+drawer_handle = add_cube("drawer_handle", (0.15, 0.01, 0.01), location=(0,0,0), rotation=(0,0,0))
+apply_material(drawer_handle, mat_black_metal)
+# Rotate so +Z aligns +Z (already default)
+# Align drawer_handle.back_face to drawer_box.front_face
+# drawer_box.front_face is y+
+# drawer_handle.back_face is y-
+align_face_to_face(drawer_handle, 'y-', drawer_box, 'y+', offset=(0, 0.005, 0))
+# Align drawer_handle.center to drawer_box.center
+# This step might conflict with the previous face alignment if not careful.
+# The prompt says "Align ... Then move by offset".
+# The previous step aligned the back face to the front face.
+# Now we align centers. This effectively overrides the position if we just move to center.
+# However, usually "Align face" sets the position, and "Align center" might be a refinement or separate step.
+# Given the offset is small (0, 0.005, 0), it suggests a slight adjustment.
+# Let's interpret "Align center" as moving the object so its center matches the target center, then applying offset.
+# But wait, if we align back face to front face, the centers are already aligned in X and Z (if sizes match or are centered).
+# In Y, they are touching.
+# If we align centers, we move it inside the box.
+# Let's follow the instruction literally: Align center to center.
+# This will move the handle inside the drawer box.
+# Then apply offset.
+
+# Re-evaluating "Align drawer_handle.center to drawer_box.center":
+# If I do this, the handle will be centered in the box.
+# Then offset (0, 0.005, 0) moves it slightly in local Y.
+# This seems correct for a handle that is slightly protruding or positioned.
+
+# Let's re-run the alignment for drawer_handle to be safe.
+# First, reset drawer_handle to origin to ensure clean state? No, it's already placed.
+# But the previous step moved it.
+# Let's assume the "Align center" step is the primary positioning for the handle relative to the box,
+# and the "back_face to front_face" was a hint for orientation or initial placement?
+# No, the prompt lists them sequentially.
+# 1. Align back_face to front_face.
+# 2. Align center to center.
+# 3. Offset.
+# Step 2 will override Step 1's position.
+# So, align center to center.
+
+align_center_to_center(drawer_handle, drawer_box, offset=(0, 0.005, 0))
+
+```

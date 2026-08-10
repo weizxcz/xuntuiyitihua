@@ -1,0 +1,256 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects and collections."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear remaining collections if any (mostly for safety)
+    for col in bpy.data.collections:
+        col.objects.unlink_all()
+        bpy.data.collections.remove(col)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a simple Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube primitive."""
+    # size is (x,y,z)
+    x, y, z = size
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.scale = (x, y, z)
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_text_object(name, text, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    # Scale text to fit approximate size (text size is in points, roughly)
+    # This is a rough approximation; for precise control, font scaling is needed.
+    # Assuming size is in meters, and default text is ~0.1m high at scale 1.
+    # We'll just set the name and material for now, as text geometry is complex.
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # For standard primitives aligned to world, this is often identity if vector is world axis.
+    # If we need to align a specific local axis to a world vector:
+    if axis == 'Z':
+        target = Vector(vector)
+        current = Vector((0, 0, 1))
+        rot_quat = current.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+    elif axis == 'X':
+        target = Vector(vector)
+        current = Vector((1, 0, 0))
+        rot_quat = current.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+    elif axis == 'Y':
+        target = Vector(vector)
+        current = Vector((0, 1, 0))
+        rot_quat = current.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_union(objs_to_union, keep_obj_name):
+    """
+    Perform boolean union on a list of objects.
+    Keeps the object named keep_obj_name.
+    """
+    if not objs_to_union:
+        return
+    
+    # Select all objects to union
+    for obj in objs_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+    # Apply boolean modifier to the first object (or the one we want to keep)
+    # We need to ensure the 'keep' object is the target of the boolean.
+    # Strategy: Add boolean modifier to keep_obj_name using others as modifiers.
+    
+    keep_obj = None
+    for obj in objs_to_union:
+        if obj.name == keep_obj_name:
+            keep_obj = obj
+            break
+    
+    if not keep_obj:
+        keep_obj = objs_to_union[0]
+        keep_obj_name = keep_obj.name
+
+    # Ensure keep_obj is active
+    bpy.context.view_layer.objects.active = keep_obj
+    keep_obj.select_set(True)
+    
+    # Add boolean modifier to keep_obj for each other object
+    for obj in objs_to_union:
+        if obj == keep_obj:
+            continue
+        
+        # Add boolean modifier
+        mod = keep_obj.modifiers.new(name=f"Bool_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        
+    # Apply all modifiers
+    for mod in keep_obj.modifiers:
+        if mod.type == 'BOOLEAN':
+            bpy.ops.object.modifier_apply(modifier=mod.name)
+            
+    # Deselect and remove the helper objects
+    for obj in objs_to_union:
+        if obj != keep_obj:
+            obj.select_set(True)
+    keep_obj.select_set(True)
+    bpy.ops.object.delete()
+    
+    # Return the kept object
+    return keep_obj
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Subtract cutter_obj from target_obj using boolean."""
+    mod = target_obj.modifiers.new(name="Bool_Subtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter_obj)
+
+def align_to_xy_face(obj, target_xy=(0,0)):
+    """
+    Align the center of the object's XY face (top face for Z-up cylinder/cube) 
+    to the target XY coordinates.
+    Assumes object is Z-up.
+    """
+    # Get current location
+    x, y, z = obj.location
+    # Set new X, Y
+    obj.location.x = target_xy[0]
+    obj.location.y = target_xy[1]
+    # Z remains unchanged unless specified otherwise. 
+    # The prompt says "Align graphic_element.XY_face to (-0.10, 0.02)".
+    # This usually means the center of the face in XY plane.
+
+def offset_object(obj, offset=(0,0,0)):
+    """Apply offset to object location."""
+    obj.location.x += offset[0]
+    obj.location.y += offset[1]
+    obj.location.z += offset[2]
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+mat_black = make_material("mat_black", (0.05, 0.05, 0.05, 1.0))
+mat_white = make_material("mat_white", (0.95, 0.95, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create base_plate ---
+# Cylinder, diameter 0.400m (radius 0.200), height 0.002m
+base_plate = add_cylinder("base_plate", radius=0.200, depth=0.002, location=(0,0,0), rotation=(0,0,0), material=mat_black)
+# Rotate so +Z aligns +Z (already default)
+align_axis_to_vector(base_plate, 'Z', (0,0,1))
+# Align base_plate.XY_face to (0,0)
+align_to_xy_face(base_plate, (0,0))
+# Offset (0,0,0)
+offset_object(base_plate, (0,0,0))
+
+# --- SECTION 2 – Create graphic_element ---
+# Cube, size 0.080x0.060x0.005m
+graphic_element = add_cube("graphic_element", size=(0.080, 0.060, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_white)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(graphic_element, 'Z', (0,0,1))
+# Align graphic_element.XY_face to (-0.10, 0.02)
+align_to_xy_face(graphic_element, (-0.10, 0.02))
+# Offset (0,0,0)
+offset_object(graphic_element, (0,0,0))
+
+# --- SECTION 3 – Create text_block ---
+# Cube, size 0.120x0.020x0.005m
+text_block = add_cube("text_block", size=(0.120, 0.020, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_white)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(text_block, 'Z', (0,0,1))
+# Align text_block.XY_face to (-0.10, -0.04)
+align_to_xy_face(text_block, (-0.10, -0.04))
+# Offset (0,0,0)
+offset_object(text_block, (0,0,0))
+
+# --- SECTION 4 – Create icon_base ---
+# Cylinder, diameter 0.100m (radius 0.050), height 0.005m
+icon_base = add_cylinder("icon_base", radius=0.050, depth=0.005, location=(0,0,0), rotation=(0,0,0), material=mat_white)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(icon_base, 'Z', (0,0,1))
+# Align icon_base.XY_face to (0.10, 0.02)
+align_to_xy_face(icon_base, (0.10, 0.02))
+# Offset (0,0,0)
+offset_object(icon_base, (0,0,0))
+
+# --- SECTION 5 – Create icon_core ---
+# Cube, size 0.040x0.040x0.005m
+icon_core = add_cube("icon_core", size=(0.040, 0.040, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_white)
+# Rotate so +Z aligns +Z
+align_axis_to_vector(icon_core, 'Z', (0,0,1))
+# Align icon_core.XY_face to (0.10, 0.02)
+align_to_xy_face(icon_core, (0.10, 0.02))
+# Offset (0,0,0)
+offset_object(icon_core, (0,0,0))
+
+# --- SECTION 6 – Assemble logo_group ---
+# Boolean-union graphic_element and text_block; keep graphic_element.
+logo_group = boolean_union([graphic_element, text_block], "graphic_element")
+
+# --- SECTION 7 – Assemble symbol_group ---
+# Boolean-union icon_core and icon_base; keep icon_base.
+symbol_group = boolean_union([icon_core, icon_base], "icon_base")
+
+# --- SECTION 8 – Assemble root ---
+# Boolean-union base_plate, logo_group, and symbol_group; keep base_plate.
+root = boolean_union([base_plate, logo_group, symbol_group], "base_plate")
+
+# Final cleanup: ensure root is selected and active
+root.select_set(True)
+bpy.context.view_layer.objects.active = root
+```

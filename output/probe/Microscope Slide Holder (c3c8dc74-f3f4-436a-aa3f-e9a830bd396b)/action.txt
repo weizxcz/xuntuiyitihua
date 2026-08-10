@@ -1,0 +1,94 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base plate  ---
+Create primitive cuboid with size 0.200×0.150×0.010 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Anchor base_plate to root.center.
+Then move by offset(0, 0, 0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create slot cutters  ---
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_01.
+Rotate cutter_01 so its +Z axis aligns +Z (world).
+Anchor cutter_01 to base_plate.top_face.center.
+Then move by offset(-0.075, 0.060, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_02.
+Rotate cutter_02 so its +Z axis aligns +Z (world).
+Anchor cutter_02 to base_plate.top_face.center.
+Then move by offset(-0.050, 0.060, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_03.
+Rotate cutter_03 so its +Z axis aligns +Z (world).
+Anchor cutter_03 to base_plate.top_face.center.
+Then move by offset(-0.025, 0.060, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_04.
+Rotate cutter_04 so its +Z axis aligns +Z (world).
+Anchor cutter_04 to base_plate.top_face.center.
+Then move by offset(0.000, 0.060, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_05.
+Rotate cutter_05 so its +Z axis aligns +Z (world).
+Anchor cutter_05 to base_plate.top_face.center.
+Then move by offset(0.025, 0.060, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_06.
+Rotate cutter_06 so its +Z axis aligns +Z (world).
+Anchor cutter_06 to base_plate.top_face.center.
+Then move by offset(0.050, 0.060, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_07.
+Rotate cutter_07 so its +Z axis aligns +Z (world).
+Anchor cutter_07 to base_plate.top_face.center.
+Then move by offset(-0.075, 0.030, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_08.
+Rotate cutter_08 so its +Z axis aligns +Z (world).
+Anchor cutter_08 to base_plate.top_face.center.
+Then move by offset(-0.050, 0.030, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_09.
+Rotate cutter_09 so its +Z axis aligns +Z (world).
+Anchor cutter_09 to base_plate.top_face.center.
+Then move by offset(-0.025, 0.030, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_10.
+Rotate cutter_10 so its +Z axis aligns +Z (world).
+Anchor cutter_10 to base_plate.top_face.center.
+Then move by offset(0.000, 0.030, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_11.
+Rotate cutter_11 so its +Z axis aligns +Z (world).
+Anchor cutter_11 to base_plate.top_face.center.
+Then move by offset(0.025, 0.030, 0.005).
+Create primitive cuboid with size 0.075×0.010×0.010 m and name it cutter_12.
+Rotate cutter_12 so its +Z axis aligns +Z (world).
+Anchor cutter_12 to base_plate.top_face.center.
+Then move by offset(0.050, 0.030, 0.005).
+Stage 2 complete.
+
+---  SECTION 3 – Boolean subtract slots  ---
+Boolean-subtract cutter_01 from base_plate; discard cutter_01.
+Boolean-subtract cutter_02 from base_plate; discard cutter_02.
+Boolean-subtract cutter_03 from base_plate; discard cutter_03.
+Boolean-subtract cutter_04 from base_plate; discard cutter_04.
+Boolean-subtract cutter_05 from base_plate; discard cutter_05.
+Boolean-subtract cutter_06 from base_plate; discard cutter_06.
+Boolean-subtract cutter_07 from base_plate; discard cutter_07.
+Boolean-subtract cutter_08 from base_plate; discard cutter_08.
+Boolean-subtract cutter_09 from base_plate; discard cutter_09.
+Boolean-subtract cutter_10 from base_plate; discard cutter_10.
+Boolean-subtract cutter_11 from base_plate; discard cutter_11.
+Boolean-subtract cutter_12 from base_plate; discard cutter_12.
+Stage 3 complete.
+
+---  SECTION 4 – Final Assembly  ---
+Align base_unit to root.center.
+Assembly guideline satisfied.
+All stages complete.

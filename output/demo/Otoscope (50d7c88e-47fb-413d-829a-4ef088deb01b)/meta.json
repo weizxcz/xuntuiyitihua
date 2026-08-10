@@ -1,0 +1,50 @@
+{
+  "id": "50d7c88e-47fb-413d-829a-4ef088deb01b",
+  "name": "Otoscope",
+  "instruction": "Let's create an otoscope. The device should have a cylindrical handle and a conical head. The head should have a small, circular lens for viewing. Add a light source at the tip of the head. Include a button on the handle to control the light.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The handle is cylindrical.",
+        "The head of the otoscope is conical.",
+        "The lens is circular and located on the head.",
+        "The light source is positioned at the tip of the head."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head appears proportionate to the handle.",
+        "The lens size is appropriate for the head."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is positioned correctly to support the head.",
+        "The head is properly aligned with the handle.",
+        "The lens is centered on the head.",
+        "The light source is correctly placed at the tip of the head."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the handle and the head.",
+        "The lens is flush with the head.",
+        "The light source is integrated into the head without any gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The button on the handle is included for controlling the light.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

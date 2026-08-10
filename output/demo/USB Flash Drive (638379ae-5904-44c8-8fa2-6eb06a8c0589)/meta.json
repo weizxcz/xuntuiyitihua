@@ -1,0 +1,45 @@
+{
+  "id": "638379ae-5904-44c8-8fa2-6eb06a8c0589",
+  "name": "USB Flash Drive",
+  "instruction": "Create a 3D model of a USB flash drive. It should have a rectangular body with a removable cap.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a USB flash drive.",
+        "The body of the flash drive is rectangular.",
+        "The cap is removable."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the body is longer than its width.",
+        "The cap should be proportionate to the body."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cap should align properly with the body when placed on.",
+        "The body should be stable when the cap is removed."
+      ],
+      "Object distance and contact": [
+        "There should be no gaps between the cap and the body when the cap is on.",
+        "The cap should not overlap with the body when removed."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The model includes a removable cap as instructed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

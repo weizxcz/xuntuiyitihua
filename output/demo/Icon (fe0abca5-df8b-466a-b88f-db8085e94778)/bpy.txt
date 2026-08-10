@@ -1,0 +1,405 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    bpy.ops.mesh.primitive_circle_add(vertices=segments, radius=radius, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.data.name = name
+    obj.name = name
+    bpy.ops.mesh.fill()
+    return obj
+
+def add_cube(name, size):
+    # size is (x, y, z)
+    half = [s/2 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0,0,0)) # size=1 means 2x2x2 cube, so scale down
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    return obj
+
+def add_cone(name, bottom_radius, top_radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cone_add(vertices=segments, radius1=bottom_radius, radius2=top_radius, depth=depth, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=16, ring_count=8, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_tapered_prism(name, base_size, height, segments=3):
+    """Creates a triangular prism (3 segments) or generic polygonal prism."""
+    # Create a polygon base
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=1, radius=1, location=(0,0,0))
+    # This is tricky for a prism. Let's use a cylinder with 3 segments and scale to make it flat?
+    # Better: Create a cylinder with 3 segments, scale Z to height, then scale X/Y to base_size.
+    # But a cylinder with 3 segments is a triangular prism.
+    # Default cylinder is centered at 0,0,0.
+    bpy.ops.mesh.primitive_cylinder_add(vertices=3, radius=1, depth=1, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # The cylinder radius is circumradius. We want the "size" to be the width of the face.
+    # For a triangle, width = side length. Side = sqrt(3) * R. So R = side / sqrt(3).
+    # Let's assume 'base_size' is the width of the triangular face.
+    side = base_size
+    circumradius = side / math.sqrt(3)
+    obj.scale = (circumradius, circumradius, height)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Aligns object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0,0,1))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    elif axis == 'X':
+        local_axis = Vector((1,0,0))
+    else:
+        return
+
+    target = Vector(vector).normalized()
+    if local_axis == target:
+        return
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def align_faces(obj_source, face_axis, obj_target, face_axis_target):
+    """
+    Aligns a face of source to a face of target.
+    face_axis: 'top', 'bottom', 'front', 'back', 'left', 'right'
+    """
+    # Get bounding boxes
+    src_min, src_max = obj_source.bound_box_local
+    tgt_min, tgt_max = obj_target.bound_box_local
+    
+    # Transform to world space
+    src_min_w = [obj_source.matrix_world @ Vector(v) for v in src_min]
+    src_max_w = [obj_source.matrix_world @ Vector(v) for v in src_max]
+    tgt_min_w = [obj_target.matrix_world @ Vector(v) for v in tgt_min]
+    tgt_max_w = [obj_target.matrix_world @ Vector(v) for v in tgt_max]
+
+    # Determine face centers and normals
+    # Note: bound_box_local is in local space. We need to be careful with orientation.
+    # Assuming standard orientation where Z is up, Y is front/back, X is left/right.
+    
+    # Helper to get face center and normal in world space
+    def get_face_info(min_w, max_w, axis):
+        if axis == 'top':
+            center = Vector((0, 0, max_w[2])) # Approximate, assuming axis aligned
+            # Better: average of points with max Z
+            pts = [v for v in [Vector((min_w[0], min_w[1], max_w[2])), Vector((max_w[0], min_w[1], max_w[2])),
+                               Vector((min_w[0], max_w[1], max_w[2])), Vector((max_w[0], max_w[1], max_w[2]))]]
+            center = sum(pts)/4
+            normal = Vector((0,0,1))
+        elif axis == 'bottom':
+            pts = [v for v in [Vector((min_w[0], min_w[1], min_w[2])), Vector((max_w[0], min_w[1], min_w[2])),
+                               Vector((min_w[0], max_w[1], min_w[2])), Vector((max_w[0], max_w[1], min_w[2]))]]
+            center = sum(pts)/4
+            normal = Vector((0,0,-1))
+        elif axis == 'front':
+            # Assuming Y+ is front
+            pts = [v for v in [Vector((min_w[0], max_w[1], min_w[2])), Vector((max_w[0], max_w[1], min_w[2])),
+                               Vector((min_w[0], max_w[1], max_w[2])), Vector((max_w[0], max_w[1], max_w[2]))]]
+            center = sum(pts)/4
+            normal = Vector((0,1,0))
+        elif axis == 'back':
+            pts = [v for v in [Vector((min_w[0], min_w[1], min_w[2])), Vector((max_w[0], min_w[1], min_w[2])),
+                               Vector((min_w[0], min_w[1], max_w[2])), Vector((max_w[0], min_w[1], max_w[2]))]]
+            center = sum(pts)/4
+            normal = Vector((0,-1,0))
+        elif axis == 'right':
+            pts = [v for v in [Vector((max_w[0], min_w[1], min_w[2])), Vector((max_w[0], max_w[1], min_w[2])),
+                               Vector((max_w[0], min_w[1], max_w[2])), Vector((max_w[0], max_w[1], max_w[2]))]]
+            center = sum(pts)/4
+            normal = Vector((1,0,0))
+        elif axis == 'left':
+            pts = [v for v in [Vector((min_w[0], min_w[1], min_w[2])), Vector((min_w[0], max_w[1], min_w[2])),
+                               Vector((min_w[0], min_w[1], max_w[2])), Vector((min_w[0], max_w[1], max_w[2]))]]
+            center = sum(pts)/4
+            normal = Vector((-1,0,0))
+        else:
+            return None, None
+        return center, normal
+
+    src_center, src_normal = get_face_info(src_min_w, src_max_w, face_axis)
+    tgt_center, tgt_normal = get_face_info(tgt_min_w, tgt_max_w, face_axis_target)
+    
+    if src_center is None:
+        return
+
+    # Align positions: move source so its face center touches target face center
+    # But we want them to touch, so we need to account for thickness?
+    # The prompt says "Align ... to ...". Usually implies touching surfaces.
+    # If we just move centers, they might overlap.
+    # Let's move the source object so its face center is at the target face center.
+    # Then the offset logic will handle separation if needed.
+    
+    # However, for boolean/assembly, usually we want the face to be *at* the other face.
+    # Let's move the source object's location such that src_center moves to tgt_center.
+    
+    delta = tgt_center - src_center
+    obj_source.location += delta
+
+def align_center_to_face(obj_source, obj_target, face_axis):
+    """Aligns source center to a specific face of target."""
+    tgt_min_w = [obj_target.matrix_world @ Vector(v) for v in obj_target.bound_box_local]
+    tgt_max_w = [obj_target.matrix_world @ Vector(v) for v in obj_target.bound_box_local]
+    
+    tgt_center, _ = get_face_info(tgt_min_w, tgt_max_w, face_axis)
+    if tgt_center is None:
+        return
+
+    # Move source center to tgt_center
+    src_center = obj_source.location
+    delta = tgt_center - src_center
+    obj_source.location += delta
+
+def get_face_info(min_w, max_w, axis):
+    if axis == 'top':
+        pts = [Vector((min_w[0], min_w[1], max_w[2])), Vector((max_w[0], min_w[1], max_w[2])),
+               Vector((min_w[0], max_w[1], max_w[2])), Vector((max_w[0], max_w[1], max_w[2]))]
+        center = sum(pts)/4
+        normal = Vector((0,0,1))
+    elif axis == 'bottom':
+        pts = [Vector((min_w[0], min_w[1], min_w[2])), Vector((max_w[0], min_w[1], min_w[2])),
+               Vector((min_w[0], max_w[1], min_w[2])), Vector((max_w[0], max_w[1], min_w[2]))]
+        center = sum(pts)/4
+        normal = Vector((0,0,-1))
+    elif axis == 'front':
+        pts = [Vector((min_w[0], max_w[1], min_w[2])), Vector((max_w[0], max_w[1], min_w[2])),
+               Vector((min_w[0], max_w[1], max_w[2])), Vector((max_w[0], max_w[1], max_w[2]))]
+        center = sum(pts)/4
+        normal = Vector((0,1,0))
+    elif axis == 'back':
+        pts = [Vector((min_w[0], min_w[1], min_w[2])), Vector((max_w[0], min_w[1], min_w[2])),
+               Vector((min_w[0], min_w[1], max_w[2])), Vector((max_w[0], min_w[1], max_w[2]))]
+        center = sum(pts)/4
+        normal = Vector((0,-1,0))
+    elif axis == 'right':
+        pts = [Vector((max_w[0], min_w[1], min_w[2])), Vector((max_w[0], max_w[1], min_w[2])),
+               Vector((max_w[0], min_w[1], max_w[2])), Vector((max_w[0], max_w[1], max_w[2]))]
+        center = sum(pts)/4
+        normal = Vector((1,0,0))
+    elif axis == 'left':
+        pts = [Vector((min_w[0], min_w[1], min_w[2])), Vector((min_w[0], max_w[1], min_w[2])),
+               Vector((min_w[0], min_w[1], max_w[2])), Vector((min_w[0], max_w[1], max_w[2]))]
+        center = sum(pts)/4
+        normal = Vector((-1,0,0))
+    else:
+        return None, None
+    return center, normal
+
+def apply_offset(obj, offset):
+    """Applies offset in local axes."""
+    # Convert local offset to world direction based on current rotation
+    # If object is rotated, local axes are rotated.
+    # We want to move along the object's local X, Y, Z by offset values.
+    rot_mat = obj.matrix_world.to_3x3()
+    move_vec = Vector((offset[0], offset[1], offset[2]))
+    world_move = rot_mat @ move_vec
+    obj.location += world_move
+
+def boolean_subtract(cutter_name, target_name):
+    """Performs boolean subtract using modifier."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure cutter is active for modifier addition? No, add to target.
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    """Performs boolean union."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union, do_unlink=True)
+
+def add_bevel(obj_name, width=0.01, segments=2):
+    """Adds a bevel modifier."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# --- Main Script ---
+
+# 1. Scene Reset & Units
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear unused data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+
+bpy.context.scene.unit_settings.scale_length = 1
+
+# 2. Materials
+mat_house_body = make_material("mat_house_body", (0.85, 0.85, 0.85, 1.0))
+mat_house_roof = make_material("mat_house_roof", (0.6, 0.2, 0.2, 1.0))
+mat_house_door = make_material("mat_house_door", (0.4, 0.2, 0.1, 1.0))
+mat_house_window = make_material("mat_house_window", (0.2, 0.4, 0.8, 1.0))
+
+# 3. Geometry Generation
+
+# --- SECTION 1 – Create base body ---
+base_body = add_cube("base_body", (0.6, 0.5, 0.4))
+base_body.data.materials.append(mat_house_body)
+
+# Rotate base_body so its +Z axis aligns +Z (world).
+# Cube default is Z-up, so this is effectively no-op if default orientation is kept.
+align_axis_to_vector(base_body, 'Z', (0,0,1))
+
+# Anchor base_body to world origin.
+base_body.location = (0, 0, 0)
+
+# Then move by offset(0, 0.25, 0).
+apply_offset(base_body, (0, 0.25, 0))
+
+# --- SECTION 2 – Create roof prism ---
+# Create primitive triangular_prism with size 0.7×0.3×0.4 m
+# Assuming size is (width, depth, height) or (base_width, base_depth, height).
+# Triangular prism usually has a triangular base.
+# Let's assume the triangle is in the X-Y plane, extruded in Z?
+# Or triangle in X-Z, extruded in Y?
+# Standard "prism" in CAD often means extruded polygon.
+# Let's create a triangular prism with base width 0.7, depth 0.3 (thickness), height 0.4?
+# Or base 0.7x0.3 triangle, height 0.4?
+# Given "triangular_prism", let's assume the cross section is a triangle.
+# Let's assume the triangle is on the X-Y plane, with width 0.7 and depth 0.3?
+# A triangle with width 0.7 and depth 0.3 is not standard.
+# Let's assume it's a prism with a triangular base of 0.7x0.3 (right triangle?) or equilateral?
+# Let's assume it's a generic prism where the "size" defines the bounding box of the base.
+# Let's create a cylinder with 3 segments, scale it to fit 0.7x0.3 base, and height 0.4.
+# But a cylinder with 3 segments is a triangular prism.
+# If we scale X by 0.7 and Y by 0.3, we get a triangular prism with base dimensions approx 0.7x0.3.
+roof_prism = add_tapered_prism("roof_prism", 0.7, 0.4) # This creates a prism with height 0.4 and base circumradius derived from 0.7?
+# Let's refine add_tapered_prism to accept base dimensions directly.
+# Re-creating roof_prism with better control:
+bpy.ops.mesh.primitive_cylinder_add(vertices=3, radius=1, depth=1, location=(0,0,0))
+roof_prism = bpy.context.active_object
+roof_prism.name = "roof_prism"
+# Scale to fit 0.7x0.3 base.
+# For a triangle, if we want width 0.7 and depth 0.3, it's not a regular triangle.
+# Let's assume it's a right triangle or just scale the bounding box.
+# Let's scale X to 0.7, Y to 0.3, Z to 0.4.
+roof_prism.scale = (0.7, 0.3, 0.4)
+roof_prism.data.materials.append(mat_house_roof)
+
+# Rotate roof_prism so its +Z axis aligns +Z (world).
+align_axis_to_vector(roof_prism, 'Z', (0,0,1))
+
+# Align roof_prism.bottom_face to base_body.top_face.
+# base_body.top_face is at Z = 0.25 + 0.2 = 0.45 (since base_body center is at 0,0.25,0 and height 0.4, so top is at 0.25+0.2=0.45)
+# roof_prism.bottom_face is at Z = roof_prism.location.z - 0.2 (since height 0.4, half is 0.2)
+# We want roof_prism.bottom_face to touch base_body.top_face.
+# So roof_prism.location.z - 0.2 = 0.45 => roof_prism.location.z = 0.65
+# But we also need to align X/Y.
+# base_body center X=0, Y=0.25.
+# roof_prism center X=0, Y=0.25 (if aligned).
+# Let's use the align_faces function.
+# Note: align_faces moves the object.
+align_faces(roof_prism, 'bottom', base_body, 'top')
+
+# Then move by offset(0, 0.15, 0).
+apply_offset(roof_prism, (0, 0.15, 0))
+
+# --- SECTION 3 – Create door panel ---
+door_panel = add_cube("door_panel", (0.2, 0.35, 0.02))
+door_panel.data.materials.append(mat_house_door)
+
+# Rotate door_panel so its +Z axis aligns +Z (world).
+align_axis_to_vector(door_panel, 'Z', (0,0,1))
+
+# Align door_panel.back_face to base_body.front_face.
+# base_body.front_face is at Y = 0.25 + 0.25 = 0.5 (since base_body Y center is 0.25, half depth 0.25)
+# door_panel.back_face is at Y = door_panel.location.y - 0.175 (half depth 0.35)
+# We want door_panel.back_face to touch base_body.front_face.
+align_faces(door_panel, 'back', base_body, 'front')
+
+# Then move by offset(0, -0.15, 0.21).
+apply_offset(door_panel, (0, -0.15, 0.21))
+
+# --- SECTION 4 – Create doorknob ---
+doorknob = add_uvsphere("doorknob", 0.01) # Diameter 0.02 => Radius 0.01
+doorknob.data.materials.append(mat_house_door) # Or a metal material, but not specified. Using door color.
+
+# Rotate doorknob so its +Z axis aligns +Z (world).
+align_axis_to_vector(doorknob, 'Z', (0,0,1))
+
+# Align doorknob.center to door_panel.right_face.
+# door_panel.right_face is at X = door_panel.location.x + 0.1 (half width 0.2)
+# doorknob.center is at doorknob.location
+# We want doorknob.center to be at door_panel.right_face.
+align_center_to_face(doorknob, door_panel, 'right')
+
+# Then move by offset(0.08, -0.05, 0.01).
+apply_offset(doorknob, (0.08, -0.05, 0.01))
+
+# --- SECTION 5 – Create left window ---
+window_left = add_cube("window_left", (0.15, 0.15, 0.02))
+window_left.data.materials.append(mat_house_window)
+
+# Rotate window_left so its +Z axis aligns +Z (world).
+align_axis_to_vector(window_left, 'Z', (0,0,1))
+
+# Align window_left.back_face to base_body.front_face.
+align_faces(window_left, 'back', base_body, 'front')
+
+# Then move by offset(-0.15, 0.15, 0.21).
+apply_offset(window_left, (-0.15, 0.15, 0.21))
+
+# --- SECTION 6 – Create right window ---
+window_right = add_cube("window_right", (0.15, 0.15, 0.02))
+window_right.data.materials.append(mat_house_window)
+
+# Rotate window_right so its +Z axis aligns +Z (world).
+align_axis_to_vector(window_right, 'Z', (0,0,1))
+
+# Align window_right.back_face to base_body.front_face.
+align_faces(window_right, 'back', base_body, 'front')
+
+# Then move by offset(0.15, 0.15, 0.21).
+apply_offset(window_right, (0.15, 0.15, 0.21))

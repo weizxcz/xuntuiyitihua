@@ -1,0 +1,50 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.7,0.7,0.7,1.0)
+mat_black_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_brass | diffuse_color=(0.8,0.6,0.2,1.0)
+mat_steel | diffuse_color=(0.4,0.4,0.4,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| case_root | Composite of case_body + case_lid + case_hinge + case_latch_L + case_latch_R + case_divider_1 + case_divider_2 + case_divider_3 | assembly_order=[case_body, case_lid, case_hinge, case_latch_L, case_latch_R, case_divider_1, case_divider_2, case_divider_3] |
+
+Layer 1 – Primary Structure (Case Body & Lid)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| case_body | Rounded rectangular box base (Outer: 0.400×0.300×0.150 m, Wall: 0.005 m, Corner Radius: 0.020 m) | pos=(0, 0, 0); orientation=axis:+Z; mat=mat_aluminum; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle 0.400×0.300 m with corner radius 0.020 m. **Extrude:** thickness 0.150 m along +Z. **Hollowing:** boolean_subtract inner box (0.390×0.290×0.145 m) centered. |
+| case_lid | Rounded rectangular box lid (Outer: 0.400×0.300×0.010 m, Wall: 0.005 m, Corner Radius: 0.020 m) | Align(XY) case_lid.bottom_face to case_body.top_face; offset(0,0,0.010); orientation=axis:+Z; mat=mat_aluminum; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle 0.400×0.300 m with corner radius 0.020 m. **Extrude:** thickness 0.010 m along +Z. **Hollowing:** boolean_subtract inner box (0.390×0.290×0.005 m) centered. |
+
+Layer 2 – Hinge Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| case_hinge | Composite of hinge_bar + hinge_pins | assembly_order=[hinge_bar, hinge_pins]; connect=case_body.back_face + hinge_bar.back_face; offset(0,0,0); orientation=axis:+Z; mat=mat_steel; create_method=boolean_union |
+| hinge_bar | Cylinder Ø0.010×0.300 m | Align(Z) hinge_bar.center to case_body.back_face.center; orientation=axis:+Y; mat=mat_steel; create_method=primitive |
+| hinge_pins | Pattern of 3 cylinders Ø0.005×0.020 m | pattern=grid(rows:1, cols:3, x_spacing:0.100, y_spacing:0, start_offset:(-0.100, 0)); Align(XY) hinge_pins.center to hinge_bar.center; orientation=axis:+X; mat=mat_steel; create_method=primitive |
+
+Layer 3 – Latches
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| case_latch_L | Composite of latch_body_L + latch_hook_L | assembly_order=[latch_body_L, latch_hook_L]; Align(XY) case_latch_L.center to case_body.front_face.left_side_center; offset(0,0,0.005); orientation=axis:+Z; mat=mat_brass; create_method=boolean_union |
+| latch_body_L | Cube 0.020×0.020×0.010 m | Align(XY) latch_body_L.center to case_body.front_face.left_side_center; offset(0,0,0.005); orientation=axis:+Z; mat=mat_brass; create_method=primitive |
+| latch_hook_L | Cylinder Ø0.010×0.015 m | Align(XY) latch_hook_L.center to latch_body_L.front_face.center; offset(0,0,0.010); orientation=axis:+Y; mat=mat_brass; create_method=primitive |
+| case_latch_R | Composite of latch_body_R + latch_hook_R | assembly_order=[latch_body_R, latch_hook_R]; Align(XY) case_latch_R.center to case_body.front_face.right_side_center; offset(0,0,0.005); orientation=axis:+Z; mat=mat_brass; create_method=boolean_union |
+| latch_body_R | Cube 0.020×0.020×0.010 m | Align(XY) latch_body_R.center to case_body.front_face.right_side_center; offset(0,0,0.005); orientation=axis:+Z; mat=mat_brass; create_method=primitive |
+| latch_hook_R | Cylinder Ø0.010×0.015 m | Align(XY) latch_hook_R.center to latch_body_R.front_face.center; offset(0,0,0.010); orientation=axis:+Y; mat=mat_brass; create_method=primitive |
+
+Layer 4 – Handle
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| case_handle | Composite of handle_base + handle_grip | assembly_order=[handle_base, handle_grip]; Align(XY) case_handle.center to case_lid.top_face.center; offset(0,0,0.015); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_union |
+| handle_base | Cube 0.060×0.020×0.010 m | Align(XY) handle_base.center to case_lid.top_face.center; offset(0,0,0.015); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| handle_grip | Cylinder Ø0.015×0.060 m | Align(XY) handle_grip.center to handle_base.top_face.center; offset(0,0,0.010); orientation=axis:+Y; mat=mat_black_plastic; create_method=primitive |
+
+Layer 5 – Internal Compartments
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| case_divider_1 | Cube 0.380×0.005×0.140 m | Align(XY) case_divider_1.center to case_body.center; offset(0,0,0.075); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| case_divider_2 | Cube 0.005×0.280×0.140 m | Align(XY) case_divider_2.center to case_body.center; offset(0,0,0.075); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| case_divider_3 | Cube 0.380×0.005×0.070 m | Align(XY) case_divider_3.center to case_body.center; offset(0,0,0.110); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+# ----------  END_GRAPH  ----------

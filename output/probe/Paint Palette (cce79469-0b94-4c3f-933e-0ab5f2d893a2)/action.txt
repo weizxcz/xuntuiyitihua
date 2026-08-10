@@ -1,0 +1,58 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_plastic_blue; diffuse_color = (0.1, 0.2, 0.8, 1.0).
+Define material mat_plastic_white; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base plate  ---
+Create primitive cuboid with size 0.250×0.180×0.015 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Anchor base_plate to world origin.
+Then move by offset(0, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create thumb hole cutter  ---
+Create primitive cylinder with diameter 0.040 m and height 0.020 m and name it cutter_thumb_hole.
+Rotate cutter_thumb_hole so its +Z axis aligns +Z (world).
+Align cutter_thumb_hole.center to base_plate.center.
+Then move by offset(-0.080, 0, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create well cutters  ---
+For r in 0…1 and c in 0…2:
+  Create primitive cylinder with diameter 0.030 m and height 0.012 m and name it cutter_wells_r_c.
+  Rotate cutter_wells_r_c so its +Z axis aligns +Z (world).
+  Align cutter_wells_r_c.center to base_plate.center.
+  Then offset(-0.040 + c·0.040, -0.015 + r·0.030, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create brush holder  ---
+Create primitive cuboid with size 0.020×0.010×0.015 m and name it brush_holder.
+Rotate brush_holder so its +Z axis aligns +Z (world).
+Align brush_holder.left_face to base_plate.right_face.
+Then move by offset(0, 0, 0).
+Stage 4 complete.
+
+---  SECTION 5 – Perform Boolean Subtractions  ---
+Boolean-subtract cutter_thumb_hole from base_plate; discard cutter_thumb_hole.
+For r in 0…1 and c in 0…2:
+  Boolean-subtract cutter_wells_r_c from base_plate; discard cutter_wells_r_c.
+Stage 5 complete.
+
+---  SECTION 6 – Assemble Palette Base  ---
+Boolean-union base_plate and brush_holder; keep base_plate.
+Assembly guideline satisfied.
+Stage 6 complete.
+
+All stages complete.

@@ -1,0 +1,36 @@
+-- MATERIAL LIBRARY --
+concrete_grey | diffuse_color=(0.6,0.6,0.6,1.0)
+steel_blue | diffuse_color=(0.2,0.3,0.5,1.0)
+steel_grey | diffuse_color=(0.4,0.4,0.4,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| crane_root | Composite of base + tower + jib + trolley + hook + counterweight | assembly_order=[base_group], [tower_group], [jib_group], [hook_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_group | Composite of base_plate + anchor_bolts | assembly_order=[base_plate], [anchor_bolts] |
+| base_plate | Cube 4.0×4.0×0.5 m (W×D×H) | pos=(0,0,0); orientation=axis:+Z; mat=concrete_grey; create_method=primitive |
+| anchor_bolts | Pattern of 4 cylinders Ø0.1×0.6 m | pattern=grid(rows:2, cols:2, x_spacing:3.0, y_spacing:3.0, start_offset:(-1.5,-1.5)); Align(Z) anchor_bolts.bottom_face to base_plate.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=steel_grey; create_method=primitive |
+| tower_group | Composite of tower_sections + cross_bracing | assembly_order=[tower_sections], [cross_bracing] |
+| tower_sections | Composite of 4 vertical columns + horizontal rings | assembly_order=[tower_columns], [tower_rings] |
+| tower_columns | Pattern of 4 cylinders Ø0.3×12.0 m | pattern=grid(rows:2, cols:2, x_spacing:2.0, y_spacing:2.0, start_offset:(-1.0,-1.0)); Align(Z) tower_columns.bottom_face to base_plate.top_face; offset(0,0,0.25); orientation=axis:+Z; mat=steel_blue; create_method=primitive |
+| tower_rings | Pattern of 4 horizontal beams forming square rings | pattern=grid(rows:4, cols:4, x_spacing:1.0, y_spacing:1.0, start_offset:(-0.5,-0.5)); Align(Z) tower_rings.bottom_face to tower_columns.center; offset(0,0,3.0); orientation=axis:+Z; mat=steel_blue; create_method=primitive |
+| cross_bracing | Composite of diagonal struts | assembly_order=[diagonal_struts] |
+| diagonal_struts | Pattern of 8 cylinders Ø0.1×2.8 m | pattern=grid(rows:4, cols:2, x_spacing:2.0, y_spacing:3.0, start_offset:(-1.0,0.0)); Align(XZ) diagonal_struts.center to tower_columns.center; orientation=axis:+Z; mat=steel_grey; create_method=primitive |
+| jib_group | Composite of jib_arm + trolley + counter_jib | assembly_order=[jib_arm], [trolley], [counter_jib] |
+| jib_arm | Composite of main_beam + end_hook_pulley | assembly_order=[main_beam], [end_hook_pulley] |
+| main_beam | Cube 15.0×0.5×0.5 m (L×W×H) | Align(X) main_beam.left_face to tower_sections.right_face; offset(0.25,0,0); orientation=axis:+X; mat=steel_blue; create_method=primitive |
+| end_hook_pulley | Composite of pulley_block + hook_cable | assembly_order=[pulley_block], [hook_cable] |
+| pulley_block | Cube 0.5×0.5×0.5 m | Align(X) pulley_block.left_face to main_beam.right_face; offset(0.25,0,0); orientation=axis:+X; mat=steel_grey; create_method=primitive |
+| hook_cable | Cylinder Ø0.05×2.0 m | Align(X) hook_cable.left_face to pulley_block.right_face; offset(0.25,0,0); orientation=axis:+X; mat=steel_grey; create_method=primitive |
+| trolley | Cube 0.8×0.6×0.4 m | Align(X) trolley.left_face to main_beam.top_face; offset(5.0,0.25,0); orientation=axis:+Z; mat=steel_grey; create_method=primitive |
+| counter_jib | Cube 5.0×0.5×0.5 m (L×W×H) | Align(X) counter_jib.right_face to tower_sections.left_face; offset(-0.25,0,0); orientation=axis:+X; mat=steel_blue; create_method=primitive |
+| hook_group | Composite of hook_block + load_chain | assembly_order=[hook_block], [load_chain] |
+| hook_block | Cube 0.4×0.3×0.3 m | Align(X) hook_block.left_face to trolley.bottom_face; offset(0,-0.3,0); orientation=axis:+Z; mat=steel_grey; create_method=primitive |
+| load_chain | Cylinder Ø0.02×1.5 m | Align(X) load_chain.left_face to hook_block.right_face; offset(0.2,0,0); orientation=axis:+X; mat=steel_grey; create_method=primitive |
+# ----------  END_GRAPH  ----------

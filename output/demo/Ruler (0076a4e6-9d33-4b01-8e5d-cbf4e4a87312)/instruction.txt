@@ -1,0 +1,1 @@
+Create a 3D model of a ruler. The ruler should be 12 inches long and 1 inch wide, with clear markings for each inch and centimeter.

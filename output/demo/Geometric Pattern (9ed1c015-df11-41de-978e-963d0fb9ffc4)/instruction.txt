@@ -1,0 +1,1 @@
+Can you create a 3D geometric pattern? It should consist of interconnected hexagons forming a honeycomb structure.

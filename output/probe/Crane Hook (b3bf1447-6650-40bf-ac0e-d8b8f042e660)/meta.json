@@ -1,0 +1,44 @@
+{
+  "id": "b3bf1447-6650-40bf-ac0e-d8b8f042e660",
+  "name": "Crane Hook",
+  "instruction": "I need a 3D model of a crane hook. It should be robust and suitable for lifting heavy loads. Ensure it has a safety latch mechanism.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a crane hook.",
+        "The crane hook has a curved shape designed for lifting.",
+        "The hook features a pronounced tip for securing loads."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The latch mechanism is proportionate to crane hook."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hook is designed to hang vertically when in use.",
+        "The safety latch is positioned correctly for easy access."
+      ],
+      "Object distance and contact": [
+        "The hook's tip is designed to connect securely with the load.",
+        "The latch mechanism does not interfere with the hook's primary function."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the crane hook are accurately represented.",
+        "The design meets the requirement for lifting heavy loads."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

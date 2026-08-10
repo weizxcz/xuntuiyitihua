@@ -1,0 +1,47 @@
+{
+  "id": "4e7d5457-9fbb-4415-bfc6-2c0f7fd9aed5",
+  "name": "Logo vs. Symbol",
+  "instruction": "Design a simple logo and a symbol. The logo should incorporate text and a graphic element, while the symbol should be purely graphical. Place them side by side for comparison.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The logo includes both text and a graphic element.",
+        "The text is clearly legible and complements the graphic element.",
+        "The graphic element is relevant to the brand or theme."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The logo and symbol are proportionate to each other.",
+        "Both elements are sized appropriately for clarity."
+      ],
+      "Texture and surface detail": [
+        "The logo and symbol share a consistent design style.",
+        "Both elements reflect the intended brand identity."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The logo and symbol are placed side by side.",
+        "Both elements are aligned properly for visual balance.",
+        "There is adequate spacing between the logo and symbol."
+      ],
+      "Object distance and contact": [
+        "The logo is visually dominant compared to the symbol.",
+        "The graphic element of the logo does not overpower the text."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the logo and symbol are designed as specified.",
+        "The side-by-side placement is accurately executed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

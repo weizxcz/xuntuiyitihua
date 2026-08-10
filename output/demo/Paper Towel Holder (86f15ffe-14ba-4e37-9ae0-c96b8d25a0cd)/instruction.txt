@@ -1,0 +1,1 @@
+Design a paper towel holder with a central rod and a base.

@@ -1,0 +1,212 @@
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius=0.5, depth=1.0, segments=32, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_disc(name, radius=0.5, segments=32, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (flat cylinder) aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_torus(name, major_radius=1.0, minor_radius=0.4, major_segments=48, minor_segments=16, location=(0,0,0), rotation=(0,0,0)):
+    """Add a torus aligned with Z axis."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=major_segments, minor_segments=minor_segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cube(name, size=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    else:
+        return
+
+    target = Vector(vector).normalized()
+    if local_axis.angle(target) < 1e-6:
+        return # Already aligned
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using cutter on target."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target has a modifier
+    if not any(m.type == 'BOOLEAN' and m.operation == 'SUBTRACT' for m in target.modifiers):
+        mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+        mod.operation = 'SUBTRACT'
+        mod.object = cutter
+    else:
+        # Find existing modifier and update object
+        for m in target.modifiers:
+            if m.type == 'BOOLEAN' and m.operation == 'SUBTRACT':
+                m.object = cutter
+                break
+
+def boolean_union(union_name, target_name):
+    """Perform boolean union using union object on target."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    if not any(m.type == 'BOOLEAN' and m.operation == 'UNION' for m in target.modifiers):
+        mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = union
+    else:
+        for m in target.modifiers:
+            if m.type == 'BOOLEAN' and m.operation == 'UNION':
+                m.object = union
+                break
+
+def apply_material(obj, mat):
+    """Apply material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_cork = make_material("mat_cork", diffuse_color=(0.6, 0.5, 0.3, 1.0))
+mat_rubber = make_material("mat_rubber", diffuse_color=(0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create coaster base ---
+# Create primitive cylinder with diameter 0.102 m and height 0.005 m
+# Radius = 0.102 / 2 = 0.051
+coaster_base = add_cylinder(
+    name="coaster_base",
+    radius=0.051,
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0)
+)
+
+# Rotate coaster_base so its +Z axis aligns +Z (world)
+# Default cylinder is already aligned with Z, but we ensure it.
+align_axis_to_vector(coaster_base, 'Z', (0, 0, 1))
+
+# Anchor coaster_base to world origin
+coaster_base.location = (0, 0, 0)
+
+# Move by offset(0,0,0)
+coaster_base.location += Vector((0, 0, 0))
+
+# Apply material mat_cork to coaster_base
+apply_material(coaster_base, mat_cork)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create rubber ring ---
+# Create primitive torus with major radius 0.051 m and minor radius 0.001 m
+rubber_ring = add_torus(
+    name="rubber_ring",
+    major_radius=0.051,
+    minor_radius=0.001,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0)
+)
+
+# Rotate rubber_ring so its +Z axis aligns +Z (world)
+align_axis_to_vector(rubber_ring, 'Z', (0, 0, 1))
+
+# Align rubber_ring.center to coaster_base.center
+# Both are at world origin initially, so center is (0,0,0).
+# Explicitly set location to match coaster_base center
+coaster_base_center = coaster_base.location
+rubber_ring.location = coaster_base_center
+
+# Move by offset(0,0,0.001)
+rubber_ring.location += Vector((0, 0, 0.001))
+
+# Apply material mat_rubber to rubber_ring
+apply_material(rubber_ring, mat_rubber)
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create rubber center ---
+# Create primitive cylinder with diameter 0.050 m and height 0.002 m
+# Radius = 0.050 / 2 = 0.025
+rubber_center = add_cylinder(
+    name="rubber_center",
+    radius=0.025,
+    depth=0.002,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0)
+)
+
+# Rotate rubber_center so its +Z axis aligns +Z (world)
+align_axis_to_vector(rubber_center, 'Z', (0, 0, 1))
+
+# Align rubber_center.center to coaster_base.center
+rubber_center.location = coaster_base_center
+
+# Move by offset(0,0,0.001)
+rubber_center.location += Vector((0, 0, 0.001))
+
+# Apply material mat_rubber to rubber_center
+apply_material(rubber_center, mat_rubber)
+
+# Stage 3 complete.
+
+# All stages complete.

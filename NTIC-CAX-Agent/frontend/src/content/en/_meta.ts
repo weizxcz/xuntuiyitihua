@@ -1,0 +1,39 @@
+import type { MetaRecord } from "nextra";
+
+const meta: MetaRecord = {
+  index: {
+    title: "Overview",
+  },
+  introduction: {
+    title: "Introduction",
+  },
+  harness: {
+    title: "NTIC-CAX-Agent Harness",
+  },
+  application: {
+    title: "NTIC-CAX-Agent App",
+  },
+  tutorials: {
+    title: "Tutorials",
+  },
+  reference: {
+    title: "Reference",
+  },
+  workspace: {
+    type: "page",
+  },
+  blog: {
+    type: "page",
+  },
+  posts: {
+    type: "page",
+  },
+  login: {
+    type: "page",
+  },
+  setup: {
+    type: "page",
+  },
+};
+
+export default meta;

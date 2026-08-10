@@ -1,0 +1,32 @@
+
+"edge_attr_dim": 10  # 边属性维度数量
+"node_attr_dim": 12  # 面属性维度数量
+"edge_attr_emb": 64  # 边属性嵌入维度数量
+"node_attr_emb": 64  # 面属性嵌入维度数量
+"edge_grid_dim": 0  # 边网格维度数量
+"node_grid_dim": 7 # 面网格维度数量
+"edge_grid_emb": 0  # 边网格嵌入维度数量
+"node_grid_emb": 64  # 面网格嵌入维度数量
+"num_layers": 4  # recommend: 3
+"delta": 2  # obsolete
+"mlp_ratio": 4  # 2
+"drop": 0.25
+"drop_path": 0.25
+"head_hidden_dim": 256  # 64
+"conv_on_edge": false
+"use_uv_gird": true
+"use_edge_attr": true
+"use_face_attr": true
+"seed": 42
+"device": 'cpu'
+"architecture": "AAGNetGraphEncoder" #aagnet网络编码模型名称
+"dataset_type": "full"
+"epochs": 240
+"lr": 0.0001
+"weight_decay": 0.001
+"batch_size": 128
+"ema_decay_per_epoch": 0.5
+"seg_a": 1.
+"inst_a": 1.
+"bottom_a": 1.
+"n_classes": 2  # 分类数量

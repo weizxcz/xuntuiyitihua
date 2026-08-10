@@ -1,0 +1,120 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_sofa; diffuse_color = (0.25,0.25,0.30,1.0).
+Define material glass_tv; diffuse_color = (0.10,0.10,0.15,0.9).
+Define material metal_tv_frame; diffuse_color = (0.15,0.15,0.15,1.0).
+Define material wood_bookshelf; diffuse_color = (0.40,0.25,0.15,1.0).
+Define material wood_table; diffuse_color = (0.35,0.20,0.10,1.0).
+Define material fabric_lamp_shade; diffuse_color = (0.90,0.85,0.75,0.8).
+Define material metal_lamp_stand; diffuse_color = (0.80,0.70,0.50,1.0).
+Define material ceramic_pot; diffuse_color = (0.80,0.80,0.75,1.0).
+Define material plant_leaves; diffuse_color = (0.10,0.40,0.10,1.0).
+Define material rug_fabric; diffuse_color = (0.60,0.60,0.65,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Room Shell  ---
+Create primitive cuboid with size 6.0×5.0×2.8 m and name it room_shell.
+Rotate room_shell so its +Z axis aligns +Z (world).
+Anchor room_shell.bottom_face to world origin (0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Sofa Sectional  ---
+Create primitive cuboid with size 2.8×2.0×0.9 m and name it sofa_sectional.
+Rotate sofa_sectional so its +Z axis aligns +Z (world).
+Align sofa_sectional.bottom_face to room_shell.bottom_face.
+Align sofa_sectional.back_corner to room_shell.back_corner.
+Then move by offset(0.0, 0.0, 0.0).
+Stage 2 complete.
+
+---  SECTION 3 – Create TV Stand  ---
+Create primitive cuboid with size 1.6×0.4×0.5 m and name it tv_stand.
+Rotate tv_stand so its +Z axis aligns +Z (world).
+Align tv_stand.bottom_face to room_shell.bottom_face.
+Align tv_stand.back_face to room_shell.wall_opposite_sofa.
+Then move by offset(0.0, 2.5, 0.0).
+Stage 3 complete.
+
+---  SECTION 4 – Create Bookshelf  ---
+Create primitive cuboid with size 0.8×0.3×2.0 m and name it bookshelf.
+Rotate bookshelf so its +Z axis aligns +Z (world).
+Align bookshelf.bottom_face to room_shell.bottom_face.
+Align bookshelf.back_face to room_shell.side_wall.
+Then move by offset(-2.5, 0.0, 0.0).
+Stage 4 complete.
+
+---  SECTION 5 – Create Coffee Table  ---
+Create primitive cuboid with size 1.2×0.6×0.45 m and name it coffee_table.
+Rotate coffee_table so its +Z axis aligns +Z (world).
+Align coffee_table.bottom_face to room_shell.bottom_face.
+Align coffee_table.center to sofa_sectional.front_center.
+Then move by offset(0.0, 1.2, 0.0).
+Stage 5 complete.
+
+---  SECTION 6 – Create Area Rug  ---
+Create primitive cuboid with size 2.5×2.0×0.005 m and name it rug.
+Rotate rug so its +Z axis aligns +Z (world).
+Align rug.bottom_face to room_shell.bottom_face.
+Align rug.center to coffee_table.center.
+Then move by offset(0.0, 0.8, 0.0025).
+Stage 6 complete.
+
+---  SECTION 7 – Create Floor Lamp  ---
+Create primitive cuboid with size 0.3×0.3×1.6 m and name it floor_lamp.
+Rotate floor_lamp so its +Z axis aligns +Z (world).
+Align floor_lamp.bottom_face to room_shell.bottom_face.
+Align floor_lamp.base to sofa_sectional.side.
+Then move by offset(-1.2, 0.5, 0.0).
+Stage 7 complete.
+
+---  SECTION 8 – Create TV Screen  ---
+Create primitive cuboid with size 1.4×0.05×0.8 m and name it tv_screen.
+Rotate tv_screen so its +Z axis aligns +Z (world).
+Align tv_screen.bottom_face to tv_stand.top_face.
+Align tv_screen.center to tv_stand.center.
+Then move by offset(0.0, 0.0, 0.9).
+Stage 8 complete.
+
+---  SECTION 9 – Create Small Plant  ---
+Create primitive cuboid with size 0.2×0.2×0.3 m and name it small_plant.
+Rotate small_plant so its +Z axis aligns +Z (world).
+Align small_plant.bottom_face to coffee_table.top_face.
+Align small_plant.center to coffee_table.center.
+Then move by offset(0.3, 1.3, 0.45).
+Stage 9 complete.
+
+---  SECTION 10 – Create Large Plant  ---
+Create primitive cuboid with size 0.5×0.5×1.2 m and name it large_plant.
+Rotate large_plant so its +Z axis aligns +Z (world).
+Align large_plant.bottom_face to room_shell.bottom_face.
+Align large_plant.center to room_shell.corner.
+Then move by offset(-2.2, -2.2, 0.0).
+Stage 10 complete.
+
+---  SECTION 11 – Create Lamp Shade  ---
+Create primitive cuboid with size 0.3×0.3×0.4 m and name it lamp_shade.
+Rotate lamp_shade so its +Z axis aligns +Z (world).
+Align lamp_shade.bottom_face to floor_lamp.top_face.
+Align lamp_shade.center to floor_lamp.center.
+Then move by offset(-1.2, 0.5, 1.4).
+Stage 11 complete.
+
+---  SECTION 12 – Create Plant Leaves  ---
+Create primitive cuboid with size 0.4×0.4×0.5 m and name it plant_leaves.
+Rotate plant_leaves so its +Z axis aligns +Z (world).
+Align plant_leaves.bottom_face to large_plant.top_face.
+Align plant_leaves.center to large_plant.center.
+Then move by offset(-2.2, -2.2, 0.6).
+Stage 12 complete.
+
+All stages complete.

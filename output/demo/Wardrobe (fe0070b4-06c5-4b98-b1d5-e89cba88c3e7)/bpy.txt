@@ -1,0 +1,466 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location, rotation_euler):
+    """Add a cube primitive, scaled and positioned."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_to_face(obj, target_obj, face_type, offset_vector=Vector((0,0,0))):
+    """
+    Aligns an object's face to the average of two target faces or a single face.
+    face_type: 'top', 'bottom', 'front', 'back', 'left', 'right', 'center'
+    """
+    # Calculate target world position based on face type
+    target_loc = get_face_center(target_obj, face_type)
+    
+    # If target_obj is a list (average of two), handle it
+    if isinstance(target_obj, list):
+        target_loc = average([get_face_center(o, face_type) for o in target_obj])
+    
+    # Calculate offset from object center to its face
+    obj_offset = get_face_offset(obj, face_type)
+    
+    # New location = Target - (Obj's local face offset rotated to world)
+    # Since we align axes, we can simplify:
+    # We want obj's face to be at target_loc.
+    # obj.location + obj_offset_world = target_loc
+    # obj.location = target_loc - obj_offset_world
+    
+    # Get rotation matrix of the object
+    rot_mat = obj.matrix_world.to_3x3()
+    obj_offset_world = obj_offset @ rot_mat
+    
+    new_loc = target_loc - obj_offset_world + offset_vector
+    obj.location = new_loc
+
+def get_face_center(obj, face_type):
+    """Get the world location of a specific face center."""
+    # Ensure object is updated to get correct bounds
+    obj.update_from_editmode() # Not needed for primitives usually, but good practice
+    
+    # Local face centers for a cube centered at 0,0,0 with scale S
+    # Dimensions
+    sx = obj.scale.x * (obj.dimensions.x / 2) if obj.dimensions.x else 0
+    sy = obj.scale.y * (obj.dimensions.y / 2) if obj.dimensions.y else 0
+    sz = obj.scale.z * (obj.dimensions.z / 2) if obj.dimensions.z else 0
+    
+    # Local face centers
+    faces = {
+        'top': Vector((0, 0, sz)),
+        'bottom': Vector((0, 0, -sz)),
+        'front': Vector((0, sy, 0)),
+        'back': Vector((0, -sy, 0)),
+        'right': Vector((sx, 0, 0)),
+        'left': Vector((-sx, 0, 0)),
+        'center': Vector((0, 0, 0))
+    }
+    
+    local_center = faces.get(face_type, Vector((0,0,0)))
+    return obj.matrix_world @ local_center
+
+def get_face_offset(obj, face_type):
+    """Get the vector from object center to the specified face center in local space."""
+    sx = obj.scale.x * (obj.dimensions.x / 2) if obj.dimensions.x else 0
+    sy = obj.scale.y * (obj.dimensions.y / 2) if obj.dimensions.y else 0
+    sz = obj.scale.z * (obj.dimensions.z / 2) if obj.dimensions.z else 0
+    
+    faces = {
+        'top': Vector((0, 0, sz)),
+        'bottom': Vector((0, 0, -sz)),
+        'front': Vector((0, sy, 0)),
+        'back': Vector((0, -sy, 0)),
+        'right': Vector((sx, 0, 0)),
+        'left': Vector((-sx, 0, 0)),
+        'center': Vector((0, 0, 0))
+    }
+    return faces.get(face_type, Vector((0,0,0)))
+
+def average(vectors):
+    """Calculate the average of a list of vectors."""
+    if not vectors:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for v in vectors:
+        avg += v
+    return avg / len(vectors)
+
+def orient_z_to_vector(obj, target_vector):
+    """Rotate object so its local +Z aligns with target_vector."""
+    # Current Z
+    current_z = Vector((0, 0, 1))
+    # Target
+    target = target_vector.normalized()
+    
+    # Calculate rotation
+    rot_quat = current_z.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Remove collections if necessary (optional, but clean)
+    # bpy.data.collections.remove(bpy.data.collections['Collection'])
+    
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_wood_dark = make_material("mat_wood_dark", (0.20, 0.15, 0.10, 1.0))
+    mat_wood_light = make_material("mat_wood_light", (0.80, 0.70, 0.60, 1.0))
+    mat_metal_silver = make_material("mat_metal_silver", (0.70, 0.70, 0.75, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create Side Panels (Frame) ---
+    
+    # side_panel_L
+    obj_L = add_cube("side_panel_L", (0.600, 2.200, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_L, mat_wood_dark)
+    # Rotate so +Z aligns +Z (already default)
+    # Anchor to world origin (already at 0,0,0)
+    # Offset
+    obj_L.location += Vector((-0.300, 1.100, 0.000))
+
+    # side_panel_R
+    obj_R = add_cube("side_panel_R", (0.600, 2.200, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_R, mat_wood_dark)
+    # Rotate so +Z aligns +Z
+    # Anchor to world origin
+    # Offset
+    obj_R.location += Vector((0.300, 1.100, 0.000))
+
+    # --- SECTION 2 – Create Top and Bottom Panels ---
+
+    # top_panel
+    obj_top = add_cube("top_panel", (0.600, 0.020, 0.600), (0,0,0), (0,0,0))
+    apply_material(obj_top, mat_wood_light)
+    # Rotate so +Z aligns +Z
+    # Align top_panel.bottom_face to Avg(side_panel_L.top_face, side_panel_R.top_face)
+    # Note: The prompt says "Align ... to Avg(...)". 
+    # side_panel_L.top_face is at y=1.1 + 1.1 = 2.2. side_panel_R.top_face is at y=2.2.
+    # Avg is 2.2.
+    # top_panel.bottom_face needs to be at 2.2.
+    # top_panel local bottom is -sz = -0.01.
+    # So obj_top.location.y = 2.2 - (-0.01) = 2.21? 
+    # Wait, standard alignment logic:
+    # target = Avg(top faces) = 2.2
+    # obj_offset (bottom) = -0.01
+    # new_loc = target - obj_offset = 2.2 - (-0.01) = 2.21.
+    # Let's use the helper function.
+    align_to_face(obj_top, [obj_L, obj_R], 'bottom')
+    # Offset (0,0,0)
+    
+    # bottom_panel
+    obj_bot = add_cube("bottom_panel", (0.600, 0.020, 0.600), (0,0,0), (0,0,0))
+    apply_material(obj_bot, mat_wood_light)
+    # Align bottom_panel.top_face to Avg(side_panel_L.bottom_face, side_panel_R.bottom_face)
+    # side_panel_L.bottom_face is at y=1.1 - 1.1 = 0.0.
+    # Avg is 0.0.
+    # bottom_panel top_face is +sz = 0.01.
+    # new_loc.y = 0.0 - 0.01 = -0.01.
+    align_to_face(obj_bot, [obj_L, obj_R], 'top')
+    # Offset (0,0,0)
+
+    # --- SECTION 3 – Create Back Panel ---
+
+    # back_panel
+    obj_back = add_cube("back_panel", (0.560, 2.160, 0.005), (0,0,0), (0,0,0))
+    apply_material(obj_back, mat_wood_light)
+    # Align back_panel.front_face to Avg(side_panel_L.back_face, side_panel_R.back_face)
+    # side_panel_L back_face is at x=-0.3 - 0.3 = -0.6.
+    # side_panel_R back_face is at x=0.3 + 0.3 = 0.6.
+    # Avg is 0.0.
+    # back_panel front_face is +sy = 1.08.
+    # new_loc.x = 0.0 - 1.08 = -1.08?
+    # Wait, orientation is +Z up. X is width, Y is height?
+    # Cube default: X right, Y forward, Z up.
+    # Side panels are 0.6 wide (X), 2.2 high (Y), 0.02 deep (Z).
+    # side_panel_L center x = -0.3. Width 0.6. Left face x=-0.6, Right face x=0.0.
+    # side_panel_R center x = 0.3. Width 0.6. Left face x=0.0, Right face x=0.6.
+    # "back_face" usually implies -Y in local space if front is +Y.
+    # Let's check side panel orientation. +Z is up.
+    # If we look at the cabinet from the front, Y is depth.
+    # side_panel_L is at x=-0.3.
+    # side_panel_R is at x=0.3.
+    # The "back" of the side panels would be the face with the most negative Y? Or positive?
+    # Usually, "front" is +Y. "Back" is -Y.
+    # side_panel_L back_face center: x=-0.3, y=-1.1, z=0.
+    # side_panel_R back_face center: x=0.3, y=-1.1, z=0.
+    # Avg: x=0.0, y=-1.1.
+    # back_panel size: 0.560 (X) x 2.160 (Y) x 0.005 (Z).
+    # back_panel front_face is +sy = 1.08.
+    # Align front_face to Avg(back faces of sides).
+    # new_loc = Avg - obj_offset(front).
+    # new_loc.x = 0.0 - 0 = 0.
+    # new_loc.y = -1.1 - 1.08 = -2.18.
+    # new_loc.z = 0 - 0 = 0.
+    # Then offset (0,0,0.010).
+    
+    # Let's re-read carefully: "Align back_panel.front_face to Avg(side_panel_L.back_face, side_panel_R.back_face)"
+    # This implies the back panel sits *behind* the side panels? Or flush with their back faces?
+    # If it aligns its FRONT face to the BACK faces of the sides, it will be in front of them (towards +Y).
+    # But usually back panels are at the back.
+    # Let's assume standard cabinet: Sides at +/- 0.3. Back panel at y = -1.1 (back of sides).
+    # If back_panel.front_face aligns to back_faces of sides (y=-1.1), then back_panel is at y=-2.18.
+    # This seems wrong for a cabinet. Usually back panel is flush with the back of the sides.
+    # If back_panel is flush, its BACK face should align with sides' BACK faces.
+    # But the instruction says "front_face".
+    # Maybe the coordinate system is different?
+    # Let's stick to the literal instruction.
+    
+    align_to_face(obj_back, [obj_L, obj_R], 'front')
+    obj_back.location += Vector((0, 0, 0.010))
+
+    # --- SECTION 4 – Create Center Stile ---
+
+    # center_stile
+    obj_stile = add_cube("center_stile", (0.020, 2.160, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_stile, mat_wood_dark)
+    # Align center_stile.left_face to Avg(side_panel_L.right_face, side_panel_R.left_face)
+    # side_panel_L right_face: x = -0.3 + 0.3 = 0.0.
+    # side_panel_R left_face: x = 0.3 - 0.3 = 0.0.
+    # Avg: x=0.0.
+    # center_stile left_face: local -sx = -0.01.
+    # new_loc.x = 0.0 - (-0.01) = 0.01.
+    align_to_face(obj_stile, [obj_L, obj_R], 'left')
+    # Offset (0,0,0)
+
+    # --- SECTION 5 – Create Shelves ---
+
+    # shelf_1
+    obj_shelf1 = add_cube("shelf_1", (0.560, 0.020, 0.560), (0,0,0), (0,0,0))
+    apply_material(obj_shelf1, mat_wood_light)
+    # Align shelf_1.bottom_face to Avg(side_panel_L.right_face, side_panel_R.left_face)
+    # Avg of right face of L (x=0) and left face of R (x=0) is x=0.
+    # This aligns the shelf's bottom face's X position to 0?
+    # shelf_1 bottom face is a plane at z=-0.01.
+    # The "face" being aligned is the entire face.
+    # align_to_face aligns the center of the face.
+    # shelf_1 bottom face center: x=0, y=0, z=-0.01.
+    # Target: x=0, y=0, z=0 (from side faces? No, side faces are vertical planes).
+    # side_panel_L right_face center: x=0, y=1.1, z=0.
+    # side_panel_R left_face center: x=0, y=1.1, z=0.
+    # Avg: x=0, y=1.1, z=0.
+    # shelf_1 bottom face offset: z=-0.01.
+    # new_loc = Target - Offset.
+    # new_loc.x = 0 - 0 = 0.
+    # new_loc.y = 1.1 - 0 = 1.1.
+    # new_loc.z = 0 - (-0.01) = 0.01.
+    # Then offset (0, 0.800, 0).
+    # new_loc.y = 1.1 + 0.8 = 1.9.
+    
+    # Wait, shelves are usually horizontal.
+    # If shelf_1 is aligned to the side faces, it sits between them.
+    # The Y position is determined by the alignment to the side faces' centers?
+    # side_panel_L right_face center is at y=1.1.
+    # So shelf_1 is centered at y=1.1 initially.
+    # Then offset y by 0.8 -> y=1.9.
+    # This places shelf_1 near the top.
+    
+    align_to_face(obj_shelf1, [obj_L, obj_R], 'bottom')
+    obj_shelf1.location += Vector((0, 0.800, 0))
+
+    # shelf_2
+    obj_shelf2 = add_cube("shelf_2", (0.560, 0.020, 0.560), (0,0,0), (0,0,0))
+    apply_material(obj_shelf2, mat_wood_light)
+    align_to_face(obj_shelf2, [obj_L, obj_R], 'bottom')
+    obj_shelf2.location += Vector((0, 1.400, 0))
+
+    # --- SECTION 6 – Create Rod Holders and Hanging Rod ---
+
+    # rod_holder_L
+    # Cylinder Ø0.010 (R=0.005) x 0.050 H.
+    # Rotate so +Z aligns +X.
+    # Cylinder default is +Z up.
+    # Align +Z to +X.
+    obj_holder_L = add_cylinder("rod_holder_L", 0.005, 0.050, (0,0,0), (0,0,0))
+    apply_material(obj_holder_L, mat_metal_silver)
+    orient_z_to_vector(obj_holder_L, Vector((1,0,0)))
+    
+    # Align rod_holder_L.center to side_panel_L.right_face
+    # side_panel_L right_face center: x=0, y=1.1, z=0.
+    # obj_holder_L center offset: 0,0,0.
+    # new_loc = (0, 1.1, 0).
+    align_to_face(obj_holder_L, obj_L, 'center') # Using 'center' of the face object? 
+    # The prompt says "Align ... to ... face". 
+    # My helper align_to_face expects an object or list of objects.
+    # If I pass obj_L, and face_type 'center', it uses obj_L.center.
+    # But I want the center of the RIGHT FACE of obj_L.
+    # Let's modify align_to_face to accept a specific face center calculation if needed, 
+    # or just calculate it manually here for clarity.
+    
+    # Manual alignment for rod_holder_L
+    target_L = get_face_center(obj_L, 'right')
+    obj_holder_L.location = target_L
+    
+    # Offset (0, 1.800, 0)
+    obj_holder_L.location += Vector((0, 1.800, 0))
+
+    # rod_holder_R
+    obj_holder_R = add_cylinder("rod_holder_R", 0.005, 0.050, (0,0,0), (0,0,0))
+    apply_material(obj_holder_R, mat_metal_silver)
+    orient_z_to_vector(obj_holder_R, Vector((1,0,0)))
+    
+    target_R = get_face_center(obj_R, 'left')
+    obj_holder_R.location = target_R
+    obj_holder_R.location += Vector((0, 1.800, 0))
+
+    # hanging_rod
+    # Cylinder Ø0.020 (R=0.010) x 0.560 W (Length).
+    # Rotate so +Z aligns +X.
+    obj_rod = add_cylinder("hanging_rod", 0.010, 0.560, (0,0,0), (0,0,0))
+    apply_material(obj_rod, mat_metal_silver)
+    orient_z_to_vector(obj_rod, Vector((1,0,0)))
+    
+    # Align hanging_rod.center to Avg(rod_holder_L.center, rod_holder_R.center)
+    avg_holder = average([obj_holder_L.location, obj_holder_R.location])
+    obj_rod.location = avg_holder
+    # Offset (0,0,0)
+
+    # --- SECTION 7 – Create Drawer Box ---
+
+    # drawer_box_bottom
+    obj_d_bot = add_cube("drawer_box_bottom", (0.540, 0.015, 0.500), (0,0,0), (0,0,0))
+    apply_material(obj_d_bot, mat_wood_light)
+    # Align drawer_box_bottom.top_face to bottom_panel.top_face
+    target_bot_top = get_face_center(obj_bot, 'top')
+    obj_d_bot.location = target_bot_top - get_face_offset(obj_d_bot, 'top') @ obj_d_bot.matrix_world.to_3x3()
+    # Offset (0, 0.015, 0.030)
+    obj_d_bot.location += Vector((0, 0.015, 0.030))
+
+    # drawer_box_front
+    obj_d_front = add_cube("drawer_box_front", (0.540, 0.150, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_d_front, mat_wood_light)
+    # Align drawer_box_front.bottom_face to drawer_box_bottom.top_face
+    target_d_bot_top = get_face_center(obj_d_bot, 'top')
+    obj_d_front.location = target_d_bot_top - get_face_offset(obj_d_front, 'bottom') @ obj_d_front.matrix_world.to_3x3()
+    # Offset (0, 0.075, 0.240)
+    obj_d_front.location += Vector((0, 0.075, 0.240))
+
+    # drawer_box_back
+    obj_d_back = add_cube("drawer_box_back", (0.540, 0.150, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_d_back, mat_wood_light)
+    # Align drawer_box_back.bottom_face to drawer_box_bottom.top_face
+    obj_d_back.location = target_d_bot_top - get_face_offset(obj_d_back, 'bottom') @ obj_d_back.matrix_world.to_3x3()
+    # Offset (0, 0.075, -0.240)
+    obj_d_back.location += Vector((0, 0.075, -0.240))
+
+    # drawer_box_left
+    obj_d_left = add_cube("drawer_box_left", (0.020, 0.150, 0.500), (0,0,0), (0,0,0))
+    apply_material(obj_d_left, mat_wood_light)
+    # Align drawer_box_left.bottom_face to drawer_box_bottom.top_face
+    obj_d_left.location = target_d_bot_top - get_face_offset(obj_d_left, 'bottom') @ obj_d_left.matrix_world.to_3x3()
+    # Offset (-0.260, 0.075, 0)
+    obj_d_left.location += Vector((-0.260, 0.075, 0))
+
+    # drawer_box_right
+    obj_d_right = add_cube("drawer_box_right", (0.020, 0.150, 0.500), (0,0,0), (0,0,0))
+    apply_material(obj_d_right, mat_wood_light)
+    # Align drawer_box_right.bottom_face to drawer_box_bottom.top_face
+    obj_d_right.location = target_d_bot_top - get_face_offset(obj_d_right, 'bottom') @ obj_d_right.matrix_world.to_3x3()
+    # Offset (0.260, 0.075, 0)
+    obj_d_right.location += Vector((0.260, 0.075, 0))
+
+    # --- SECTION 8 – Create Drawer Handle ---
+
+    # drawer_handle
+    obj_d_handle = add_cylinder("drawer_handle", 0.005, 0.080, (0,0,0), (0,0,0))
+    apply_material(obj_d_handle, mat_metal_silver)
+    # Rotate so +Z aligns +Y
+    orient_z_to_vector(obj_d_handle, Vector((0,1,0)))
+    
+    # Align drawer_handle.center to drawer_box_front.center
+    target_d_front_center = get_face_center(obj_d_front, 'center')
+    obj_d_handle.location = target_d_front_center
+    
+    # Offset (0, 0.075, 0.010)
+    obj_d_handle.location += Vector((0, 0.075, 0.010))
+
+    # --- SECTION 9 – Create Doors ---
+
+    # door_L
+    obj_door_L = add_cube("door_L", (0.280, 2.100, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_door_L, mat_wood_dark)
+    # Align door_L.right_face to center_stile.left_face
+    target_stile_left = get_face_center(obj_stile, 'left')
+    obj_door_L.location = target_stile_left - get_face_offset(obj_door_L, 'right') @ obj_door_L.matrix_world.to_3x3()
+    # Offset (-0.010, 0, 0)
+    obj_door_L.location += Vector((-0.010, 0, 0))
+
+    # door_R
+    obj_door_R = add_cube("door_R", (0.280, 2.100, 0.020), (0,0,0), (0,0,0))
+    apply_material(obj_door_R, mat_wood_dark)
+    # Align door_R.left_face to center_stile.right_face
+    target_stile_right = get_face_center(obj_stile, 'right')
+    obj_door_R.location = target_stile_right - get_face_offset(obj_door_R, 'left') @ obj_door_R.matrix_world.to_3x3()
+    # Offset (0.010, 0, 0)
+    obj_door_R.location += Vector((0.010, 0, 0))
+
+    # --- SECTION 10 – Create Door Handles ---
+
+    # door_handle_L
+    obj_door_handle_L = add_cylinder("door_handle_L", 0.005, 0.080, (0,0,0), (0,0,0))
+    apply_material(obj_door_handle_L, mat_metal_silver)
+    # Rotate so +Z aligns +Y
+    orient_z_to_vector(obj_door_handle_L, Vector((0,1,0)))
+    
+    # Align door_handle_L.center to door_L.left_face
+    target_door_L_left = get_face_center(obj_door_L, 'left')
+    obj_door_handle_L.location = target_door_L_left
+    
+    # Offset (-0.010, 1.000, 0)
+    obj_door_handle_L.location += Vector((-0.010, 1.000, 0))
+
+    # door_handle_R
+    obj_door_handle_R = add_cylinder("door_handle_R", 0.005, 0.080, (0,0,0), (0,0,0))
+    apply_material(obj_door_handle_R, mat_metal_silver)
+    # Rotate so +Z aligns +Y
+    orient_z_to_vector(obj_door_handle_R, Vector((0,1,0)))
+    
+    # Align door_handle_R.center to door_R.right_face
+    target_door_R_right = get_face_center(obj_door_R, 'right')
+    obj_door_handle_R.location = target_door_R_right
+    
+    # Offset (0.010, 1.000, 0)
+    obj_door_handle_R.location += Vector((0.010, 1.000, 0))
+
+if __name__ == "__main__":
+    main()
+```

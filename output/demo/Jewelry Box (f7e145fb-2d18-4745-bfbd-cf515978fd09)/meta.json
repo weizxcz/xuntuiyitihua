@@ -1,0 +1,45 @@
+{
+  "id": "f7e145fb-2d18-4745-bfbd-cf515978fd09",
+  "name": "Jewelry Box",
+  "instruction": "Design a jewelry box with a decorative appearance. The box should have multiple compartments for rings, necklaces, and earrings. Include a mirror on the inside of the lid.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a jewelry box.",
+        "The box has a rectangular or square shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The mirror is proportionate to the box."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The compartments are appropriately sized for their intended items.",
+        "The mirror is securely attached to the inside of the lid.",
+        "The box opens and closes properly without obstruction."
+      ],
+      "Object distance and contact": [
+        "The compartments do not overlap with each other.",
+        "There is adequate space for items to be placed in each compartment.",
+        "The mirror does not interfere with the compartments when the lid is closed."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The decorative appearance aligns with the instruction."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

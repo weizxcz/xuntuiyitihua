@@ -1,0 +1,92 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_floral_green; diffuse_color = (0.2, 0.4, 0.2, 1.0).
+Define material mat_floral_pink; diffuse_color = (0.8, 0.4, 0.5, 1.0).
+Define material mat_floral_white; diffuse_color = (0.95, 0.95, 0.95, 1.0).
+Define material mat_wall_base; diffuse_color = (0.9, 0.9, 0.85, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base wall panel  ---
+Create primitive cuboid with size 1.0×1.0×0.02 m and name it wall_base.
+Rotate wall_base so its +Z axis aligns +Z (world).
+Anchor wall_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create virtual center point  ---
+Create an Empty helper (cube display) and name it tile_center.
+Rotate tile_center so its axis aligns +Z (world).
+Move tile_center to (0.5, 0.5, 0.01).
+Stage 2 complete.
+
+---  SECTION 3 – Create floral motif components  ---
+Create primitive cuboid with size 0.04×0.04×0.005 m and name it flower_center.
+Rotate flower_center so its +Z axis aligns +Z (world).
+Align flower_center.center to tile_center.
+Align flower_center.bottom_face to wall_base.top_face.
+Then move by offset(0,0,0.001).
+
+Create primitive cuboid with size 0.02×0.06×0.003 m and name it petal_1.
+Rotate petal_1 so its +Z axis aligns +Z (world).
+Align petal_1.center to tile_center.
+Align petal_1.bottom_face to wall_base.top_face.
+Then move by offset(0, 0.03, 0.001).
+
+Create primitive cuboid with size 0.06×0.02×0.003 m and name it petal_2.
+Rotate petal_2 so its +Z axis aligns +Z (world).
+Align petal_2.center to tile_center.
+Align petal_2.bottom_face to wall_base.top_face.
+Then move by offset(0.03, 0, 0.001).
+
+Create primitive cuboid with size 0.02×0.06×0.003 m and name it petal_3.
+Rotate petal_3 so its +Z axis aligns +Z (world).
+Align petal_3.center to tile_center.
+Align petal_3.bottom_face to wall_base.top_face.
+Then move by offset(0, -0.03, 0.001).
+
+Create primitive cuboid with size 0.06×0.02×0.003 m and name it petal_4.
+Rotate petal_4 so its +Z axis aligns +Z (world).
+Align petal_4.center to tile_center.
+Align petal_4.bottom_face to wall_base.top_face.
+Then move by offset(-0.03, 0, 0.001).
+
+Create primitive cuboid with size 0.03×0.01×0.002 m and name it leaf_1.
+Rotate leaf_1 so its +Z axis aligns +Z (world).
+Align leaf_1.center to tile_center.
+Align leaf_1.bottom_face to wall_base.top_face.
+Then move by offset(0.02, 0.02, 0.001).
+
+Create primitive cuboid with size 0.03×0.01×0.002 m and name it leaf_2.
+Rotate leaf_2 so its +Z axis aligns +Z (world).
+Align leaf_2.center to tile_center.
+Align leaf_2.bottom_face to wall_base.top_face.
+Then move by offset(-0.02, -0.02, 0.001).
+Stage 3 complete.
+
+---  SECTION 4 – Assemble composite floral tile  ---
+Boolean-union flower_center, petal_1, petal_2, petal_3, petal_4, leaf_1, leaf_2; keep flower_center.
+Rename flower_center to floral_tile.
+Stage 4 complete.
+
+---  SECTION 5 – Generate seamless wall pattern  ---
+For r in 0…9 and c in 0…9:
+  Create primitive cuboid with size 1.0×1.0×0.02 m and name it wall_tile_r_c.
+  Rotate wall_tile_r_c so its +Z axis aligns +Z (world).
+  Anchor wall_tile_r_c to world origin.
+  Then offset(c·1.0, r·1.0, 0).
+  Boolean-union wall_tile_r_c with floral_tile; keep wall_tile_r_c.
+  Rename wall_tile_r_c to wall_pattern_r_c.
+Stage 5 complete.
+
+All stages complete.

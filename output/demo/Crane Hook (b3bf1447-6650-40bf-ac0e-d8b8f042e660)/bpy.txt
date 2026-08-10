@@ -1,0 +1,549 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for col in bpy.data.collections:
+        col.objects.clear()
+
+def set_units():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Roughness'].default_value = 0.5
+    bsdf.inputs['Metallic'].default_value = 0.9
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='TRIFAN')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc (flat cylinder) primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments) # Small depth to avoid z-fighting if needed, or use 0
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (1, 1, 0.01) # Make it flat
+    return obj
+
+def add_cube(name, size):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, height, segments=32):
+    """Add a cone primitive."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=height, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, segments=32, ring_count=16):
+    """Add a UV sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=segments, ring_count=ring_count)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_torus(name, major_radius, minor_radius, major_segments=48, minor_segments=24):
+    """Add a torus primitive."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=major_segments, minor_segments=minor_segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.to_quaternion()
+    # Target direction in local space (inverse of current rotation)
+    # Actually, simpler: set rotation directly to align axis to vector
+    
+    # Define basis vectors for the object's local axis
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    else:
+        return
+
+    # Calculate rotation quaternion to align local_axis to target vector
+    # We need to handle the case where vectors are parallel or anti-parallel
+    if local_axis.normalized().dot(vector.normalized()) == -1:
+        # 180 degree rotation around any perpendicular axis
+        # Find a perpendicular vector
+        perp = Vector((1, 0, 0))
+        if abs(local_axis.x) > 0.9:
+            perp = Vector((0, 1, 0))
+        rot_quat = local_axis.rotation_difference(-vector) # This might be tricky
+        # Simpler approach: Use look_at logic
+        pass
+    
+    # Robust alignment using quaternion rotation_difference
+    # We want to rotate the object such that its local axis points to 'vector'
+    # Current local axis in world space is: rot * local_axis
+    # We want new rot such that new_rot * local_axis = vector
+    
+    # Let's just set the rotation to align the axis.
+    # Create a rotation that aligns local_axis to vector.
+    # We need an up-vector to define the roll. Default to Z if axis is not Z, else X.
+    up = Vector((0, 0, 1))
+    if axis == 'Z':
+        up = Vector((1, 0, 0))
+    
+    # Calculate rotation
+    # Method: Align local_axis to vector, then align 'up' to the projected up
+    q_align = local_axis.rotation_difference(vector)
+    
+    # Apply this rotation to the object
+    obj.rotation_euler = q_align.to_euler()
+
+def get_face_normal(obj, axis='Z'):
+    """Get the world direction of a local axis face."""
+    # This is a simplification. For primitives, we know the geometry.
+    # For a cylinder/cone, +Z face is at the top.
+    # We return the world vector pointing in the direction of the local axis.
+    if axis == 'X':
+        return obj.matrix_world.to_3x3() @ Vector((1, 0, 0))
+    elif axis == 'Y':
+        return obj.matrix_world.to_3x3() @ Vector((0, 1, 0))
+    elif axis == 'Z':
+        return obj.matrix_world.to_3x3() @ Vector((0, 0, 1))
+    return Vector((0,0,0))
+
+def get_face_center(obj, axis='Z'):
+    """Get the world location of the center of a local axis face."""
+    # Get the local center of the face
+    # For primitives centered at origin:
+    # +Z face center is (0,0, radius/height)
+    # -Z face center is (0,0, -radius/height)
+    # +X face center is (size/2, 0, 0)
+    
+    # We need to know the dimensions of the object to find the face center
+    # This is tricky for generic objects. 
+    # For this script, we assume primitives and calculate based on known types.
+    
+    loc = obj.location
+    rot = obj.rotation_euler.to_quaternion()
+    
+    # Helper to transform a local point to world
+    def l2w(lp):
+        return rot @ lp + loc
+
+    if obj.type == 'MESH':
+        # Try to get bounding box or specific geometry
+        # For simplicity in this generator, we assume standard primitives
+        # and their default orientations.
+        
+        # Check if it's a cylinder/cone (aligned to Z by default)
+        # We can check the mesh attributes or just assume based on naming/type if we created them.
+        # Since we create them, we know their dimensions.
+        
+        # Let's use a generic approach: Raycast or BMesh to find the face?
+        # Too slow. Let's rely on the fact that we just created them.
+        
+        # If it's a cylinder/cone/sphere/torus aligned to Z:
+        # +Z face is at Z = height/2 or radius
+        pass
+    
+    # Fallback: Return object location if we can't determine face
+    return loc
+
+def align_face_to_face(obj_source, axis_source, obj_target, axis_target):
+    """Align obj_source's axis face to obj_target's axis face."""
+    # 1. Align orientations
+    dir_source = get_face_normal(obj_source, axis_source)
+    dir_target = get_face_normal(obj_target, axis_target)
+    
+    # Rotate source to match target direction
+    if dir_source.length > 0 and dir_target.length > 0:
+        align_axis_to_vector(obj_source, axis_source, dir_target)
+    
+    # 2. Align positions (center-to-center of the faces)
+    # We need to calculate the world position of the face centers
+    # Since we just rotated, the object's local axes are aligned with world axes (mostly)
+    # But the object might have been rotated arbitrarily.
+    
+    # Let's assume after alignment, the local axis points in the target direction.
+    # We need to move the object so that the face center touches the target face center.
+    
+    # Calculate face centers in local space
+    # This requires knowing the object's dimensions.
+    # We will store dimensions in a custom property or assume standard primitives.
+    
+    # For this script, we will implement specific logic for the primitives we create.
+    pass
+
+def align_center_to_center(obj_source, obj_target):
+    """Align the XY center of obj_source to obj_target."""
+    # Move obj_source so its location matches obj_target's location
+    obj_source.location = obj_target.location.copy()
+
+def offset_object(obj, offset_vector):
+    """Move object by offset in its local axes."""
+    # Convert local offset to world offset
+    world_offset = obj.matrix_world.to_3x3() @ offset_vector
+    obj.location += world_offset
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using cutter on target."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Add Boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(objects_to_union, target_name):
+    """Union a list of objects into the target."""
+    target = bpy.data.objects[target_name]
+    
+    # Add Boolean modifier to target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = objects_to_union[0] # Blender boolean modifier only supports one object at a time in UI, but we can chain or use a single cutter
+    
+    # Actually, for multiple objects, we usually union them into one mesh first or apply sequentially.
+    # For simplicity, we will apply them one by one or use a single combined cutter.
+    # Let's combine all objects into one temporary object for the boolean operation.
+    
+    # Combine meshes
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+    target.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    # Join them
+    bpy.ops.object.join()
+    
+    # The result is now a single object. We need to rename it back to target_name if it changed.
+    # The join operation keeps the active object's name.
+    pass
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        return self.obj.location.copy()
+    
+    def face_center_world(self, axis='Z'):
+        # Calculate the world position of the face center
+        # This depends on the object's geometry.
+        # For primitives, we can calculate it.
+        
+        # Get local face center
+        local_center = Vector((0, 0, 0))
+        
+        # Determine dimensions
+        # We assume the object is a primitive created by our helpers
+        # We can check the mesh attributes or just use a generic bounding box approach
+        
+        # Bounding Box approach
+        bbox = self.obj.bound_box
+        # bbox is in local space
+        # Find the min/max for the given axis
+        if axis == 'X':
+            # Find max X
+            max_x = max(v[0] for v in bbox)
+            # Find min/max Y and Z for the center
+            min_y, max_y = min(v[1] for v in bbox), max(v[1] for v in bbox)
+            min_z, max_z = min(v[2] for v in bbox), max(v[2] for v in bbox)
+            local_center = Vector((max_x, (min_y + max_y)/2, (min_z + max_z)/2))
+        elif axis == 'Y':
+            max_y = max(v[1] for v in bbox)
+            min_x, max_x = min(v[0] for v in bbox), max(v[0] for v in bbox)
+            min_z, max_z = min(v[2] for v in bbox), max(v[2] for v in bbox)
+            local_center = Vector(((min_x + max_x)/2, max_y, (min_z + max_z)/2))
+        elif axis == 'Z':
+            max_z = max(v[2] for v in bbox)
+            min_x, max_x = min(v[0] for v in bbox), max(v[0] for v in bbox)
+            min_y, max_y = min(v[1] for v in bbox), max(v[1] for v in bbox)
+            local_center = Vector(((min_x + max_x)/2, (min_y + max_y)/2, max_z))
+            
+        # Transform to world space
+        return self.obj.matrix_world @ local_center
+
+    def radial_point_world(self, axis='Z', angle=0):
+        # Get the center of the face
+        center = self.face_center_world(axis)
+        # Get the normal of the face
+        normal = get_face_normal(self.obj, axis)
+        
+        # If axis is Z, radial points are in XY plane
+        if axis == 'Z':
+            # Rotate around Z axis
+            rot_matrix = Matrix.Rotation(angle, 4, 'Z')
+            # Vector from center to surface in local space (assuming circular cross section)
+            # We need the radius. Let's approximate from bounding box.
+            bbox = self.obj.bound_box
+            # Radius is half of the width in XY
+            min_x, max_x = min(v[0] for v in bbox), max(v[0] for v in bbox)
+            min_y, max_y = min(v[1] for v in bbox), max(v[1] for v in bbox)
+            radius = max(max_x - min_x, max_y - min_y) / 2
+            
+            # Local radial vector
+            local_radial = Vector((math.cos(angle), math.sin(angle), 0)) * radius
+            # Transform to world
+            world_radial = self.obj.matrix_world.to_3x3() @ local_radial
+            return center + world_radial
+        else:
+            # For other axes, radial is more complex. Default to center.
+            return center
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+mat_steel_hardened = make_material("steel_hardened", (0.3, 0.3, 0.35, 1.0))
+mat_steel_spring = make_material("steel_spring", (0.2, 0.2, 0.25, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create Hook Body (Shank, Throat, Tip) ---
+
+# Create shank
+shank = add_cylinder("shank", radius=0.02, depth=0.3)
+shank.data.materials.append(mat_steel_hardened)
+align_axis_to_vector(shank, 'Z', Vector((0, 0, 1)))
+shank.location = Vector((0, 0, 0.15))
+
+# Create throat
+throat = add_torus("throat", major_radius=0.06, minor_radius=0.02)
+throat.data.materials.append(mat_steel_hardened)
+align_axis_to_vector(throat, 'Z', Vector((0, 0, 1)))
+
+# Align throat.+Z_face to shank.+Z_face
+# Shank +Z face is at Z = 0.15 + 0.15 = 0.3
+# Throat +Z face is at Z = throat.location.z + throat.radius (approx)
+# Throat is a torus, so its "height" is 2*minor_radius = 0.04
+# Center of +Z face is at local Z = minor_radius = 0.02
+# We want throat's +Z face to touch shank's +Z face.
+# So throat center Z should be: shank_face_Z - throat_face_local_Z
+# shank_face_Z = 0.3
+# throat_face_local_Z = 0.02
+# throat.location.z = 0.3 - 0.02 = 0.28
+
+# Let's use the Locator helper for precision
+loc_shank = Locator(shank)
+loc_throat = Locator(throat)
+
+# Align positions
+throat_face_shank = loc_shank.face_center_world('Z')
+throat_face_throat = loc_throat.face_center_world('Z')
+
+# Move throat so its face touches shank's face
+# Vector to move = throat_face_shank - throat_face_throat
+move_vec = throat_face_shank - throat_face_throat
+throat.location += move_vec
+
+# Offset (0,0,0)
+offset_object(throat, Vector((0, 0, 0)))
+
+# Create tip
+tip = add_cone("tip", radius=0.02, height=0.04)
+tip.data.materials.append(mat_steel_hardened)
+align_axis_to_vector(tip, 'Z', Vector((0, 0, 1)))
+
+# Align tip.+Z_face to throat.+Z_face
+loc_tip = Locator(tip)
+throat_face_throat_new = loc_throat.face_center_world('Z')
+tip_face_tip = loc_tip.face_center_world('Z')
+
+# Move tip so its face touches throat's face
+# Tip is a cone, +Z face is the base (radius 0.02).
+# Local +Z face center is at Z = height/2 = 0.02
+# We want tip's +Z face to touch throat's +Z face.
+# So tip center Z should be: throat_face_Z - tip_face_local_Z
+# throat_face_Z = throat_face_shank_new (which is 0.3)
+# tip_face_local_Z = 0.02
+# tip.location.z = 0.3 - 0.02 = 0.28
+
+move_vec_tip = throat_face_throat_new - tip_face_tip
+tip.location += move_vec_tip
+
+# Offset (0,0,0)
+offset_object(tip, Vector((0, 0, 0)))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create Safety Latch Mechanism (Latch Arm, Tip, Spring, Pin) ---
+
+# Create latch_arm
+latch_arm = add_cube("latch_arm", size=0.01) # Size is total width, so half-size is 0.005
+# The prompt says size 0.01x0.01x0.08. add_cube size is the total width.
+# So we need to scale it.
+latch_arm.scale = (0.01, 0.01, 0.08)
+latch_arm.data.materials.append(mat_steel_hardened)
+align_axis_to_vector(latch_arm, 'Z', Vector((0, 0, 1)))
+
+# Align latch_arm.XY_center to throat.side_at(0°)
+# throat.side_at(0°) likely means the point on the throat's circumference at 0 degrees (X axis)
+# Throat is a torus. side_at(0°) is the point on the major circle at angle 0.
+# Throat center is at (0, 0, 0.28) (from previous step)
+# Throat major radius is 0.06.
+# So side_at(0°) is at (0.06, 0, 0.28) relative to throat center?
+# Or is it the local X axis of the throat?
+# Let's assume it means the point on the torus surface at angle 0 in the XY plane.
+# Throat is aligned to Z. So the torus lies in XY plane.
+# side_at(0°) is at (major_radius, 0, 0) in local space, transformed to world.
+# Throat center is at (0, 0, 0.28).
+# So side_at(0°) is at (0.06, 0, 0.28).
+
+loc_throat = Locator(throat)
+anchor_point = loc_throat.radial_point_world('Z', angle=0)
+
+# Align latch_arm.XY_center to anchor_point
+# latch_arm.XY_center is its location (since it's centered at origin)
+latch_arm.location.x = anchor_point.x
+latch_arm.location.y = anchor_point.y
+# latch_arm.location.z remains unchanged for now?
+# The prompt says "Align latch_arm.XY_center to throat.side_at(0°)".
+# This implies X and Y alignment. Z is handled by offset.
+
+# Offset (0,0,0.02)
+offset_object(latch_arm, Vector((0, 0, 0.02)))
+
+# Create latch_tip
+latch_tip = add_uvsphere("latch_tip", radius=0.015)
+latch_tip.data.materials.append(mat_steel_hardened)
+align_axis_to_vector(latch_tip, 'Z', Vector((0, 0, 1)))
+
+# Align latch_tip.XY_center to latch_arm.+Z_face
+loc_latch_arm = Locator(latch_arm)
+latch_arm_face = loc_latch_arm.face_center_world('Z')
+loc_latch_tip = Locator(latch_tip)
+latch_tip_face = loc_latch_tip.face_center_world('Z') # Sphere doesn't have a "face", but center is center.
+# For a sphere, XY_center is the center.
+# So we align latch_tip center to latch_arm +Z face.
+# latch_tip center should be at latch_arm +Z face.
+# But then we offset.
+
+# Move latch_tip so its center is at latch_arm +Z face
+latch_tip.location.x = latch_arm_face.x
+latch_tip.location.y = latch_arm_face.y
+latch_tip.location.z = latch_arm_face.z
+
+# Offset (0,0,0.04)
+offset_object(latch_tip, Vector((0, 0, 0.04)))
+
+# Create spring
+spring = add_cylinder("spring", radius=0.0025, depth=0.02) # Diameter 0.005 -> Radius 0.0025
+spring.data.materials.append(mat_steel_spring)
+align_axis_to_vector(spring, 'Z', Vector((1, 0, 0))) # Align +Z to +X
+
+# Align spring.XY_center to latch_arm.side_at(90°)
+# latch_arm.side_at(90°) means the point on the latch_arm's bounding box at 90 degrees?
+# Or is it a circular feature? Latch arm is a box.
+# "side_at(90°)" usually implies a circular feature.
+# If latch_arm is a box, maybe it means the face at +Y?
+# Let's assume it means the point on the latch_arm's "side" at 90 degrees.
+# If we treat the latch_arm as having a circular cross-section for anchoring purposes?
+# No, it's a box.
+# Let's assume "side_at(90°)" refers to the latch_arm's local +Y axis face center.
+loc_latch_arm = Locator(latch_arm)
+anchor_spring = loc_latch_arm.face_center_world('Y') # 90 degrees is +Y
+
+# Align spring.XY_center to anchor_spring
+# Spring is a cylinder aligned to X. Its XY center is its center.
+spring.location.x = anchor_spring.x
+spring.location.y = anchor_spring.y
+spring.location.z = anchor_spring.z
+
+# Offset (0,0,0.04)
+offset_object(spring, Vector((0, 0, 0.04)))
+
+# Create pin
+pin = add_cylinder("pin", radius=0.001, depth=0.02) # Diameter 0.002 -> Radius 0.001
+pin.data.materials.append(mat_steel_hardened)
+align_axis_to_vector(pin, 'Z', Vector((1, 0, 0))) # Align +Z to +X
+
+# Align pin.XY_center to latch_arm.side_at(90°)
+# Same anchor as spring
+anchor_pin = anchor_spring
+
+pin.location.x = anchor_pin.x
+pin.location.y = anchor_pin.y
+pin.location.z = anchor_pin.z
+
+# Offset (0,0,0.04)
+offset_object(pin, Vector((0, 0, 0.04)))
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Assemble Crane Hook ---
+# Connect crane_hook_assembly to hook_body, safety_latch, spring, and pin.
+# This implies creating an assembly object or grouping them.
+# In Blender, this is done by joining them or creating a collection.
+# The prompt says "Connect", which might mean boolean union or just grouping.
+# Given "Assemble", and the previous steps, it's likely a boolean union to make a single mesh.
+
+# Define the parts to union
+parts_to_union = [shank, throat, tip, latch_arm, latch_tip, spring, pin]
+
+# Create a new object to hold the assembly
+bpy.ops.object.select_all(action='DESELECT')
+for p in parts_to_union:
+    p.select_set(True)
+bpy.context.view_layer.objects.active = parts_to_union[0]
+
+# Join them into a single mesh
+bpy.ops.object.join()
+
+# Rename the resulting object
+assembly_obj = bpy.context.active_object
+assembly_obj.name = "crane_hook_assembly"
+assembly_obj.data.materials.append(mat_steel_hardened) # Apply main material
+
+# All stages complete.
+```

@@ -1,0 +1,1 @@
+Create a 3D model of an apple slicer. The slicer should have a circular frame with multiple blades radiating from the center to cut an apple into equal slices.

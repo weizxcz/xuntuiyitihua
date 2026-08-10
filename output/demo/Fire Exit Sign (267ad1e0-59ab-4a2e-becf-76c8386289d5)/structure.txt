@@ -1,0 +1,32 @@
+-- MATERIAL LIBRARY --
+mat_green_diffuse | diffuse_color=(0,1,0,1)
+mat_green_emissive | diffuse_color=(0,1,0,0.8)
+mat_white_diffuse | diffuse_color=(1,1,1,1)
+mat_white_emissive | diffuse_color=(1,1,1,0.9)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of sign_panel + text_layer + symbol_layer | assembly_order=[sign_panel, text_layer, symbol_layer] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sign_panel | Rectangular base plate 0.600×0.300×0.005 m | Align(XY) sign_panel.center to root.center; orientation=axis:+Z; mat=mat_green_diffuse; create_method=primitive(cube); size=(0.600, 0.300, 0.005) |
+
+Layer 2 – Text Layer
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| text_layer | Composite of "FIRE" text + "EXIT" text | assembly_order=[text_fire, text_exit] |
+| text_fire | "FIRE" text block 0.200×0.050×0.002 m | Align(XY) text_fire.center to root.center; offset(0, 0.060, 0); orientation=axis:+Z; mat=mat_white_emissive; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Text "FIRE" approximated by bounding box W=0.200 m, H=0.050 m. Extrude thickness t=0.002 m along +Z. Caps enabled. |
+| text_exit | "EXIT" text block 0.200×0.050×0.002 m | Align(XY) text_exit.center to root.center; offset(0, -0.060, 0); orientation=axis:+Z; mat=mat_white_emissive; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Text "EXIT" approximated by bounding box W=0.200 m, H=0.050 m. Extrude thickness t=0.002 m along +Z. Caps enabled. |
+
+Layer 3 – Symbol Layer
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| symbol_layer | Composite of running figure + arrow | assembly_order=[running_figure, arrow] |
+| running_figure | Stylized running person silhouette 0.100×0.150×0.002 m | Align(XY) running_figure.center to root.center; offset(0.150, 0, 0); orientation=axis:+Z; mat=mat_white_emissive; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Stylized running figure silhouette. Bounding box W=0.100 m, H=0.150 m. Extrude thickness t=0.002 m along +Z. Caps enabled. |
+| arrow | Left-pointing arrow 0.100×0.050×0.002 m | Align(XY) arrow.center to root.center; offset(-0.150, 0, 0); orientation=axis:+Z; mat=mat_white_emissive; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Left-pointing arrow silhouette. Bounding box W=0.100 m, H=0.050 m. Extrude thickness t=0.002 m along +Z. Caps enabled. |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,49 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_dark; diffuse_color = (0.35,0.20,0.10,1.0).
+Define material mat_wood_light; diffuse_color = (0.80,0.65,0.45,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create legs group  ---
+Create primitive cuboid with size 0.04×0.04×0.30 m and name it leg_fl.
+Rotate leg_fl so its +Z axis aligns +Z (world).
+Anchor leg_fl to seat_top.left_face and seat_top.front_face using Align(XY) on center.
+Then move by offset(0.18, 0.18, 0).
+
+Create primitive cuboid with size 0.04×0.04×0.30 m and name it leg_fr.
+Rotate leg_fr so its +Z axis aligns +Z (world).
+Anchor leg_fr to seat_top.right_face and seat_top.front_face using Align(XY) on center.
+Then move by offset(0.18, -0.18, 0).
+
+Create primitive cuboid with size 0.04×0.04×0.30 m and name it leg_bl.
+Rotate leg_bl so its +Z axis aligns +Z (world).
+Anchor leg_bl to seat_top.left_face and seat_top.back_face using Align(XY) on center.
+Then move by offset(-0.18, 0.18, 0).
+
+Create primitive cuboid with size 0.04×0.04×0.30 m and name it leg_br.
+Rotate leg_br so its +Z axis aligns +Z (world).
+Anchor leg_br to seat_top.right_face and seat_top.back_face using Align(XY) on center.
+Then move by offset(-0.18, -0.18, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create seat_group  ---
+Create primitive cuboid with size 0.40×0.40×0.04 m and name it seat_top.
+Rotate seat_top so its +Z axis aligns +Z (world).
+Anchor seat_top.bottom_face to Avg(leg_fl.top_face, leg_fr.top_face, leg_bl.top_face, leg_br.top_face) using Align(XY).
+Then move by offset(0, 0, 0.020).
+
+Stage 2 complete.
+
+All stages complete.

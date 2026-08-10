@@ -1,0 +1,48 @@
+{
+  "id": "aa459177-975f-46f3-b8e6-83f7d4979187",
+  "name": "Oven Mitt",
+  "instruction": "I need a 3D model of an oven mitt.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an oven mitt.",
+        "The oven mitt has a rounded shape.",
+        "The mitt features a thumb section.",
+        "The body of the mitt is elongated."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The length of the mitt should be approximately 30cm."
+      ],
+      "Proportion": [
+        "The thumb section is proportionate to the body of the mitt.",
+        "The overall size is suitable for handling hot items."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The mitt is designed to fit comfortably over a hand.",
+        "The thumb section is positioned correctly for grip.",
+        "The body of the mitt is wide enough to accommodate various hand sizes."
+      ],
+      "Object distance and contact": [
+        "The mitt does not have any overlapping sections.",
+        "The inner lining should be snug against the hand without gaps.",
+        "The opening for the hand is appropriately sized."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The specified object, an oven mitt, is accurately represented.",
+        "There are no deviations from the instruction regarding the type of object."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

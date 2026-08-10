@@ -1,0 +1,87 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material metal_body; diffuse_color = (0.50, 0.50, 0.50, 1).
+Define material metal_dial; diffuse_color = (0.20, 0.20, 0.20, 1).
+Define material plastic_dial; diffuse_color = (0.08, 0.08, 0.08, 1).
+Define material plastic_handle; diffuse_color = (0.08, 0.08, 0.08, 1).
+Define material glass_door; diffuse_color = (0.78, 0.86, 1.00, 0.50).
+Define material metal_rack; diffuse_color = (0.71, 0.71, 0.71, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main body shell  ---
+Create primitive cuboid with size 0.45×0.30×0.35 m and name it main_body_shell.
+Rotate main_body_shell so its +Z axis aligns +Z (world).
+Anchor main_body_shell to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create main body cavity  ---
+Create primitive cuboid with size 0.40×0.25×0.30 m and name it main_body_cavity.
+Rotate main_body_cavity so its +Z axis aligns +Z (world).
+Anchor main_body_cavity to main_body_shell.center.
+Then move by offset(0,0,0).
+Boolean-subtract main_body_cavity from main_body_shell; discard main_body_cavity.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create door frame  ---
+Create primitive cuboid with size 0.40×0.25×0.02 m and name it door_frame.
+Rotate door_frame so its +Z axis aligns +Z (world).
+Anchor door_frame to main_body_shell.front_face.
+Then move by offset(0, 0.125, 0.175).
+
+---  SECTION 4 – Create door glass  ---
+Create primitive cuboid with size 0.38×0.23×0.005 m and name it door_glass.
+Rotate door_glass so its +Z axis aligns +Z (world).
+Anchor door_glass to door_frame.front_face.
+Then move by offset(0, 0.125, 0.175).
+Boolean-subtract door_glass from door_frame; discard door_glass.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create door handle  ---
+Create primitive cuboid with size 0.20×0.02×0.02 m and name it door_handle.
+Rotate door_handle so its +Z axis aligns +Z (world).
+Anchor door_handle to door_frame.front_face.
+Then move by offset(0, 0.05, 0.185).
+Stage 5 complete.
+
+---  SECTION 6 – Create food rack  ---
+Create primitive cuboid with size 0.38×0.23×0.01 m and name it food_rack.
+Rotate food_rack so its +Z axis aligns +Z (world).
+Anchor food_rack to main_body_shell.interior_bottom.
+Then move by offset(0, 0.05, 0.15).
+Stage 6 complete.
+
+---  SECTION 7 – Create temperature dial  ---
+Create primitive cylinder with Ø0.04×0.02 m and name it dial_1.
+Rotate dial_1 so its +Z axis aligns +Z (world).
+Anchor dial_1 to main_body_shell.front_face.
+Then move by offset(-0.15, 0.15, 0.185).
+Stage 7 complete.
+
+---  SECTION 8 – Create timer dial  ---
+Create primitive cylinder with Ø0.04×0.02 m and name it dial_2.
+Rotate dial_2 so its +Z axis aligns +Z (world).
+Anchor dial_2 to main_body_shell.front_face.
+Then move by offset(-0.05, 0.15, 0.185).
+Stage 8 complete.
+
+---  SECTION 9 – Create function dial  ---
+Create primitive cylinder with Ø0.04×0.02 m and name it dial_3.
+Rotate dial_3 so its +Z axis aligns +Z (world).
+Anchor dial_3 to main_body_shell.front_face.
+Then move by offset(0.05, 0.15, 0.185).
+Stage 9 complete.
+
+All stages complete.

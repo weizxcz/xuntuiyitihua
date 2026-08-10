@@ -1,0 +1,53 @@
+{
+  "id": "cdc5cfe9-327a-438b-9c4c-794df66d51c8",
+  "name": "Pet Grooming Kit vs. Pet Feeding Set",
+  "instruction": "Design a 3D model comparing a pet grooming kit and a pet feeding set. The grooming kit should include items like a brush, comb, and nail clippers, while the feeding set should have bowls and a mat. Ensure the grooming kit is compact and organized, while the feeding set is more open and accessible.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The grooming kit includes a brush, comb, and nail clippers.",
+        "The feeding set includes bowls and a mat.",
+        "The brush has a rectangular shape.",
+        "The comb is elongated and narrow.",
+        "The nail clippers have a compact design.",
+        "The bowls are circular.",
+        "The mat is flat and rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The grooming kit items are proportionate to fit within the kit.",
+        "The bowls are proportionate to the mat.",
+        "The size of the mat is appropriate for the feeding bowls."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The grooming kit items are arranged compactly within the kit.",
+        "The feeding bowls are placed on the mat with enough space between them.",
+        "The mat is flat and provides a stable base for the bowls."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between grooming kit items.",
+        "The bowls are positioned on the mat without any gaps.",
+        "The mat is large enough to catch spills from the bowls."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The grooming kit is designed to be compact and organized.",
+        "The feeding set is designed to be open and accessible.",
+        "All specified items for both sets are included."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

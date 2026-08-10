@@ -1,0 +1,1 @@
+Design a wall clock that also functions as a decorative piece. The clock should have large, easy-to-read numbers and a sweeping second hand. Around the clock face, add a series of small compartments that can hold tiny decorative items or trinkets. The overall design should be both functional and aesthetically pleasing.

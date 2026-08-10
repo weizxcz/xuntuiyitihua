@@ -1,0 +1,3 @@
+Design a trash can. 
+
+It should have a simple, cylindrical shape.

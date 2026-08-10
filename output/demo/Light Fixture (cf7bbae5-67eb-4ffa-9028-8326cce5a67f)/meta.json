@@ -1,0 +1,45 @@
+{
+  "id": "cf7bbae5-67eb-4ffa-9028-8326cce5a67f",
+  "name": "Light Fixture",
+  "instruction": "Create a simple light fixture with a round base that can be mounted on the ceiling. It should have a single bulb socket in the center.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a light fixture.",
+        "The base of the fixture is round.",
+        "The bulb socket is centrally located."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the bulb socket is proportionate to the round base.",
+        "The overall height of the fixture is balanced with the base diameter."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The round base is correctly oriented for ceiling mounting.",
+        "The bulb socket is positioned directly above the center of the base."
+      ],
+      "Object distance and contact": [
+        "The bulb socket does not extend beyond the edges of the base.",
+        "There is no gap between the bulb socket and the base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design follows the instruction for a simple light fixture."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

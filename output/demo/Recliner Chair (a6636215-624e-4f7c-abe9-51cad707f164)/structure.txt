@@ -1,0 +1,48 @@
+-- MATERIAL LIBRARY --
+fabric_dark | diffuse_color=(0.15,0.15,0.18,1.0)
+fabric_light | diffuse_color=(0.85,0.85,0.85,1.0)
+metal_steel | diffuse_color=(0.2,0.2,0.25,1.0)
+wood_oak | diffuse_color=(0.5,0.35,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| chair_root | Composite of all chair components | assembly_order=[frame_group],[upholstery_group],[mechanism_group],[footrest_group] |
+
+Layer 1 – Primary Structure (Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_base | Rectangular base platform | size=0.7×0.6×0.05 m; mat=wood_oak; create_method=primitive; pos=(0,0,0); orientation=axis:+Z |
+| leg_fl | Front-left support leg | size=0.05×0.05×0.45 m; mat=wood_oak; create_method=primitive; pos=(-0.3, -0.25, -0.25); orientation=axis:+Z |
+| leg_fr | Front-right support leg | size=0.05×0.05×0.45 m; mat=wood_oak; create_method=primitive; pos=(0.3, -0.25, -0.25); orientation=axis:+Z |
+| leg_bl | Back-left support leg | size=0.05×0.05×0.45 m; mat=wood_oak; create_method=primitive; pos=(-0.3, 0.25, -0.25); orientation=axis:+Z |
+| leg_br | Back-right support leg | size=0.05×0.05×0.45 m; mat=wood_oak; create_method=primitive; pos=(0.3, 0.25, -0.25); orientation=axis:+Z |
+| seat_frame | Main seat support beam | size=0.6×0.5×0.08 m; mat=wood_oak; create_method=primitive; pos=(0, 0, 0.25); orientation=axis:+Z |
+| back_frame | Vertical back support beam | size=0.6×0.08×0.8 m; mat=wood_oak; create_method=primitive; pos=(0, 0.25, 0.65); orientation=axis:+Z |
+
+Layer 2 – Upholstery & Comfort
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| seat_cushion | Padded seat surface | size=0.65×0.55×0.1 m; mat=fabric_dark; create_method=primitive; pos=(0, 0, 0.35); orientation=axis:+Z |
+| backrest_cushion | High backrest padding | size=0.65×0.15×0.9 m; mat=fabric_dark; create_method=primitive; pos=(0, 0.3, 0.7); orientation=axis:+Z |
+| headrest_cushion | Top headrest padding | size=0.4×0.15×0.2 m; mat=fabric_dark; create_method=primitive; pos=(0, 0.35, 1.15); orientation=axis:+Z |
+| armrest_l | Left wide armrest | size=0.15×0.55×0.15 m; mat=fabric_light; create_method=primitive; pos=(-0.35, 0, 0.55); orientation=axis:+Z |
+| armrest_r | Right wide armrest | size=0.15×0.55×0.15 m; mat=fabric_light; create_method=primitive; pos=(0.35, 0, 0.55); orientation=axis:+Z |
+
+Layer 3 – Reclining Mechanism & Controls
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pivot_hinge | Central pivot joint | size=0.1×0.1×0.1 m; mat=metal_steel; create_method=primitive; pos=(0, 0, 0.3); orientation=axis:+Z |
+| recline_lever | Side adjustment lever | size=0.05×0.05×0.2 m; mat=metal_steel; create_method=primitive; pos=(-0.35, -0.1, 0.4); orientation=axis:+Z |
+| gas_spring | Support strut | size=0.03×0.03×0.4 m; mat=metal_steel; create_method=primitive; pos=(0.1, 0.1, 0.3); orientation=axis:+Z |
+
+Layer 4 – Footrest Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| footrest_base | Main footrest platform | size=0.5×0.4×0.05 m; mat=wood_oak; create_method=primitive; pos=(0, -0.4, 0.3); orientation=axis:+Z |
+| footrest_cushion | Padded footrest surface | size=0.55×0.45×0.08 m; mat=fabric_dark; create_method=primitive; pos=(0, -0.4, 0.36); orientation=axis:+Z |
+| footrest_hinge | Footrest pivot point | size=0.05×0.05×0.05 m; mat=metal_steel; create_method=primitive; pos=(0, -0.2, 0.3); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

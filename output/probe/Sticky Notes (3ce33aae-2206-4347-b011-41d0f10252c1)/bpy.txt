@@ -1,0 +1,269 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects in the scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, but delete usually suffices for a reset
+    for col in bpy.data.collections:
+        col.objects.unlink_all()
+    for col in list(bpy.data.collections):
+        bpy.data.collections.remove(col)
+
+def set_units_meters():
+    """Set scene units to meters."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    # Set alpha for transparency if needed, though default is 1.0
+    bsdf.inputs['Alpha'].default_value = diffuse_color[3]
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube object, scaled and positioned."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_object_to_face(obj_target, obj_source, target_face='top', source_face='bottom'):
+    """
+    Aligns the source object's face to the target object's face.
+    Assumes Z-up orientation for standard cubes/cylinders.
+    target_face: 'top' (max Z), 'bottom' (min Z)
+    source_face: 'top' (max Z), 'bottom' (min Z)
+    """
+    # Get world matrix of target
+    tm = obj_target.matrix_world
+    sm = obj_source.matrix_world
+    
+    # Calculate bounding boxes in world space
+    # Target
+    min_t, max_t = obj_target.bound_box[0], obj_target.bound_box[0]
+    for v in obj_target.bound_box:
+        wv = tm @ Vector(v)
+        min_t = Vector((min(min_t.x, wv.x), min(min_t.y, wv.y), min(min_t.z, wv.z)))
+        max_t = Vector((max(max_t.x, wv.x), max(max_t.y, wv.y), max(max_t.z, wv.z)))
+        
+    # Source
+    min_s, max_s = obj_source.bound_box[0], obj_source.bound_box[0]
+    for v in obj_source.bound_box:
+        wv = sm @ Vector(v)
+        min_s = Vector((min(min_s.x, wv.x), min(min_s.y, wv.y), min(min_s.z, wv.z)))
+        max_s = Vector((max(max_s.x, wv.x), max(max_s.y, wv.y), max(max_s.z, wv.z)))
+
+    # Determine target Z and source Z
+    if target_face == 'top':
+        target_z = max_t.z
+    else:
+        target_z = min_t.z
+        
+    if source_face == 'top':
+        source_z = max_s.z
+    else:
+        source_z = min_s.z
+
+    # Calculate offset needed
+    offset_z = target_z - source_z
+    
+    # Apply offset to source object location
+    obj_source.location.z += offset_z
+    
+    # Re-calculate world matrix for centering if needed later
+    # For center alignment, we need to adjust X and Y as well
+    return obj_source
+
+def align_object_center_to_object_center(obj_target, obj_source):
+    """Aligns the center of source to the center of target in X and Y."""
+    tm = obj_target.matrix_world
+    sm = obj_source.matrix_world
+    
+    # Get centers
+    center_t = tm @ Vector((0, 0, 0)) # Assuming origin at center for primitives
+    center_s = sm @ Vector((0, 0, 0))
+    
+    # Calculate offset
+    offset_x = center_t.x - center_s.x
+    offset_y = center_t.y - center_s.y
+    
+    obj_source.location.x += offset_x
+    obj_source.location.y += offset_y
+    
+    return obj_source
+
+def apply_offset(obj, offset_vector):
+    """Applies a local offset to an object."""
+    # Since objects are Z-up and aligned with world, local offset is same as world offset
+    # if rotation is identity.
+    obj.location += offset_vector
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+clear_scene()
+set_units_meters()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_clear_plastic = make_material("mat_clear_plastic", (0.94, 0.94, 0.94, 0.3))
+mat_paper_blue = make_material("mat_paper_blue", (0.39, 0.58, 0.93, 1.0))
+mat_paper_green = make_material("mat_paper_green", (0.56, 0.93, 0.56, 1.0))
+mat_paper_pink = make_material("mat_paper_pink", (1.0, 0.75, 0.80, 1.0))
+mat_paper_yellow = make_material("mat_paper_yellow", (1.0, 1.0, 0.88, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: Create holder base ---
+# Cylinder, diameter 0.100m -> radius 0.05m, height 0.015m
+holder_base = add_cylinder(
+    name="holder_base",
+    radius=0.05,
+    depth=0.015,
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0), # +Z aligns +Z
+    material=mat_clear_plastic
+)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+apply_offset(holder_base, Vector((0, 0, 0)))
+
+# --- SECTION 2: Create holder back ---
+# Cuboid 0.100 x 0.080 x 0.015
+holder_back = add_cube(
+    name="holder_back",
+    size=(0.100, 0.080, 0.015),
+    location=(0, 0, 0), # Start at origin
+    rotation_euler=(0, 0, 0),
+    material=mat_clear_plastic
+)
+
+# Align holder_back.bottom_face to holder_base.top_face
+# holder_base top face Z is at 0.015/2 = 0.0075
+# holder_back bottom face Z is at -0.015/2 = -0.0075 (relative to its center)
+# We need to move holder_back so its bottom face is at 0.0075
+# Current center Z is 0. Bottom face Z is -0.0075.
+# Target bottom face Z is 0.0075.
+# Offset Z = 0.0075 - (-0.0075) = 0.015
+# However, the prompt says: "Align... Then move by offset(0,0,0.0075)"
+# Let's follow the strict instruction: Align first, then offset.
+
+# Align bottom face of holder_back to top face of holder_base
+# holder_base top Z = 0.0075
+# holder_back bottom Z (initially) = -0.0075
+# Move holder_back Z by 0.015 to align faces
+holder_back.location.z += 0.015
+
+# Then move by offset(0,0,0.0075)
+apply_offset(holder_back, Vector((0, 0, 0.0075)))
+
+# --- SECTION 3: Create yellow note stack ---
+# Cuboid 0.075 x 0.075 x 0.010
+stack_yellow = add_cube(
+    name="stack_yellow",
+    size=(0.075, 0.075, 0.010),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_paper_yellow
+)
+
+# Align stack_yellow.center to holder_base.center
+# holder_base center is (0,0,0). stack_yellow center is (0,0,0). Already aligned.
+align_object_center_to_object_center(holder_base, stack_yellow)
+
+# Align stack_yellow.bottom_face to holder_base.top_face
+# holder_base top Z = 0.0075
+# stack_yellow bottom Z (initially) = -0.005
+# Move stack_yellow Z by 0.0125 to align faces
+stack_yellow.location.z += 0.0125
+
+# Then move by offset(0,0,0.015)
+apply_offset(stack_yellow, Vector((0, 0, 0.015)))
+
+# --- SECTION 4: Create blue note stack ---
+stack_blue = add_cube(
+    name="stack_blue",
+    size=(0.075, 0.075, 0.010),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_paper_blue
+)
+
+align_object_center_to_object_center(holder_base, stack_blue)
+
+# Align stack_blue.bottom_face to holder_base.top_face
+stack_blue.location.z += 0.0125
+
+# Then move by offset(0,0,0.025)
+apply_offset(stack_blue, Vector((0, 0, 0.025)))
+
+# --- SECTION 5: Create green note stack ---
+stack_green = add_cube(
+    name="stack_green",
+    size=(0.075, 0.075, 0.010),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_paper_green
+)
+
+align_object_center_to_object_center(holder_base, stack_green)
+
+# Align stack_green.bottom_face to holder_base.top_face
+stack_green.location.z += 0.0125
+
+# Then move by offset(0,0,0.035)
+apply_offset(stack_green, Vector((0, 0, 0.035)))
+
+# --- SECTION 6: Create pink note stack ---
+stack_pink = add_cube(
+    name="stack_pink",
+    size=(0.075, 0.075, 0.010),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_paper_pink
+)
+
+align_object_center_to_object_center(holder_base, stack_pink)
+
+# Align stack_pink.bottom_face to holder_base.top_face
+stack_pink.location.z += 0.0125
+
+# Then move by offset(0,0,0.045)
+apply_offset(stack_pink, Vector((0, 0, 0.045)))
+
+```

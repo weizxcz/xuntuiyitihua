@@ -1,0 +1,46 @@
+-- MATERIAL LIBRARY --
+mat_blue | diffuse_color=(0.1,0.2,0.8,1.0)
+mat_green | diffuse_color=(0.1,0.7,0.2,1.0)
+mat_orange | diffuse_color=(0.9,0.5,0.1,1.0)
+mat_red | diffuse_color=(0.8,0.1,0.1,1.0)
+mat_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of tile_unit + tile_unit_mirror + tile_unit_top + tile_unit_bottom | (1) execute 'tile_unit': pos=(0,0,0); (2) execute 'tile_unit_mirror': pos=(0.2,0,0); (3) execute 'tile_unit_top': pos=(0,0.2,0); (4) execute 'tile_unit_bottom': pos=(0,-0.2,0); assembly_order=[root_group]; mat=- |
+
+Layer 1 – Primary Structure (Tile Unit)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tile_unit | Composite of square_base + triangle_A + triangle_B + triangle_C + triangle_D | (1) execute 'square_base': pos=(0,0,0); (2) execute 'triangle_A': pos=(0.1,0.1,0); (3) execute 'triangle_B': pos=(-0.1,0.1,0); (4) execute 'triangle_C': pos=(-0.1,-0.1,0); (5) execute 'triangle_D': pos=(0.1,-0.1,0); assembly_order=[tile_unit_group]; mat=- |
+| square_base | Cube 0.2×0.2×0.01 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=primitive |
+| triangle_A | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_A.bottom_right to square_base.top_right; orientation=axis:+Z; mat=mat_red; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_B | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_B.bottom_left to square_base.top_left; orientation=axis:+Z; mat=mat_blue; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_C | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_C.top_left to square_base.bottom_left; orientation=axis:+Z; mat=mat_green; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_D | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_C.top_right to square_base.bottom_right; orientation=axis:+Z; mat=mat_orange; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+
+Layer 2 – Mirrored & Tiled Units
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tile_unit_mirror | Composite of square_base_m + triangle_A_m + triangle_B_m + triangle_C_m + triangle_D_m | (1) execute 'square_base_m': pos=(0,0,0); (2) execute 'triangle_A_m': pos=(-0.1,0.1,0); (3) execute 'triangle_B_m': pos=(0.1,0.1,0); (4) execute 'triangle_C_m': pos=(0.1,-0.1,0); (5) execute 'triangle_D_m': pos=(-0.1,-0.1,0); assembly_order=[mirror_group]; mat=- |
+| square_base_m | Cube 0.2×0.2×0.01 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=primitive |
+| triangle_A_m | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_A_m.bottom_left to square_base_m.top_left; orientation=axis:+Z; mat=mat_red; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_B_m | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_B_m.bottom_right to square_base_m.top_right; orientation=axis:+Z; mat=mat_blue; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_C_m | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_C_m.top_right to square_base_m.bottom_right; orientation=axis:+Z; mat=mat_green; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_D_m | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_D_m.top_left to square_base_m.bottom_left; orientation=axis:+Z; mat=mat_orange; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| tile_unit_top | Composite of square_base_t + triangle_A_t + triangle_B_t + triangle_C_t + triangle_D_t | (1) execute 'square_base_t': pos=(0,0,0); (2) execute 'triangle_A_t': pos=(0.1,0.1,0); (3) execute 'triangle_B_t': pos=(-0.1,0.1,0); (4) execute 'triangle_C_t': pos=(-0.1,-0.1,0); (5) execute 'triangle_D_t': pos=(0.1,-0.1,0); assembly_order=[top_group]; mat=- |
+| square_base_t | Cube 0.2×0.2×0.01 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=primitive |
+| triangle_A_t | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_A_t.bottom_right to square_base_t.top_right; orientation=axis:+Z; mat=mat_red; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_B_t | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_B_t.bottom_left to square_base_t.top_left; orientation=axis:+Z; mat=mat_blue; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_C_t | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_C_t.top_left to square_base_t.bottom_left; orientation=axis:+Z; mat=mat_green; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_D_t | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_D_t.top_right to square_base_t.bottom_right; orientation=axis:+Z; mat=mat_orange; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| tile_unit_bottom | Composite of square_base_b + triangle_A_b + triangle_B_b + triangle_C_b + triangle_D_b | (1) execute 'square_base_b': pos=(0,0,0); (2) execute 'triangle_A_b': pos=(0.1,0.1,0); (3) execute 'triangle_B_b': pos=(-0.1,0.1,0); (4) execute 'triangle_C_b': pos=(-0.1,-0.1,0); (5) execute 'triangle_D_b': pos=(0.1,-0.1,0); assembly_order=[bottom_group]; mat=- |
+| square_base_b | Cube 0.2×0.2×0.01 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=primitive |
+| triangle_A_b | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_A_b.bottom_right to square_base_b.top_right; orientation=axis:+Z; mat=mat_red; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_B_b | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_B_b.bottom_left to square_base_b.top_left; orientation=axis:+Z; mat=mat_blue; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_C_b | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_C_b.top_left to square_base_b.bottom_left; orientation=axis:+Z; mat=mat_green; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (-0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+| triangle_D_b | Triangle prism 0.1×0.1×0.01 m | Align(XY) triangle_D_b.top_right to square_base_b.bottom_right; orientation=axis:+Z; mat=mat_orange; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Right-angled isosceles triangle. Vertices: (0,0), (0.1,0), (0,-0.1). Area: 0.005 m². Extrude thickness t=0.01 m along +Z with caps. |
+# ----------  END_GRAPH  ----------

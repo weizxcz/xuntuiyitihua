@@ -1,0 +1,56 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material wood_dark; diffuse_color = (0.35, 0.20, 0.10, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create central vertical support  ---
+Create primitive cuboid with size 0.020×0.020×1.800 m and name it support_back.
+Rotate support_back so its +Z axis aligns +Z (world).
+Anchor support_back to world_origin(0,0,0).
+Align support_back.bottom_face to world_origin(0,0,0).
+Then move by offset(0,0,0).
+Apply material wood_dark to support_back.
+Stage 1 complete.
+
+---  SECTION 2 – Create bottom triangular shelf tier  ---
+Create primitive cuboid with size 0.800×0.800×0.025 m and name it tier_1.
+Rotate tier_1 so its +Z axis aligns +Z (world).
+Anchor tier_1 to support_back.
+Align tier_1.center to Avg(support_back.left_face, support_back.right_face).
+Align tier_1.bottom_face to support_back.bottom_face.
+Then move by offset(0,0,0.025).
+Apply material wood_dark to tier_1.
+Stage 2 complete.
+
+---  SECTION 3 – Create middle triangular shelf tier  ---
+Create primitive cuboid with size 0.600×0.600×0.025 m and name it tier_2.
+Rotate tier_2 so its +Z axis aligns +Z (world).
+Anchor tier_2 to support_back.
+Align tier_2.center to Avg(support_back.left_face, support_back.right_face).
+Align tier_2.bottom_face to support_back.bottom_face.
+Then move by offset(0,0,0.600).
+Apply material wood_dark to tier_2.
+Stage 3 complete.
+
+---  SECTION 4 – Create top triangular shelf tier  ---
+Create primitive cuboid with size 0.400×0.400×0.025 m and name it tier_3.
+Rotate tier_3 so its +Z axis aligns +Z (world).
+Anchor tier_3 to support_back.
+Align tier_3.center to Avg(support_back.left_face, support_back.right_face).
+Align tier_3.bottom_face to support_back.bottom_face.
+Then move by offset(0,0,1.200).
+Apply material wood_dark to tier_3.
+Stage 4 complete.
+
+All stages complete.

@@ -1,0 +1,47 @@
+{
+  "id": "ffda5664-40fe-47a7-bdaf-a93950887604",
+  "name": "Pliers vs. Needle-Nose Pliers",
+  "instruction": "Design both pliers and needle-nose pliers. The pliers should have a wide, flat gripping surface, while the needle-nose pliers should have long, narrow tips for precision work.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The design includes both pliers and needle-nose pliers.",
+        "The pliers have a wide, flat gripping surface.",
+        "The needle-nose pliers have long, narrow tips."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The gripping surface of the pliers is proportionate to the overall size of the tool.",
+        "The length of the needle-nose tips is proportionate to the body of the needle-nose pliers."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pliers have a symmetrical design for balanced use.",
+        "The needle-nose pliers maintain a consistent taper towards the tips.",
+        "The gripping surfaces of both tools are aligned with their handles."
+      ],
+      "Object distance and contact": [
+        "The tips of the needle-nose pliers do not overlap with the gripping surface.",
+        "There is a clear separation between the gripping surfaces of both tools.",
+        "The handles of both pliers are designed to allow for comfortable gripping without interference."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both pliers and needle-nose pliers are accurately represented.",
+        "The specified attributes of gripping surfaces and tips are correctly implemented."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

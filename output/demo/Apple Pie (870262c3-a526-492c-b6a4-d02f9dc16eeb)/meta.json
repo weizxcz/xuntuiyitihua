@@ -1,0 +1,44 @@
+{
+  "id": "870262c3-a526-492c-b6a4-d02f9dc16eeb",
+  "name": "Apple Pie",
+  "instruction": "How about an apple pie? ",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is an apple pie.",
+        "The pie has a round shape."
+      ],
+      "Color representation": [
+        "The crust is golden brown.",
+        "The filling is a mix of light brown and yellowish colors."
+      ],
+      "Size": [
+        "The pie is of standard pie size, typically around 9 inches in diameter."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pie is presented in a pie dish.",
+        "The filling is contained within the crust."
+      ],
+      "Object distance and contact": [
+        "The crust is intact and holds the filling without any spillage.",
+        "The pie is centered in the dish."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately represents an apple pie.",
+        "All specified attributes of an apple pie are included."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

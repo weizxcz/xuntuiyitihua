@@ -1,0 +1,44 @@
+-- MATERIAL LIBRARY --
+fabric_main | diffuse_color=(0.8,0.8,0.8,1.0)
+elastic_band | diffuse_color=(0.2,0.2,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| glove_L | Composite of palm, back, thumb, and four fingers for the left hand | Align(XY) glove_L.center to (0,0,0); orientation=axis:+Z; mat=fabric_main; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Left-hand glove outline. Outer contour approximates a mitten shape with distinct finger protrusions. Thumb extends from the side. **Extrude:** thickness t=0.005 m along +Z with caps. **Fit:** Snug fit implies tight tolerance to hand anatomy; modeled as a hollow shell. |
+| glove_R | Composite of palm, back, thumb, and four fingers for the right hand | Align(XY) glove_R.center to (0.3,0,0); orientation=axis:+Z; mat=fabric_main; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Right-hand glove outline (mirror of L). **Extrude:** thickness t=0.005 m along +Z with caps. |
+
+Layer 1 – Primary Structure (Left Glove)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| palm_L | Base shell of the left glove | Align(XY) palm_L.center to glove_L.center; orientation=axis:+Z; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.15×0.005 m (approximate palm width) |
+| back_L | Back of the hand section | Align(XY) back_L.center to palm_L.center; orientation=axis:+Z; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.14×0.005 m |
+| thumb_L | Thumb protrusion | Align(XY) thumb_L.center to palm_L.left_face; orientation=axis:-X; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.03×0.08 m |
+| index_L | Index finger | Align(XY) index_L.center to palm_L.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.025×0.08 m |
+| middle_L | Middle finger | Align(XY) middle_L.center to palm_L.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.025×0.09 m |
+| ring_L | Ring finger | Align(XY) ring_L.center to palm_L.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.024×0.085 m |
+| pinky_L | Pinky finger | Align(XY) pinky_L.center to palm_L.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.022×0.07 m |
+| cuff_L | Elasticated wrist opening | Align(XY) cuff_L.center to palm_L.bottom_face; orientation=axis:+Z; mat=elastic_band; create_method=primitive; constraint=torus Ø0.16×0.02 m (inner diameter slightly smaller for snug fit) |
+
+Layer 2 – Primary Structure (Right Glove)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| palm_R | Base shell of the right glove | Align(XY) palm_R.center to glove_R.center; orientation=axis:+Z; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.15×0.005 m |
+| back_R | Back of the hand section | Align(XY) back_R.center to palm_R.center; orientation=axis:+Z; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.14×0.005 m |
+| thumb_R | Thumb protrusion | Align(XY) thumb_R.center to palm_R.right_face; orientation=axis:+X; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.03×0.08 m |
+| index_R | Index finger | Align(XY) index_R.center to palm_R.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.025×0.08 m |
+| middle_R | Middle finger | Align(XY) middle_R.center to palm_R.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.025×0.09 m |
+| ring_R | Ring finger | Align(XY) ring_R.center to palm_R.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.024×0.085 m |
+| pinky_R | Pinky finger | Align(XY) pinky_R.center to palm_R.top_face; orientation=axis:+Y; mat=fabric_main; create_method=primitive; constraint=cylinder Ø0.022×0.07 m |
+| cuff_R | Elasticated wrist opening | Align(XY) cuff_R.center to palm_R.bottom_face; orientation=axis:+Z; mat=elastic_band; create_method=primitive; constraint=torus Ø0.16×0.02 m |
+
+Layer 3 – Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| glove_L_assembled | Composite of palm_L + back_L + thumb_L + index_L + middle_L + ring_L + pinky_L + cuff_L | assembly_order=[palm_L, back_L, thumb_L, index_L, middle_L, ring_L, pinky_L, cuff_L] |
+| glove_R_assembled | Composite of palm_R + back_R + thumb_R + index_R + middle_R + ring_R + pinky_R + cuff_R | assembly_order=[palm_R, back_R, thumb_R, index_R, middle_R, ring_R, pinky_R, cuff_R] |
+| gloves_pair | Final pair of gloves | assembly_order=[glove_L_assembled, glove_R_assembled] |
+
+# ----------  END_GRAPH  ----------

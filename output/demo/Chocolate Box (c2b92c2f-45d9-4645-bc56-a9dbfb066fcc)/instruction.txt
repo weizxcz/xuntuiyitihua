@@ -1,0 +1,1 @@
+Design a 3D model of a rectangular chocolate box. The box should have a lid that can be opened and closed. Inside, create individual compartments for each piece of chocolate. The compartments should be arranged in neat rows and columns. Include a ribbon tied around the box for decoration.

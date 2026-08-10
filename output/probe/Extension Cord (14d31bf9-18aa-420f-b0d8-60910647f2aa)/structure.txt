@@ -1,0 +1,53 @@
+-- MATERIAL LIBRARY --
+cable_jacket | diffuse_color=(240,240,240,255)
+cord_wire | diffuse_color=(100,100,100,255)
+outlet_body | diffuse_color=(245,245,245,255)
+outlet_shutter | diffuse_color=(50,50,50,255)
+plug_housing | diffuse_color=(245,245,245,255)
+plug_prong | diffuse_color=(180,180,180,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly for the extension cord system | assembly_order=[cable_coil, power_strip, plug_head] |
+
+Layer 1 – Cable Coil
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cable_coil | Coiled cable bundle | Composite of multiple cable loops; assembly_order=[cable_loop_1, cable_loop_2, cable_loop_3, cable_loop_4, cable_loop_5] |
+| cable_loop_1 | First loop of the coiled cable | cylinder Ø0.040×0.010 m (representing the cross-section of the coiled bundle); Align(XY) cable_loop_1.center to root.center; offset(0, 0, 0); orientation=axis:+Z; mat=cable_jacket; create_method=primitive |
+| cable_loop_2 | Second loop of the coiled cable | cylinder Ø0.040×0.010 m; Align(XY) cable_loop_2.center to root.center; offset(0.045, 0, 0); orientation=axis:+Z; mat=cable_jacket; create_method=primitive |
+| cable_loop_3 | Third loop of the coiled cable | cylinder Ø0.040×0.010 m; Align(XY) cable_loop_3.center to root.center; offset(0.090, 0, 0); orientation=axis:+Z; mat=cable_jacket; create_method=primitive |
+| cable_loop_4 | Fourth loop of the coiled cable | cylinder Ø0.040×0.010 m; Align(XY) cable_loop_4.center to root.center; offset(0.135, 0, 0); orientation=axis:+Z; mat=cable_jacket; create_method=primitive |
+| cable_loop_5 | Fifth loop of the coiled cable | cylinder Ø0.040×0.010 m; Align(XY) cable_loop_5.center to root.center; offset(0.180, 0, 0); orientation=axis:+Z; mat=cable_jacket; create_method=primitive |
+
+Layer 2 – Power Strip
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| power_strip | Main body of the extension cord with outlets | Composite of strip_body and outlets; assembly_order=[strip_body, outlet_1, outlet_2, outlet_3] |
+| strip_body | Rectangular housing for the outlets | cube 0.300×0.050×0.020 m; Align(XY) strip_body.center to root.center; offset(0.225, 0, 0); orientation=axis:+Z; mat=outlet_body; create_method=primitive |
+| outlet_1 | First electrical outlet | Composite of socket_housing and shutters; assembly_order=[socket_housing_1, shutter_1a, shutter_1b] |
+| socket_housing_1 | Housing for outlet 1 | cube 0.040×0.040×0.015 m; Align(XY) socket_housing_1.center to strip_body.top_face; offset(-0.100, 0, 0.0175); orientation=axis:+Z; mat=outlet_body; create_method=primitive |
+| shutter_1a | Shutter for pin 1 of outlet 1 | cylinder Ø0.005×0.002 m; Align(XY) shutter_1a.center to socket_housing_1.front_face; offset(-0.008, 0, 0.0075); orientation=axis:+X; mat=outlet_shutter; create_method=primitive |
+| shutter_1b | Shutter for pin 2 of outlet 1 | cylinder Ø0.005×0.002 m; Align(XY) shutter_1b.center to socket_housing_1.front_face; offset(0.008, 0, 0.0075); orientation=axis:+X; mat=outlet_shutter; create_method=primitive |
+| outlet_2 | Second electrical outlet | Composite of socket_housing_2, shutter_2a, shutter_2b; assembly_order=[socket_housing_2, shutter_2a, shutter_2b] |
+| socket_housing_2 | Housing for outlet 2 | cube 0.040×0.040×0.015 m; Align(XY) socket_housing_2.center to strip_body.top_face; offset(0, 0, 0.0175); orientation=axis:+Z; mat=outlet_body; create_method=primitive |
+| shutter_2a | Shutter for pin 1 of outlet 2 | cylinder Ø0.005×0.002 m; Align(XY) shutter_2a.center to socket_housing_2.front_face; offset(-0.008, 0, 0.0075); orientation=axis:+X; mat=outlet_shutter; create_method=primitive |
+| shutter_2b | Shutter for pin 2 of outlet 2 | cylinder Ø0.005×0.002 m; Align(XY) shutter_2b.center to socket_housing_2.front_face; offset(0.008, 0, 0.0075); orientation=axis:+X; mat=outlet_shutter; create_method=primitive |
+| outlet_3 | Third electrical outlet | Composite of socket_housing_3, shutter_3a, shutter_3b; assembly_order=[socket_housing_3, shutter_3a, shutter_3b] |
+| socket_housing_3 | Housing for outlet 3 | cube 0.040×0.040×0.015 m; Align(XY) socket_housing_3.center to strip_body.top_face; offset(0.100, 0, 0.0175); orientation=axis:+Z; mat=outlet_body; create_method=primitive |
+| shutter_3a | Shutter for pin 1 of outlet 3 | cylinder Ø0.005×0.002 m; Align(XY) shutter_3a.center to socket_housing_3.front_face; offset(-0.008, 0, 0.0075); orientation=axis:+X; mat=outlet_shutter; create_method=primitive |
+| shutter_3b | Shutter for pin 2 of outlet 3 | cylinder Ø0.005×0.002 m; Align(XY) shutter_3b.center to socket_housing_3.front_face; offset(0.008, 0, 0.0075); orientation=axis:+X; mat=outlet_shutter; create_method=primitive |
+
+Layer 3 – Plug Head
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| plug_head | Male plug end of the extension cord | Composite of plug_body and prongs; assembly_order=[plug_body, prong_1, prong_2, prong_3] |
+| plug_body | Housing for the plug | cube 0.050×0.040×0.030 m; Align(XY) plug_body.center to root.center; offset(-0.025, 0, 0); orientation=axis:+Z; mat=plug_housing; create_method=primitive |
+| prong_1 | First metal prong | cylinder Ø0.004×0.020 m; Align(XY) prong_1.center to plug_body.back_face; offset(-0.010, 0, 0); orientation=axis:-Z; mat=plug_prong; create_method=primitive |
+| prong_2 | Second metal prong | cylinder Ø0.004×0.020 m; Align(XY) prong_2.center to plug_body.back_face; offset(0.010, 0, 0); orientation=axis:-Z; mat=plug_prong; create_method=primitive |
+| prong_3 | Ground pin | cylinder Ø0.004×0.020 m; Align(XY) prong_3.center to plug_body.back_face; offset(0, 0.015, 0); orientation=axis:-Z; mat=plug_prong; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

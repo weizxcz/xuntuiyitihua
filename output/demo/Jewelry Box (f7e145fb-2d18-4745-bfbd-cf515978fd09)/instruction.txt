@@ -1,0 +1,1 @@
+Design a jewelry box with a decorative appearance. The box should have multiple compartments for rings, necklaces, and earrings. Include a mirror on the inside of the lid.

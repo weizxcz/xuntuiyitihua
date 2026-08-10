@@ -1,0 +1,428 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix, Euler
+import math
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_disc(name, radius, depth, location, rotation_euler, material=None):
+    # Disc is a flat cylinder
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, depth, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_top, radius2=radius_bottom, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_text_object(name, text, size, location, rotation_euler, material=None):
+    bpy.ops.object.text_add(location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.scale = (size, size, size)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    # Determine current axis vector
+    if axis == 'X':
+        current = Vector((1, 0, 0))
+    elif axis == 'Y':
+        current = Vector((0, 1, 0))
+    elif axis == 'Z':
+        current = Vector((0, 0, 1))
+    else:
+        return
+
+    target = vector.normalized()
+    
+    # Calculate rotation matrix to align current to target
+    rot_matrix = current.rotation_difference(target).to_matrix().to_4x4()
+    
+    # Apply rotation
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = current.rotation_difference(target)
+
+def align_face_to_face(obj_src, axis_src, obj_tgt, axis_tgt):
+    """Align source object's face axis to target object's face axis.
+    This usually means aligning the normals (Z axis of the face).
+    """
+    # For cubes, faces are aligned with axes.
+    # We want the source object's local axis (e.g., +Z) to point in the same direction as target's local axis (e.g., +Z).
+    # Since we are aligning faces, we align the normal vectors.
+    align_axis_to_vector(obj_src, axis_src, Vector((0,0,1))) # Simplified: assuming target is already aligned or we just align normals
+    
+    # More robust: align source normal to target normal
+    # Get target normal in world space
+    tgt_normal = obj_tgt.matrix_world.to_3x3() @ Vector((0,0,1)) # Assuming Z is up for faces usually
+    
+    # Actually, let's just align the specific axes requested.
+    # If aligning Z_face to Z_face, we align obj_src.Z to obj_tgt.Z
+    src_normal = obj_src.matrix_world.to_3x3() @ Vector((0,0,1))
+    tgt_normal = obj_tgt.matrix_world.to_3x3() @ Vector((0,0,1))
+    
+    rot = src_normal.rotation_difference(tgt_normal)
+    obj_src.rotation_quaternion = rot
+
+def align_face_to_face_custom(obj_src, src_axis, obj_tgt, tgt_axis):
+    """Align a specific axis of src to a specific axis of tgt."""
+    # Get world direction of src axis
+    if src_axis == 'X':
+        src_dir = Vector((1,0,0))
+    elif src_axis == 'Y':
+        src_dir = Vector((0,1,0))
+    elif src_axis == 'Z':
+        src_dir = Vector((0,0,1))
+        
+    if tgt_axis == 'X':
+        tgt_dir = Vector((1,0,0))
+    elif tgt_axis == 'Y':
+        tgt_dir = Vector((0,1,0))
+    elif tgt_axis == 'Z':
+        tgt_dir = Vector((0,0,1))
+        
+    # We want to rotate obj_src so that its src_dir aligns with tgt_dir (in world space)
+    # But obj_tgt might be rotated. So we need tgt_dir in world space.
+    tgt_world_dir = obj_tgt.matrix_world.to_3x3() @ tgt_dir
+    
+    # Calculate rotation to align src_dir (local) to tgt_world_dir (world)
+    # Current src_dir in world
+    current_src_world = obj_src.matrix_world.to_3x3() @ src_dir
+    
+    rot = current_src_world.rotation_difference(tgt_world_dir)
+    obj_src.rotation_quaternion = rot
+
+def align_face_position(obj_src, src_axis, obj_tgt, tgt_axis):
+    """Move obj_src so its face is coplanar with obj_tgt's face."""
+    # Get world position of src face center
+    if src_axis == 'X':
+        src_offset = Vector((1,0,0))
+    elif src_axis == 'Y':
+        src_offset = Vector((0,1,0))
+    elif src_axis == 'Z':
+        src_offset = Vector((0,0,1))
+        
+    if tgt_axis == 'X':
+        tgt_offset = Vector((1,0,0))
+    elif tgt_axis == 'Y':
+        tgt_offset = Vector((0,1,0))
+    elif tgt_axis == 'Z':
+        tgt_offset = Vector((0,0,1))
+        
+    # Get half extents
+    src_half = obj_src.dimensions / 2
+    tgt_half = obj_tgt.dimensions / 2
+    
+    # World position of src face center
+    src_face_world = obj_src.location + (obj_src.matrix_world.to_3x3() @ src_offset) * src_half[src_axis]
+    
+    # World position of tgt face center
+    tgt_face_world = obj_tgt.location + (obj_tgt.matrix_world.to_3x3() @ tgt_offset) * tgt_half[tgt_axis]
+    
+    # Move src so its face aligns with tgt face
+    # We want src_face_world == tgt_face_world
+    # delta = tgt_face_world - src_face_world
+    # But we need to be careful about direction. 
+    # If we align +Z to +Z, we want src top to touch tgt top.
+    
+    # Let's calculate the target location for the object center
+    # Target Center = Tgt Face Center - (Src Half Extent along aligned axis in World Space)
+    # Note: The direction from Tgt Face to Tgt Center is -tgt_offset.
+    # The direction from Src Center to Src Face is +src_offset.
+    
+    # Vector from Tgt Face to Tgt Center
+    vec_tgt_center = -(obj_tgt.matrix_world.to_3x3() @ tgt_offset) * tgt_half[tgt_axis]
+    
+    # Target Center Position
+    tgt_center_world = tgt_face_world + vec_tgt_center
+    
+    # We want Src Face to be at tgt_face_world.
+    # Src Center = Src Face - (Src Half Extent along src_offset)
+    # But src_offset is in local space.
+    vec_src_face_from_center = (obj_src.matrix_world.to_3x3() @ src_offset) * src_half[src_axis]
+    
+    obj_src.location = tgt_face_world - vec_src_face_from_center
+
+def boolean_subtract(cutter_name, target_name):
+    """Apply boolean subtract modifier."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure cutter is visible and selected for modifier creation if needed, 
+    # but usually we just add modifier to target.
+    
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(target_name, other_name):
+    """Apply boolean union modifier."""
+    target = bpy.data.objects[target_name]
+    other = bpy.data.objects[other_name]
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(other, do_unlink=True)
+
+def add_bevel(obj_name, width, segments):
+    """Add bevel modifier."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this script context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.location
+    
+    def face_center_world(self, axis='Z'):
+        """Returns the world location of the face center along the specified axis."""
+        half = self.obj.dimensions / 2
+        if axis == 'X':
+            offset = Vector((1,0,0))
+        elif axis == 'Y':
+            offset = Vector((0,1,0))
+        elif axis == 'Z':
+            offset = Vector((0,0,1))
+        else:
+            offset = Vector((0,0,1))
+            
+        return self.obj.location + (self.obj.matrix_world.to_3x3() @ offset) * half[self.obj.rotation_euler.index(axis)] # Simplified, assumes axis-aligned
+
+    def radial_point_world(self, angle, axis='Z'):
+        """Returns a point on the radial edge."""
+        # Placeholder for radial calculations if needed
+        return self.center_world()
+
+# --- Scene Reset & Units ---
+
+def reset_scene():
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Set units to metres
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Main Script ---
+
+def main():
+    reset_scene()
+    
+    # --- Materials ---
+    mat_aluminum = make_material("mat_aluminum", (0.82, 0.82, 0.85, 1.0))
+    mat_black_plastic = make_material("mat_black_plastic", (0.1, 0.1, 0.1, 1.0))
+    
+    # --- Stage 1: Base Plate ---
+    # Create primitive cuboid with size 0.200×0.100×0.010 m and name it base_plate.
+    base_plate = add_cube("base_plate", (0.200, 0.100, 0.010), (0, 0, 0), (0, 0, 0), mat_aluminum)
+    
+    # Rotate base_plate so its +Z axis aligns +Z (world).
+    # It is already aligned by default, but we ensure it.
+    align_axis_to_vector(base_plate, 'Z', Vector((0, 0, 1)))
+    
+    # Align base_plate.XY_face to root.XY_face.
+    # Align base_plate.Z_face to root.Z_face.
+    # "root" is not defined. Assuming root is the world origin or a non-existent object.
+    # If root is not present, we assume alignment to world axes is sufficient or it's a no-op relative to world.
+    # The prompt says "Align ... to root ...". If root doesn't exist, we skip or assume world.
+    # Given the context, "root" likely refers to the global origin or a base reference.
+    # Since no root object is created, we assume alignment to world is the intent.
+    
+    # Then move by offset(0, 0, 0).
+    base_plate.location += Vector((0, 0, 0))
+    
+    # --- Stage 2: Longitudinal Support Rails ---
+    
+    # slot_rail_1
+    slot_rail_1 = add_cube("slot_rail_1", (0.200, 0.005, 0.005), (0, 0, 0), (0, 0, 0), mat_aluminum)
+    align_axis_to_vector(slot_rail_1, 'Z', Vector((0, 0, 1)))
+    
+    # Align slot_rail_1.XZ_face to base_plate.XZ_face.
+    # Align slot_rail_1.Z_face to base_plate.Z_face.
+    # XZ face normal is Y. Z face normal is Z.
+    # Align Y axis to Y, Z axis to Z.
+    align_face_to_face_custom(slot_rail_1, 'Y', base_plate, 'Y')
+    align_face_to_face_custom(slot_rail_1, 'Z', base_plate, 'Z')
+    
+    # Align position: slot_rail_1.Z_face to base_plate.Z_face
+    # This means the top of the rail touches the top of the plate? Or center?
+    # "Align ... Z_face to ... Z_face" usually implies coplanarity.
+    # base_plate Z_face is at Z = 0.005 (half height).
+    # slot_rail_1 Z_face is at Z = 0.0025 (half height).
+    # If we align Z_face to Z_face, the tops are at the same level.
+    align_face_position(slot_rail_1, 'Z', base_plate, 'Z')
+    
+    # Then move by offset(0, 0.045, 0.005).
+    slot_rail_1.location += Vector((0, 0.045, 0.005))
+    
+    # slot_rail_2
+    slot_rail_2 = add_cube("slot_rail_2", (0.200, 0.005, 0.005), (0, 0, 0), (0, 0, 0), mat_aluminum)
+    align_axis_to_vector(slot_rail_2, 'Z', Vector((0, 0, 1)))
+    align_face_to_face_custom(slot_rail_2, 'Y', base_plate, 'Y')
+    align_face_to_face_custom(slot_rail_2, 'Z', base_plate, 'Z')
+    align_face_position(slot_rail_2, 'Z', base_plate, 'Z')
+    slot_rail_2.location += Vector((0, -0.045, 0.005))
+    
+    # slot_rail_3
+    slot_rail_3 = add_cube("slot_rail_3", (0.200, 0.005, 0.005), (0, 0, 0), (0, 0, 0), mat_aluminum)
+    align_axis_to_vector(slot_rail_3, 'Z', Vector((0, 0, 1)))
+    align_face_to_face_custom(slot_rail_3, 'Y', base_plate, 'Y')
+    align_face_to_face_custom(slot_rail_3, 'Z', base_plate, 'Z')
+    align_face_position(slot_rail_3, 'Z', base_plate, 'Z')
+    slot_rail_3.location += Vector((0, 0, 0.005))
+    
+    # --- Stage 3: End Caps ---
+    
+    # end_cap_L
+    end_cap_L = add_cube("end_cap_L", (0.005, 0.100, 0.010), (0, 0, 0), (0, 0, 0), mat_aluminum)
+    align_axis_to_vector(end_cap_L, 'Z', Vector((0, 0, 1)))
+    
+    # Align end_cap_L.YZ_face to base_plate.YZ_face.
+    # YZ face normal is X.
+    # Align end_cap_L.X_face to base_plate.X_face.
+    # X face normal is X.
+    # So align X to X.
+    align_face_to_face_custom(end_cap_L, 'X', base_plate, 'X')
+    
+    # Align position: end_cap_L.X_face to base_plate.X_face
+    # base_plate X_face is at X = 0.100 (half width).
+    # end_cap_L X_face is at X = 0.0025 (half width).
+    # Aligning X_face to X_face means the right face of the cap touches the right face of the plate?
+    # Or does it mean they are coplanar?
+    # "Align ... X_face to ... X_face" -> Coplanar.
+    align_face_position(end_cap_L, 'X', base_plate, 'X')
+    
+    # Then move by offset(-0.0025, 0, 0).
+    end_cap_L.location += Vector((-0.0025, 0, 0))
+    
+    # end_cap_R
+    end_cap_R = add_cube("end_cap_R", (0.005, 0.100, 0.010), (0, 0, 0), (0, 0, 0), mat_aluminum)
+    align_axis_to_vector(end_cap_R, 'Z', Vector((0, 0, 1)))
+    align_face_to_face_custom(end_cap_R, 'X', base_plate, 'X')
+    align_face_position(end_cap_R, 'X', base_plate, 'X')
+    end_cap_R.location += Vector((0.0025, 0, 0))
+    
+    # --- Stage 4: Slide Inserts Pattern ---
+    
+    # For r in 0…2 and c in 0…3:
+    for r in range(3):
+        for c in range(4):
+            name = f"slide_insert_r{r}_c{c}"
+            # Create primitive cuboid with size 0.075×0.025×0.002 m
+            slide_insert = add_cube(name, (0.075, 0.025, 0.002), (0, 0, 0), (0, 0, 0), mat_aluminum)
+            
+            # Rotate slide_insert_r_c so its +Z axis aligns +Z (world).
+            align_axis_to_vector(slide_insert, 'Z', Vector((0, 0, 1)))
+            
+            # Align slide_insert_r_c.XY_face to slot_rail_1.XY_face.
+            # XY face normal is Z.
+            # Align slide_insert_r_c.Z_face to slot_rail_1.Z_face.
+            # Z face normal is Z.
+            # So align Z to Z.
+            align_face_to_face_custom(slide_insert, 'Z', slot_rail_1, 'Z')
+            
+            # Align position: slide_insert.Z_face to slot_rail_1.Z_face
+            # slot_rail_1 Z_face is at Z = 0.0025 + 0.005 (offset) = 0.0075?
+            # Let's check slot_rail_1 location.
+            # slot_rail_1 location was set to (0, 0.045, 0.005) after alignment.
+            # Alignment made its top face (Z=0.0025 local) touch base_plate top (Z=0.005 world).
+            # So slot_rail_1 center Z is 0.005 - 0.0025 = 0.0025.
+            # Then offset (0, 0.045, 0.005) is applied.
+            # So slot_rail_1 center Z is 0.0025 + 0.005 = 0.0075.
+            # slot_rail_1 top face Z is 0.0075 + 0.0025 = 0.010.
+            
+            # slide_insert Z_face is at Z = 0.001 (half height).
+            # Aligning Z_face to Z_face means slide_insert top touches slot_rail_1 top.
+            align_face_position(slide_insert, 'Z', slot_rail_1, 'Z')
+            
+            # Then offset(-0.075 + c·0.050, 0.030 + r·0.030, 0.006).
+            offset_x = -0.075 + c * 0.050
+            offset_y = 0.030 + r * 0.030
+            offset_z = 0.006
+            
+            slide_insert.location += Vector((offset_x, offset_y, offset_z))
+
+if __name__ == "__main__":
+    main()

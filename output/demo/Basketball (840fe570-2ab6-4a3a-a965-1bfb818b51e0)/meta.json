@@ -1,0 +1,45 @@
+{
+  "id": "840fe570-2ab6-4a3a-a965-1bfb818b51e0",
+  "name": "Basketball",
+  "instruction": "Could you design a 3D model of a basketball? Thanks.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a basketball.",
+        "The basketball is spherical in shape."
+      ],
+      "Color representation": [
+        "The primary color of the basketball is orange.",
+        "The basketball features black lines for design."
+      ],
+      "Size": [
+        "The diameter of the basketball should be approximately 24 cm."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The surface of the basketball has a pebbled texture for grip.",
+        "The basketball may have a matte finish."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The basketball is correctly represented as a 3D object.",
+        "The spherical shape is uniform without any distortions."
+      ],
+      "Object distance and contact": [
+        "The basketball appears to be floating or resting on a flat surface.",
+        "There are no overlapping elements in the design."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The basketball is accurately represented as per the instruction.",
+        "All specified attributes are included in the design."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

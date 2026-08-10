@@ -1,0 +1,357 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder primitive, oriented along Z by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_to_vector(obj, vector):
+    """Align object's local Z axis to a world vector."""
+    vec = vector.normalized()
+    # Create rotation matrix that aligns Z (0,0,1) to vec
+    z_axis = Vector((0, 0, 1))
+    if z_axis.angle(vec) < 1e-6:
+        rot_quat = Matrix.Identity(3).to_quaternion()
+    else:
+        rot_quat = z_axis.rotation_difference(vec)
+    
+    # Apply rotation
+    obj.rotation_euler = rot_quat.to_euler()
+
+def align_centers_xy(obj_target, obj_source):
+    """Align XY center of obj_source to obj_target."""
+    obj_source.location.x = obj_target.location.x
+    obj_source.location.y = obj_target.location.y
+
+def align_bottom_to_top_z(obj_bottom, obj_top):
+    """Align bottom face of obj_bottom to top face of obj_top along Z."""
+    # Calculate top Z of bottom object
+    # Assuming cylinder/cube centered at 0,0,0 in local space
+    # We need to move obj_bottom so its bottom Z equals obj_top's top Z
+    # obj_top top Z = obj_top.location.z + (obj_top.dimensions.z / 2)
+    # obj_bottom bottom Z = obj_bottom.location.z - (obj_bottom.dimensions.z / 2)
+    
+    top_z = obj_top.location.z + (obj_top.dimensions.z / 2)
+    half_h_bottom = obj_bottom.dimensions.z / 2
+    
+    obj_bottom.location.z = top_z - half_h_bottom
+
+def boolean_union(target, operand):
+    """Perform boolean union of operand into target, then remove operand."""
+    # Select target
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = operand
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove operand
+    bpy.data.objects.remove(operand, do_unlink=True)
+
+def create_locator(name, location):
+    """Create a simple empty locator."""
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=location)
+    loc = bpy.context.active_object
+    loc.name = name
+    return loc
+
+def get_world_center(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_face_center_world(obj, face_normal_axis='Z'):
+    """Get world location of the face defined by normal axis (e.g., +Z is top)."""
+    # For primitives centered at origin, this is just center + half_dim * axis
+    # But we must use world matrix
+    half_dim = obj.dimensions / 2.0
+    local_center = Vector((0,0,0))
+    
+    if face_normal_axis == 'Z':
+        local_offset = Vector((0, 0, half_dim.z))
+    elif face_normal_axis == '-Z':
+        local_offset = Vector((0, 0, -half_dim.z))
+    elif face_normal_axis == 'X':
+        local_offset = Vector((half_dim.x, 0, 0))
+    elif face_normal_axis == '-X':
+        local_offset = Vector((-half_dim.x, 0, 0))
+    elif face_normal_axis == 'Y':
+        local_offset = Vector((0, half_dim.y, 0))
+    elif face_normal_axis == '-Y':
+        local_offset = Vector((0, -half_dim.y, 0))
+    else:
+        local_offset = Vector((0,0,0))
+        
+    return obj.matrix_world @ (local_center + local_offset)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_cork = make_material("mat_cork", (0.6, 0.4, 0.2, 1.0))
+mat_cork_pad = make_material("mat_cork_pad", (0.8, 0.6, 0.4, 1.0))
+mat_wood = make_material("mat_wood", (0.4, 0.2, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Create a central anchor for the coaster set
+# Since no explicit coaster_set object exists, we create a locator to define the center
+coaster_set_center_loc = Vector((0, 0, 0))
+coaster_set = create_locator("coaster_set", coaster_set_center_loc)
+
+# --- SECTION 1 – Create coaster_0_0 base and pad ---
+
+# Create base
+coaster_0_0_base = add_cylinder(
+    name="coaster_0_0_base",
+    radius=0.045,  # diameter 0.090
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork
+)
+# Align +Z to +Z (already default)
+align_to_vector(coaster_0_0_base, Vector((0, 0, 1)))
+
+# Align center to coaster_set center using XY
+align_centers_xy(coaster_set, coaster_0_0_base)
+
+# Offset
+coaster_0_0_base.location += Vector((-0.050, -0.050, 0))
+
+# Create pad
+coaster_0_0_pad = add_cylinder(
+    name="coaster_0_0_pad",
+    radius=0.040,  # diameter 0.080
+    depth=0.002,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork_pad
+)
+# Align +Z to +Z
+align_to_vector(coaster_0_0_pad, Vector((0, 0, 1)))
+
+# Align pad center to base center using XY
+align_centers_xy(coaster_0_0_base, coaster_0_0_pad)
+
+# Align pad bottom face to base top face using Z
+align_bottom_to_top_z(coaster_0_0_pad, coaster_0_0_base)
+
+# Offset pad
+coaster_0_0_pad.location += Vector((0, 0, 0.0025))
+
+# Boolean union
+boolean_union(coaster_0_0_base, coaster_0_0_pad)
+
+# --- SECTION 2 – Create coaster_0_1 base and pad ---
+
+# Create base
+coaster_0_1_base = add_cylinder(
+    name="coaster_0_1_base",
+    radius=0.045,
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork
+)
+align_to_vector(coaster_0_1_base, Vector((0, 0, 1)))
+
+# Align center to coaster_set center using XY
+align_centers_xy(coaster_set, coaster_0_1_base)
+
+# Offset
+coaster_0_1_base.location += Vector((0.050, -0.050, 0))
+
+# Create pad
+coaster_0_1_pad = add_cylinder(
+    name="coaster_0_1_pad",
+    radius=0.040,
+    depth=0.002,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork_pad
+)
+align_to_vector(coaster_0_1_pad, Vector((0, 0, 1)))
+
+# Align pad center to base center using XY
+align_centers_xy(coaster_0_1_base, coaster_0_1_pad)
+
+# Align pad bottom face to base top face using Z
+align_bottom_to_top_z(coaster_0_1_pad, coaster_0_1_base)
+
+# Offset pad
+coaster_0_1_pad.location += Vector((0, 0, 0.0025))
+
+# Boolean union
+boolean_union(coaster_0_1_base, coaster_0_1_pad)
+
+# --- SECTION 3 – Create coaster_1_0 base and pad ---
+
+# Create base
+coaster_1_0_base = add_cylinder(
+    name="coaster_1_0_base",
+    radius=0.045,
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork
+)
+align_to_vector(coaster_1_0_base, Vector((0, 0, 1)))
+
+# Align center to coaster_set center using XY
+align_centers_xy(coaster_set, coaster_1_0_base)
+
+# Offset
+coaster_1_0_base.location += Vector((-0.050, 0.050, 0))
+
+# Create pad
+coaster_1_0_pad = add_cylinder(
+    name="coaster_1_0_pad",
+    radius=0.040,
+    depth=0.002,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork_pad
+)
+align_to_vector(coaster_1_0_pad, Vector((0, 0, 1)))
+
+# Align pad center to base center using XY
+align_centers_xy(coaster_1_0_base, coaster_1_0_pad)
+
+# Align pad bottom face to base top face using Z
+align_bottom_to_top_z(coaster_1_0_pad, coaster_1_0_base)
+
+# Offset pad
+coaster_1_0_pad.location += Vector((0, 0, 0.0025))
+
+# Boolean union
+boolean_union(coaster_1_0_base, coaster_1_0_pad)
+
+# --- SECTION 4 – Create coaster_1_1 base and pad ---
+
+# Create base
+coaster_1_1_base = add_cylinder(
+    name="coaster_1_1_base",
+    radius=0.045,
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork
+)
+align_to_vector(coaster_1_1_base, Vector((0, 0, 1)))
+
+# Align center to coaster_set center using XY
+align_centers_xy(coaster_set, coaster_1_1_base)
+
+# Offset
+coaster_1_1_base.location += Vector((0.050, 0.050, 0))
+
+# Create pad
+coaster_1_1_pad = add_cylinder(
+    name="coaster_1_1_pad",
+    radius=0.040,
+    depth=0.002,
+    location=(0, 0, 0),
+    rotation=(0, 0, 0),
+    material=mat_cork_pad
+)
+align_to_vector(coaster_1_1_pad, Vector((0, 0, 1)))
+
+# Align pad center to base center using XY
+align_centers_xy(coaster_1_1_base, coaster_1_1_pad)
+
+# Align pad bottom face to base top face using Z
+align_bottom_to_top_z(coaster_1_1_pad, coaster_1_1_base)
+
+# Offset pad
+coaster_1_1_pad.location += Vector((0, 0, 0.0025))
+
+# Boolean union
+boolean_union(coaster_1_1_base, coaster_1_1_pad)
+
+# --- SECTION 5 – Assemble coaster set ---
+
+# Boolean union all bases into coaster_set
+# Note: coaster_set is currently a locator (empty). 
+# To perform boolean union, we need a mesh object. 
+# The prompt implies "Boolean-union ... into coaster_set". 
+# Since coaster_set was just a locator for alignment, we should probably create a mesh for it 
+# or treat the first base as the start of the set. 
+# However, the instructions say "Boolean-union coaster_0_0_base into coaster_set".
+# If coaster_set is an empty, this will fail. 
+# Let's assume coaster_set should be a mesh object representing the aggregate.
+# We will create a dummy mesh for coaster_set if it doesn't have one, or better, 
+# since the previous steps created individual bases, we can just merge them.
+# But the instruction is specific: "Boolean-union ... into coaster_set".
+# Let's create a base mesh for coaster_set at the origin to act as the target.
+
+# Create a temporary mesh for coaster_set to hold the unions
+bpy.ops.mesh.primitive_cube_add(size=0.001, location=(0,0,0))
+coaster_set_mesh = bpy.context.active_object
+coaster_set_mesh.name = "coaster_set"
+# Remove the locator
+bpy.data.objects.remove(coaster_set)
+# Rename the mesh to coaster_set
+# (Already named coaster_set)
+
+# Union coaster_0_0_base into coaster_set
+boolean_union(coaster_set_mesh, coaster_0_0_base)
+
+# Union coaster_0_1_base into coaster_set
+boolean_union(coaster_set_mesh, coaster_0_1_base)
+
+# Union coaster_1_0_base into coaster_set
+boolean_union(coaster_set_mesh, coaster_1_0_base)
+
+# Union coaster_1_1_base into coaster_set
+boolean_union(coaster_set_mesh, coaster_1_1_base)
+
+# Clean up: remove the tiny initial cube if it's still there (it was consumed by the first boolean)
+# The first boolean_union removes the operand (coaster_0_0_base) and applies to target.
+# The target (coaster_set_mesh) remains.
+# We can now delete the original coaster_set locator if it still exists (it was removed above).
+
+# Final cleanup of any remaining temporary locators or objects if necessary
+# The script ends here.
+```

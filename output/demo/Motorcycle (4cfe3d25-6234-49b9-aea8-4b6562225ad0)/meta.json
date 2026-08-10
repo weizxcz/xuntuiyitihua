@@ -1,0 +1,48 @@
+{
+  "id": "4cfe3d25-6234-49b9-aea8-4b6562225ad0",
+  "name": "Motorcycle",
+  "instruction": "Can you create a 3D model of a motorcycle? It should have two wheels, handlebars, and a seat.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a motorcycle.",
+        "The motorcycle has two wheels.",
+        "The handlebars are positioned above the front wheel.",
+        "The seat is located between the handlebars and the rear wheel."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The wheels should be proportionate to the overall size of the motorcycle.",
+        "The handlebars should be proportionate to the height of the seat."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The two wheels are positioned parallel to each other.",
+        "The handlebars are correctly positioned above the front wheel.",
+        "The seat is properly aligned between the handlebars and the rear wheel."
+      ],
+      "Object distance and contact": [
+        "The wheels do not overlap with the seat.",
+        "The handlebars do not obstruct the view of the seat.",
+        "There is sufficient space between the handlebars and the seat for rider comfort."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (two wheels, handlebars, seat) are included.",
+        "There are no deviations from the basic motorcycle design as per the instruction."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,1 @@
+Can you create a 3D model of an iron? The iron should have a flat soleplate with steam holes. Add a handle on top with a dial for temperature control. Include a water tank with a fill cap. Add buttons for steam and spray functions. Make sure the power cord is visible.

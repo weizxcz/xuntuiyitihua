@@ -1,0 +1,221 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with a specific diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color, 1.0)
+    return mat
+
+def add_cylinder(name, radius, height, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube mesh object."""
+    # size is expected as a tuple (x, y, z)
+    x, y, z = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.scale = (x/2, y/2, z/2)
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_bottom_to_top(obj_bottom, obj_top):
+    """Align the bottom face of obj_bottom to the top face of obj_top."""
+    # Get world bounds
+    def get_world_bounds(obj):
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bm.transform(obj.matrix_world)
+        min_z = min(v.co.z for v in bm.verts)
+        max_z = max(v.co.z for v in bm.verts)
+        bm.free()
+        return min_z, max_z
+
+    min_z_bottom, max_z_bottom = get_world_bounds(obj_bottom)
+    min_z_top, max_z_top = get_world_bounds(obj_top)
+
+    # Calculate offset needed to move obj_bottom's bottom to obj_top's top
+    offset_z = max_z_top - min_z_bottom
+    obj_bottom.location.z += offset_z
+
+def align_center_x_y(obj1, obj2):
+    """Align the center X and Y of obj1 to obj2."""
+    # Get world centers
+    def get_world_center(obj):
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bm.transform(obj.matrix_world)
+        center = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
+        bm.free()
+        return center
+
+    center1 = get_world_center(obj1)
+    center2 = get_world_center(obj2)
+    
+    obj1.location.x += (center2.x - center1.x)
+    obj1.location.y += (center2.y - center1.y)
+
+def apply_offset(obj, offset_vector):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vector
+
+def set_orientation_z(obj):
+    """Ensure object's +Z aligns with world +Z (default for primitives, but explicit for safety)."""
+    # Most primitives default to Z-up. If rotated, we reset rotation to 0,0,0.
+    obj.rotation_euler = (0, 0, 0)
+
+def reset_scene():
+    """Delete all objects and set units to meters."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Clear collections if necessary, though delete usually handles it
+    # Ensure scene units are meters
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# SCENE RESET & UNITS
+# ==============================================================================
+reset_scene()
+
+# ==============================================================================
+# MATERIALS
+# ==============================================================================
+mat_board_green = make_material("board_green", (0.1, 0.4, 0.1))
+mat_copper_gold = make_material("copper_gold", (0.8, 0.6, 0.2))
+mat_ic_black = make_material("ic_black", (0.1, 0.1, 0.1))
+mat_resistor_beige = make_material("resistor_beige", (0.8, 0.7, 0.5))
+mat_capacitor_blue = make_material("capacitor_blue", (0.1, 0.2, 0.6))
+mat_led_red = make_material("led_red", (0.9, 0.1, 0.1))
+mat_led_green = make_material("led_green", (0.1, 0.9, 0.1))
+mat_connector_black = make_material("connector_black", (0.15, 0.15, 0.15))
+mat_connector_gold = make_material("connector_gold", (0.9, 0.7, 0.3))
+
+# ==============================================================================
+# GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create base PCB substrate ---
+pcb_base = add_cube("pcb_base", (0.100, 0.080, 0.002), location=(0,0,0), material=mat_board_green)
+set_orientation_z(pcb_base)
+# Anchor to world origin (already at 0,0,0)
+apply_offset(pcb_base, (0, 0, 0))
+
+# --- SECTION 2 – Create copper trace layer ---
+pcb_copper_layer = add_cube("pcb_copper_layer", (0.098, 0.078, 0.0001), location=(0,0,0), material=mat_copper_gold)
+set_orientation_z(pcb_copper_layer)
+# Align bottom face to pcb_base top face
+align_bottom_to_top(pcb_copper_layer, pcb_base)
+# Offset
+apply_offset(pcb_copper_layer, (0, 0, 0.0001))
+
+# --- SECTION 3 – Place IC 1 (DIP-8) ---
+ic_1 = add_cube("ic_1", (0.010, 0.004, 0.002), location=(0,0,0), material=mat_ic_black)
+set_orientation_z(ic_1)
+# Align bottom face to pcb_copper_layer top face
+align_bottom_to_top(ic_1, pcb_copper_layer)
+# Align center X/Y to pcb_copper_layer center (implied by "Align... to... top_face" usually meaning placement on surface, 
+# but prompt says "Align ic_1.bottom_face to pcb_copper_layer.top_face" then offset. 
+# Standard interpretation: Align vertical position, then apply offset from center or anchor.
+# Prompt says "Align ic_1.bottom_face to pcb_copper_layer.top_face". It does not explicitly say align X/Y.
+# However, offset is given as (0.02, 0.02, 0.001). 
+# If we don't align X/Y, it stays at 0,0. Let's assume center alignment for X/Y unless specified otherwise.
+align_center_x_y(ic_1, pcb_copper_layer)
+apply_offset(ic_1, (0.02, 0.02, 0.001))
+
+# --- SECTION 4 – Place IC 2 (SOP-16) ---
+ic_2 = add_cube("ic_2", (0.010, 0.006, 0.002), location=(0,0,0), material=mat_ic_black)
+set_orientation_z(ic_2)
+align_bottom_to_top(ic_2, pcb_copper_layer)
+align_center_x_y(ic_2, pcb_copper_layer)
+apply_offset(ic_2, (-0.02, 0.02, 0.001))
+
+# --- SECTION 5 – Place Resistor 1 ---
+res_1 = add_cylinder("res_1", 0.0015, 0.010, location=(0,0,0), material=mat_resistor_beige)
+set_orientation_z(res_1)
+align_bottom_to_top(res_1, pcb_copper_layer)
+align_center_x_y(res_1, pcb_copper_layer)
+apply_offset(res_1, (0.02, -0.02, 0.0015))
+
+# --- SECTION 6 – Place Resistor 2 ---
+res_2 = add_cylinder("res_2", 0.0015, 0.010, location=(0,0,0), material=mat_resistor_beige)
+set_orientation_z(res_2)
+align_bottom_to_top(res_2, pcb_copper_layer)
+align_center_x_y(res_2, pcb_copper_layer)
+apply_offset(res_2, (-0.02, -0.02, 0.0015))
+
+# --- SECTION 7 – Place Capacitor 1 ---
+cap_1 = add_cylinder("cap_1", 0.0025, 0.002, location=(0,0,0), material=mat_capacitor_blue)
+set_orientation_z(cap_1)
+align_bottom_to_top(cap_1, pcb_copper_layer)
+align_center_x_y(cap_1, pcb_copper_layer)
+apply_offset(cap_1, (0.04, 0.02, 0.001))
+
+# --- SECTION 8 – Place Capacitor 2 ---
+cap_2 = add_cylinder("cap_2", 0.003, 0.010, location=(0,0,0), material=mat_capacitor_blue)
+set_orientation_z(cap_2)
+align_bottom_to_top(cap_2, pcb_copper_layer)
+align_center_x_y(cap_2, pcb_copper_layer)
+apply_offset(cap_2, (-0.04, 0.02, 0.005))
+
+# --- SECTION 9 – Place LED 1 ---
+led_1 = add_cylinder("led_1", 0.0025, 0.004, location=(0,0,0), material=mat_led_red)
+set_orientation_z(led_1)
+align_bottom_to_top(led_1, pcb_copper_layer)
+align_center_x_y(led_1, pcb_copper_layer)
+apply_offset(led_1, (0.04, -0.02, 0.002))
+
+# --- SECTION 10 – Place LED 2 ---
+led_2 = add_cylinder("led_2", 0.0025, 0.004, location=(0,0,0), material=mat_led_green)
+set_orientation_z(led_2)
+align_bottom_to_top(led_2, pcb_copper_layer)
+align_center_x_y(led_2, pcb_copper_layer)
+apply_offset(led_2, (-0.04, -0.02, 0.002))
+
+# --- SECTION 11 – Place USB Connector ---
+conn_1 = add_cube("conn_1", (0.020, 0.010, 0.005), location=(0,0,0), material=mat_connector_black)
+set_orientation_z(conn_1)
+align_bottom_to_top(conn_1, pcb_copper_layer)
+align_center_x_y(conn_1, pcb_copper_layer)
+apply_offset(conn_1, (0.05, 0, 0.0025))
+
+# --- SECTION 12 – Place Header Pin Block ---
+conn_2 = add_cube("conn_2", (0.020, 0.010, 0.005), location=(0,0,0), material=mat_connector_black)
+set_orientation_z(conn_2)
+align_bottom_to_top(conn_2, pcb_copper_layer)
+align_center_x_y(conn_2, pcb_copper_layer)
+apply_offset(conn_2, (-0.05, 0, 0.0025))
+
+# --- SECTION 13 – Place USB Connector Pins ---
+conn_pins_1 = add_cube("conn_pins_1", (0.018, 0.008, 0.001), location=(0,0,0), material=mat_connector_gold)
+set_orientation_z(conn_pins_1)
+align_bottom_to_top(conn_pins_1, pcb_copper_layer)
+align_center_x_y(conn_pins_1, pcb_copper_layer)
+apply_offset(conn_pins_1, (0.05, 0, 0.0025))
+
+# --- SECTION 14 – Place Header Pin Block Pins ---
+conn_pins_2 = add_cube("conn_pins_2", (0.018, 0.008, 0.001), location=(0,0,0), material=mat_connector_gold)
+set_orientation_z(conn_pins_2)
+align_bottom_to_top(conn_pins_2, pcb_copper_layer)
+align_center_x_y(conn_pins_2, pcb_copper_layer)
+apply_offset(conn_pins_2, (-0.05, 0, 0.0025))
+```

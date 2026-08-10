@@ -1,0 +1,43 @@
+{
+  "id": "c5c611c1-e86b-4a75-9a21-58f3826b8373",
+  "name": "Keyboard vs. Mouse",
+  "instruction": "Compare a keyboard and a mouse in terms of their design. The keyboard should be rectangular with a full set of keys, while the mouse should be ergonomic and fit comfortably in the hand.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The keyboard is rectangular in shape.",
+        "The mouse has an ergonomic design."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The keys are proportionate to the keyboard."
+      ],
+      "Texture and surface detail": [
+        "The keyboard likely has a smooth surface for key pressing.",
+        "The mouse may have a textured surface for grip."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "No Texture and surface detail."
+      ],
+      "Object distance and contact": [
+        "The keyboard and mouse are separate objects.",
+        "The mouse is positioned within easy reach of the keyboard."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The keyboard is accurately represented as rectangular with a full set of keys.",
+        "The mouse is accurately represented as ergonomic."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

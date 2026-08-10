@@ -1,0 +1,166 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_to_face(obj, target_obj, face_normal_local, face_center_local):
+    """
+    Aligns obj's bottom face (local -Z) to target_obj's specified face.
+    Assumes obj is created at origin with default orientation.
+    """
+    # Get target face world transform
+    # We need to find the world matrix of the specific face on the target object.
+    # Since we are dealing with simple primitives aligned to axes, we can calculate it.
+    
+    # Target face center in world space
+    target_center_world = target_obj.matrix_world @ face_center_local
+    
+    # Target face normal in world space
+    # face_normal_local is in local space of target_obj
+    normal_world = (target_obj.matrix_world @ Vector(face_normal_local)).normalized()
+    
+    # Current obj bottom normal is (0,0,-1)
+    # We want to rotate obj so that (0,0,-1) aligns with normal_world
+    # And we want to position obj so its bottom center is at target_center_world
+    
+    # Calculate rotation
+    current_bottom = Vector((0, 0, -1))
+    target_normal = normal_world
+    
+    # Avoid division by zero or near-zero
+    if abs(current_bottom.dot(target_normal)) > 0.9999:
+        rot_quat = current_bottom.rotation_difference(target_normal)
+    else:
+        rot_quat = current_bottom.rotation_difference(target_normal)
+        
+    obj.rotation_euler = rot_quat.to_euler()
+    
+    # Calculate position
+    # The object's local bottom center is at (0,0,-size[2]/2) relative to its origin
+    # We want this point to be at target_center_world
+    local_bottom_center = Vector((0, 0, -obj.dimensions[2]/2))
+    
+    # Apply rotation to local offset to get world offset
+    rotated_offset = rot_quat @ local_bottom_center
+    
+    obj.location = target_center_world - rotated_offset
+    
+    return obj
+
+def apply_material(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_puzzle_blue = make_material("mat_puzzle_blue", (0.2, 0.4, 0.8, 1.0))
+mat_puzzle_green = make_material("mat_puzzle_green", (0.2, 0.6, 0.2, 1.0))
+mat_puzzle_red = make_material("mat_puzzle_red", (0.8, 0.2, 0.2, 1.0))
+mat_puzzle_yellow = make_material("mat_puzzle_yellow", (0.9, 0.8, 0.2, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# Helper for creating aligned cubes
+def create_aligned_cube(name, size, anchor_obj, anchor_face_normal, anchor_face_center, offset, mat):
+    # Default orientation: +Z aligns +Z (world)
+    rot = (0, 0, 0)
+    loc = (0, 0, 0)
+    
+    obj = add_cube(name, size, loc, rot)
+    
+    # Align to anchor face
+    obj = align_to_face(obj, anchor_obj, anchor_face_normal, anchor_face_center)
+    
+    # Apply offset (in reference local axes of the aligned object? 
+    # Prompt says "Offset is in reference local axes". 
+    # Usually implies offset from the aligned position.
+    # We apply offset in the object's local space after alignment.
+    offset_vec = Vector(offset)
+    obj.location += obj.rotation_euler.to_matrix() @ offset_vec
+    
+    apply_material(obj, mat)
+    return obj
+
+# SECTION 1 – Create puzzle base
+# Size 0.254x0.381x0.005
+# Rotate +Z to +Z (default)
+# Move to (0,0,0)
+puzzle_base = add_cube("puzzle_base", (0.254, 0.381, 0.005), (0, 0, 0), (0, 0, 0))
+apply_material(puzzle_base, mat_puzzle_blue)
+
+# SECTION 2 – Create edge_top
+# Size 0.254x0.0254x0.005
+# Align bottom_face to puzzle_base.top_face
+# puzzle_base top face normal is (0,0,1), center is (0, 0, 0.005/2)
+edge_top = create_aligned_cube("edge_top", (0.254, 0.0254, 0.005), puzzle_base, (0, 0, 1), (0, 0, 0.0025), (0, 0, 0), mat_puzzle_red)
+
+# SECTION 3 – Create edge_bottom
+# Size 0.254x0.0254x0.005
+# Align bottom_face to puzzle_base.top_face
+# Offset (0, -0.381, 0)
+edge_bottom = create_aligned_cube("edge_bottom", (0.254, 0.0254, 0.005), puzzle_base, (0, 0, 1), (0, 0, 0.0025), (0, -0.381, 0), mat_puzzle_red)
+
+# SECTION 4 – Create edge_left
+# Size 0.005x0.381x0.005
+# Align bottom_face to puzzle_base.top_face
+# Offset (-0.254, 0, 0)
+edge_left = create_aligned_cube("edge_left", (0.005, 0.381, 0.005), puzzle_base, (0, 0, 1), (0, 0, 0.0025), (-0.254, 0, 0), mat_puzzle_red)
+
+# SECTION 5 – Create edge_right
+# Size 0.005x0.381x0.005
+# Align bottom_face to puzzle_base.top_face
+# Offset (0.254, 0, 0)
+edge_right = create_aligned_cube("edge_right", (0.005, 0.381, 0.005), puzzle_base, (0, 0, 1), (0, 0, 0.0025), (0.254, 0, 0), mat_puzzle_red)
+
+# Helper for inner rows
+# Size 0.2032x0.0254x0.005
+# Align bottom_face to puzzle_base.top_face
+# Offsets vary in Y
+
+inner_row_size = (0.2032, 0.0254, 0.005)
+anchor_normal = (0, 0, 1)
+anchor_center = (0, 0, 0.0025)
+
+for i in range(1, 47):
+    name = f"inner_row_{i}"
+    y_offset = i * 0.0254
+    offset = (0, y_offset, 0)
+    
+    obj = create_aligned_cube(name, inner_row_size, puzzle_base, anchor_normal, anchor_center, offset, mat_puzzle_green)

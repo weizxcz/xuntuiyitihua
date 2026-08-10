@@ -1,0 +1,43 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material glass_clear; diffuse_color = (0.9,0.95,1.0,0.2).
+Define material metal_steel; diffuse_color = (0.7,0.7,0.75,1.0).
+Define material specimen_green; diffuse_color = (0.1,0.6,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create slide base  ---
+Create primitive cuboid with size 0.076×0.026×0.001 m and name it slide_base.
+Rotate slide_base so its +Z axis aligns +Z (world).
+Anchor slide_base to world origin.
+Then move by offset(0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create specimen layer  ---
+Create primitive cuboid with size 0.015×0.015×0.0001 m and name it specimen_patch.
+Rotate specimen_patch so its +Z axis aligns +Z (world).
+Align specimen_patch.+Z_face to slide_base.+Z_face.
+Then move by offset(0,0,0.0005).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create cover slip  ---
+Create primitive cuboid with size 0.022×0.022×0.00017 m and name it cover_slip.
+Rotate cover_slip so its +Z axis aligns +Z (world).
+Align cover_slip.+Z_face to specimen_patch.+Z_face.
+Then move by offset(0,0,0.00058).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

@@ -1,0 +1,120 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material abs_black; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material abs_white; diffuse_color = (0.95,0.95,0.95,1.00).
+Define material aluminum_silver; diffuse_color = (0.75,0.75,0.78,1.00).
+Define material lcd_green; diffuse_color = (0.10,0.80,0.10,1.00).
+Define material nylon_black; diffuse_color = (0.05,0.05,0.05,1.00).
+Define material nylon_white; diffuse_color = (0.90,0.90,0.90,1.00).
+Define material silicone_grey; diffuse_color = (0.60,0.60,0.60,1.00).
+Define material velcro_gray; diffuse_color = (0.50,0.50,0.50,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Display Unit Main Body  ---
+Create primitive cuboid with size 0.080×0.120×0.025 m and name it main_body.
+Rotate main_body so its +Z axis aligns +Z (world).
+Move main_body to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Display Unit Screen Beze  ---
+Create primitive cuboid with size 0.060×0.080×0.002 m and name it screen_beze.
+Rotate screen_beze so its +Z axis aligns +Z (world).
+Align screen_beze.bottom_face to main_body.top_face.
+Then move by offset(0,0,0.001).
+Stage 2 complete.
+
+---  SECTION 3 – Create Display Unit LCD Screen  ---
+Create primitive cuboid with size 0.050×0.070×0.001 m and name it lcd_screen.
+Rotate lcd_screen so its +Z axis aligns +Z (world).
+Align lcd_screen.bottom_face to screen_beze.top_face.
+Then move by offset(0,0,0.001).
+Stage 3 complete.
+
+---  SECTION 4 – Create Display Unit Button Panel  ---
+Create primitive cuboid with size 0.060×0.030×0.002 m and name it button_panel.
+Rotate button_panel so its +Z axis aligns +Z (world).
+Align button_panel.bottom_face to main_body.top_face.
+Then move by offset(0,-0.045,0.001).
+Stage 4 complete.
+
+---  SECTION 5 – Create Display Unit Start Button  ---
+Create primitive cylinder with Ø0.015×0.005 m and name it button_start.
+Rotate button_start so its +Z axis aligns +Z (world).
+Align button_start.bottom_face to button_panel.top_face.
+Then move by offset(-0.015,0,0.001).
+Stage 5 complete.
+
+---  SECTION 6 – Create Display Unit Memory Button  ---
+Create primitive cylinder with Ø0.010×0.005 m and name it button_memory.
+Rotate button_memory so its +Z axis aligns +Z (world).
+Align button_memory.bottom_face to button_panel.top_face.
+Then move by offset(0.015,0,0.001).
+Stage 6 complete.
+
+---  SECTION 7 – Create Display Unit Internal Electronics  ---
+Create primitive cuboid with size 0.070×0.110×0.015 m and name it internal_electronics.
+Rotate internal_electronics so its +Z axis aligns +Z (world).
+Align internal_electronics.bottom_face to main_body.bottom_face.
+Then move by offset(0,0,-0.005).
+Stage 7 complete.
+
+---  SECTION 8 – Create Cuff Band  ---
+Create primitive cuboid with size 0.040×0.300×0.005 m and name it cuff_band.
+Rotate cuff_band so its +Z axis aligns +Z (world).
+Move cuff_band to pos=(0.15,0,0).
+Stage 8 complete.
+
+---  SECTION 9 – Create Cuff Inner Padding  ---
+Create primitive cuboid with size 0.038×0.290×0.003 m and name it cuff_inner.
+Rotate cuff_inner so its +Z axis aligns +Z (world).
+Align cuff_inner.bottom_face to cuff_band.top_face.
+Then move by offset(0,0,0.001).
+Stage 9 complete.
+
+---  SECTION 10 – Create Cuff Bladder  ---
+Create primitive cuboid with size 0.035×0.280×0.001 m and name it bladder.
+Rotate bladder so its +Z axis aligns +Z (world).
+Align bladder.bottom_face to cuff_inner.top_face.
+Then move by offset(0,0,0.001).
+Stage 10 complete.
+
+---  SECTION 11 – Create Velcro Hook  ---
+Create primitive cuboid with size 0.040×0.100×0.002 m and name it velcro_hook.
+Rotate velcro_hook so its +Z axis aligns +Z (world).
+Align velcro_hook.bottom_face to cuff_band.top_face.
+Then move by offset(0,0.100,0.001).
+Stage 11 complete.
+
+---  SECTION 12 – Create Velcro Loop  ---
+Create primitive cuboid with size 0.040×0.100×0.002 m and name it velcro_loop.
+Rotate velcro_loop so its +Z axis aligns +Z (world).
+Align velcro_loop.bottom_face to cuff_band.top_face.
+Then move by offset(0,-0.100,0.001).
+Stage 12 complete.
+
+---  SECTION 13 – Create Air Connector  ---
+Create primitive cylinder with Ø0.010×0.015 m and name it air_connector.
+Rotate air_connector so its +Z axis aligns +Z (world).
+Align air_connector.bottom_face to cuff_band.top_face.
+Then move by offset(0,0.150,0.001).
+Stage 13 complete.
+
+---  SECTION 14 – Create Air Tube  ---
+Create primitive cylinder with Ø0.005×0.500 m and name it air_tube.
+Rotate air_tube so its +Z axis aligns +Z (world).
+Align air_tube.bottom_face to air_connector.top_face.
+Then move by offset(0,0,0.007).
+Stage 14 complete.
+
+All stages complete.

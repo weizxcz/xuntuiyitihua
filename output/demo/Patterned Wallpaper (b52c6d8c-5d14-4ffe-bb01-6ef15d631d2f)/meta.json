@@ -1,0 +1,43 @@
+{
+  "id": "b52c6d8c-5d14-4ffe-bb01-6ef15d631d2f",
+  "name": "Patterned Wallpaper",
+  "instruction": "Design a 3D model of a patterned wallpaper. Start with a rectangular sheet. Add a repeating geometric pattern across the surface. Ensure the pattern is evenly spaced and consistent throughout. The wallpaper should look ready to be applied to a wall.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a rectangular sheet.",
+        "The dimensions of the sheet are appropriate for wallpaper."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pattern is evenly spaced and consistent throughout the sheet."
+      ],
+      "Texture and surface detail": [
+        "The surface has a repeating geometric pattern."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The wallpaper is presented as a flat, two-dimensional object.",
+        "The edges of the wallpaper are clearly defined."
+      ],
+      "Object distance and contact": [
+        "The pattern is applied uniformly without any overlaps.",
+        "There are no gaps between the repeating elements of the pattern."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the wallpaper are accurately represented.",
+        "The repeating geometric pattern is consistent and evenly spaced."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

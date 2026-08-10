@@ -1,0 +1,47 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_plastic_grey; diffuse_color = (0.4,0.4,0.4,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create body shell  ---
+Create primitive cylinder with radius 0.150 m and height 0.400 m and name it body_shell.
+Rotate body_shell so its +Z axis aligns +Z (world).
+Anchor body_shell to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create base plate  ---
+Create primitive cylinder with radius 0.150 m and height 0.005 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Align base_plate.top_face to body_shell.bottom_face.
+Then move by offset(0,0,-0.002).
+
+---  SECTION 3 – Create lid dome  ---
+Create full_sphere and name it lid_dome_raw with radius 0.150 m.
+Rotate lid_dome_raw so its +Z axis aligns +Z (world).
+Create plane_cutter and name it lid_dome_cut with size 0.300×0.300 m; orientation=axis:+Z.
+Boolean-subtract lid_dome_cut from lid_dome_raw; keep lid_dome_raw.  // produces hemisphere
+Rotate lid_dome_raw so its curved face points +Z.
+Rename lid_dome_raw to lid_dome.
+Align lid_dome.bottom_face to body_shell.top_face.
+Then move by offset(0,0,0.002).
+
+---  SECTION 4 – Create hinge pin  ---
+Create primitive cylinder with radius 0.005 m and height 0.020 m and name it hinge_pin.
+Rotate hinge_pin so its +Z axis aligns +Z (world).
+Align hinge_pin.center to Avg(body_shell.left_face, body_shell.right_face).
+Align hinge_pin.bottom_face to body_shell.top_face.
+Then move by offset(0,0,0.002).
+
+Stage 4 complete.
+All stages complete.

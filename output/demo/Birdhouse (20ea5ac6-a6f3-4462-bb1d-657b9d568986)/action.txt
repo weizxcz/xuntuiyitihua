@@ -1,0 +1,83 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_brown; diffuse_color = (0.55,0.27,0.15,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create back panel  ---
+Create primitive cuboid with size 0.300×0.400×0.015 m and name it back.
+Rotate back so its +Z axis aligns +Z (world).
+Align back.center to (0, -0.150, 0.200).
+Stage 1 complete.
+
+---  SECTION 2 – Create left panel  ---
+Create primitive cuboid with size 0.200×0.400×0.015 m and name it left.
+Rotate left so its +Z axis aligns +Z (world).
+Align left.center to (-0.150, 0, 0.200).
+Stage 2 complete.
+
+---  SECTION 3 – Create right panel  ---
+Create primitive cuboid with size 0.200×0.400×0.015 m and name it right.
+Rotate right so its +Z axis aligns +Z (world).
+Align right.center to (0.150, 0, 0.200).
+Stage 3 complete.
+
+---  SECTION 4 – Create front panel  ---
+Create primitive cuboid with size 0.300×0.400×0.015 m and name it front.
+Rotate front so its +Z axis aligns +Z (world).
+Align front.center to (0, 0.150, 0.200).
+Stage 4 complete.
+
+---  SECTION 5 – Assemble walls union  ---
+Boolean-union back, left, right, and front; keep back. Name the result walls_union.
+Stage 5 complete.
+
+---  SECTION 6 – Create floor  ---
+Create primitive cuboid with size 0.300×0.200×0.015 m and name it floor.
+Rotate floor so its +Z axis aligns +Z (world).
+Align floor.center to (0, 0, 0).
+Stage 6 complete.
+
+---  SECTION 7 – Create roof left panel  ---
+Create primitive cuboid with size 0.250×0.300×0.015 m and name it roof_left.
+Rotate roof_left so its +Z axis aligns +Y (world).
+Align roof_left.bottom_edge to back.top_edge.
+Stage 7 complete.
+
+---  SECTION 8 – Create roof right panel  ---
+Create primitive cuboid with size 0.250×0.300×0.015 m and name it roof_right.
+Rotate roof_right so its +Z axis aligns +Y (world).
+Align roof_right.bottom_edge to back.top_edge.
+Stage 8 complete.
+
+---  SECTION 9 – Assemble roof  ---
+Boolean-union roof_left and roof_right; keep roof_left. Name the result roof.
+Stage 9 complete.
+
+---  SECTION 10 – Create entrance hole  ---
+Create cylinder with Ø0.050×0.020 m and name it entrance_hole_cut.
+Rotate entrance_hole_cut so its +Z axis aligns +Y (world).
+Align entrance_hole_cut.center to (0, 0.1575, 0.250).
+Boolean-subtract entrance_hole_cut from front; discard entrance_hole_cut.
+Stage 10 complete.
+
+---  SECTION 11 – Create perch  ---
+Create primitive cylinder with Ø0.010×0.040 m and name it perch.
+Rotate perch so its +Z axis aligns +Y (world).
+Align perch.center to (0, 0.1575, 0.225).
+Stage 11 complete.
+
+---  SECTION 12 – Assemble birdhouse  ---
+Boolean-union walls_union, roof, floor, and perch; keep walls_union. Name the result birdhouse.
+Assembly guideline satisfied.
+All stages complete.

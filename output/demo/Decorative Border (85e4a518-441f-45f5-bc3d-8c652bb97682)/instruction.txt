@@ -1,0 +1,1 @@
+Could you design a decorative border for a page? It should have a repeating geometric pattern, with shapes like triangles and squares. The border should be about 1 inch wide and run along the edges of the page. Can you do this?

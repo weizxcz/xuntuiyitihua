@@ -1,0 +1,49 @@
+-- MATERIAL LIBRARY --
+mat_aluminum_silver | diffuse_color=(0.75,0.75,0.80,1.0)
+mat_black_plastic | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_black_screen | diffuse_color=(0.01,0.01,0.02,1.0)
+mat_blue_led | diffuse_color=(0.0,0.2,1.0,1.0)
+mat_glass_translucent | diffuse_color=(0.9,0.95,1.0,0.1)
+mat_port_gold | diffuse_color=(0.8,0.6,0.2,1.0)
+mat_port_black | diffuse_color=(0.1,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| monitor_root | Composite assembly of the entire monitor unit | assembly_order=[base_assembly, screen_assembly, back_panel_assembly, interface_assembly] |
+
+Layer 1 – Primary Structure (Screen & Bezel)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| screen_panel | Flat rectangular display panel 0.600×0.340×0.005 m (W×H×T) | pos=(0, 0.170, 0); orientation=axis:+Z; mat=mat_black_screen; create_method=primitive |
+| bezel_frame | Slim rectangular frame surrounding the screen 0.620×0.360×0.008 m (W×H×T) with central aperture | Align(XY) bezel_frame.center to screen_panel.center; Align(Z) bezel_frame.front_face to screen_panel.front_face; offset(0,0,0.002); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract |
+| screen_assembly | Composite of screen and bezel | assembly_order=[screen_panel, bezel_frame] |
+
+Layer 2 – Stand Assembly (Height Adjustable)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| stand_base | Circular base plate Ø0.150×0.010 m (D×H) | pos=(0, -0.180, 0); orientation=axis:+Z; mat=mat_aluminum_silver; create_method=primitive |
+| stand_pillar | Vertical support cylinder Ø0.020×0.150 m (D×H) | Align(XY) stand_pillar.center to stand_base.center; Align(Z) stand_pillar.bottom_face to stand_base.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_aluminum_silver; create_method=primitive |
+| stand_connector | Small block connecting pillar to screen back 0.040×0.030×0.020 m (W×H×T) | Align(XY) stand_connector.center to stand_pillar.center; Align(Z) stand_connector.bottom_face to stand_pillar.top_face; offset(0,0,0.010); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| base_assembly | Composite of stand components | assembly_order=[stand_base, stand_pillar, stand_connector] |
+
+Layer 3 – Back Panel & Ports
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| back_panel | Flat rectangular plate 0.600×0.340×0.005 m (W×H×T) | Align(XY) back_panel.center to screen_panel.center; Align(Z) back_panel.back_face to screen_panel.back_face; offset(0,0,-0.002); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| port_housing | Composite block for connectivity ports | assembly_order=[port_housing_hdmi, port_housing_dp, port_housing_usb] |
+| port_housing_hdmi | HDMI port block 0.030×0.015×0.010 m (W×H×T) | Align(XY) port_housing_hdmi.center to back_panel.center; Align(Z) port_housing_hdmi.front_face to back_panel.back_face; offset(-0.150, 0.100, -0.002); orientation=axis:+Z; mat=mat_port_black; create_method=primitive |
+| port_housing_dp | DisplayPort block 0.030×0.015×0.010 m (W×H×T) | Align(XY) port_housing_dp.center to back_panel.center; Align(Z) port_housing_dp.front_face to back_panel.back_face; offset(-0.150, 0.080, -0.002); orientation=axis:+Z; mat=mat_port_black; create_method=primitive |
+| port_housing_usb | USB-A block 0.015×0.010×0.010 m (W×H×T) | Align(XY) port_housing_usb.center to back_panel.center; Align(Z) port_housing_usb.front_face to back_panel.back_face; offset(-0.150, 0.060, -0.002); orientation=axis:+Z; mat=mat_port_black; create_method=primitive |
+| back_panel_assembly | Composite of back panel and ports | assembly_order=[back_panel, port_housing] |
+
+Layer 4 – Interface (Buttons & Indicators)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| button_power | Small cylindrical button Ø0.010×0.005 m (D×H) | Align(XY) button_power.center to bezel_frame.right_face; Align(Z) button_power.center to bezel_frame.center; offset(0.005, 0, 0); orientation=axis:+X; mat=mat_black_plastic; create_method=primitive |
+| indicator_led | Small cylindrical LED Ø0.005×0.002 m (D×H) | Align(XY) indicator_led.center to button_power.center; Align(Z) indicator_led.center to button_power.center; offset(0, 0, 0.003); orientation=axis:+Z; mat=mat_blue_led; create_method=primitive |
+| interface_assembly | Composite of buttons and indicators | assembly_order=[button_power, indicator_led] |
+
+# ----------  END_GRAPH  ----------

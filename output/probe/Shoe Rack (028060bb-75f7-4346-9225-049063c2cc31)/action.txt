@@ -1,0 +1,67 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_dark; diffuse_color = (0.35,0.20,0.15,1.0).
+Define material mat_wood_light; diffuse_color = (0.80,0.65,0.50,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Left Side Panel  ---
+Create primitive cuboid with size 0.300×1.200×0.020 m and name it side_panel_L.
+Rotate side_panel_L so its +Z axis aligns +Z (world).
+Anchor side_panel_L to world origin.
+Then move by offset(-0.300, 0.600, 0.000).
+
+---  SECTION 2 – Create Right Side Panel  ---
+Create primitive cuboid with size 0.300×1.200×0.020 m and name it side_panel_R.
+Rotate side_panel_R so its +Z axis aligns +Z (world).
+Anchor side_panel_R to world origin.
+Then move by offset(0.300, 0.600, 0.000).
+
+---  SECTION 3 – Create Top Rail  ---
+Create primitive cuboid with size 0.600×0.020×0.020 m and name it top_rail.
+Rotate top_rail so its +Z axis aligns +X (world).
+Anchor top_rail to world origin.
+Then move by offset(0.000, 1.190, 0.000).
+
+---  SECTION 4 – Create Bottom Rail  ---
+Create primitive cuboid with size 0.600×0.020×0.020 m and name it bottom_rail.
+Rotate bottom_rail so its +Z axis aligns +X (world).
+Anchor bottom_rail to world origin.
+Then move by offset(0.000, 0.010, 0.000).
+
+---  SECTION 5 – Create Bottom Shelf  ---
+Create primitive cuboid with size 0.560×0.020×0.250 m and name it shelf_L1.
+Rotate shelf_L1 so its +Z axis aligns +Z (world).
+Anchor shelf_L1 to world origin.
+Then move by offset(0.000, 0.300, 0.000).
+
+---  SECTION 6 – Create Middle Shelf  ---
+Create primitive cuboid with size 0.560×0.020×0.250 m and name it shelf_L2.
+Rotate shelf_L2 so its +Z axis aligns +Z (world).
+Anchor shelf_L2 to world origin.
+Then move by offset(0.000, 0.600, 0.000).
+
+---  SECTION 7 – Create Top Shelf  ---
+Create primitive cuboid with size 0.560×0.020×0.250 m and name it shelf_L3.
+Rotate shelf_L3 so its +Z axis aligns +Z (world).
+Anchor shelf_L3 to world origin.
+Then move by offset(0.000, 0.900, 0.000).
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+Stage 4 complete.
+Stage 5 complete.
+Stage 6 complete.
+Stage 7 complete.
+All stages complete.

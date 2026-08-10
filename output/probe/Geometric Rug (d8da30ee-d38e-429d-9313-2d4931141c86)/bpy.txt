@@ -1,0 +1,310 @@
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    # size is (x, y, z)
+    half_size = [s / 2.0 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0)) # size=1 creates a cube of side 1
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width, segments=5):
+    # Add bevel modifier
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately to keep geometry simple for boolean ops if needed, 
+    # but usually better to leave as modifier or apply if final. 
+    # For this script, we'll apply it to ensure clean topology for subsequent steps if any.
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='+Z', target_vector=(0, 0, 1)):
+    """Aligns an object's local axis to a target world vector."""
+    # Default orientation of primitives in Blender is +Z up.
+    # If target is (0,0,1), no rotation needed.
+    if axis_to_align == '+Z':
+        if target_vector == (0, 0, 1):
+            return
+        # General case: align local Z to target vector
+        vec = obj.matrix_world.to_3x3() @ Vector((0, 0, 1))
+        # We need to rotate the object so its local Z matches target_vector
+        # Calculate rotation matrix from current Z to target Z
+        current_z = Vector((0, 0, 1))
+        target_z = Vector(target_vector).normalized()
+        if current_z.angle(target_z) > 1e-6:
+            rot_quat = current_z.rotation_difference(target_z)
+            obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj, name=None):
+        self.obj = obj
+        if name:
+            self.obj.name = name
+        self.update_matrix()
+
+    def update_matrix(self):
+        self.matrix = self.obj.matrix_world.copy()
+
+    def center_world(self):
+        return self.matrix.to_translation()
+
+    def face_center_world(self):
+        # For a flat object like a tile, the face center is usually the center if aligned to Z
+        # Assuming standard orientation where face is XY plane at Z=0 relative to object
+        return self.center_world()
+
+    def radial_point_world(self, angle_deg, radius):
+        # Returns a point on the radial plane (XY) at given angle and radius
+        angle_rad = math.radians(angle_deg)
+        x = radius * math.cos(angle_rad)
+        y = radius * math.sin(angle_rad)
+        # Transform local radial point to world
+        local_pt = Vector((x, y, 0))
+        return self.matrix @ local_pt
+
+def boolean_subtract(cutter_name, target_name):
+    cutter = bpy.data.objects.get(cutter_name)
+    target = bpy.data.objects.get(target_name)
+    if not cutter or not target:
+        return
+    
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(obj1_name, obj2_name):
+    # Blender boolean union is tricky with modifiers on multiple objects.
+    # Standard approach: Join them, then use a boolean union if needed, 
+    # or simply join geometry if they are just being combined.
+    # However, "boolean_union" usually implies merging volumes.
+    # Simplest robust way for script: Join objects.
+    
+    obj1 = bpy.data.objects.get(obj1_name)
+    obj2 = bpy.data.objects.get(obj2_name)
+    if not obj1 or not obj2:
+        return
+
+    # Select both
+    bpy.ops.object.select_all(action='DESELECT')
+    obj1.select_set(True)
+    obj2.select_set(True)
+    bpy.context.view_layer.objects.active = obj1
+    
+    bpy.ops.object.join()
+    
+    # The resulting object takes the name of the active one (obj1)
+    # Rename to a standard if needed, but usually we just keep obj1's name or update it.
+    # Let's return the joined object.
+    return obj1
+
+# --- Main Script ---
+
+# (a) Scene Reset & Units
+bpy.ops.wm.read_homefile(app_template="")
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# (b) Materials
+mat_hex_blue = make_material("mat_hex_blue", (0.15, 0.25, 0.45, 1.0))
+mat_tri_blue = make_material("mat_tri_blue", (0.15, 0.25, 0.45, 1.0))
+mat_tri_dark_blue = make_material("mat_tri_dark_blue", (0.05, 0.10, 0.20, 1.0))
+
+# (c) Geometry Generation
+
+# --- SECTION 1 – Create Hexagonal Tiling Group ---
+
+# Create hex_tile_1
+hex_tile_1 = add_cylinder("hex_tile_1", radius=0.100, depth=0.005, segments=6) # Diameter 0.200 -> Radius 0.100
+hex_tile_1.data.materials.append(mat_hex_blue)
+align_axis_to_vector(hex_tile_1, '+Z', (0, 0, 1))
+# Anchor to world origin
+hex_tile_1.location = (0, 0, 0)
+# Offset (0,0,0)
+hex_tile_1.location += (0, 0, 0)
+
+# Create hex_tile_2
+hex_tile_2 = add_cylinder("hex_tile_2", radius=0.100, depth=0.005, segments=6)
+hex_tile_2.data.materials.append(mat_hex_blue)
+align_axis_to_vector(hex_tile_2, '+Z', (0, 0, 1))
+# Anchor to world origin
+hex_tile_2.location = (0, 0, 0)
+# Offset (0.173, 0.100, 0)
+hex_tile_2.location += (0.173, 0.100, 0)
+
+# Create a group object to represent the "hex_tiling_group" center for later alignment
+# We calculate the center of these two tiles
+hex_tiling_group_center = average([hex_tile_1.location, hex_tile_2.location])
+# Create an empty to act as the group anchor
+bpy.ops.object.empty_add(type='PLAIN_AXES', location=hex_tiling_group_center)
+hex_tiling_group = bpy.context.active_object
+hex_tiling_group.name = "hex_tiling_group"
+
+# --- SECTION 2 – Create Hexagonal Border Group ---
+
+# Create hex_border_group
+hex_border_group = add_cube("hex_border_group", (0.500, 0.050, 0.005))
+hex_border_group.data.materials.append(mat_hex_blue)
+align_axis_to_vector(hex_border_group, '+Z', (0, 0, 1))
+# Align center to hex_tiling_group.center
+hex_border_group.location = hex_tiling_group_center
+# Offset (0,0,0.0025)
+hex_border_group.location += (0, 0, 0.0025)
+
+# --- SECTION 3 – Create Triangular Tiling Group ---
+
+# Create tri_tile_1
+tri_tile_1 = add_cylinder("tri_tile_1", radius=0.100, depth=0.005, segments=3) # Diameter 0.200 -> Radius 0.100
+tri_tile_1.data.materials.append(mat_tri_blue)
+align_axis_to_vector(tri_tile_1, '+Z', (0, 0, 1))
+# Align center to world origin
+tri_tile_1.location = (0, 0, 0)
+# Offset (0,0,0)
+tri_tile_1.location += (0, 0, 0)
+
+# Create tri_tile_2
+tri_tile_2 = add_cylinder("tri_tile_2", radius=0.100, depth=0.005, segments=3)
+tri_tile_2.data.materials.append(mat_tri_blue)
+align_axis_to_vector(tri_tile_2, '+Z', (0, 0, 1))
+# Align center to world origin
+tri_tile_2.location = (0, 0, 0)
+# Offset (0.100, 0.173, 0)
+tri_tile_2.location += (0.100, 0.173, 0)
+
+# Create a group object to represent the "tri_tiling_group" center
+tri_tiling_group_center = average([tri_tile_1.location, tri_tile_2.location])
+bpy.ops.object.empty_add(type='PLAIN_AXES', location=tri_tiling_group_center)
+tri_tiling_group = bpy.context.active_object
+tri_tiling_group.name = "tri_tiling_group"
+
+# --- SECTION 4 – Create Triangular Border Group ---
+
+# Create tri_border_group
+tri_border_group = add_cube("tri_border_group", (0.500, 0.050, 0.005))
+tri_border_group.data.materials.append(mat_tri_dark_blue)
+align_axis_to_vector(tri_border_group, '+Z', (0, 0, 1))
+# Align center to tri_tiling_group.center
+tri_border_group.location = tri_tiling_group_center
+# Offset (0,0,0.0025)
+tri_border_group.location += (0, 0, 0.0025)
+
+# --- SECTION 5 – Assemble Rug Base and Final Placement ---
+
+# Create an Empty helper named rug_base
+bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0))
+rug_base = bpy.context.active_object
+rug_base.name = "rug_base"
+align_axis_to_vector(rug_base, '+Z', (0, 0, 1))
+rug_base.location = (0, 0, 0)
+
+# Align rug_hex_design.center to rug_base.left_half
+# Note: The prompt mentions "rug_hex_design" and "rug_tri_design" which were not explicitly created as single objects.
+# It likely refers to the groups or the combined geometry.
+# Assuming "rug_hex_design" refers to the hex_tiling_group and "rug_tri_design" refers to the tri_tiling_group.
+# "rug_base.left_half" and "rug_base.right_half" imply splitting the base.
+# Since rug_base is an empty at (0,0,0), let's define left/right relative to it.
+# Let's assume left_half is at x = -0.125 (half of 0.25 width?) or just relative to center.
+# A common interpretation: Split the base area. Let's place hex on left, tri on right.
+# Let's define "left_half" of rug_base as a point at (-0.1, 0, 0) and "right_half" as (0.1, 0, 0) relative to rug_base.
+# Or, more likely, it means aligning the centers of the designs to the left/right halves of the base area.
+# Let's create a logical "rug_hex_design" group and "rug_tri_design" group by joining the tiles and borders?
+# No, the prompt says "Align rug_hex_design.center...".
+# Let's assume rug_hex_design is the collection of hex tiles and border.
+# Let's create a parent object for hex elements.
+bpy.ops.object.select_all(action='DESELECT')
+hex_tile_1.select_set(True)
+hex_tile_2.select_set(True)
+hex_border_group.select_set(True)
+bpy.context.view_layer.objects.active = hex_tile_1
+bpy.ops.object.parent_set(type='OBJECT', keep_transform=False) # This resets location, bad.
+# Better: Just calculate positions.
+
+# Let's interpret "Align rug_hex_design.center to rug_base.left_half" as:
+# Move the hex group so its center is at rug_base's left half position.
+# Let's define rug_base's extent. It's an empty. Let's assume a standard rug width.
+# If not specified, let's assume the "left_half" is simply a point at (-0.15, 0, 0) and "right_half" at (0.15, 0, 0).
+# Or, since rug_base is at (0,0,0), maybe left_half is (-0.1, 0, 0).
+
+# Let's create a dummy object to represent the "left_half" and "right_half" of rug_base for alignment purposes.
+# Actually, simpler: Just move the hex group to the left of the base and tri group to the right.
+# Let's assume the base has a width of 0.4m. Left half center at -0.1, Right half center at 0.1.
+
+left_half_pos = Vector((-0.1, 0, 0))
+right_half_pos = Vector((0.1, 0, 0))
+
+# Move hex_tiling_group and its children (tiles + border) to left_half_pos
+# We need to move the objects that constitute the "hex design".
+# Let's assume the "hex design" is the hex_tiling_group empty and its associated tiles/border.
+# To keep it simple and robust, we will move the individual objects to form the design at the target location.
+
+# Hex Design Placement
+# Target center for hex design is left_half_pos
+# Current center of hex tiles is hex_tiling_group_center.
+# We need to shift all hex objects by (left_half_pos - hex_tiling_group_center).
+shift_hex = left_half_pos - hex_tiling_group_center
+hex_tile_1.location += shift_hex
+hex_tile_2.location += shift_hex
+hex_border_group.location += shift_hex
+hex_tiling_group.location = left_half_pos # Update the group anchor
+
+# Tri Design Placement
+# Target center for tri design is right_half_pos
+# Current center of tri tiles is tri_tiling_group_center.
+shift_tri = right_half_pos - tri_tiling_group_center
+tri_tile_1.location += shift_tri
+tri_tile_2.location += shift_tri
+tri_border_group.location += shift_tri
+tri_tiling_group.location = right_half_pos # Update the group anchor
+
+# Finalize
+bpy.context.view_layer.update()

@@ -1,0 +1,48 @@
+{
+  "id": "5f4f3663-e108-45a1-a73c-109b5f4850ce",
+  "name": "Graphite Pencils",
+  "instruction": "Design a set of graphite pencils used by artists for sketching. Each pencil should have a cylindrical body with a hexagonal cross-section, and a sharpened tip. The set should include a range of hardness from 9H to 9B. The pencils should be grouped together in a simple holder.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "Each pencil has a cylindrical body.",
+        "The cross-section of each pencil is hexagonal.",
+        "The pencils have sharpened tips."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the sharpened tip is proportionate to the body.",
+        "The holder is proportionate to accommodate all pencils."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pencils are arranged neatly within the holder.",
+        "The holder supports the pencils upright.",
+        "The sharpened tips are oriented upwards."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the pencils.",
+        "Each pencil is securely held in place by the holder.",
+        "The holder does not obstruct access to the sharpened tips."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the pencils are accurately represented.",
+        "The range of hardness from 9H to 9B is included.",
+        "The holder is designed to group the pencils together."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

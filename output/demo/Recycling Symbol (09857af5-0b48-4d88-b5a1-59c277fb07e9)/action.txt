@@ -1,0 +1,77 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material arrow_green; diffuse_color = (0,128,0,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Arrow Segment 1 (0°) ---
+Create primitive cuboid with size 0.001×0.001×0.001 m and name it arrow_0.
+Rotate arrow_0 so its +Z axis aligns +Z (world).
+Anchor arrow_0 to world.origin.
+Then move by offset(0,0,0).
+Create plane_cutter and name it arrow_0_sketch with size 0.20×0.20 m; orientation=axis:+Z.
+Anchor arrow_0_sketch to arrow_0.center.
+Then move by offset(0,0,0.0025).
+Define 2D sketch on arrow_0_sketch: Vertices at (0.050, 0), (0.150, 0), (0.150, 0.020), (0.170, 0), (0.150, -0.020), (0.050, -0.010), close to (0.050, 0).
+Extrude sketch on arrow_0_sketch by thickness 0.005 m along +Z to form arrow_0 body.
+Boolean-union arrow_0 body with arrow_0.
+Rotate arrow_0 so its +Z axis aligns +Z (world).
+Align arrow_0.center to world.origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Arrow Segment 2 (120°) ---
+Create primitive cuboid with size 0.001×0.001×0.001 m and name it arrow_1.
+Rotate arrow_1 so its +Z axis aligns +Z (world).
+Anchor arrow_1 to world.origin.
+Then move by offset(0,0,0).
+Create plane_cutter and name it arrow_1_sketch with size 0.20×0.20 m; orientation=axis:+Z.
+Anchor arrow_1_sketch to arrow_1.center.
+Then move by offset(0,0,0.0025).
+Define 2D sketch on arrow_1_sketch: Vertices at (0.050, 0), (0.150, 0), (0.150, 0.020), (0.170, 0), (0.150, -0.020), (0.050, -0.010), close to (0.050, 0).
+Extrude sketch on arrow_1_sketch by thickness 0.005 m along +Z to form arrow_1 body.
+Boolean-union arrow_1 body with arrow_1.
+Rotate arrow_1 so its +Z axis aligns +Z (world).
+Align arrow_1.center to world.origin.
+Then position at polar(120°).
+Stage 2 complete.
+
+---  SECTION 3 – Create Arrow Segment 3 (240°) ---
+Create primitive cuboid with size 0.001×0.001×0.001 m and name it arrow_2.
+Rotate arrow_2 so its +Z axis aligns +Z (world).
+Anchor arrow_2 to world.origin.
+Then move by offset(0,0,0).
+Create plane_cutter and name it arrow_2_sketch with size 0.20×0.20 m; orientation=axis:+Z.
+Anchor arrow_2_sketch to arrow_2.center.
+Then move by offset(0,0,0.0025).
+Define 2D sketch on arrow_2_sketch: Vertices at (0.050, 0), (0.150, 0), (0.150, 0.020), (0.170, 0), (0.150, -0.020), (0.050, -0.010), close to (0.050, 0).
+Extrude sketch on arrow_2_sketch by thickness 0.005 m along +Z to form arrow_2 body.
+Boolean-union arrow_2 body with arrow_2.
+Rotate arrow_2 so its +Z axis aligns +Z (world).
+Align arrow_2.center to world.origin.
+Then position at polar(240°).
+Stage 3 complete.
+
+---  SECTION 4 – Assemble Recycling Symbol ---
+Create primitive cuboid with size 0.001×0.001×0.001 m and name it recycling_symbol.
+Rotate recycling_symbol so its +Z axis aligns +Z (world).
+Anchor recycling_symbol to world.origin.
+Then move by offset(0,0,0).
+Boolean-union arrow_0 with recycling_symbol.
+Boolean-union arrow_1 with recycling_symbol.
+Boolean-union arrow_2 with recycling_symbol.
+Align recycling_symbol.center to world.origin.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

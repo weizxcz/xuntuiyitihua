@@ -1,0 +1,45 @@
+{
+  "id": "14d31bf9-18aa-420f-b0d8-60910647f2aa",
+  "name": "Extension Cord",
+  "instruction": "Please generate a 3D model of an extension cord. It should have multiple outlets and a long, coiled cable.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an extension cord.",
+        "The extension cord features multiple outlets.",
+        "The cable is coiled."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cable is proportionate to the cord."
+      ],
+      "Texture and surface detail": [
+        "The surface of the extension cord has a smooth finish.",
+        "The outlets have a textured surface for grip."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The outlets are evenly spaced along the length of the cord.",
+        "The coiled cable maintains a compact form."
+      ],
+      "Object distance and contact": [
+        "The outlets are positioned so that they do not overlap.",
+        "The coiled cable does not interfere with the outlets."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the extension cord are accurately represented.",
+        "The model includes multiple outlets and a coiled cable as instructed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,97 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_clear_plastic; diffuse_color = (240,240,240,0.3).
+Define material mat_paper_blue; diffuse_color = (100,149,237,1.0).
+Define material mat_paper_green; diffuse_color = (144,238,144,1.0).
+Define material mat_paper_orange; diffuse_color = (255,165,0,1.0).
+Define material mat_paper_pink; diffuse_color = (255,192,203,1.0).
+Define material mat_paper_yellow; diffuse_color = (255,255,0,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Holder Base Plate  ---
+Create primitive cuboid with size 0.080×0.080×0.005 m and name it holder_base.
+Rotate holder_base so its +Z axis aligns +Z (world).
+Anchor holder_base to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create Holder Back Panel  ---
+Create primitive cuboid with size 0.080×0.120×0.002 m and name it holder_back.
+Rotate holder_back so its +Z axis aligns +Z (world).
+Align holder_back.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.002).
+
+---  SECTION 3 – Create Holder Left Wall  ---
+Create primitive cuboid with size 0.002×0.120×0.080 m and name it holder_left.
+Rotate holder_left so its +Z axis aligns +Z (world).
+Align holder_left.right_face to holder_back.left_face.
+Then move by offset(0,0,0).
+
+---  SECTION 4 – Create Holder Right Wall  ---
+Create primitive cuboid with size 0.002×0.120×0.080 m and name it holder_right.
+Rotate holder_right so its +Z axis aligns +Z (world).
+Align holder_right.left_face to holder_back.right_face.
+Then move by offset(0,0,0).
+
+---  SECTION 5 – Create Holder Top Lip  ---
+Create primitive cuboid with size 0.080×0.002×0.002 m and name it holder_top.
+Rotate holder_top so its +Z axis aligns +Z (world).
+Align holder_top.bottom_face to holder_back.top_face.
+Then move by offset(0,0,0).
+
+---  SECTION 6 – Assemble Holder Union  ---
+Boolean-union holder_base, holder_back, holder_left, holder_right, and holder_top; keep holder_base.
+Rename the resulting object to holder_union.
+Stage 6 complete.
+
+---  SECTION 7 – Create Yellow Note Sheet  ---
+Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_yellow.
+Rotate note_yellow so its +Z axis aligns +Z (world).
+Align note_yellow.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.005).
+
+---  SECTION 8 – Create Pink Note Sheet  ---
+Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_pink.
+Rotate note_pink so its +Z axis aligns +Z (world).
+Align note_pink.bottom_face to note_yellow.top_face.
+Then move by offset(0,0,0.0001).
+
+---  SECTION 9 – Create Blue Note Sheet  ---
+Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_blue.
+Rotate note_blue so its +Z axis aligns +Z (world).
+Align note_blue.bottom_face to note_pink.top_face.
+Then move by offset(0,0,0.0001).
+
+---  SECTION 10 – Create Green Note Sheet  ---
+Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_green.
+Rotate note_green so its +Z axis aligns +Z (world).
+Align note_green.bottom_face to note_blue.top_face.
+Then move by offset(0,0,0.0001).
+
+---  SECTION 11 – Create Orange Note Sheet  ---
+Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_orange.
+Rotate note_orange so its +Z axis aligns +Z (world).
+Align note_orange.bottom_face to note_green.top_face.
+Then move by offset(0,0,0.0001).
+
+---  SECTION 12 – Assemble Note Stack  ---
+Boolean-union note_yellow, note_pink, note_blue, note_green, and note_orange; keep note_yellow.
+Rename the resulting object to notes_stack.
+Stage 12 complete.
+
+---  SECTION 13 – Final Assembly  ---
+Boolean-union holder_union and notes_stack; keep holder_union.
+Rename the resulting object to final_product.
+Stage 13 complete.
+
+All stages complete.

@@ -1,0 +1,234 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder oriented along Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, depth=0.001, segments=32):
+    """Add a disc (thin cylinder) oriented along Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube with given total size (x, y, z)."""
+    # size is tuple (sx, sy, sz)
+    sx, sy, sz = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0)) # size=1 means half-extent 0.5
+    obj = bpy.context.active_object
+    obj.scale = (sx, sy, sz)
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    """Add a cone oriented along Z."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, segments=32, rings=16):
+    """Add a UV sphere oriented along Z."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=segments, ring_count=rings, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, radius, segments=8):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE' # Default, often works well
+    # Apply immediately to keep geometry simple for subsequent booleans
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using modifier stack, then apply and remove cutter."""
+    # Ensure target is active for modifier addition if needed, but we add to target
+    bpy.context.view_layer.objects.active = target_obj
+    
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Perform boolean union using modifier stack, then apply and remove union_obj."""
+    bpy.context.view_layer.objects.active = target_obj
+    
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union_obj
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis_to_align='Z', vector_to_align_to=(0, 0, 1)):
+    """Rotate object so its local axis aligns with a world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler
+    
+    # Simple approach: set rotation to align axis. 
+    # For Z to X: Rotate Y by -90 deg.
+    # For Z to Z: No rotation.
+    # For Z to Y: Rotate X by 90 deg.
+    
+    target_vec = Vector(vector_to_align_to).normalized()
+    
+    if axis_to_align == 'Z':
+        if target_vec == Vector((1, 0, 0)): # +X
+            obj.rotation_euler = (0, -pi/2, 0)
+        elif target_vec == Vector((-1, 0, 0)): # -X
+            obj.rotation_euler = (0, pi/2, 0)
+        elif target_vec == Vector((0, 1, 0)): # +Y
+            obj.rotation_euler = (pi/2, 0, 0)
+        elif target_vec == Vector((0, -1, 0)): # -Y
+            obj.rotation_euler = (-pi/2, 0, 0)
+        elif target_vec == Vector((0, 0, 1)): # +Z
+            obj.rotation_euler = (0, 0, 0)
+        elif target_vec == Vector((0, 0, -1)): # -Z
+            obj.rotation_euler = (pi, 0, 0)
+        else:
+            # Fallback: use mathutils to find rotation
+            # Align Z to target
+            z_axis = Vector((0, 0, 1))
+            quat = z_axis.rotation_difference(target_vec)
+            obj.rotation_euler = quat.to_euler()
+
+def set_world_origin(obj):
+    """Move object to world origin (0,0,0)."""
+    obj.location = (0, 0, 0)
+
+def offset_object(obj, offset_vector):
+    """Apply offset to object location."""
+    obj.location += Vector(offset_vector)
+
+def get_center_world(obj):
+    """Get the world location of the object's center."""
+    return obj.location
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    if mesh.users == 0:
+        bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_durable_rubber = make_material("mat_durable_rubber", (0.8, 0.1, 0.1, 1.0))
+mat_treat_compartment = make_material("mat_treat_compartment", (0.2, 0.2, 0.2, 1.0))
+mat_textured_bumps = make_material("mat_textured_bumps", (0.9, 0.9, 0.9, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create core bone ---
+
+# Create primitive cuboid with size 0.203×0.05×0.03 m and name it core_bone.
+core_bone = add_cube("core_bone", (0.203, 0.05, 0.03))
+apply_material(core_bone, mat_durable_rubber)
+
+# Rotate core_bone so its +Z axis aligns +X (world).
+align_axis_to_vector(core_bone, 'Z', (1, 0, 0))
+
+# Anchor core_bone to world origin.
+set_world_origin(core_bone)
+
+# Then move by offset(0,0,0).
+offset_object(core_bone, (0, 0, 0))
+
+# Bevel core_bone edges with radius 0.01 m, segments 8.
+add_bevel(core_bone, radius=0.01, segments=8)
+
+# --- SECTION 2 – Create treat hollow ---
+
+# Create primitive cuboid with size 0.05×0.03×0.02 m and name it treat_hollow_cut.
+treat_hollow_cut = add_cube("treat_hollow_cut", (0.05, 0.03, 0.02))
+
+# Rotate treat_hollow_cut so its +Z axis aligns +Z (world).
+align_axis_to_vector(treat_hollow_cut, 'Z', (0, 0, 1))
+
+# Anchor treat_hollow_cut to core_bone.center.
+# Since core_bone is at origin, treat_hollow_cut center should be at origin initially
+set_world_origin(treat_hollow_cut)
+
+# Then move by offset(0,0,0.015).
+offset_object(treat_hollow_cut, (0, 0, 0.015))
+
+# Boolean-subtract treat_hollow_cut from core_bone; discard treat_hollow_cut.
+boolean_subtract(treat_hollow_cut, core_bone)
+
+# --- SECTION 3 – Create texture layer ---
+
+# Create primitive cuboid with size 0.203×0.05×0.005 m and name it texture_layer.
+texture_layer = add_cube("texture_layer", (0.203, 0.05, 0.005))
+apply_material(texture_layer, mat_textured_bumps)
+
+# Rotate texture_layer so its +Z axis aligns +Z (world).
+align_axis_to_vector(texture_layer, 'Z', (0, 0, 1))
+
+# Anchor texture_layer to core_bone.center.
+set_world_origin(texture_layer)
+
+# Then move by offset(0,0,0.015).
+offset_object(texture_layer, (0, 0, 0.015))
+
+# Boolean-union texture_layer to core_bone; discard texture_layer.
+boolean_union(texture_layer, core_bone)
+
+# Finalize: Ensure core_bone is selected and visible
+bpy.context.view_layer.objects.active = core_bone
+core_bone.select_set(True)
+```

@@ -1,0 +1,20 @@
+-- MATERIAL LIBRARY --
+petal_mat | diffuse_color=(1.0,0.84,0.0,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| floral_symbol | Composite of 5 petals arranged in a circle | assembly_order=[petal_group]; create_method=union |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| petal_group | Composite of 5 individual petals | assembly_order=[petal_0, petal_1, petal_2, petal_3, petal_4]; create_method=union |
+| petal_0 | Petal 0 (Base template) | Align(XY) petal_0.center to floral_symbol.center; Align(Z) petal_0.bottom_face to floral_symbol.bottom_face; orientation=axis:+Z; mat=petal_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Define a single petal shape centered at origin. Outer boundary is a smooth curve (e.g., bezier or parametric ellipse-like) with width W=0.04m and length L=0.06m. Vertex list approximates a teardrop/oval shape. Extrude thickness T=0.002m along +Z with caps. |
+| petal_1 | Petal 1 (Rotated 72°) | Align(XY) petal_1.center to floral_symbol.center; Align(Z) petal_1.bottom_face to floral_symbol.bottom_face; orientation=axis:+Z; mat=petal_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Same as petal_0. Rotation: spin=Z,72° applied after extrusion. |
+| petal_2 | Petal 2 (Rotated 144°) | Align(XY) petal_2.center to floral_symbol.center; Align(Z) petal_2.bottom_face to floral_symbol.bottom_face; orientation=axis:+Z; mat=petal_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Same as petal_0. Rotation: spin=Z,144° applied after extrusion. |
+| petal_3 | Petal 3 (Rotated 216°) | Align(XY) petal_3.center to floral_symbol.center; Align(Z) petal_3.bottom_face to floral_symbol.bottom_face; orientation=axis:+Z; mat=petal_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Same as petal_0. Rotation: spin=Z,216° applied after extrusion. |
+| petal_4 | Petal 4 (Rotated 288°) | Align(XY) petal_4.center to floral_symbol.center; Align(Z) petal_4.bottom_face to floral_symbol.bottom_face; orientation=axis:+Z; mat=petal_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Same as petal_0. Rotation: spin=Z,288° applied after extrusion. |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,80 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material black_key_mat; diffuse_color = (0,0,0,1).
+Define material control_panel_mat; diffuse_color = (30,30,30,1).
+Define material white_key_mat; diffuse_color = (240,240,240,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Frame Components  ---
+Create primitive cuboid with size 0.700×0.150×0.050 m and name it white_key_base.
+Rotate white_key_base so its +Z axis aligns +Z (world).
+Move white_key_base to (0,0,0).
+
+Create primitive cuboid with size 0.400×0.150×0.030 m and name it black_key_base.
+Rotate black_key_base so its +Z axis aligns +Z (world).
+Move black_key_base to (0,0,0.010).
+
+Create primitive cuboid with size 0.100×0.150×0.050 m and name it control_panel_base.
+Rotate control_panel_base so its +Z axis aligns +Z (world).
+Move control_panel_base to (0.400,0,0).
+
+Boolean-union white_key_base, black_key_base, and control_panel_base; keep white_key_base.
+Rename white_key_base to base_frame.
+Stage 1 complete.
+
+---  SECTION 2 – Create White Keys Pattern  ---
+For c in 0…87:
+  Create primitive cuboid with size 0.007×0.150×0.050 m and name it white_key_template_c.
+  Rotate white_key_template_c so its +Z axis aligns +Z (world).
+  Anchor white_key_template_c to base_frame.top_face.
+  Align white_key_template_c.+Z_face to base_frame.+Z_face.
+  Then offset(-0.3065 + c·0.007, 0, 0.050).
+
+Boolean-union all white_key_template_c objects; keep white_key_template_0.
+Stage 2 complete.
+
+---  SECTION 3 – Create Black Keys Pattern  ---
+For c in 0…51:
+  Create primitive cuboid with size 0.004×0.090×0.025 m and name it black_key_template_c.
+  Rotate black_key_template_c so its +Z axis aligns +Z (world).
+  Anchor black_key_template_c to base_frame.top_face.
+  Align black_key_template_c.+Z_face to base_frame.+Z_face.
+  Then offset(-0.292 + c·0.028, 0, 0.025).
+
+Boolean-union all black_key_template_c objects; keep black_key_template_0.
+Stage 3 complete.
+
+---  SECTION 4 – Create Control Panel Details  ---
+Create primitive cuboid with size 0.080×0.080×0.002 m and name it control_screen.
+Rotate control_screen so its +Z axis aligns +Z (world).
+Anchor control_screen to control_panel_base.top_face.
+Align control_screen.+Z_face to control_panel_base.+Z_face.
+Then offset(0.010, 0, 0.026).
+
+Create primitive cuboid with size 0.080×0.020×0.005 m and name it control_buttons.
+Rotate control_buttons so its +Z axis aligns +Z (world).
+Anchor control_buttons to control_panel_base.top_face.
+Align control_buttons.+Z_face to control_panel_base.+Z_face.
+Then offset(0.010, 0, 0.010).
+
+Boolean-union control_screen and control_buttons; keep control_screen.
+Rename control_screen to control_panel_details.
+Stage 4 complete.
+
+---  SECTION 5 – Final Assembly  ---
+Boolean-union base_frame, white_key_template_0, black_key_template_0, and control_panel_details; keep base_frame.
+Rename base_frame to piano_assembly.
+Stage 5 complete.
+
+All stages complete.

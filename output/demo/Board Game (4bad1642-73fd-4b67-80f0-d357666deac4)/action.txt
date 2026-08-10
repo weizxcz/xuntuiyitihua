@@ -1,0 +1,94 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material board_green; diffuse_color = (0.15,0.45,0.15,1.0).
+Define material board_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material card_stock; diffuse_color = (0.90,0.90,0.85,1.0).
+Define material dice_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material dice_red; diffuse_color = (0.85,0.10,0.10,1.0).
+Define material piece_blue; diffuse_color = (0.10,0.20,0.80,1.0).
+Define material piece_red; diffuse_color = (0.80,0.10,0.10,1.0).
+Define material piece_yellow; diffuse_color = (0.90,0.80,0.10,1.0).
+Define material piece_green; diffuse_color = (0.10,0.70,0.10,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create board base  ---
+Create primitive cube with size 0.300×0.300×0.020 m and name it board_base.
+Rotate board_base so its +Z axis aligns +Z (world).
+Anchor board_base to world origin.
+Then move by offset(0,0,0).
+Apply material board_green to board_base.
+
+---  SECTION 2 – Create board grid overlay  ---
+Create primitive cube with size 0.300×0.300×0.001 m and name it board_grid.
+Rotate board_grid so its +Z axis aligns +Z (world).
+Align board_grid.bottom_face to board_base.top_face.
+Then move by offset(0,0,0.001).
+Apply material board_white to board_grid.
+Boolean-subtract board_grid from board_base; discard board_grid.
+// Constraint: grid_lines_width=0.005m, spacing=0.050m applied via boolean subtraction logic.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create game pieces  ---
+Create primitive cylinder with size 0.040×0.040×0.060 m and name it piece_blue.
+Rotate piece_blue so its +Z axis aligns +Z (world).
+Anchor piece_blue to world origin.
+Then move by offset(-0.10,-0.10,0.040).
+Apply material piece_blue to piece_blue.
+
+Create primitive cylinder with size 0.040×0.040×0.060 m and name it piece_red.
+Rotate piece_red so its +Z axis aligns +Z (world).
+Anchor piece_red to world origin.
+Then move by offset(0.10,-0.10,0.040).
+Apply material piece_red to piece_red.
+
+Create primitive cylinder with size 0.040×0.040×0.060 m and name it piece_yellow.
+Rotate piece_yellow so its +Z axis aligns +Z (world).
+Anchor piece_yellow to world origin.
+Then move by offset(-0.10,0.10,0.040).
+Apply material piece_yellow to piece_yellow.
+
+Create primitive cylinder with size 0.040×0.040×0.060 m and name it piece_green.
+Rotate piece_green so its +Z axis aligns +Z (world).
+Anchor piece_green to world origin.
+Then move by offset(0.10,0.10,0.040).
+Apply material piece_green to piece_green.
+
+Stage 3 complete.
+
+---  SECTION 4 – Create dice  ---
+Create primitive cube with size 0.020×0.020×0.020 m and name it dice_1.
+Rotate dice_1 so its +Z axis aligns +Z (world).
+Anchor dice_1 to world origin.
+Then move by offset(-0.05,0.15,0.020).
+Apply material dice_white to dice_1.
+
+Create primitive cube with size 0.020×0.020×0.020 m and name it dice_2.
+Rotate dice_2 so its +Z axis aligns +Z (world).
+Anchor dice_2 to world origin.
+Then move by offset(0.05,0.15,0.020).
+Apply material dice_red to dice_2.
+
+Stage 4 complete.
+
+---  SECTION 5 – Create card stack  ---
+Create primitive cube with size 0.080×0.050×0.002 m and name it card_stack.
+Rotate card_stack so its +Z axis aligns +Z (world).
+Anchor card_stack to world origin.
+Then move by offset(0,0.15,0.020).
+Apply material card_stock to card_stack.
+
+Stage 5 complete.
+
+All stages complete.

@@ -1,0 +1,196 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    else:
+        return
+
+    target = vector.normalized()
+    if local_axis.normalized().dot(target) < 0.999999:
+        quat = local_axis.rotation_difference(target)
+        obj.rotation_euler = quat.to_euler()
+
+def get_world_center(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def set_world_location(obj, loc):
+    """Set the world location of an object."""
+    obj.location = loc
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract using the modifier stack."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target has modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply immediately for simplicity in this script flow
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Remove cutter if desired, but keeping it allows reuse if needed.
+    # bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(obj1_name, obj2_name):
+    """Perform a boolean union."""
+    target = bpy.data.objects[obj1_name]
+    source = bpy.data.objects[obj2_name]
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = source
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(source, do_unlink=True)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_fabric_cover = make_material("fabric_cover", (0.94, 0.94, 0.94, 1))
+mat_memory_foam = make_material("memory_foam", (0.78, 0.78, 0.78, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# Note: The prompt implies 'travel_pillow' is an existing anchor. 
+# Since it's not defined in Block 2, we must create a placeholder or assume it exists.
+# Given the strict "Scene Reset" in Block 0, 'travel_pillow' does not exist.
+# We will create a dummy 'travel_pillow' object at origin (0,0,0) to serve as the anchor.
+# In a real pipeline, this might be imported or created in a previous step.
+# Here, we create it as a simple cube to satisfy the anchor requirement.
+
+travel_pillow = add_cube("travel_pillow", size=0.1, location=(0, 0, 0))
+# Assign a dummy material or none, just for anchoring
+travel_pillow.data.materials.append(mat_memory_foam)
+
+# --- SECTION 1 – Create foam core structure ---
+
+# 1.1 Create left_arm
+left_arm = add_cylinder("left_arm", radius=0.04, depth=0.25, location=(0,0,0), rotation=(0,0,0), material=mat_memory_foam)
+# Rotate so +Z aligns +Z (already default, but explicit)
+align_axis_to_vector(left_arm, 'Z', (0,0,1))
+
+# Anchor left_arm to travel_pillow.center
+# Align left_arm.center to travel_pillow.center with axes XY
+# This means we move left_arm so its center matches travel_pillow's center in X and Y.
+# Since travel_pillow is at (0,0,0), left_arm center becomes (0,0,0).
+# Then offset (0,0,0).
+tp_center = get_world_center(travel_pillow)
+set_world_location(left_arm, (tp_center.x, tp_center.y, left_arm.location.z))
+# Apply offset
+left_arm.location = Vector(left_arm.location) + Vector((0, 0, 0))
+
+# 1.2 Create right_arm
+right_arm = add_cylinder("right_arm", radius=0.04, depth=0.25, location=(0,0,0), rotation=(0,0,0), material=mat_memory_foam)
+align_axis_to_vector(right_arm, 'Z', (0,0,1))
+
+# Anchor right_arm to travel_pillow.center
+tp_center = get_world_center(travel_pillow)
+set_world_location(right_arm, (tp_center.x, tp_center.y, right_arm.location.z))
+# Apply offset
+right_arm.location = Vector(right_arm.location) + Vector((0, 0, 0))
+
+# 1.3 Create back_connector
+back_connector = add_cylinder("back_connector", radius=0.04, depth=0.15, location=(0,0,0), rotation=(0,0,0), material=mat_memory_foam)
+align_axis_to_vector(back_connector, 'Z', (0,0,1))
+
+# Anchor back_connector to travel_pillow.center
+tp_center = get_world_center(travel_pillow)
+set_world_location(back_connector, (tp_center.x, tp_center.y, back_connector.location.z))
+# Apply offset
+back_connector.location = Vector(back_connector.location) + Vector((0, 0, 0))
+
+# --- SECTION 2 – Create fabric cover structure ---
+
+# 2.1 Create left_sleeve
+left_sleeve = add_cylinder("left_sleeve", radius=0.045, depth=0.25, location=(0,0,0), rotation=(0,0,0), material=mat_fabric_cover)
+align_axis_to_vector(left_sleeve, 'Z', (0,0,1))
+
+# Anchor left_sleeve to left_arm.center
+# Align left_sleeve.center to left_arm.center with axes XY
+la_center = get_world_center(left_arm)
+set_world_location(left_sleeve, (la_center.x, la_center.y, left_sleeve.location.z))
+# Apply offset
+left_sleeve.location = Vector(left_sleeve.location) + Vector((0, 0, 0))
+
+# 2.2 Create right_sleeve
+right_sleeve = add_cylinder("right_sleeve", radius=0.045, depth=0.25, location=(0,0,0), rotation=(0,0,0), material=mat_fabric_cover)
+align_axis_to_vector(right_sleeve, 'Z', (0,0,1))
+
+# Anchor right_sleeve to right_arm.center
+ra_center = get_world_center(right_arm)
+set_world_location(right_sleeve, (ra_center.x, ra_center.y, right_sleeve.location.z))
+# Apply offset
+right_sleeve.location = Vector(right_sleeve.location) + Vector((0, 0, 0))
+
+# 2.3 Create back_sleeve
+back_sleeve = add_cylinder("back_sleeve", radius=0.045, depth=0.15, location=(0,0,0), rotation=(0,0,0), material=mat_fabric_cover)
+align_axis_to_vector(back_sleeve, 'Z', (0,0,1))
+
+# Anchor back_sleeve to back_connector.center
+bc_center = get_world_center(back_connector)
+set_world_location(back_sleeve, (bc_center.x, bc_center.y, back_sleeve.location.z))
+# Apply offset
+back_sleeve.location = Vector(back_sleeve.location) + Vector((0, 0, 0))
+
+print("All stages complete.")
+```

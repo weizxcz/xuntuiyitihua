@@ -1,0 +1,1 @@
+Design a 3D model of a restaurant sign. The sign should be rectangular with the restaurant's name in bold letters. Add decorative elements around the edges, such as vines or geometric patterns. The sign should be mounted on a pole with a base for stability. Consider the overall aesthetic appeal and how it would attract customers.

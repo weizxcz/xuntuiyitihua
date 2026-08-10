@@ -1,0 +1,52 @@
+{
+  "id": "564461a0-7f3d-418f-b7d6-3be10c41b2f5",
+  "name": "Camping Tent",
+  "instruction": "Hello there, I need a 3D model of a camping tent. It should be a dome shape and large enough to fit four people. The tent should have two zippered doors, one on each side, and mesh windows for ventilation. Include a rainfly that covers the entire tent and can be removed. The tent should also feature a small vestibule area at the front for storing gear. Inside, add hooks at the top for hanging a lantern and pockets along the walls for storage. The tent poles should be lightweight and flexible, and the base should be waterproof.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a dome-shaped camping tent.",
+        "The tent is large enough to fit four people.",
+        "The structure has a rounded top characteristic of dome tents."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the tent is proportionate to its width and length.",
+        "The vestibule area is proportionate to the main tent structure."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tent has a clear dome shape that allows for adequate headroom.",
+        "The two zippered doors are positioned on opposite sides for easy access.",
+        "The mesh windows are strategically placed for ventilation without compromising privacy.",
+        "The vestibule area is correctly positioned at the front of the tent."
+      ],
+      "Object distance and contact": [
+        "The doors do not overlap with the tent structure.",
+        "The mesh windows are securely attached to the tent fabric.",
+        "The rainfly covers the entire tent without gaps.",
+        "The tent poles are properly positioned to support the structure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes, including the dome shape, size, and features, are accurately represented.",
+        "The tent includes two zippered doors as instructed.",
+        "The inclusion of mesh windows for ventilation is correctly executed.",
+        "The rainfly is designed to cover the entire tent and is removable.",
+        "Hooks for hanging a lantern and pockets for storage are included as specified."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,46 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_base; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material mat_shade; diffuse_color = (1.0,0.95,0.8,1.0).
+Define material mat_stand; diffuse_color = (0.8,0.8,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base cylinder  ---
+Create primitive cylinder with diameter 0.152 m and height 0.025 m and name it base_cylinder.
+Rotate base_cylinder so its +Z axis aligns +Z (world).
+Anchor base_cylinder to lamp_root.center:
+Align base_cylinder.center to lamp_root.center.
+Align base_cylinder.bottom_face to lamp_root.bottom_face.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create stand cylinder  ---
+Create primitive cylinder with diameter 0.025 m and height 0.305 m and name it stand_cylinder.
+Rotate stand_cylinder so its +Z axis aligns +Z (world).
+Anchor stand_cylinder to base_cylinder.top_face:
+Align stand_cylinder.center to base_cylinder.top_face.center.
+Align stand_cylinder.bottom_face to base_cylinder.top_face.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create shade cone  ---
+Create primitive cone with bottom diameter 0.203 m and height 0.152 m and name it shade_cone.
+Rotate shade_cone so its +Z axis aligns +Z (world).
+Anchor shade_cone to stand_cylinder.top_face:
+Align shade_cone.bottom_face.center to stand_cylinder.top_face.center.
+Align shade_cone.bottom_face to stand_cylinder.top_face.
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+All stages complete.

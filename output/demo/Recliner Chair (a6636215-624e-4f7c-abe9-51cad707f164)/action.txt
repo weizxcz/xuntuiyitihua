@@ -1,0 +1,140 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_dark; diffuse_color = (0.15,0.15,0.18,1.0).
+Define material fabric_light; diffuse_color = (0.85,0.85,0.85,1.0).
+Define material metal_steel; diffuse_color = (0.2,0.2,0.25,1.0).
+Define material wood_oak; diffuse_color = (0.5,0.35,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create frame base  ---
+Create primitive cuboid with size 0.7×0.6×0.05 m and name it frame_base.
+Rotate frame_base so its +Z axis aligns +Z (world).
+Anchor frame_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create support legs  ---
+Create primitive cuboid with size 0.05×0.05×0.45 m and name it leg_fl.
+Rotate leg_fl so its +Z axis aligns +Z (world).
+Anchor leg_fl to frame_base.bottom_face.
+Then move by offset(-0.3,-0.25,-0.25).
+
+Create primitive cuboid with size 0.05×0.05×0.45 m and name it leg_fr.
+Rotate leg_fr so its +Z axis aligns +Z (world).
+Anchor leg_fr to frame_base.bottom_face.
+Then move by offset(0.3,-0.25,-0.25).
+
+Create primitive cuboid with size 0.05×0.05×0.45 m and name it leg_bl.
+Rotate leg_bl so its +Z axis aligns +Z (world).
+Anchor leg_bl to frame_base.bottom_face.
+Then move by offset(-0.3,0.25,-0.25).
+
+Create primitive cuboid with size 0.05×0.05×0.45 m and name it leg_br.
+Rotate leg_br so its +Z axis aligns +Z (world).
+Anchor leg_br to frame_base.bottom_face.
+Then move by offset(0.3,0.25,-0.25).
+Stage 2 complete.
+
+---  SECTION 3 – Create seat frame  ---
+Create primitive cuboid with size 0.6×0.5×0.08 m and name it seat_frame.
+Rotate seat_frame so its +Z axis aligns +Z (world).
+Anchor seat_frame to frame_base.top_face.
+Then move by offset(0,0,0.25).
+Stage 3 complete.
+
+---  SECTION 4 – Create back frame  ---
+Create primitive cuboid with size 0.6×0.08×0.8 m and name it back_frame.
+Rotate back_frame so its +Z axis aligns +Z (world).
+Anchor back_frame to seat_frame.top_face.
+Then move by offset(0,0.25,0.65).
+Stage 4 complete.
+
+---  SECTION 5 – Create seat cushion  ---
+Create primitive cuboid with size 0.65×0.55×0.1 m and name it seat_cushion.
+Rotate seat_cushion so its +Z axis aligns +Z (world).
+Anchor seat_cushion to seat_frame.top_face.
+Then move by offset(0,0,0.35).
+Stage 5 complete.
+
+---  SECTION 6 – Create backrest cushion  ---
+Create primitive cuboid with size 0.65×0.15×0.9 m and name it backrest_cushion.
+Rotate backrest_cushion so its +Z axis aligns +Z (world).
+Anchor backrest_cushion to back_frame.top_face.
+Then move by offset(0,0.3,0.7).
+Stage 6 complete.
+
+---  SECTION 7 – Create headrest cushion  ---
+Create primitive cuboid with size 0.4×0.15×0.2 m and name it headrest_cushion.
+Rotate headrest_cushion so its +Z axis aligns +Z (world).
+Anchor headrest_cushion to backrest_cushion.top_face.
+Then move by offset(0,0.35,1.15).
+Stage 7 complete.
+
+---  SECTION 8 – Create left armrest  ---
+Create primitive cuboid with size 0.15×0.55×0.15 m and name it armrest_l.
+Rotate armrest_l so its +Z axis aligns +Z (world).
+Anchor armrest_l to seat_frame.top_face.
+Then move by offset(-0.35,0,0.55).
+Stage 8 complete.
+
+---  SECTION 9 – Create right armrest  ---
+Create primitive cuboid with size 0.15×0.55×0.15 m and name it armrest_r.
+Rotate armrest_r so its +Z axis aligns +Z (world).
+Anchor armrest_r to seat_frame.top_face.
+Then move by offset(0.35,0,0.55).
+Stage 9 complete.
+
+---  SECTION 10 – Create pivot hinge  ---
+Create primitive cuboid with size 0.1×0.1×0.1 m and name it pivot_hinge.
+Rotate pivot_hinge so its +Z axis aligns +Z (world).
+Anchor pivot_hinge to seat_frame.top_face.
+Then move by offset(0,0,0.3).
+Stage 10 complete.
+
+---  SECTION 11 – Create recline lever  ---
+Create primitive cuboid with size 0.05×0.05×0.2 m and name it recline_lever.
+Rotate recline_lever so its +Z axis aligns +Z (world).
+Anchor recline_lever to seat_frame.side_face.
+Then move by offset(-0.35,-0.1,0.4).
+Stage 11 complete.
+
+---  SECTION 12 – Create gas spring  ---
+Create primitive cuboid with size 0.03×0.03×0.4 m and name it gas_spring.
+Rotate gas_spring so its +Z axis aligns +Z (world).
+Anchor gas_spring to seat_frame.bottom_face.
+Then move by offset(0.1,0.1,0.3).
+Stage 12 complete.
+
+---  SECTION 13 – Create footrest base  ---
+Create primitive cuboid with size 0.5×0.4×0.05 m and name it footrest_base.
+Rotate footrest_base so its +Z axis aligns +Z (world).
+Anchor footrest_base to seat_frame.bottom_face.
+Then move by offset(0,-0.4,0.3).
+Stage 13 complete.
+
+---  SECTION 14 – Create footrest cushion  ---
+Create primitive cuboid with size 0.55×0.45×0.08 m and name it footrest_cushion.
+Rotate footrest_cushion so its +Z axis aligns +Z (world).
+Anchor footrest_cushion to footrest_base.top_face.
+Then move by offset(0,-0.4,0.36).
+Stage 14 complete.
+
+---  SECTION 15 – Create footrest hinge  ---
+Create primitive cuboid with size 0.05×0.05×0.05 m and name it footrest_hinge.
+Rotate footrest_hinge so its +Z axis aligns +Z (world).
+Anchor footrest_hinge to footrest_base.top_face.
+Then move by offset(0,-0.2,0.3).
+Stage 15 complete.
+
+All stages complete.

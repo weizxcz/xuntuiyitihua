@@ -1,0 +1,51 @@
+{
+  "id": "cc094a73-f4e9-4eee-8bf0-a7da6188a1ad",
+  "name": "Convertible Sofa Bed",
+  "instruction": "Let's design a convertible sofa bed. The backrest should be adjustable, allowing it to lay flat to form a bed. The seat should be rectangular, with a length of 80 inches and a width of 30 inches. The armrests should be detachable and positioned at both ends of the seat. Add a storage compartment under the seat.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a convertible sofa bed.",
+        "The backrest is adjustable.",
+        "The seat is rectangular.",
+        "The armrests are detachable.",
+        "The storage compartment is located under the seat."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The length of the seat is 80 inches.",
+        "The width of the seat is 30 inches."
+      ],
+      "Proportion": [
+        "The backrest height is proportionate to the seat length.",
+        "The armrests are proportionate to the seat width."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The backrest can lay flat to form a bed.",
+        "The armrests are positioned correctly at both ends of the seat.",
+        "The storage compartment is accessible from the front."
+      ],
+      "Object distance and contact": [
+        "The armrests do not overlap with the seat.",
+        "There is no gap between the seat and the armrests.",
+        "The backrest connects securely to the seat."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The adjustable backrest is implemented as instructed.",
+        "The dimensions of the seat match the specifications."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,76 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material ceramic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material wood_oak; diffuse_color = (0.6,0.4,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create root anchor  ---
+Create an Empty helper (cube display) and name it root.
+Rotate root so its axis aligns +Z (world).
+Move root to (0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create base_group  ---
+---  SECTION 2.1 – Create bowl_body  ---
+Create primitive cylinder with size Ø0.250×0.120 m and name it bowl_body.
+Rotate bowl_body so its +Z axis aligns +Z (world).
+Align bowl_body.XY_face to root.XY_face.
+Then move by offset(0,0,0.060).
+Stage 2.1 complete.
+
+---  SECTION 2.2 – Create base_foot  ---
+Create primitive cylinder with size Ø0.100×0.010 m and name it base_foot.
+Rotate base_foot so its +Z axis aligns +Z (world).
+Align base_foot.XY_face to bowl_body.bottom_face.XY_face.
+Align base_foot.Z_face to bowl_body.bottom_face.Z_face.
+Then move by offset(0,0,0).
+Stage 2.2 complete.
+
+---  SECTION 2.3 – Assemble base_group  ---
+Boolean-union base_foot into bowl_body; discard base_foot.
+Stage 2 complete.
+
+---  SECTION 3 – Create fruit_group  ---
+---  SECTION 3.1 – Create apple  ---
+Create primitive sphere with size Ø0.060 m and name it apple.
+Rotate apple so its +Z axis aligns +Z (world).
+Align apple.XY_face to bowl_body.inner_bottom.XY_face.
+Align apple.Z_face to bowl_body.inner_bottom.Z_face.
+Then move by offset(0,0,0.030).
+Stage 3.1 complete.
+
+---  SECTION 3.2 – Create banana  ---
+Create primitive cylinder with size Ø0.030×0.150 m and name it banana.
+Rotate banana so its +Z axis aligns +Z (world).
+Align banana.XY_face to bowl_body.inner_bottom.XY_face.
+Align banana.Z_face to bowl_body.inner_bottom.Z_face.
+Then move by offset(0.05,0,0.075).
+Bevel banana.edge_set with radius 0.015 m, segments 8.
+Stage 3.2 complete.
+
+---  SECTION 3.3 – Create orange  ---
+Create primitive sphere with size Ø0.050 m and name it orange.
+Rotate orange so its +Z axis aligns +Z (world).
+Align orange.XY_face to bowl_body.inner_bottom.XY_face.
+Align orange.Z_face to bowl_body.inner_bottom.Z_face.
+Then move by offset(-0.05,0,0.025).
+Stage 3.3 complete.
+
+---  SECTION 3.4 – Assemble fruit_group  ---
+Boolean-union apple into bowl_body; discard apple.
+Boolean-union banana into bowl_body; discard banana.
+Boolean-union orange into bowl_body; discard orange.
+Stage 3 complete.
+
+All stages complete.

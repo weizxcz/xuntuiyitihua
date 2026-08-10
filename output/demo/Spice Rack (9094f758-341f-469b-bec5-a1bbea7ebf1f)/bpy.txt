@@ -1,0 +1,187 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube primitive, apply transform, and assign material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder primitive, apply transform, and assign material."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def boolean_subtract(target_name, cutter_name):
+    """
+    Perform a boolean subtract operation.
+    Adds a Boolean modifier to 'target_name' using 'cutter_name' as the object.
+    Applies the modifier.
+    """
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure cutter is active for the modifier setup if needed, 
+    # but usually we just set the object in the modifier.
+    
+    mod = target.modifiers.new(name="BoolSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(objects_to_union, result_name):
+    """
+    Perform a boolean union on a list of objects.
+    Returns the resulting object.
+    """
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+    
+    bpy.context.view_layer.objects.active = objects_to_union[0]
+    
+    # Join them first to make a single mesh, then we can't easily boolean union 
+    # separate meshes into one without a target. 
+    # Better approach: Use the first object as the base and boolean union others into it.
+    
+    base_obj = objects_to_union[0]
+    base_obj.name = result_name
+    
+    for i in range(1, len(objects_to_union)):
+        other_obj = objects_to_union[i]
+        mod = base_obj.modifiers.new(name=f"BoolUnion_{i}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other_obj
+        
+        bpy.context.view_layer.objects.active = base_obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove the other object
+        bpy.data.objects.remove(other_obj, do_unlink=True)
+        
+    return base_obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.length_unit = 'METRES'
+
+# --- Block 1: Materials ---
+
+mat_wood = make_material("mat_wood", (0.55, 0.35, 0.15, 1.0))
+mat_metal_bracket = make_material("mat_metal_bracket", (0.2, 0.2, 0.2, 1.0))
+mat_metal_rail = make_material("mat_metal_rail", (0.8, 0.8, 0.8, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create Left Mounting Bracket
+# Create primitive cuboid: size 0.020×0.150×0.005 m, name bracket_L
+# Orientation: +Z aligns +Z (default)
+# Position: (-0.150, 0.075, -0.025)
+bracket_L = add_cube("bracket_L", (0.020, 0.150, 0.005), (-0.150, 0.075, -0.025), (0, 0, 0), mat_metal_bracket)
+
+# Create drill_bit_L: cylinder, diameter 0.006 (radius 0.003), length 0.010
+# Position: (-0.150, 0.025, -0.025)
+# Orientation: +Z aligns +Z
+drill_bit_L = add_cylinder("drill_bit_L", 0.003, 0.010, (-0.150, 0.025, -0.025), (0, 0, 0))
+
+# Boolean-subtract drill_bit_L from bracket_L
+boolean_subtract("bracket_L", "drill_bit_L")
+
+# SECTION 2 – Create Right Mounting Bracket
+# Create primitive cuboid: size 0.020×0.150×0.005 m, name bracket_R
+# Position: (0.150, 0.075, -0.025)
+bracket_R = add_cube("bracket_R", (0.020, 0.150, 0.005), (0.150, 0.075, -0.025), (0, 0, 0), mat_metal_bracket)
+
+# Create drill_bit_R: cylinder, diameter 0.006 (radius 0.003), length 0.010
+# Position: (0.150, 0.025, -0.025)
+drill_bit_R = add_cylinder("drill_bit_R", 0.003, 0.010, (0.150, 0.025, -0.025), (0, 0, 0))
+
+# Boolean-subtract drill_bit_R from bracket_R
+boolean_subtract("bracket_R", "drill_bit_R")
+
+# SECTION 3 – Create Bottom Shelf Tier
+# Create primitive cuboid: size 0.300×0.100×0.015 m, name tier_1
+# Position: (0, 0.025, 0)
+tier_1 = add_cube("tier_1", (0.300, 0.100, 0.015), (0, 0.025, 0), (0, 0, 0), mat_wood)
+
+# SECTION 4 – Create Middle Shelf Tier
+# Create primitive cuboid: size 0.300×0.100×0.015 m, name tier_2
+# Position: (0, 0.125, 0)
+tier_2 = add_cube("tier_2", (0.300, 0.100, 0.015), (0, 0.125, 0), (0, 0, 0), mat_wood)
+
+# SECTION 5 – Create Top Shelf Tier
+# Create primitive cuboid: size 0.300×0.100×0.015 m, name tier_3
+# Position: (0, 0.225, 0)
+tier_3 = add_cube("tier_3", (0.300, 0.100, 0.015), (0, 0.225, 0), (0, 0, 0), mat_wood)
+
+# SECTION 6 – Create Bottom Safety Rail
+# Create primitive cuboid: size 0.300×0.004×0.004 m, name rail_1
+# Position: (0, 0.025, 0.048)
+rail_1 = add_cube("rail_1", (0.300, 0.004, 0.004), (0, 0.025, 0.048), (0, 0, 0), mat_metal_rail)
+
+# SECTION 7 – Create Middle Safety Rail
+# Create primitive cuboid: size 0.300×0.004×0.004 m, name rail_2
+# Position: (0, 0.125, 0.048)
+rail_2 = add_cube("rail_2", (0.300, 0.004, 0.004), (0, 0.125, 0.048), (0, 0, 0), mat_metal_rail)
+
+# SECTION 8 – Create Top Safety Rail
+# Create primitive cuboid: size 0.300×0.004×0.004 m, name rail_3
+# Position: (0, 0.225, 0.048)
+rail_3 = add_cube("rail_3", (0.300, 0.004, 0.004), (0, 0.225, 0.048), (0, 0, 0), mat_metal_rail)
+
+# SECTION 9 – Assemble Spice Rack
+# Boolean-union bracket_L, bracket_R, tier_1, tier_2, tier_3, rail_1, rail_2, rail_3
+# Result name: spice_rack_root
+
+parts_to_union = [
+    bracket_L, 
+    bracket_R, 
+    tier_1, 
+    tier_2, 
+    tier_3, 
+    rail_1, 
+    rail_2, 
+    rail_3
+]
+
+spice_rack_root = boolean_union(parts_to_union, "spice_rack_root")
+```

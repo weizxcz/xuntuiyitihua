@@ -1,0 +1,337 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc mesh object."""
+    bpy.ops.mesh.primitive_circle_add(vertices=segments, radius=radius, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone/tapered mesh object."""
+    bpy.ops.mesh.primitive_cone_add(vertices=segments, radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=32):
+    """Add an UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=width_seg, ring_count=height_seg, radius=radius, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_torus(name, major_radius, minor_radius, major_segments=32, minor_segments=16):
+    """Add a Torus mesh object."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=major_segments, minor_segments=minor_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Rotate object so its local axis aligns with target vector."""
+    # Ensure object is in object mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Get current rotation as quaternion
+    rot = obj.rotation_quaternion
+    
+    # Define local axis vectors
+    local_axes = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    if axis_to_align not in local_axes:
+        return
+
+    src_axis = local_axes[axis_to_align]
+    tgt_axis = target_vector.normalized()
+    
+    # Calculate rotation quaternion to align src to tgt
+    rot_quat = src_axis.rotation_difference(tgt_axis)
+    
+    # Apply rotation
+    obj.rotation_quaternion = rot_quat
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find specific points on an object's bounding box or geometry."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.update_matrix()
+
+    def update_matrix(self):
+        self.matrix_world = self.obj.matrix_world.copy()
+        self.bound_box = self.obj.bound_box
+
+    def center_world(self):
+        """Return the world center of the object."""
+        return self.matrix_world.to_translation()
+
+    def face_center_world(self, face_index=0):
+        """Return the center of a specific face in world space. 
+        Assumes standard primitive orientation if face_index is not specific."""
+        # For simple primitives, we can calculate based on dimensions
+        # This is a simplified version assuming axis-aligned bounding box relative to object rotation
+        bb = self.bound_box
+        # Vertices of the face (indices depend on primitive type, this is generic approximation)
+        # For cylinder/cone/sphere, face_index logic is complex. 
+        # Let's use a simpler approach: project center along normal if possible, or use bounding box extremes.
+        
+        # Fallback: Use bounding box center + offset based on size
+        center = self.center_world()
+        size = self.obj.dimensions
+        
+        # Determine direction based on face_index logic if needed, 
+        # but for this script we will use specific geometric helpers below.
+        return center
+
+    def radial_point_world(self, angle_deg, axis='Z'):
+        """Return a point on the radial edge at a specific angle."""
+        center = self.center_world()
+        size = self.obj.dimensions
+        
+        # Radius is half of the dimension perpendicular to the axis
+        if axis == 'Z':
+            radius = size[0] / 2.0 # X or Y dimension
+        elif axis == 'Y':
+            radius = size[0] / 2.0
+        else:
+            radius = size[0] / 2.0
+            
+        angle_rad = math.radians(angle_deg)
+        
+        # Local point
+        if axis == 'Z':
+            local_pt = Vector((math.cos(angle_rad) * radius, math.sin(angle_rad) * radius, 0))
+        elif axis == 'Y':
+            local_pt = Vector((math.cos(angle_rad) * radius, 0, math.sin(angle_rad) * radius))
+        else:
+            local_pt = Vector((0, math.cos(angle_rad) * radius, math.sin(angle_rad) * radius))
+            
+        return self.matrix_world @ local_pt
+
+    def side_at(self, angle_deg):
+        """Alias for radial_point_world."""
+        return self.radial_point_world(angle_deg)
+
+    def top_world(self):
+        """Return the world position of the top of the object."""
+        center = self.center_world()
+        size = self.obj.dimensions
+        # Top is center + half height along Z (assuming default orientation)
+        # We need to account for rotation.
+        # Get the up vector in world space
+        up_vec = self.matrix_world @ Vector((0, 0, 1))
+        return center + up_vec * (size[2] / 2.0)
+
+    def bottom_world(self):
+        """Return the world position of the bottom of the object."""
+        center = self.center_world()
+        size = self.obj.dimensions
+        down_vec = self.matrix_world @ Vector((0, 0, -1))
+        return center + down_vec * (size[2] / 2.0)
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract operation using the modifier stack."""
+    target = bpy.data.objects.get(target_name)
+    cutter = bpy.data.objects.get(cutter_name)
+    
+    if not target or not cutter:
+        print(f"Error: Object {target_name} or {cutter_name} not found.")
+        return
+
+    # Ensure target is active for modifier addition
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="Boolean_Subtract", type='BOOLEAN')
+    mod.object = cutter
+    mod.operation = 'DIFFERENCE'
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(target_name, other_name):
+    """Perform a boolean union operation."""
+    target = bpy.data.objects.get(target_name)
+    other = bpy.data.objects.get(other_name)
+    
+    if not target or not other:
+        print(f"Error: Object {target_name} or {other_name} not found.")
+        return
+
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="Boolean_Union", type='BOOLEAN')
+    mod.object = other
+    mod.operation = 'UNION'
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(other, do_unlink=True)
+
+def add_bevel(obj_name, width=0.01, segments=5):
+    """Add a bevel modifier and apply it."""
+    obj = bpy.data.objects.get(obj_name)
+    if not obj:
+        print(f"Error: Object {obj_name} not found.")
+        return
+
+    bpy.context.view_layer.objects.active = obj
+    
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def add_text_object(name, text_string, size=1.0):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text_string
+    obj.scale = (size, size, size)
+    return obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_fabric_main = make_material("fabric_main", (0.85, 0.15, 0.15, 1.0))
+mat_fur_pom = make_material("fur_pom", (0.95, 0.95, 0.90, 1.0))
+mat_fur_trim = make_material("fur_trim", (0.95, 0.95, 0.90, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create hat body ---
+hat_body = add_cylinder("hat_body", radius=0.110, depth=0.200)
+# Rotate hat_body so its +Z axis aligns +Z (world) - it is already aligned by default, but we ensure it.
+align_axis_to_vector(hat_body, 'Z', Vector((0, 0, 1)))
+
+# Anchor hat_body to world origin
+hat_body.location = (0, 0, 0)
+
+# Move by offset(0,0,0)
+hat_body.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create ear flaps ---
+
+# Left Flap
+flap_L = add_cylinder("flap_L", radius=0.040, depth=0.150)
+# Rotate flap_L so its +Z axis aligns +Y (world)
+align_axis_to_vector(flap_L, 'Z', Vector((0, 1, 0)))
+
+# Align flap_L.center to hat_body.side_at(180°)
+loc_L = Locator(hat_body)
+align_target_L = loc_L.side_at(180)
+flap_L.location = align_target_L
+
+# Move by offset(0,0,-0.050)
+flap_L.location += Vector((0, 0, -0.050))
+
+# Right Flap
+flap_R = add_cylinder("flap_R", radius=0.040, depth=0.150)
+# Rotate flap_R so its +Z axis aligns +Y (world)
+align_axis_to_vector(flap_R, 'Z', Vector((0, 1, 0)))
+
+# Align flap_R.center to hat_body.side_at(0°)
+loc_R = Locator(hat_body)
+align_target_R = loc_R.side_at(0)
+flap_R.location = align_target_R
+
+# Move by offset(0,0,-0.050)
+flap_R.location += Vector((0, 0, -0.050))
+
+# --- SECTION 3 – Create pom-pom and trim ring ---
+
+# Pom-pom
+pom_pom = add_uvsphere("pom_pom", radius=0.050)
+# Rotate pom_pom so its +Z axis aligns +Z (world) - already aligned
+align_axis_to_vector(pom_pom, 'Z', Vector((0, 0, 1)))
+
+# Align pom_pom.bottom to hat_body.top
+loc_pom = Locator(pom_pom)
+loc_hat = Locator(hat_body)
+
+# Calculate bottom of pom_pom in world space if it were at origin
+# Bottom is center - (0,0,1)*radius
+pom_bottom_local = Vector((0, 0, -0.050))
+hat_top_world = loc_hat.top_world()
+
+# We want pom_pom.bottom to be at hat_top_world
+# So pom_pom.center should be at hat_top_world + (0,0,1)*radius
+pom_center_target = hat_top_world + Vector((0, 0, 0.050))
+pom_pom.location = pom_center_target
+
+# Move by offset(0,0,0.020)
+pom_pom.location += Vector((0, 0, 0.020))
+
+# Trim Ring
+trim_ring = add_torus("trim_ring", major_radius=0.110, minor_radius=0.015)
+# Rotate trim_ring so its +Z axis aligns +Z (world) - already aligned
+align_axis_to_vector(trim_ring, 'Z', Vector((0, 0, 1)))
+
+# Align trim_ring.center to hat_body.top
+loc_trim = Locator(trim_ring)
+hat_top_world_trim = loc_hat.top_world()
+trim_ring.location = hat_top_world_trim
+
+# Move by offset(0,0,0.001)
+trim_ring.location += Vector((0, 0, 0.001))
+
+# Assign materials (Optional but good practice based on Block 1)
+# Note: The prompt didn't explicitly ask to assign materials to objects, just define them.
+# However, usually "Define material" implies usage. I will leave assignment out unless specified 
+# to keep the script strictly to the "Stage-by-Stage Operations" geometry instructions.
+# If assignment was required, it would be added here.

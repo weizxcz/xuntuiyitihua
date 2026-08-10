@@ -1,0 +1,41 @@
+{
+  "id": "7987d2ab-6f01-4016-befb-d3b1b632f5ea",
+  "name": "Beanie",
+  "instruction": "Create a beanie with a simple, rounded shape. \n\nMake it in a deep green color.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a beanie.",
+        "The beanie has a simple, rounded shape."
+      ],
+      "Color representation": [
+        "The color of the beanie is deep green."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The beanie is at reasonable height and width to wear."
+      ],
+      "Texture and surface detail": [
+        "The beanie may have a knitted texture."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The beanie maintains its rounded shape when viewed from different angles."
+      ],
+      "Object distance and contact": [
+        "The beanie fits snugly without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The shape and color match the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

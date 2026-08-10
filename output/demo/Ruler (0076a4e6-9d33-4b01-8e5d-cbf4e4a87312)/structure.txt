@@ -1,0 +1,67 @@
+-- MATERIAL LIBRARY --
+plastic_white | diffuse_color=(240,240,240,255)
+ink_black | diffuse_color=(0,0,0,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| ruler_root | Composite assembly of the ruler body and measurement markings | assembly_order=[ruler_body, markings_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| ruler_body | Flat rectangular prism representing the main ruler body | size=0.3048×0.0254×0.003 (L×W×T in m); mat=plastic_white; create_method=primitive; pos=(0,0,0); orientation=axis:+Z |
+
+Layer 2 – Measurement Markings
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| markings_group | Composite union of all inch and centimeter tick marks | assembly_order=[inch_marks, cm_marks] |
+| inch_marks | Composite union of 12 individual inch tick marks | assembly_order=[inch_0, inch_1, inch_2, inch_3, inch_4, inch_5, inch_6, inch_7, inch_8, inch_9, inch_10, inch_11, inch_12] |
+| inch_0 | Inch mark at 0 inches | size=0.001×0.015×0.0005 (W×H×T); mat=ink_black; create_method=primitive; Align(Z) inch_0.bottom_face to ruler_body.top_face; offset(0,0,0) |
+| inch_1 | Inch mark at 1 inch | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_1.bottom_face to ruler_body.top_face; offset(0.0254,0,0) |
+| inch_2 | Inch mark at 2 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_2.bottom_face to ruler_body.top_face; offset(0.0508,0,0) |
+| inch_3 | Inch mark at 3 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_3.bottom_face to ruler_body.top_face; offset(0.0762,0,0) |
+| inch_4 | Inch mark at 4 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_4.bottom_face to ruler_body.top_face; offset(0.1016,0,0) |
+| inch_5 | Inch mark at 5 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_5.bottom_face to ruler_body.top_face; offset(0.127,0,0) |
+| inch_6 | Inch mark at 6 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_6.bottom_face to ruler_body.top_face; offset(0.1524,0,0) |
+| inch_7 | Inch mark at 7 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_7.bottom_face to ruler_body.top_face; offset(0.1778,0,0) |
+| inch_8 | Inch mark at 8 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_8.bottom_face to ruler_body.top_face; offset(0.2032,0,0) |
+| inch_9 | Inch mark at 9 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_9.bottom_face to ruler_body.top_face; offset(0.2286,0,0) |
+| inch_10 | Inch mark at 10 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_10.bottom_face to ruler_body.top_face; offset(0.254,0,0) |
+| inch_11 | Inch mark at 11 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_11.bottom_face to ruler_body.top_face; offset(0.2794,0,0) |
+| inch_12 | Inch mark at 12 inches | size=0.001×0.015×0.0005; mat=ink_black; create_method=primitive; Align(Z) inch_12.bottom_face to ruler_body.top_face; offset(0.3048,0,0) |
+| cm_marks | Composite union of 30 individual centimeter tick marks (0 to 30 cm) | assembly_order=[cm_0, cm_1, cm_2, cm_3, cm_4, cm_5, cm_6, cm_7, cm_8, cm_9, cm_10, cm_11, cm_12, cm_13, cm_14, cm_15, cm_16, cm_17, cm_18, cm_19, cm_20, cm_21, cm_22, cm_23, cm_24, cm_25, cm_26, cm_27, cm_28, cm_29, cm_30] |
+| cm_0 | Centimeter mark at 0 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_0.bottom_face to ruler_body.top_face; offset(0,0,0) |
+| cm_1 | Centimeter mark at 1 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_1.bottom_face to ruler_body.top_face; offset(0.01,0,0) |
+| cm_2 | Centimeter mark at 2 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_2.bottom_face to ruler_body.top_face; offset(0.02,0,0) |
+| cm_3 | Centimeter mark at 3 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_3.bottom_face to ruler_body.top_face; offset(0.03,0,0) |
+| cm_4 | Centimeter mark at 4 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_4.bottom_face to ruler_body.top_face; offset(0.04,0,0) |
+| cm_5 | Centimeter mark at 5 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_5.bottom_face to ruler_body.top_face; offset(0.05,0,0) |
+| cm_6 | Centimeter mark at 6 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_6.bottom_face to ruler_body.top_face; offset(0.06,0,0) |
+| cm_7 | Centimeter mark at 7 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_7.bottom_face to ruler_body.top_face; offset(0.07,0,0) |
+| cm_8 | Centimeter mark at 8 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_8.bottom_face to ruler_body.top_face; offset(0.08,0,0) |
+| cm_9 | Centimeter mark at 9 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_9.bottom_face to ruler_body.top_face; offset(0.09,0,0) |
+| cm_10 | Centimeter mark at 10 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_10.bottom_face to ruler_body.top_face; offset(0.1,0,0) |
+| cm_11 | Centimeter mark at 11 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_11.bottom_face to ruler_body.top_face; offset(0.11,0,0) |
+| cm_12 | Centimeter mark at 12 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_12.bottom_face to ruler_body.top_face; offset(0.12,0,0) |
+| cm_13 | Centimeter mark at 13 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_13.bottom_face to ruler_body.top_face; offset(0.13,0,0) |
+| cm_14 | Centimeter mark at 14 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_14.bottom_face to ruler_body.top_face; offset(0.14,0,0) |
+| cm_15 | Centimeter mark at 15 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_15.bottom_face to ruler_body.top_face; offset(0.15,0,0) |
+| cm_16 | Centimeter mark at 16 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_16.bottom_face to ruler_body.top_face; offset(0.16,0,0) |
+| cm_17 | Centimeter mark at 17 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_17.bottom_face to ruler_body.top_face; offset(0.17,0,0) |
+| cm_18 | Centimeter mark at 18 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_18.bottom_face to ruler_body.top_face; offset(0.18,0,0) |
+| cm_19 | Centimeter mark at 19 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_19.bottom_face to ruler_body.top_face; offset(0.19,0,0) |
+| cm_20 | Centimeter mark at 20 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_20.bottom_face to ruler_body.top_face; offset(0.2,0,0) |
+| cm_21 | Centimeter mark at 21 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_21.bottom_face to ruler_body.top_face; offset(0.21,0,0) |
+| cm_22 | Centimeter mark at 22 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_22.bottom_face to ruler_body.top_face; offset(0.22,0,0) |
+| cm_23 | Centimeter mark at 23 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_23.bottom_face to ruler_body.top_face; offset(0.23,0,0) |
+| cm_24 | Centimeter mark at 24 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_24.bottom_face to ruler_body.top_face; offset(0.24,0,0) |
+| cm_25 | Centimeter mark at 25 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_25.bottom_face to ruler_body.top_face; offset(0.25,0,0) |
+| cm_26 | Centimeter mark at 26 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_26.bottom_face to ruler_body.top_face; offset(0.26,0,0) |
+| cm_27 | Centimeter mark at 27 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_27.bottom_face to ruler_body.top_face; offset(0.27,0,0) |
+| cm_28 | Centimeter mark at 28 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_28.bottom_face to ruler_body.top_face; offset(0.28,0,0) |
+| cm_29 | Centimeter mark at 29 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_29.bottom_face to ruler_body.top_face; offset(0.29,0,0) |
+| cm_30 | Centimeter mark at 30 cm | size=0.001×0.010×0.0005; mat=ink_black; create_method=primitive; Align(Z) cm_30.bottom_face to ruler_body.top_face; offset(0.3,0,0) |
+# ----------  END_GRAPH  ----------

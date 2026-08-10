@@ -1,0 +1,250 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder oriented along Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='TRIFAN')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cone(bottom_radius, top_radius, depth, segments=32, name="Cone"):
+    """Add a cone/tapered cylinder oriented along Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=bottom_radius, radius2=top_radius, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    if axis == 'X': local_axis = Vector((1, 0, 0))
+    elif axis == 'Y': local_axis = Vector((0, 1, 0))
+    else: local_axis = Vector((0, 0, 1)) # Z
+    
+    target = vector.normalized()
+    if local_axis.normalized().dot(target) < 0.9999:
+        rot_quat = local_axis.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='bottom'):
+    """
+    Calculate the world center of the bottom or top face of a Z-aligned object.
+    Assumes object is Z-aligned and centered at origin before placement.
+    """
+    # Get half height
+    if obj.type == 'MESH':
+        # Approximate based on dimensions for primitives
+        if obj.name.startswith('Cylinder') or obj.name.startswith('Cone'):
+            h = obj.dimensions.z / 2
+        else:
+            h = obj.dimensions.z / 2
+    else:
+        h = 0
+        
+    if face_type == 'bottom':
+        return obj.location + obj.matrix_world.to_3x3() @ Vector((0, 0, -h))
+    elif face_type == 'top':
+        return obj.location + obj.matrix_world.to_3x3() @ Vector((0, 0, h))
+    return obj.location
+
+def boolean_union(objects_to_union, target_name="UnionResult"):
+    """
+    Perform boolean union on a list of objects.
+    Returns the resulting object.
+    """
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+    # Apply modifiers to first object to ensure clean boolean
+    # Note: In a script, it's safer to apply transforms first
+    for obj in objects_to_union:
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+    # Create a new mesh from the union
+    # Using bpy.ops.mesh.union is not directly available in standard Blender python without addons,
+    # so we use the Boolean Modifier approach or BMesh.
+    # Here we use the Boolean Modifier on the first object.
+    
+    base_obj = objects_to_union[0]
+    
+    # Clear existing modifiers
+    for mod in base_obj.modifiers:
+        base_obj.modifiers.remove(mod)
+        
+    # Add boolean modifier
+    bool_mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    bool_mod.operation = 'UNION'
+    
+    # We need to iterate through the rest and add them as targets? 
+    # Blender's boolean modifier only takes one object. 
+    # To union multiple, we must chain them or use a different method.
+    # Simplest robust way for script: Add all to a collection, make one the base, 
+    # and use a loop of boolean modifiers or merge geometry.
+    
+    # Alternative: Merge geometry into one mesh
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = objects_to_union[0]
+    bpy.ops.object.join()
+    
+    result = bpy.context.active_object
+    result.name = target_name
+    return result
+
+def boolean_subtract(base_obj, cutter_obj, result_name="BooleanSubResult"):
+    """Subtract cutter from base using Boolean Modifier."""
+    # Ensure transforms are applied
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    bpy.context.view_layer.objects.active = cutter_obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    
+    # Add modifier to base
+    bool_mod = base_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    bool_mod.operation = 'DIFFERENCE'
+    bool_mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    
+    base_obj.name = result_name
+    return base_obj
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_base = make_material("mat_base", (0.8, 0.8, 0.8, 1.0))
+mat_shade = make_material("mat_shade", (1.0, 0.95, 0.8, 0.9))
+mat_stand = make_material("mat_stand", (0.8, 0.8, 0.8, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create lamp base ---
+# Create primitive cylinder with radius 0.076 m and height 0.025 m and name it lamp_base.
+lamp_base = add_cylinder(radius=0.076, depth=0.025, name="lamp_base")
+lamp_base.data.materials.append(mat_base)
+
+# Rotate lamp_base so its +Z axis aligns +Z (world).
+align_axis_to_vector(lamp_base, 'Z', (0, 0, 1))
+
+# Anchor lamp_base to world origin.
+lamp_base.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+lamp_base.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create lamp stand ---
+# Create primitive cylinder with radius 0.0125 m and height 0.305 m and name it lamp_stand.
+lamp_stand = add_cylinder(radius=0.0125, depth=0.305, name="lamp_stand")
+lamp_stand.data.materials.append(mat_stand)
+
+# Rotate lamp_stand so its +Z axis aligns +Z (world).
+align_axis_to_vector(lamp_stand, 'Z', (0, 0, 1))
+
+# Align lamp_stand.bottom_face to lamp_base.top_face.
+# Calculate positions
+base_top_z = lamp_base.location.z + (lamp_base.dimensions.z / 2)
+stand_bottom_z = lamp_stand.location.z - (lamp_stand.dimensions.z / 2)
+
+# Move stand so its bottom face touches base top face
+offset_z = base_top_z - stand_bottom_z
+lamp_stand.location = (0, 0, offset_z)
+
+# Then move by offset(0,0,0.0125).
+lamp_stand.location += Vector((0, 0, 0.0125))
+
+# --- SECTION 3 – Create lamp shade ---
+# Create primitive cone with bottom_radius 0.06 m, top_radius 0.04 m, and height 0.150 m and name it lamp_shade.
+lamp_shade = add_cone(bottom_radius=0.06, top_radius=0.04, depth=0.150, name="lamp_shade")
+lamp_shade.data.materials.append(mat_shade)
+
+# Rotate lamp_shade so its +Z axis aligns +Z (world).
+align_axis_to_vector(lamp_shade, 'Z', (0, 0, 1))
+
+# Align lamp_shade.bottom_face to lamp_stand.top_face.
+stand_top_z = lamp_stand.location.z + (lamp_stand.dimensions.z / 2)
+shade_bottom_z = lamp_shade.location.z - (lamp_shade.dimensions.z / 2)
+
+offset_z_shade = stand_top_z - shade_bottom_z
+lamp_shade.location = (0, 0, offset_z_shade)
+
+# Then move by offset(0,0,0.0125).
+lamp_shade.location += Vector((0, 0, 0.0125))
+
+# --- SECTION 4 – Assemble lamp ---
+# Boolean-union lamp_base, lamp_stand, and lamp_shade to form lamp_assembly.
+# Note: Boolean operations require applied transforms.
+bpy.context.view_layer.objects.active = lamp_base
+bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+bpy.context.view_layer.objects.active = lamp_stand
+bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+bpy.context.view_layer.objects.active = lamp_shade
+bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+# Join them into one object
+bpy.ops.object.select_all(action='DESELECT')
+lamp_base.select_set(True)
+lamp_stand.select_set(True)
+lamp_shade.select_set(True)
+bpy.context.view_layer.objects.active = lamp_base
+bpy.ops.object.join()
+
+lamp_assembly = bpy.context.active_object
+lamp_assembly.name = "lamp_assembly"
+
+# All stages complete.
+```

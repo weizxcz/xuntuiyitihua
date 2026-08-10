@@ -1,0 +1,35 @@
+-- MATERIAL LIBRARY --
+metal_body | diffuse_color=(128,128,128,255)
+metal_dial | diffuse_color=(50,50,50,255)
+plastic_dial | diffuse_color=(20,20,20,255)
+plastic_handle | diffuse_color=(20,20,20,255)
+glass_door | diffuse_color=(200,220,255,128)
+metal_rack | diffuse_color=(180,180,180,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| main_body | Composite of outer shell + internal cavity | A. Rectangular box with hollow interior; mat=metal_body; create_method=boolean_subtract; assembly_order=main_body_shell, main_body_cavity |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+| main_body_shell | Rectangular shell 0.45×0.30×0.35 m (W×H×D) | Align(XYZ) main_body_shell.center to (0,0,0); orientation=axis:+Z; mat=metal_body; create_method=primitive; constraint=cube 0.45×0.30×0.35 |
+| main_body_cavity | Inner void 0.40×0.25×0.30 m | Align(XYZ) main_body_cavity.center to (0,0,0); orientation=axis:+Z; mat=-; create_method=primitive; constraint=cube 0.40×0.25×0.30; assembly_order=main_body_cavity; constraint=boolean_subtract from main_body_shell |
+
+Layer 2 – Door Assembly
+| ID | Description | Key attributes / placement |
+| door_frame | Rectangular frame 0.40×0.25×0.02 m | Align(XYZ) door_frame.center to (0, 0.125, 0.175); orientation=axis:+Z; mat=metal_body; create_method=primitive; constraint=cube 0.40×0.25×0.02 |
+| door_glass | Glass panel 0.38×0.23×0.005 m | Align(XYZ) door_glass.center to (0, 0.125, 0.175); orientation=axis:+Z; mat=glass_door; create_method=primitive; constraint=cube 0.38×0.23×0.005; assembly_order=door_glass; constraint=boolean_subtract from door_frame (or inset) |
+| door_handle | Horizontal handle 0.20×0.02×0.02 m | Align(XYZ) door_handle.center to (0, 0.05, 0.185); orientation=axis:+Z; mat=plastic_handle; create_method=primitive; constraint=cube 0.20×0.02×0.02 |
+
+Layer 3 – Internal Components
+| ID | Description | Key attributes / placement |
+| food_rack | Wire rack 0.38×0.23×0.01 m | Align(XYZ) food_rack.center to (0, 0.05, 0.15); orientation=axis:+Z; mat=metal_rack; create_method=primitive; constraint=cube 0.38×0.23×0.01 |
+
+Layer 4 – External Controls
+| ID | Description | Key attributes / placement |
+| dial_1 | Temperature dial Ø0.04×0.02 m | Align(XYZ) dial_1.center to (-0.15, 0.15, 0.185); orientation=axis:+Z; mat=plastic_dial; create_method=primitive; constraint=cylinder Ø0.04×0.02 |
+| dial_2 | Timer dial Ø0.04×0.02 m | Align(XYZ) dial_2.center to (-0.05, 0.15, 0.185); orientation=axis:+Z; mat=plastic_dial; create_method=primitive; constraint=cylinder Ø0.04×0.02 |
+| dial_3 | Function dial Ø0.04×0.02 m | Align(XYZ) dial_3.center to (0.05, 0.15, 0.185); orientation=axis:+Z; mat=plastic_dial; create_method=primitive; constraint=cylinder Ø0.04×0.02 |
+# ----------  END_GRAPH  ----------

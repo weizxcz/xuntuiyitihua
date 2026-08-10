@@ -1,0 +1,40 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_black_rubber | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_steel | diffuse_color=(0.4,0.4,0.5,1.0)
+mat_yellow_plastic | diffuse_color=(0.9,0.8,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| scooter_root | Composite of deck, steering_column, front_wheel, rear_wheel | assembly_order=[steering_column], [deck], [front_wheel], [rear_wheel] |
+
+Layer 1 – Primary Structure (Deck & Steering)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| deck | Composite of deck_plate, rear_fender, brake_pedal | assembly_order=[deck_plate], [rear_fender], [brake_pedal] |
+| deck_plate | Flat rectangular plate Ø0.600×0.150×0.005 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_yellow_plastic; create_method=primitive(cube); constraint=Length=0.600m, Width=0.150m, Thickness=0.005m |
+| rear_fender | Semi-cylindrical cover over rear wheel | Align(Z) rear_fender.bottom to deck_plate.top; offset(0, -0.25, 0.005); orientation=axis:+Z; mat=mat_yellow_plastic; create_method=primitive(cylinder); constraint=Radius=0.15m, Length=0.15m, boolean_subtract half |
+| brake_pedal | Small lever on rear of deck | Align(XY) brake_pedal.center to deck_plate.center; offset(0, -0.25, 0.005); orientation=axis:+Z; mat=mat_black_rubber; create_method=primitive(cube); constraint=Length=0.10m, Width=0.10m, Thickness=0.002m |
+| steering_column | Composite of stem, handlebar, grips | assembly_order=[stem], [handlebar], [grips] |
+| stem | Vertical tube connecting deck to handlebar | Align(XY) stem.bottom to deck_plate.top; offset(0.25, 0, 0.005); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive(cylinder); constraint=Radius=0.015m, Height=0.500m |
+| handlebar | Horizontal bar for steering | Align(XY) handlebar.center to stem.top; offset(0,0,0); orientation=axis:+Y; mat=mat_aluminum; create_method=primitive(cylinder); constraint=Radius=0.01m, Length=0.500m |
+| grips | Rubber handles on ends of handlebar | Align(XY) grip_L.center to handlebar.left_face; offset(-0.02,0,0); orientation=axis:+Y; mat=mat_black_rubber; create_method=primitive(cylinder); constraint=Radius=0.015m, Length=0.05m |
+| grips | Rubber handles on ends of handlebar | Align(XY) grip_R.center to handlebar.right_face; offset(0.02,0,0); orientation=axis:+Y; mat=mat_black_rubber; create_method=primitive(cylinder); constraint=Radius=0.015m, Length=0.05m |
+
+Layer 2 – Wheels & Axles
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| front_wheel | Composite of tire, rim, hub, spokes | assembly_order=[hub], [rim], [tire], [spokes] |
+| hub | Central axle mount | Align(XY) hub.center to stem.bottom; offset(0.25, 0, -0.15); orientation=axis:+Y; mat=mat_steel; create_method=primitive(cylinder); constraint=Radius=0.02m, Length=0.05m |
+| rim | Circular frame for tire | Align(XY) rim.center to hub.center; offset(0,0,0); orientation=axis:+Y; mat=mat_aluminum; create_method=primitive(torus); constraint=MajorRadius=0.15m, MinorRadius=0.01m |
+| tire | Rubber outer ring | Align(XY) tire.center to rim.center; offset(0,0,0); orientation=axis:+Y; mat=mat_black_rubber; create_method=primitive(torus); constraint=MajorRadius=0.15m, MinorRadius=0.02m |
+| spokes | Connecting rods from hub to rim | Align(XY) spoke.center to hub.center; offset(0,0,0); orientation=axis:+Y; mat=mat_steel; create_method=primitive(cylinder); constraint=Radius=0.001m, Length=0.15m; pattern=polar(count:12, radius:0.15, start_angle:0°, angle_step:30°) |
+| rear_wheel | Composite of tire, rim, hub, spokes | assembly_order=[hub], [rim], [tire], [spokes] |
+| hub | Central axle mount | Align(XY) hub.center to deck_plate.bottom; offset(-0.25, 0, -0.005); orientation=axis:+Y; mat=mat_steel; create_method=primitive(cylinder); constraint=Radius=0.02m, Length=0.05m |
+| rim | Circular frame for tire | Align(XY) rim.center to hub.center; offset(0,0,0); orientation=axis:+Y; mat=mat_aluminum; create_method=primitive(torus); constraint=MajorRadius=0.15m, MinorRadius=0.01m |
+| tire | Rubber outer ring | Align(XY) tire.center to rim.center; offset(0,0,0); orientation=axis:+Y; mat=mat_black_rubber; create_method=primitive(torus); constraint=MajorRadius=0.15m, MinorRadius=0.02m |
+| spokes | Connecting rods from hub to rim | Align(XY) spoke.center to hub.center; offset(0,0,0); orientation=axis:+Y; mat=mat_steel; create_method=primitive(cylinder); constraint=Radius=0.001m, Length=0.15m; pattern=polar(count:12, radius:0.15, start_angle:0°, angle_step:30°) |
+# ----------  END_GRAPH  ----------

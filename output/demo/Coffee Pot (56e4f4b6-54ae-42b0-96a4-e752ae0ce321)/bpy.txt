@@ -1,0 +1,424 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects and collections."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Clear orphan data blocks
+    for block in bpy.data.meshes:
+        bpy.data.meshes.remove(block)
+    for block in bpy.data.materials:
+        bpy.data.materials.remove(block)
+    for block in bpy.data.objects:
+        bpy.data.objects.remove(block)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive(name, type, **kwargs):
+    """Add a primitive object and return it."""
+    if type == 'CUBE':
+        bpy.ops.mesh.primitive_cube_add(size=kwargs.get('size', 1), location=(0,0,0))
+    elif type == 'CYLINDER':
+        bpy.ops.mesh.primitive_cylinder_add(radius=kwargs.get('radius', 0.5), depth=kwargs.get('height', 1), location=(0,0,0))
+    elif type == 'CONE':
+        bpy.ops.mesh.primitive_cone_add(radius1=kwargs.get('base_radius', 0.5), radius2=kwargs.get('top_radius', 0), depth=kwargs.get('height', 1), location=(0,0,0))
+    elif type == 'UVSPHERE':
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=kwargs.get('radius', 0.5), location=(0,0,0))
+    elif type == 'TORUS':
+        bpy.ops.mesh.primitive_torus_add(major_radius=kwargs.get('major_radius', 0.5), minor_radius=kwargs.get('minor_radius', 0.1), location=(0,0,0))
+    elif type == 'PLANE':
+        bpy.ops.mesh.primitive_plane_add(size=kwargs.get('size', 1), location=(0,0,0))
+    
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def orient_object(obj, axis_align):
+    """
+    Orient object so its local +Z aligns with the specified world axis.
+    axis_align: 'X', 'Y', 'Z', '-X', '-Y', '-Z'
+    """
+    obj.rotation_euler = (0, 0, 0)
+    if axis_align == 'Z':
+        # Default, no rotation needed if created upright
+        pass
+    elif axis_align == 'X':
+        obj.rotation_euler = (0, 0, math.radians(90))
+    elif axis_align == '-X':
+        obj.rotation_euler = (0, 0, math.radians(-90))
+    elif axis_align == 'Y':
+        obj.rotation_euler = (math.radians(-90), 0, 0)
+    elif axis_align == '-Y':
+        obj.rotation_euler = (math.radians(90), 0, 0)
+    elif axis_align == '-Z':
+        obj.rotation_euler = (math.radians(180), 0, 0)
+    
+    obj.update_tag()
+    bpy.context.view_layer.update()
+
+def get_bounding_box(obj):
+    """Get min/max bounds in world space."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    
+    mins = Vector((float('inf'), float('inf'), float('inf')))
+    maxs = Vector((float('-inf'), float('-inf'), float('-inf')))
+    
+    for v in bm.verts:
+        mins.x = min(mins.x, v.co.x)
+        mins.y = min(mins.y, v.co.y)
+        mins.z = min(mins.z, v.co.z)
+        maxs.x = max(maxs.x, v.co.x)
+        maxs.y = max(maxs.y, v.co.y)
+        maxs.z = max(maxs.z, v.co.z)
+        
+    bm.free()
+    return mins, maxs
+
+def align_faces(obj_src, face_type_src, obj_tgt, face_type_tgt):
+    """
+    Align source object's face to target object's face.
+    face_type: 'top', 'bottom', 'left', 'right', 'front', 'back', 'center'
+    """
+    src_min, src_max = get_bounding_box(obj_src)
+    tgt_min, tgt_max = get_bounding_box(obj_tgt)
+    
+    # Calculate centers
+    src_center = (src_min + src_max) / 2
+    tgt_center = (tgt_min + tgt_max) / 2
+    
+    # Calculate face positions
+    # Assuming standard orientation: Z is up, X is right, Y is front
+    # Top: max Z, Bottom: min Z
+    # Right: max X, Left: min X
+    # Front: max Y, Back: min Y
+    
+    src_face_pos = Vector()
+    tgt_face_pos = Vector()
+    
+    # Determine alignment vector
+    align_vec = Vector()
+    
+    if face_type_src == 'top' and face_type_tgt == 'bottom':
+        # Align src top (max Z) to tgt bottom (min Z)
+        src_face_pos.z = src_max.z
+        tgt_face_pos.z = tgt_min.z
+        align_vec.z = tgt_face_pos.z - src_face_pos.z
+    elif face_type_src == 'bottom' and face_type_tgt == 'top':
+        src_face_pos.z = src_min.z
+        tgt_face_pos.z = tgt_max.z
+        align_vec.z = tgt_face_pos.z - src_face_pos.z
+    elif face_type_src == 'left' and face_type_tgt == 'right':
+        src_face_pos.x = src_min.x
+        tgt_face_pos.x = tgt_max.x
+        align_vec.x = tgt_face_pos.x - src_face_pos.x
+    elif face_type_src == 'right' and face_type_tgt == 'left':
+        src_face_pos.x = src_max.x
+        tgt_face_pos.x = tgt_min.x
+        align_vec.x = tgt_face_pos.x - src_face_pos.x
+    elif face_type_src == 'front' and face_type_tgt == 'back':
+        src_face_pos.y = src_max.y
+        tgt_face_pos.y = tgt_min.y
+        align_vec.y = tgt_face_pos.y - src_face_pos.y
+    elif face_type_src == 'back' and face_type_tgt == 'front':
+        src_face_pos.y = src_min.y
+        tgt_face_pos.y = tgt_max.y
+        align_vec.y = tgt_face_pos.y - src_face_pos.y
+    elif face_type_src == 'center' and face_type_tgt == 'center':
+        align_vec = tgt_center - src_center
+    else:
+        # Default to center-to-center if specific face not matched or unsupported
+        align_vec = tgt_center - src_center
+
+    # Apply translation
+    obj_src.location += align_vec
+    obj_src.update_tag()
+    bpy.context.view_layer.update()
+
+def offset_object(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+    obj.update_tag()
+    bpy.context.view_layer.update()
+
+def boolean_subtract(cutter_name, target_name):
+    """
+    Perform boolean subtract using modifier stack.
+    cutter_name: Name of the object to cut with.
+    target_name: Name of the object to be cut.
+    """
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target has a modifier slot
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.update()
+    bpy.ops.object.modifier_apply(modifier=mod.name, object=target)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter)
+
+def boolean_union(objects_to_union, result_name):
+    """
+    Union a list of objects into a single object.
+    """
+    if not objects_to_union:
+        return None
+        
+    # Select all objects
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+    bpy.ops.object.join()
+    
+    # Rename the resulting object
+    result = bpy.context.active_object
+    result.name = result_name
+    
+    # Deselect all
+    for obj in objects_to_union:
+        obj.select_set(False)
+        
+    return result
+
+def average_vectors(vectors):
+    """Calculate average of a list of vectors."""
+    if not vectors:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for v in vectors:
+        avg += v
+    return avg / len(vectors)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95))
+mat_metal_silver = make_material("metal_silver", (0.8, 0.8, 0.8))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Body Group ---
+
+# 1. Create body
+body = add_primitive("body", "CYLINDER", radius=0.050, height=0.150)
+apply_material(body, mat_ceramic_white)
+orient_object(body, 'Z')
+# Anchor to world origin (already at 0,0,0 by default)
+offset_object(body, Vector((0,0,0)))
+
+# 2. Create body_bottom
+body_bottom = add_primitive("body_bottom", "CYLINDER", radius=0.050, height=0.005)
+apply_material(body_bottom, mat_ceramic_white)
+orient_object(body_bottom, 'Z')
+# Align body_bottom.bottom_face to body.top_face? 
+# Prompt says: "Align body_bottom.top_face to body.bottom_face"
+# This implies stacking. Usually bottom sits on top. 
+# If body_bottom.top_face aligns to body.bottom_face, it would be below body.
+# However, context suggests a base. Let's follow prompt literally:
+# Align body_bottom.top_face to body.bottom_face.
+align_faces(body_bottom, 'top', body, 'bottom')
+# Then move by offset(0,0,0.0025)
+offset_object(body_bottom, Vector((0,0,0.0025)))
+
+
+# --- SECTION 2 – Create Spout Group ---
+
+# 1. Create spout_base
+spout_base = add_primitive("spout_base", "CYLINDER", radius=0.015, height=0.040)
+apply_material(spout_base, mat_metal_silver)
+orient_object(spout_base, 'X') # +Z aligns +X
+# Align spout_base.right_face to body.left_face
+# Note: spout_base is rotated. Its local axes are transformed.
+# "right_face" in local space is +X. In world space, since +Z->+X, local +X is world +Y?
+# Let's rely on the helper which uses bounding boxes in world space.
+# The helper aligns based on world space bounds.
+align_faces(spout_base, 'right', body, 'left')
+offset_object(spout_base, Vector((0.050, 0, 0.050)))
+
+# 2. Create spout_tip
+spout_tip = add_primitive("spout_tip", "CONE", base_radius=0.010, height=0.030, top_radius=0)
+apply_material(spout_tip, mat_metal_silver)
+orient_object(spout_tip, 'X')
+# Align spout_tip.left_face to spout_base.right_face
+align_faces(spout_tip, 'left', spout_base, 'right')
+offset_object(spout_tip, Vector((0.020, 0, 0.010)))
+
+# 3. Create spout_curve
+spout_curve = add_primitive("spout_curve", "TORUS", major_radius=0.020, minor_radius=0.015)
+apply_material(spout_curve, mat_metal_silver)
+orient_object(spout_curve, 'Z')
+# Align spout_curve.center to Avg(spout_base.center, spout_tip.center)
+avg_center = average_vectors([spout_base.location, spout_tip.location])
+offset_vec = avg_center - spout_curve.location
+offset_object(spout_curve, offset_vec)
+
+# 4. Boolean Union Spout
+spout_union = boolean_union([spout_base, spout_tip, spout_curve], "spout_union")
+apply_material(spout_union, mat_metal_silver)
+
+
+# --- SECTION 3 – Create Handle Group ---
+
+# 1. Create handle_arc
+handle_arc = add_primitive("handle_arc", "TORUS", major_radius=0.040, minor_radius=0.005)
+apply_material(handle_arc, mat_metal_silver)
+orient_object(handle_arc, 'Z')
+# Align handle_arc.center to body.left_face
+# "center to face" usually means center of object to the plane of the face.
+# We'll align center to the face position.
+# Helper align_faces supports 'center' vs 'left/right/etc'.
+align_faces(handle_arc, 'center', body, 'left')
+offset_object(handle_arc, Vector((-0.060, 0, 0.075)))
+
+# 2. Create handle_top
+handle_top = add_primitive("handle_top", "CYLINDER", radius=0.005, height=0.020)
+apply_material(handle_top, mat_metal_silver)
+orient_object(handle_top, 'X')
+# Align handle_top.right_face to handle_arc.left_face
+align_faces(handle_top, 'right', handle_arc, 'left')
+offset_object(handle_top, Vector((0.040, 0, 0.040)))
+
+# 3. Create handle_bottom
+handle_bottom = add_primitive("handle_bottom", "CYLINDER", radius=0.005, height=0.020)
+apply_material(handle_bottom, mat_metal_silver)
+orient_object(handle_bottom, 'X')
+# Align handle_bottom.right_face to handle_arc.left_face
+align_faces(handle_bottom, 'right', handle_arc, 'left')
+offset_object(handle_bottom, Vector((0.040, 0, -0.040)))
+
+# 4. Boolean Union Handle
+handle_union = boolean_union([handle_arc, handle_top, handle_bottom], "handle_union")
+apply_material(handle_union, mat_metal_silver)
+
+
+# --- SECTION 4 – Create Lid Group ---
+
+# 1. Create lid_dome (Sphere)
+lid_dome = add_primitive("lid_dome", "UVSPHERE", radius=0.050)
+apply_material(lid_dome, mat_ceramic_white)
+orient_object(lid_dome, 'Z')
+# Align lid_dome.center to body.top_face
+align_faces(lid_dome, 'center', body, 'top')
+offset_object(lid_dome, Vector((0, 0, 0.075)))
+
+# 2. Create lid_dome_cut (Plane Cutter)
+lid_dome_cut = add_primitive("lid_dome_cut", "PLANE", size=0.100)
+# Orientation +Z
+orient_object(lid_dome_cut, 'Z')
+# Position cutter to slice the sphere. 
+# The prompt says "Boolean-subtract lid_dome_cut from lid_dome; keep lid_dome. // produces hemisphere"
+# And "Rotate lid_dome so its curved face points +Z".
+# A hemisphere produced by a plane cut usually implies cutting off the bottom half.
+# We need to position the plane at the equator of the sphere.
+# Current lid_dome center is at (0,0,0.075) relative to body top? No, offset was applied.
+# Let's calculate the cut position.
+# Sphere radius 0.05. Center is at Z_center.
+# To get a hemisphere with flat face down, cut at Z_center.
+# To get a hemisphere with curved face up, we keep the top half.
+# So the plane should be at Z = lid_dome.location.z.
+lid_dome_cut.location = Vector((lid_dome.location.x, lid_dome.location.y, lid_dome.location.z))
+
+# Boolean Subtract
+boolean_subtract("lid_dome_cut", "lid_dome")
+
+# Rotate lid_dome so its curved face points +Z.
+# After cutting the bottom half off (assuming plane was at equator), the flat face is at bottom.
+# The curved face is already pointing +Z if we kept the top half.
+# If the cut removed the top half, we need to rotate 180.
+# Standard UVSphere creation is centered. Cutting with a plane at center.
+# If we want curved face +Z, we want the top hemisphere.
+# The boolean subtract removes the cutter volume. 
+# If the plane has no thickness, it's ambiguous which side is removed unless we give it depth or position it slightly.
+# Let's assume the cutter is a solid box or we rely on the modifier logic.
+# To ensure "curved face points +Z", we assume the result is the top hemisphere.
+# If it's the bottom hemisphere, we rotate it.
+# Let's check the normal or just rotate to be safe if needed.
+# However, without complex mesh analysis, we'll assume the operation resulted in the desired orientation 
+# or we explicitly rotate if it looks inverted. 
+# Given "Rotate lid_dome so its curved face points +Z", it implies a rotation step is needed.
+# If the cut was clean, the flat face is at Z=Z_center. The dome is above.
+# If the cut removed the top, the dome is below.
+# Let's assume the standard behavior of boolean subtract with a plane often removes the "negative" side or depends on normals.
+# To be robust: We will rotate it 180 degrees around X if the flat face is at the top.
+# But simpler: The prompt asks to rotate. Let's just do the rotation requested.
+# "Rotate lid_dome so its curved face points +Z"
+# If it's already pointing +Z, rotation is 0. If it's pointing -Z, rotation is 180.
+# Let's apply a 180 rotation around X to ensure the "bowl" shape is upright if it was inverted.
+lid_dome.rotation_euler = (math.radians(180), 0, 0)
+lid_dome.update_tag()
+bpy.context.view_layer.update()
+
+
+# 3. Create lid_knob
+lid_knob = add_primitive("lid_knob", "UVSPHERE", radius=0.010)
+apply_material(lid_knob, mat_ceramic_white)
+orient_object(lid_knob, 'Z')
+# Align lid_knob.center to lid_dome.top_face
+# "top_face" of a hemisphere is the highest point of the curve.
+# We need to find the max Z of lid_dome.
+# Helper align_faces doesn't support 'top_face' of a curved object easily as a target for 'center'.
+# We'll approximate: Align center to the bounding box max Z of lid_dome.
+# But align_faces aligns src face to tgt face.
+# Let's align lid_knob.bottom to lid_dome.top (highest point).
+# Since lid_knob is a sphere, bottom is min Z.
+# We need to place the sphere on top of the dome.
+# Calculate lid_dome max Z
+_, lid_dome_max = get_bounding_box(lid_dome)
+lid_dome_top_z = lid_dome_max.z
+
+# Place lid_knob such that its bottom touches lid_dome_top_z
+# lid_knob radius 0.01. Center should be at lid_dome_top_z + 0.01
+lid_knob.location.z = lid_dome_top_z + 0.01
+lid_knob.location.x = lid_dome.location.x
+lid_knob.location.y = lid_dome.location.y
+
+# Then move by offset(0,0,0.060)
+offset_object(lid_knob, Vector((0, 0, 0.060)))
+
+# 4. Boolean Union Lid
+lid_union = boolean_union([lid_dome, lid_knob], "lid_union")
+apply_material(lid_union, mat_ceramic_white)
+
+```

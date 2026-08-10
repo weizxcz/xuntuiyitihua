@@ -1,0 +1,33 @@
+-- MATERIAL LIBRARY --
+mat_dark_grout | diffuse_color=(0.15,0.15,0.15,1.0)
+mat_tile_blue | diffuse_color=(0.2,0.4,0.8,1.0)
+mat_tile_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| floor_base | Composite of 4x4 tile grid forming a single repeating unit | A. Composite of tile_1 + tile_2 + tile_3 + tile_4 + tile_5 + tile_6 + tile_7 + tile_8 + tile_9 + tile_10 + tile_11 + tile_12 + tile_13 + tile_14 + tile_15 + tile_16; 4x4 grid of 0.3m tiles with 0.01m gaps; create_method=boolean_union; assembly_order=[tiles]; constraint=grid_pattern(4,4,0.31,0.31) |
+
+Layer 1 – Primary Structure (The Repeating Unit)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| tile_1 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_1.center to floor_base.center; offset(-0.155, 0.155, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_2 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_2.center to floor_base.center; offset(-0.045, 0.155, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_3 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_3.center to floor_base.center; offset(0.065, 0.155, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_4 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_4.center to floor_base.center; offset(0.175, 0.155, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_5 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_5.center to floor_base.center; offset(-0.155, 0.045, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_6 | Blue square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_6.center to floor_base.center; offset(-0.045, 0.045, 0); orientation=axis:+Z; mat=mat_tile_blue; create_method=primitive |
+| tile_7 | Blue square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_7.center to floor_base.center; offset(0.065, 0.045, 0); orientation=axis:+Z; mat=mat_tile_blue; create_method=primitive |
+| tile_8 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_8.center to floor_base.center; offset(0.175, 0.045, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_9 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_9.center to floor_base.center; offset(-0.155, -0.065, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_10 | Blue square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_10.center to floor_base.center; offset(-0.045, -0.065, 0); orientation=axis:+Z; mat=mat_tile_blue; create_method=primitive |
+| tile_11 | Blue square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_11.center to floor_base.center; offset(0.065, -0.065, 0); orientation=axis:+Z; mat=mat_tile_blue; create_method=primitive |
+| tile_12 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_12.center to floor_base.center; offset(0.175, -0.065, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_13 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_13.center to floor_base.center; offset(-0.155, -0.175, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_14 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_14.center to floor_base.center; offset(-0.045, -0.175, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_15 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_15.center to floor_base.center; offset(0.065, -0.175, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+| tile_16 | White square tile | cylinder Ø0.3×0.02 m; Align(XY) tile_16.center to floor_base.center; offset(0.175, -0.175, 0); orientation=axis:+Z; mat=mat_tile_white; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

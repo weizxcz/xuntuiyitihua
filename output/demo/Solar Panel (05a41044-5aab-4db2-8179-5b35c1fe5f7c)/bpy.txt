@@ -1,0 +1,261 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder oriented along Z by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube."""
+    # size is (x, y, z)
+    x, y, z = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (x/2, y/2, z/2)
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Align a specific axis of an object to a target vector."""
+    # Get current rotation as quaternion
+    rot_q = obj.rotation_euler.to_quaternion()
+    
+    # Define local axis vectors
+    local_axes = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    if axis_to_align not in local_axes:
+        return
+
+    # Calculate rotation to align local axis to target vector
+    # We want to rotate the object such that local_axes[axis_to_align] becomes target_vector
+    # The rotation quaternion is from local_axis to target_vector
+    rot = local_axes[axis_to_align].rotation_difference(target_vector)
+    
+    # Apply this rotation to the object's current rotation
+    # Note: This aligns the axis but might introduce roll. 
+    # For simple alignment, we can set the rotation directly if we don't care about other axes,
+    # or compose it. Here we compose.
+    obj.rotation_euler = (rot * rot_q).to_euler()
+
+def get_world_center(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_world_face_center(obj, face_type='top'):
+    """Get the world location of a specific face center."""
+    # Assuming standard orientation:
+    # Top face is +Z, Bottom is -Z, Front is +Y, Back is -Y, Right is +X, Left is -X
+    # We need to transform the local face center by the object's world matrix
+    
+    # Local centers of faces for a cube/cylinder centered at 0,0,0
+    # For a cube of size (sx, sy, sz), top face center is (0, 0, sz/2)
+    # For a cylinder of radius r, height h, top face center is (0, 0, h/2)
+    
+    # Determine local offset based on geometry type and face
+    local_offset = Vector((0, 0, 0))
+    
+    if obj.type == 'MESH':
+        # Check if it's roughly a cube or cylinder
+        # We'll approximate based on scale or just use bounding box logic if needed.
+        # Simpler: Use the object's dimensions.
+        dims = obj.dimensions
+        if face_type == 'top':
+            local_offset.z = dims.z / 2
+        elif face_type == 'bottom':
+            local_offset.z = -dims.z / 2
+        elif face_type == 'front':
+            local_offset.y = dims.y / 2
+        elif face_type == 'back':
+            local_offset.y = -dims.y / 2
+        elif face_type == 'right':
+            local_offset.x = dims.x / 2
+        elif face_type == 'left':
+            local_offset.x = -dims.x / 2
+            
+    # Transform local offset to world space
+    # The center of the face is obj.location + local_offset in local space
+    # But we need to rotate local_offset by obj.rotation
+    world_offset = obj.matrix_world.to_3x3() @ local_offset
+    return get_world_center(obj) + world_offset
+
+def anchor_to_object(target_obj, anchor_obj, anchor_type='center'):
+    """
+    Anchor target_obj to anchor_obj.
+    If anchor_type is 'center', align centers.
+    If anchor_type is 'face', align target center to anchor face center.
+    """
+    if anchor_type == 'center':
+        anchor_loc = get_world_center(anchor_obj)
+        # Move target so its center matches anchor center
+        # Current world center of target
+        target_center = get_world_center(target_obj)
+        # Delta
+        delta = anchor_loc - target_center
+        target_obj.location += delta
+    elif anchor_type == 'face':
+        # Anchor target's center to anchor_obj's top face center
+        anchor_face_loc = get_world_face_center(anchor_obj, 'top')
+        target_center = get_world_center(target_obj)
+        delta = anchor_face_loc - target_center
+        target_obj.location += delta
+
+def apply_offset(obj, offset_vector):
+    """Apply an offset in the object's local space? 
+    The prompt says 'Offset is in reference local axes'.
+    However, usually in these scripts, offsets are applied in World space relative to the anchor point,
+    OR in the object's local space after orientation.
+    Given 'Anchor... Then move by offset', and the orientation happens before,
+    let's assume the offset is applied in the object's LOCAL coordinate system after orientation.
+    """
+    # Convert local offset to world direction
+    # If the object is rotated, local X might be world Y.
+    # We transform the offset vector by the object's rotation matrix.
+    rot_mat = obj.matrix_world.to_3x3()
+    world_offset = rot_mat @ offset_vector
+    obj.location += world_offset
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Create a dummy origin object for solar_panel.origin if it doesn't exist
+# The prompt implies solar_panel.origin is an anchor point.
+# We will create an empty at 0,0,0 to serve as this anchor.
+if "solar_panel.origin" not in bpy.data.objects:
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0))
+    solar_panel_origin = bpy.context.active_object
+    solar_panel_origin.name = "solar_panel.origin"
+else:
+    solar_panel_origin = bpy.data.objects["solar_panel.origin"]
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_aluminum_frame = make_material("aluminum_frame", (0.706, 0.706, 0.706, 1))
+mat_backsheet = make_material("backsheet", (0.118, 0.118, 0.118, 1))
+mat_junction_box = make_material("junction_box", (0.078, 0.078, 0.078, 1))
+mat_junction_box_lid = make_material("junction_box_lid", (0.078, 0.078, 0.078, 1))
+mat_junction_box_connector = make_material("junction_box_connector", (0.392, 0.392, 0.392, 1))
+mat_junction_box_wire = make_material("junction_box_wire", (0.784, 0.196, 0.196, 1))
+mat_junction_box_wire_black = make_material("junction_box_wire_black", (0.078, 0.078, 0.078, 1))
+mat_glass_cover = make_material("glass_cover", (0.392, 0.784, 0.784, 0.3))
+mat_grid_busbar = make_material("grid_busbar", (0.588, 0.588, 0.588, 1))
+mat_photovoltaic_cell = make_material("photovoltaic_cell", (0.078, 0.078, 0.314, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create frame rails ---
+
+# frame_top
+frame_top = add_cylinder("frame_top", radius=0.020, depth=1.600, location=(0,0,0), rotation=(0,0,0), material=mat_aluminum_frame)
+# Rotate so +Z aligns +Z (already aligned, but explicit step)
+align_axis_to_vector(frame_top, 'Z', Vector((0, 0, 1)))
+# Anchor to solar_panel.origin (center-to-center)
+anchor_to_object(frame_top, solar_panel_origin, 'center')
+# Offset (0, 0.500, 0) in local axes
+apply_offset(frame_top, Vector((0, 0.500, 0)))
+
+# frame_bottom
+frame_bottom = add_cylinder("frame_bottom", radius=0.020, depth=1.600, location=(0,0,0), rotation=(0,0,0), material=mat_aluminum_frame)
+align_axis_to_vector(frame_bottom, 'Z', Vector((0, 0, 1)))
+anchor_to_object(frame_bottom, solar_panel_origin, 'center')
+apply_offset(frame_bottom, Vector((0, -0.500, 0)))
+
+# frame_left
+frame_left = add_cylinder("frame_left", radius=0.020, depth=1.000, location=(0,0,0), rotation=(0,0,0), material=mat_aluminum_frame)
+# Rotate so +Z aligns +X
+align_axis_to_vector(frame_left, 'Z', Vector((1, 0, 0)))
+anchor_to_object(frame_left, solar_panel_origin, 'center')
+apply_offset(frame_left, Vector((-0.800, 0, 0)))
+
+# frame_right
+frame_right = add_cylinder("frame_right", radius=0.020, depth=1.000, location=(0,0,0), rotation=(0,0,0), material=mat_aluminum_frame)
+# Rotate so +Z aligns +X
+align_axis_to_vector(frame_right, 'Z', Vector((1, 0, 0)))
+anchor_to_object(frame_right, solar_panel_origin, 'center')
+apply_offset(frame_right, Vector((0.800, 0, 0)))
+
+# --- SECTION 2 – Create photovoltaic cell array ---
+
+for r in range(6): # 0..5
+    for c in range(10): # 0..9
+        # Create primitive cuboid
+        cell = add_cube(f"cell_{r}_{c}", size=(0.15, 0.15, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_photovoltaic_cell)
+        
+        # Rotate so +Z aligns +Z
+        align_axis_to_vector(cell, 'Z', Vector((0, 0, 1)))
+        
+        # Anchor to solar_panel.origin
+        anchor_to_object(cell, solar_panel_origin, 'center')
+        
+        # Offset
+        ox = -0.75 + c * 0.15
+        oy = -0.45 + r * 0.15
+        oz = 0.02
+        apply_offset(cell, Vector((ox, oy, oz)))
+
+# --- SECTION 3 – Create junction box and wires ---
+
+# junction_box_body
+jb_body = add_cube("junction_box_body", size=(0.080, 0.060, 0.030), location=(0,0,0), rotation=(0,0,0), material=mat_junction_box)
+align_axis_to_vector(jb_body, 'Z', Vector((0, 0, 1)))
+anchor_to_object(jb_body, solar_panel_origin, 'center')
+apply_offset(jb_body, Vector((0.700, 0.700, 0.015)))
+
+# junction_box_lid
+jb_lid = add_cube("junction_box_lid", size=(0.080, 0.060, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_junction_box_lid)
+align_axis_to_vector(jb_lid, 'Z', Vector((0, 0, 1)))
+# Anchor to junction_box_body.top_face
+anchor_to_object(jb_lid, jb_body, 'face')
+apply_offset(jb_lid, Vector((0, 0, 0.0175)))
+
+# junction_box_connector
+jb_conn = add_cylinder("junction_box_connector", radius=0.010, depth=0.010, location=(0,0,0), rotation=(0,0,0), material=mat_junction_box_connector)
+align_axis_to_vector(jb_conn, 'Z', Vector((0, 0, 1)))
+# Anchor to junction_box_body.top_face
+anchor_to_object(jb_conn, jb_body, 'face')
+apply_offset(jb_conn, Vector((0, 0, 0.020)))
+
+# junction_box_wire
+jb_wire = add_cylinder("junction_box_wire", radius=0.0025, depth=0.100, location=(0,0,0), rotation=(0,0,0), material=mat_junction_box_wire)
+align_axis_to_vector(jb_wire, 'Z', Vector((0, 0, 1)))
+# Anchor to junction_box_body.top_face
+anchor_to_object(jb_wire, jb_body, 'face')
+apply_offset(jb_wire, Vector((0.010, 0, 0.020)))
+
+# junction_box_wire_black
+jb_wire_black = add_cylinder("junction_box_wire_black", radius=0.0025, depth=0.100, location=(0,0,0), rotation=(0,0,0), material=mat_junction_box_wire_black)
+align_axis_to_vector(jb_wire_black, 'Z', Vector((0, 0, 1)))
+# Anchor to junction_box_body.top_face
+anchor_to_object(jb_wire_black, jb_body, 'face')
+apply_offset(jb_wire_black, Vector((-0.010, 0, 0.020)))
+```

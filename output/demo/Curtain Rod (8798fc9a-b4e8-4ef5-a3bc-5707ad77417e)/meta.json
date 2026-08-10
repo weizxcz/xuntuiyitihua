@@ -1,0 +1,47 @@
+{
+  "id": "8798fc9a-b4e8-4ef5-a3bc-5707ad77417e",
+  "name": "Curtain Rod",
+  "instruction": "Design a 3D model of a curtain rod. It should be a long, straight rod with decorative finials on both ends. Include mounting brackets for attaching it to a wall.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a curtain rod.",
+        "The rod is long and straight.",
+        "The finials at both ends are decorative."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the rod is proportionate to the decorative finials.",
+        "The finials are appropriately sized relative to the rod."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The finials are correctly positioned at both ends of the rod.",
+        "The mounting brackets are placed at appropriate intervals along the rod.",
+        "The rod is straight and does not sag under its own weight."
+      ],
+      "Object distance and contact": [
+        "The finials do not overlap with the rod.",
+        "The mounting brackets are securely attached to the rod.",
+        "There is no gap between the rod and the mounting brackets."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are represented in the design.",
+        "The design includes both decorative finials and mounting brackets."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

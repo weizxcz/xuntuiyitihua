@@ -1,0 +1,56 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material crust_dough; diffuse_color = (0.96, 0.84, 0.62, 1.0).
+Define material fill_apple; diffuse_color = (0.85, 0.15, 0.10, 0.9).
+Define material glaze_eggs; diffuse_color = (0.95, 0.85, 0.50, 0.6).
+Define material sugar_crystal; diffuse_color = (1.0, 1.0, 1.0, 0.8).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create pie base (crust_base)  ---
+Create primitive cylinder with radius 0.100 m and height 0.015 m and name it crust_base.
+Rotate crust_base so its +Z axis aligns +Z (world).
+Align crust_base.+Z_face to table.+Z_face.
+Then move by offset(0,0,0).
+Apply material crust_dough to crust_base.
+
+---  SECTION 2 – Create filling  ---
+Create primitive cylinder with radius 0.090 m and height 0.020 m and name it filling.
+Rotate filling so its +Z axis aligns +Z (world).
+Align filling.+Z_face to crust_base.+Z_face.
+Then move by offset(0,0,0.015).
+Apply material fill_apple to filling.
+
+---  SECTION 3 – Create crust top  ---
+Create primitive cylinder with radius 0.100 m and height 0.005 m and name it crust_top.
+Rotate crust_top so its +Z axis aligns +Z (world).
+Align crust_top.+Z_face to crust_base.+Z_face.
+Then move by offset(0,0,0.035).
+Apply material crust_dough to crust_top.
+
+---  SECTION 4 – Create glaze  ---
+Create primitive cylinder with radius 0.095 m and height 0.001 m and name it glaze.
+Rotate glaze so its +Z axis aligns +Z (world).
+Align glaze.+Z_face to crust_top.+Z_face.
+Then move by offset(0,0,0.040).
+Apply material glaze_eggs to glaze.
+
+---  SECTION 5 – Create sugar crystals  ---
+Create primitive cylinder with radius 0.095 m and height 0.0005 m and name it sugar.
+Rotate sugar so its +Z axis aligns +Z (world).
+Align sugar.+Z_face to crust_top.+Z_face.
+Then move by offset(0,0,0.041).
+Apply material sugar_crystal to sugar.
+
+Stage 5 complete.
+All stages complete.

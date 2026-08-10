@@ -1,0 +1,199 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_bamboo; diffuse_color = (0.85, 0.75, 0.50, 1.0).
+Define material mat_leather; diffuse_color = (0.40, 0.20, 0.10, 1.0).
+Define material mat_metal; diffuse_color = (0.70, 0.70, 0.70, 1.0).
+Define material mat_wood; diffuse_color = (0.60, 0.45, 0.30, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Bottom Panel  ---
+Create primitive cuboid with size 0.4572×0.3048×0.015 m and name it base_bottom.
+Rotate base_bottom so its +Z axis aligns +Z (world).
+Anchor base_bottom to world origin.
+Then move by offset(0, 0, 0).
+Apply material mat_wood to base_bottom.
+Stage 1 complete.
+
+---  SECTION 2 – Create Base Front Wall Panel  ---
+Create primitive cuboid with size 0.4572×0.254×0.015 m and name it base_front.
+Rotate base_front so its +Z axis aligns +Z (world).
+Align base_front.bottom_face to base_bottom.top_face.
+Then move by offset(0, 0.1524, 0).
+Apply material mat_wood to base_front.
+Stage 2 complete.
+
+---  SECTION 3 – Create Base Back Wall Panel  ---
+Create primitive cuboid with size 0.4572×0.254×0.015 m and name it base_back.
+Rotate base_back so its +Z axis aligns +Z (world).
+Align base_back.bottom_face to base_bottom.top_face.
+Then move by offset(0, -0.1524, 0).
+Apply material mat_wood to base_back.
+Stage 3 complete.
+
+---  SECTION 4 – Create Base Left Wall Panel  ---
+Create primitive cuboid with size 0.3048×0.254×0.015 m and name it base_left.
+Rotate base_left so its +Z axis aligns +Z (world).
+Align base_left.bottom_face to base_bottom.top_face.
+Then move by offset(-0.2286, 0, 0).
+Apply material mat_wood to base_left.
+Stage 4 complete.
+
+---  SECTION 5 – Create Base Right Wall Panel  ---
+Create primitive cuboid with size 0.3048×0.254×0.015 m and name it base_right.
+Rotate base_right so its +Z axis aligns +Z (world).
+Align base_right.bottom_face to base_bottom.top_face.
+Then move by offset(0.2286, 0, 0).
+Apply material mat_wood to base_right.
+Stage 5 complete.
+
+---  SECTION 6 – Create Corner Protectors  ---
+Create primitive cuboid with size 0.02×0.02×0.02 m and name it corner_protector.
+Rotate corner_protector so its +Z axis aligns +Z (world).
+Align corner_protector.center to Avg(base_front.left_face, base_left.front_face, base_bottom.top_face).
+Then move by offset(0.01, 0.01, 0.01).
+Apply material mat_metal to corner_protector.
+Bevel corner_protector with radius 0.002 m, segments 4.
+Create three additional corner protectors named corner_protector_FL, corner_protector_FR, corner_protector_BL by repeating the alignment and offset logic for the respective corners (Front-Left, Front-Right, Back-Left, Back-Right) using the appropriate face averages.
+Stage 6 complete.
+
+---  SECTION 7 – Create Lid Top Panel  ---
+Create primitive cuboid with size 0.4572×0.3048×0.015 m and name it lid_top.
+Rotate lid_top so its +Z axis aligns +Z (world).
+Align lid_top.bottom_face to base_back.top_face.
+Then move by offset(0, 0, 0.254).
+Apply material mat_wood to lid_top.
+Stage 7 complete.
+
+---  SECTION 8 – Create Lid Front Wall Panel  ---
+Create primitive cuboid with size 0.4572×0.254×0.015 m and name it lid_front.
+Rotate lid_front so its +Z axis aligns +Z (world).
+Align lid_front.bottom_face to lid_top.top_face.
+Then move by offset(0, 0.1524, 0).
+Apply material mat_wood to lid_front.
+Stage 8 complete.
+
+---  SECTION 9 – Create Lid Back Wall Panel  ---
+Create primitive cuboid with size 0.4572×0.254×0.015 m and name it lid_back.
+Rotate lid_back so its +Z axis aligns +Z (world).
+Align lid_back.bottom_face to base_back.top_face.
+Then move by offset(0, -0.1524, 0).
+Apply material mat_wood to lid_back.
+Stage 9 complete.
+
+---  SECTION 10 – Create Lid Left Wall Panel  ---
+Create primitive cuboid with size 0.3048×0.254×0.015 m and name it lid_left.
+Rotate lid_left so its +Z axis aligns +Z (world).
+Align lid_left.bottom_face to lid_top.top_face.
+Then move by offset(-0.2286, 0, 0).
+Apply material mat_wood to lid_left.
+Stage 10 complete.
+
+---  SECTION 11 – Create Lid Right Wall Panel  ---
+Create primitive cuboid with size 0.3048×0.254×0.015 m and name it lid_right.
+Rotate lid_right so its +Z axis aligns +Z (world).
+Align lid_right.bottom_face to lid_top.top_face.
+Then move by offset(0.2286, 0, 0).
+Apply material mat_wood to lid_right.
+Stage 11 complete.
+
+---  SECTION 12 – Create Left Hinge  ---
+Create primitive cylinder with diameter 0.01 m and length 0.05 m and name it hinge_L.
+Rotate hinge_L so its +Z axis aligns +Y (world).
+Align hinge_L.center to Avg(base_back.left_face, lid_back.left_face).
+Then move by offset(0.1, 0, 0).
+Apply material mat_metal to hinge_L.
+Stage 12 complete.
+
+---  SECTION 13 – Create Right Hinge  ---
+Create primitive cylinder with diameter 0.01 m and length 0.05 m and name it hinge_R.
+Rotate hinge_R so its +Z axis aligns +Y (world).
+Align hinge_R.center to Avg(base_back.right_face, lid_back.right_face).
+Then move by offset(-0.1, 0, 0).
+Apply material mat_metal to hinge_R.
+Stage 13 complete.
+
+---  SECTION 14 – Create Handle Bar  ---
+Create primitive cuboid with size 0.3048×0.02×0.02 m and name it handle_bar.
+Rotate handle_bar so its +Z axis aligns +Z (world).
+Align handle_bar.center to Avg(base_left.top_face, base_right.top_face).
+Then move by offset(0, 0, 0.254).
+Apply material mat_bamboo to handle_bar.
+Stage 14 complete.
+
+---  SECTION 15 – Create Left Handle Bracket  ---
+Create primitive cuboid with size 0.05×0.05×0.01 m and name it bracket_L.
+Rotate bracket_L so its +Z axis aligns +Z (world).
+Align bracket_L.center to base_left.top_face.
+Then move by offset(0.1, 0, 0.254).
+Apply material mat_metal to bracket_L.
+Stage 15 complete.
+
+---  SECTION 16 – Create Right Handle Bracket  ---
+Create primitive cuboid with size 0.05×0.05×0.01 m and name it bracket_R.
+Rotate bracket_R so its +Z axis aligns +Z (world).
+Align bracket_R.center to base_right.top_face.
+Then move by offset(-0.1, 0, 0.254).
+Apply material mat_metal to bracket_R.
+Stage 16 complete.
+
+---  SECTION 17 – Create Interior Compartments  ---
+Create primitive cuboid with size 0.40×0.25×0.05 m and name it compartments.
+Rotate compartments so its +Z axis aligns +Z (world).
+Align compartments.center to base_bottom.center.
+Then move by offset(0, 0, 0.025).
+Apply material mat_wood to compartments.
+Bevel compartments with radius 0.005 m, segments 4.
+Stage 17 complete.
+
+---  SECTION 18 – Create Cutlery Tray  ---
+Create primitive cuboid with size 0.20×0.10×0.02 m and name it cutlery_tray.
+Rotate cutlery_tray so its +Z axis aligns +Z (world).
+Align cutlery_tray.center to base_bottom.center.
+Then move by offset(0.1, 0, 0.025).
+Apply material mat_wood to cutlery_tray.
+Stage 18 complete.
+
+---  SECTION 19 – Create Left Strap  ---
+Create primitive cuboid with size 0.30×0.02×0.005 m and name it strap_L.
+Rotate strap_L so its +Z axis aligns +Z (world).
+Align strap_L.center to Avg(base_left.top_face, lid_left.bottom_face).
+Then move by offset(0.1, 0, 0.127).
+Apply material mat_leather to strap_L.
+Stage 19 complete.
+
+---  SECTION 20 – Create Right Strap  ---
+Create primitive cuboid with size 0.30×0.02×0.005 m and name it strap_R.
+Rotate strap_R so its +Z axis aligns +Z (world).
+Align strap_R.center to Avg(base_right.top_face, lid_right.bottom_face).
+Then move by offset(-0.1, 0, 0.127).
+Apply material mat_leather to strap_R.
+Stage 20 complete.
+
+---  SECTION 21 – Create Left Buckle  ---
+Create primitive cuboid with size 0.03×0.03×0.01 m and name it buckle_L.
+Rotate buckle_L so its +Z axis aligns +Z (world).
+Align buckle_L.center to strap_L.center.
+Then move by offset(0.1, 0, 0).
+Apply material mat_metal to buckle_L.
+Stage 21 complete.
+
+---  SECTION 22 – Create Right Buckle  ---
+Create primitive cuboid with size 0.03×0.03×0.01 m and name it buckle_R.
+Rotate buckle_R so its +Z axis aligns +Z (world).
+Align buckle_R.center to strap_R.center.
+Then move by offset(-0.1, 0, 0).
+Apply material mat_metal to buckle_R.
+Stage 22 complete.
+
+All stages complete.

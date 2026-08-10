@@ -1,0 +1,59 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material bell_dome; diffuse_color = (0.941, 0.843, 0.333, 1).
+Define material clamp_base; diffuse_color = (0.196, 0.196, 0.196, 1).
+Define material lever; diffuse_color = (0.196, 0.196, 0.196, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create bell_dome (Hemisphere)  ---
+Create full_sphere and name it bell_dome_sphere with diameter 0.0508 m.
+Rotate bell_dome_sphere so its +Z axis aligns +Z (world).
+Create plane_cutter and name it bell_dome_cut with size 0.1×0.1×0.1 m; orientation=axis:+Z.
+Anchor bell_dome_cut to bell_dome_sphere.center.
+Align bell_dome_cut.−Z_face to bell_dome_sphere.−Z_face.
+Boolean-subtract bell_dome_cut from bell_dome_sphere; keep bell_dome_sphere. // produces hemisphere
+Rotate bell_dome_sphere so its curved face points +Z.
+Rename bell_dome_sphere to bell_dome.
+Align bell_dome.center to bell_assembly.center.
+Align bell_dome.−Z_face to bell_assembly.−Z_face.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create clamp_base  ---
+Create primitive cylinder and name it clamp_base with diameter 0.040 m and height 0.015 m.
+Rotate clamp_base so its +Z axis aligns +Z (world).
+Align clamp_base.center to bell_assembly.center.
+Align clamp_base.+Z_face to bell_dome.−Z_face.
+Then move by offset(0,0,-0.0075).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create lever_arm  ---
+Create primitive cylinder and name it lever_arm with diameter 0.005 m and height 0.020 m.
+Rotate lever_arm so its +Z axis aligns +X (world).
+Align lever_arm.center to bell_dome.side_at(0°).
+Align lever_arm.−Z_face to bell_dome.−Z_face.
+Then move by offset(0.025,0,0).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create lever_head  ---
+Create primitive sphere and name it lever_head with diameter 0.010 m.
+Rotate lever_head so its +Z axis aligns +Z (world).
+Align lever_head.center to lever_arm.+Z_face.center.
+Then move by offset(0,0,0.010).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

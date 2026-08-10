@@ -1,0 +1,47 @@
+{
+  "id": "eecf3fdf-bce9-470f-867e-e70c4ee50424",
+  "name": "Decorative Wall Art",
+  "instruction": "Create a piece of decorative wall art that would enhance the ambiance of a living room. The art should feature intricate patterns and have a balanced composition. Consider adding elements that draw the eye and create a sense of harmony in the space.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The wall art has an abstract shape.",
+        "The patterns within the art are intricate and detailed.",
+        "The overall composition is balanced."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The elements within the art are proportionate to each other.",
+        "The balance of positive and negative space is well-maintained."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The wall art is designed to hang flat against the wall.",
+        "The composition allows for visual flow across the piece.",
+        "Elements within the art are arranged to guide the viewer's eye."
+      ],
+      "Object distance and contact": [
+        "The art is designed to be viewed from a distance appropriate for a living room.",
+        "There is no overlap with other furniture or decor in the space."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The art features intricate patterns as specified.",
+        "The composition is balanced and enhances the living room ambiance.",
+        "Elements are included to draw the eye and create harmony."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

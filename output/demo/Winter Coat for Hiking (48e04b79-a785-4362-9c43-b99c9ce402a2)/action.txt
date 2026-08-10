@@ -1,0 +1,166 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_main; diffuse_color = (0.15,0.15,0.20,1.0).
+Define material fabric_lining; diffuse_color = (0.85,0.85,0.90,1.0).
+Define material zipper_metal; diffuse_color = (0.60,0.60,0.65,1.0).
+Define material zipper_pull; diffuse_color = (0.20,0.20,0.20,1.0).
+Define material button_plastic; diffuse_color = (0.10,0.10,0.10,1.0).
+Define material drawstring_cord; diffuse_color = (0.10,0.10,0.10,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Shell Body (Front & Back Panels)  ---
+Create primitive cuboid with size 0.3×0.6×0.002 m and name it shell_body_front.
+Rotate shell_body_front so its +Z axis aligns +Z (world).
+Anchor shell_body_front to world origin.
+Move by offset(0,0,0).
+
+Create primitive cuboid with size 0.3×0.6×0.002 m and name it shell_body_back.
+Rotate shell_body_back so its +Z axis aligns +Z (world).
+Anchor shell_body_back to shell_body_front.bottom_face.
+Align shell_body_back.XY_face to shell_body_front.XY_face.
+Move by offset(0,0.01,0).
+
+Create primitive cuboid with size 0.6×1.2×0.02 m and name it shell_body_union.
+Rotate shell_body_union so its +Z axis aligns +Z (world).
+Anchor shell_body_union to world origin.
+Move by offset(0,0,0).
+
+Boolean-union shell_body_front and shell_body_back into shell_body_union; discard shell_body_front and shell_body_back.
+Rename shell_body_union to shell_body.
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Shell Hood  ---
+Create primitive cuboid with size 0.4×0.3×0.2 m and name it shell_hood.
+Rotate shell_hood so its +Z axis aligns +Z (world).
+Anchor shell_hood to shell_body.top_face.
+Align shell_hood.XY_face to shell_body.top_face.
+Move by offset(0,0,0).
+
+Create primitive cuboid with size 0.4×0.3×0.1 m and name it hood_cutter.
+Rotate hood_cutter so its +Z axis aligns +Z (world).
+Anchor hood_cutter to shell_hood.top_face.
+Align hood_cutter.XY_face to shell_hood.top_face.
+Move by offset(0,0,0.05).
+
+Boolean-subtract hood_cutter from shell_hood; discard hood_cutter.
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Shell Cuffs  ---
+Create primitive cuboid with size 0.15×0.1×0.05 m and name it shell_cuff_left.
+Rotate shell_cuff_left so its +Z axis aligns +Z (world).
+Anchor shell_cuff_left to shell_body.left_side.
+Align shell_cuff_left.XY_face to shell_body.left_side.
+Move by offset(0,0.5,0).
+
+Create primitive cuboid with size 0.15×0.1×0.05 m and name it shell_cuff_right.
+Rotate shell_cuff_right so its +Z axis aligns +Z (world).
+Anchor shell_cuff_right to shell_body.right_side.
+Align shell_cuff_right.XY_face to shell_body.right_side.
+Move by offset(0,0.5,0).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Waist Drawstring  ---
+Create primitive cylinder with Ø0.005 m and height 0.6 m and name it shell_drawstring.
+Rotate shell_drawstring so its +Z axis aligns +Z (world).
+Anchor shell_drawstring to shell_body.center.
+Align shell_drawstring.Z_face to shell_body.center.
+Move by offset(0,0,0.01).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Lining Body  ---
+Create primitive cuboid with size 0.58×1.18×0.005 m and name it lining_body.
+Rotate lining_body so its +Z axis aligns +Z (world).
+Anchor lining_body to shell_body.center.
+Align lining_body.XY_face to shell_body.center.
+Move by offset(0,0,-0.001).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Main Zipper  ---
+Create primitive cuboid with size 0.01×1.0×0.005 m and name it zipper_main.
+Rotate zipper_main so its +Z axis aligns +Z (world).
+Anchor zipper_main to shell_body.center.
+Align zipper_main.XY_face to shell_body.center.
+Move by offset(0,0,0.015).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create Zipper Pull  ---
+Create primitive cuboid with size 0.02×0.01×0.005 m and name it zipper_pull.
+Rotate zipper_pull so its +Z axis aligns +Z (world).
+Anchor zipper_pull to zipper_main.top.
+Align zipper_pull.XY_face to zipper_main.top.
+Move by offset(0,0,0.005).
+
+Stage 7 complete.
+
+---  SECTION 8 – Create Flap Protector  ---
+Create primitive cuboid with size 0.1×0.8×0.003 m and name it flap_protect.
+Rotate flap_protect so its +Z axis aligns +Z (world).
+Anchor flap_protect to shell_body.center.
+Align flap_protect.XY_face to shell_body.center.
+Move by offset(0,0,0.02).
+
+Stage 8 complete.
+
+---  SECTION 9 – Create Button on Flap  ---
+Create primitive cuboid with size 0.01×0.01×0.005 m and name it button_flap.
+Rotate button_flap so its +Z axis aligns +Z (world).
+Anchor button_flap to flap_protect.bottom.
+Align button_flap.XY_face to flap_protect.bottom.
+Move by offset(0,0,0.005).
+
+Stage 9 complete.
+
+---  SECTION 10 – Create Left Chest Pocket  ---
+Create primitive cuboid with size 0.15×0.15×0.005 m and name it pocket_left.
+Rotate pocket_left so its +Z axis aligns +Z (world).
+Anchor pocket_left to shell_body.front.
+Align pocket_left.XY_face to shell_body.front.
+Move by offset(0.1,0.2,0.01).
+
+Stage 10 complete.
+
+---  SECTION 11 – Create Right Chest Pocket  ---
+Create primitive cuboid with size 0.15×0.15×0.005 m and name it pocket_right.
+Rotate pocket_right so its +Z axis aligns +Z (world).
+Anchor pocket_right to shell_body.front.
+Align pocket_right.XY_face to shell_body.front.
+Move by offset(-0.1,0.2,0.01).
+
+Stage 11 complete.
+
+---  SECTION 12 – Create Left Lower Pocket  ---
+Create primitive cuboid with size 0.2×0.15×0.005 m and name it pocket_lower_left.
+Rotate pocket_lower_left so its +Z axis aligns +Z (world).
+Anchor pocket_lower_left to shell_body.front.
+Align pocket_lower_left.XY_face to shell_body.front.
+Move by offset(0.15,-0.2,0.01).
+
+Stage 12 complete.
+
+---  SECTION 13 – Create Right Lower Pocket  ---
+Create primitive cuboid with size 0.2×0.15×0.005 m and name it pocket_lower_right.
+Rotate pocket_lower_right so its +Z axis aligns +Z (world).
+Anchor pocket_lower_right to shell_body.front.
+Align pocket_lower_right.XY_face to shell_body.front.
+Move by offset(-0.15,-0.2,0.01).
+
+Stage 13 complete.
+
+All stages complete.

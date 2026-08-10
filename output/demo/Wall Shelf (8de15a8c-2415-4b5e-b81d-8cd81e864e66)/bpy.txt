@@ -1,0 +1,439 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube primitive, set size, location, rotation, and material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        if len(obj.data.materials) == 0:
+            obj.data.materials.append(material)
+        else:
+            obj.data.materials[0] = material
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        if len(obj.data.materials) == 0:
+            obj.data.materials.append(material)
+        else:
+            obj.data.materials[0] = material
+    return obj
+
+def align_face_to_face(obj_source, face_type_source, obj_target, face_type_target, offset_vector=Vector((0,0,0))):
+    """
+    Aligns a specific face of the source object to a specific face of the target object.
+    face_type: 'top', 'bottom', 'front', 'back', 'left', 'right'
+    Assumes objects are axis-aligned.
+    """
+    # Get bounding box corners in world space
+    def get_face_center(obj, face_type):
+        # Transform local bounds to world
+        corners = [
+            obj.matrix_world @ Vector((-obj.dimensions.x/2, -obj.dimensions.y/2, -obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((obj.dimensions.x/2, -obj.dimensions.y/2, -obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((-obj.dimensions.x/2, obj.dimensions.y/2, -obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((obj.dimensions.x/2, obj.dimensions.y/2, -obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((-obj.dimensions.x/2, -obj.dimensions.y/2, obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((obj.dimensions.x/2, -obj.dimensions.y/2, obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((-obj.dimensions.x/2, obj.dimensions.y/2, obj.dimensions.z/2)),
+            obj.matrix_world @ Vector((obj.dimensions.x/2, obj.dimensions.y/2, obj.dimensions.z/2)),
+        ]
+        
+        # Determine center based on face type
+        # Note: This assumes standard orientation where X=Right, Y=Front, Z=Up
+        # 'top' is max Z, 'bottom' is min Z
+        # 'front' is max Y, 'back' is min Y
+        # 'right' is max X, 'left' is min X
+        
+        if face_type == 'top':
+            return Vector([c.x for c in corners if c.z == max(c.z for c in corners)][0], 
+                          [c.y for c in corners if c.z == max(c.z for c in corners)][0],
+                          max(c.z for c in corners))
+        elif face_type == 'bottom':
+            return Vector([c.x for c in corners if c.z == min(c.z for c in corners)][0], 
+                          [c.y for c in corners if c.z == min(c.z for c in corners)][0],
+                          min(c.z for c in corners))
+        elif face_type == 'front':
+            return Vector([c.x for c in corners if c.y == max(c.y for c in corners)][0], 
+                          max(c.y for c in corners),
+                          [c.z for c in corners if c.y == max(c.y for c in corners)][0])
+        elif face_type == 'back':
+            return Vector([c.x for c in corners if c.y == min(c.y for c in corners)][0], 
+                          min(c.y for c in corners),
+                          [c.z for c in corners if c.y == min(c.y for c in corners)][0])
+        elif face_type == 'right':
+            return Vector(max(c.x for c in corners), 
+                          [c.y for c in corners if c.x == max(c.x for c in corners)][0],
+                          [c.z for c in corners if c.x == max(c.x for c in corners)][0])
+        elif face_type == 'left':
+            return Vector(min(c.x for c in corners), 
+                          [c.y for c in corners if c.x == min(c.x for c in corners)][0],
+                          [c.z for c in corners if c.x == min(c.x for c in corners)][0])
+        return obj.matrix_world.to_translation()
+
+    src_center = get_face_center(obj_source, face_type_source)
+    tgt_center = get_face_center(obj_target, face_type_target)
+    
+    # Calculate translation needed to align src_face to tgt_face
+    # We want src_face_center to move to tgt_face_center
+    diff = tgt_center - src_center
+    
+    # Apply offset
+    final_loc = obj_source.location + diff + offset_vector
+    
+    obj_source.location = final_loc
+    return obj_source
+
+def orient_z_to_z(obj):
+    """Ensure object's +Z aligns with world +Z (no-op if already aligned, but ensures rotation is clean)."""
+    # If the object was created with default orientation, it's already aligned.
+    # This helper is for explicit orientation steps.
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- BLOCK 1: Materials ---
+
+mat_white_paint = make_material("mat_white_paint", (0.95, 0.95, 0.95))
+mat_wood_oak = make_material("mat_wood_oak", (0.75, 0.60, 0.40))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1 – Create shelf panel ---
+# Create primitive cuboid with size 0.914×0.203×0.025 m and name it shelf_panel.
+# Rotate shelf_panel so its +Z axis aligns +Z (world).
+# Move shelf_panel to (0, 0, 0).
+
+shelf_panel = add_cube(
+    name="shelf_panel",
+    size=(0.914, 0.203, 0.025),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_wood_oak
+)
+orient_z_to_z(shelf_panel)
+
+# --- SECTION 2 – Create left bracket ---
+
+# 1. bracket_L_vertical_plate
+# Create primitive cuboid with size 0.025×0.150×0.025 m and name it bracket_L_vertical_plate.
+# Rotate bracket_L_vertical_plate so its +Z axis aligns +Z (world).
+# Align bracket_L_vertical_plate.back_face to shelf_panel.bottom_face.
+# Then move by offset(0, 0, -0.025).
+
+bracket_L_vertical_plate = add_cube(
+    name="bracket_L_vertical_plate",
+    size=(0.025, 0.150, 0.025),
+    location=(0, 0, 0), # Temporary location
+    rotation_euler=(0, 0, 0),
+    material=mat_wood_oak
+)
+orient_z_to_z(bracket_L_vertical_plate)
+
+# Align back_face of vertical plate to bottom_face of shelf panel
+# Shelf panel bottom face is at Z = -0.025/2 = -0.0125
+# Bracket vertical plate back face is at Y = -0.150/2 = -0.075 (relative to its center)
+# We need to position the bracket so its back face touches the shelf's bottom face.
+# However, the instruction says "Align ... to ...". Usually this means touching.
+# Let's calculate the position.
+# Shelf bottom Z = -0.0125.
+# Bracket back Y = -0.075.
+# If we align back_face to bottom_face, we are aligning the Y-min of bracket to Z-min of shelf?
+# No, "back_face" usually refers to the face normal pointing in -Y. "bottom_face" normal points in -Z.
+# Aligning them usually means placing the bracket *under* the shelf.
+# Let's assume standard alignment logic:
+# Target: Shelf Bottom Face (Z = -0.0125)
+# Source: Bracket Back Face (Y = -0.075 relative to center)
+# To align them, we need to move the bracket so its back face is at the same location as the shelf's bottom face?
+# Or does it mean the faces are coplanar?
+# Given the offset (0, 0, -0.025), it implies a specific placement.
+# Let's interpret "Align bracket_L_vertical_plate.back_face to shelf_panel.bottom_face" as:
+# Place the bracket such that its back face is flush with the shelf's bottom face.
+# Since the shelf is at Z=0, its bottom is at Z=-0.0125.
+# The bracket's back face is at Y = bracket_loc.y - 0.075.
+# This alignment is geometrically ambiguous without a specific axis mapping.
+# However, looking at the offset (0,0,-0.025), it suggests the bracket is hanging down.
+# Let's assume the "back" of the vertical plate is the side touching the wall/shelf underside.
+# If we align back_face (Y-) to bottom_face (Z-), we might be rotating? No, rotation is fixed to Z.
+# Let's assume "Align" means "Position so that the specified faces touch".
+# Shelf Bottom Face Center: (0, 0, -0.0125)
+# Bracket Back Face Center: (bracket.x, bracket.y - 0.075, bracket.z)
+# If we align them, we might just set the bracket's position relative to the shelf.
+# Let's try a simpler interpretation often used in these prompts:
+# The bracket is attached to the bottom of the shelf.
+# The vertical plate hangs down.
+# Let's place the vertical plate such that its top face aligns with the shelf's bottom face?
+# No, it says "back_face".
+# Let's look at the dimensions: 0.025 (X) x 0.150 (Y) x 0.025 (Z).
+# If it hangs down, the long dimension (0.150) is likely Z.
+# But the size is given as 0.025x0.150x0.025.
+# If +Z is up, and size is 0.025 in Z, it's a thin plate standing up?
+# Or is it lying flat?
+# If it's a bracket, usually the vertical part is tall.
+# If the size is 0.025x0.150x0.025, and it's a "vertical plate", maybe the 0.150 is the height (Z)?
+# But the size tuple is (X, Y, Z). So X=0.025, Y=0.150, Z=0.025.
+# This means it's a thin vertical strip in the Y direction?
+# Let's stick to the literal size: X=0.025, Y=0.150, Z=0.025.
+# Back face is at Y = -0.075. Bottom face is at Z = -0.0125.
+# Aligning Back Face (Y-) to Bottom Face (Z-) is tricky.
+# Let's assume the prompt implies a standard L-bracket configuration where the vertical plate is against the wall (Y direction) and the horizontal plate is under the shelf (X direction).
+# If the vertical plate is 0.150m long, and it's "vertical", it should be along Z.
+# But the size says Y=0.150.
+# Maybe the object is rotated? "Rotate ... so its +Z axis aligns +Z".
+# If I create a cube 0.025x0.150x0.025, it is flat in Z.
+# To make it a "vertical plate", I might need to rotate it 90 degrees around X?
+# But the prompt says "Rotate ... so its +Z axis aligns +Z". This implies NO rotation from default.
+# So the object is flat.
+# Let's re-read carefully: "Align bracket_L_vertical_plate.back_face to shelf_panel.bottom_face."
+# Shelf bottom face is at Z = -0.0125.
+# Bracket back face is at Y = bracket_loc.y - 0.075.
+# If we align them, we might be placing the bracket such that its back face is at the same Z level?
+# No, that doesn't make sense for a bracket.
+# Let's assume "back_face" refers to the face that will be against the shelf.
+# If the shelf is at Z=0, and the bracket is below it, the bracket's TOP face should touch the shelf's BOTTOM face.
+# Why does it say "back_face"?
+# Maybe the coordinate system of the bracket is different?
+# Let's assume the prompt meant "top_face" of the vertical plate aligns to "bottom_face" of the shelf.
+# If I align top_face (Z=0.0125) to bottom_face (Z=-0.0125), the distance is 0.025.
+# Then offset (0,0,-0.025) moves it further down by 0.025.
+# Total Z shift: -0.0125 (align) - 0.025 (offset) = -0.0375 from center?
+# Let's try to interpret "back_face" as the face in the -Y direction.
+# If the bracket is mounted on the wall (Y=0), and the shelf sticks out in Y?
+# Shelf size Y=0.203. Center at 0. So shelf extends from Y=-0.1015 to Y=0.1015.
+# If the bracket is at the back of the shelf, it might be at Y=-0.1015.
+# Let's assume the "back_face" of the vertical plate is the face touching the wall/shelf back.
+# Let's place the vertical plate at the back of the shelf.
+# Shelf Back Face: Y = -0.1015.
+# Bracket Back Face: Y = bracket_loc.y - 0.075.
+# Align: bracket_loc.y - 0.075 = -0.1015 => bracket_loc.y = -0.0265.
+# Then offset (0,0,-0.025).
+# This seems plausible.
+
+# Let's refine the "Align" logic.
+# "Align A.face to B.face" usually means making them coplanar and touching.
+# Shelf Bottom Face: Z = -0.0125.
+# Bracket Back Face: Y = bracket_loc.y - 0.075.
+# If we align them, we are essentially saying the Y coordinate of the bracket's back face should match the Z coordinate of the shelf's bottom face? No, that's mixing axes.
+# It likely means: Position the bracket so that its back face is flush with the shelf's bottom face.
+# This implies the bracket is oriented such that its "back" is "down".
+# But we are not rotating it.
+# Let's assume the prompt has a slight terminology mismatch and means "top_face" of the vertical plate aligns to "bottom_face" of the shelf.
+# Why? Because it's a bracket holding the shelf up (or hanging from it).
+# If it's hanging, the vertical plate hangs down.
+# If the vertical plate is 0.150m long (Y dimension), and it hangs down, it should be rotated.
+# But we are not rotating it.
+# So the vertical plate is a flat plate lying in the XY plane?
+# If so, it's not a "vertical" plate in the Z sense.
+# Let's assume the "vertical" refers to its position relative to the shelf, not its local Z.
+# Let's just follow the literal instructions:
+# 1. Create cube 0.025x0.150x0.025.
+# 2. Align back_face (Y-) to bottom_face (Z-).
+# This is geometrically impossible to "align" in a standard way without rotation.
+# However, if we interpret "Align" as "Place the object such that the specified face is at the same location as the target face's center", it's vague.
+# Let's assume the standard L-bracket setup:
+# Vertical plate is along Z. Horizontal plate is along X.
+# To get a vertical plate along Z from a 0.025x0.150x0.025 cube, we must rotate it 90 deg around X.
+# BUT the prompt says "Rotate ... so its +Z axis aligns +Z".
+# This contradicts the idea of a vertical plate being tall in Z.
+# Unless... the size 0.025x0.150x0.025 is (X, Z, Y)? No, standard is X, Y, Z.
+# Let's assume the bracket is a flat plate attached to the side/back of the shelf.
+# Shelf Panel: 0.914 (X) x 0.203 (Y) x 0.025 (Z).
+# Bracket L Vertical Plate: 0.025 (X) x 0.150 (Y) x 0.025 (Z).
+# If it's attached to the back, it might be at Y = -0.1015.
+# Let's place the vertical plate at the back of the shelf.
+# Shelf Back Face: Y = -0.1015.
+# Bracket Back Face: Y = bracket_loc.y - 0.075.
+# Align: bracket_loc.y = -0.1015 + 0.075 = -0.0265.
+# Then offset (0, 0, -0.025).
+# This moves it in Z.
+# So the vertical plate is at Y=-0.0265, Z=0-0.025=-0.025.
+# This places it slightly below the shelf center.
+
+# Let's try another interpretation:
+# The "vertical plate" is actually the part that goes DOWN.
+# If it goes down, it needs to be tall in Z.
+# If the size is 0.025x0.150x0.025, and we don't rotate, it's short in Z.
+# Maybe the "vertical" name is misleading, or the size is (X, Z, Y)?
+# Let's assume the size is correct and the name is just a label.
+# We will follow the alignment instruction literally as best as possible.
+# "Align back_face to bottom_face".
+# If we assume this means "Place the bracket such that its back face is coincident with the shelf's bottom face",
+# we need to map the normal of the back face (-Y) to the normal of the bottom face (-Z).
+# This requires rotation. But we are not rotating.
+# Therefore, "Align" must mean "Position the object so that the face is at the same location as the target face".
+# Shelf Bottom Face Center: (0, 0, -0.0125).
+# Bracket Back Face Center: (bracket.x, bracket.y - 0.075, bracket.z).
+# If we align them, we set:
+# bracket.x = 0
+# bracket.y - 0.075 = 0  => bracket.y = 0.075
+# bracket.z = -0.0125
+# Then offset (0, 0, -0.025).
+# Final location: (0, 0.075, -0.0375).
+# This places the bracket in front of the shelf (positive Y) and below it.
+
+# Let's look at the Right Bracket for clues.
+# Offset (0.711, 0, -0.025).
+# Shelf width 0.914.
+# 0.711 is roughly 0.914 - 0.203 (depth)? No.
+# 0.711 is roughly 0.914 - 0.203? 0.711.
+# If the bracket is at the right end, X should be near 0.914/2 = 0.457.
+# 0.711 is further out.
+# Maybe the bracket is 0.203 wide?
+# If the bracket is at the right, and the shelf is 0.914 wide.
+# Let's assume the bracket is centered at X = 0.711?
+# Or maybe the offset is from the center?
+# Let's assume the "Align" logic is:
+# Place the bracket such that its specified face is at the same location as the target face's center.
+
+# Implementation of Align Face to Face (Center to Center):
+def align_face_to_face_center(obj_source, face_type_source, obj_target, face_type_target, offset_vector=Vector((0,0,0))):
+    src_center = get_face_center(obj_source, face_type_source)
+    tgt_center = get_face_center(obj_target, face_type_target)
+    diff = tgt_center - src_center
+    final_loc = obj_source.location + diff + offset_vector
+    obj_source.location = final_loc
+    return obj_source
+
+# Re-evaluating Section 2:
+# bracket_L_vertical_plate
+# Align back_face to shelf_panel.bottom_face.
+# Shelf Bottom Face Center: (0, 0, -0.0125)
+# Bracket Back Face Center (initially at 0,0,0): (0, -0.075, 0)
+# Diff: (0, 0.075, -0.0125)
+# Location after align: (0, 0.075, -0.0125)
+# Offset (0, 0, -0.025)
+# Final Location: (0, 0.075, -0.0375)
+
+bracket_L_vertical_plate = add_cube(
+    name="bracket_L_vertical_plate",
+    size=(0.025, 0.150, 0.025),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_wood_oak
+)
+orient_z_to_z(bracket_L_vertical_plate)
+align_face_to_face_center(bracket_L_vertical_plate, 'back', shelf_panel, 'bottom', Vector((0, 0, -0.025)))
+
+# bracket_L_horizontal_plate
+# Create primitive cuboid with size 0.203×0.025×0.025 m and name it bracket_L_horizontal_plate.
+# Rotate bracket_L_horizontal_plate so its +Z axis aligns +Z (world).
+# Align bracket_L_horizontal_plate.top_face to bracket_L_vertical_plate.bottom_face.
+# Then move by offset(0, 0, 0).
+
+bracket_L_horizontal_plate = add_cube(
+    name="bracket_L_horizontal_plate",
+    size=(0.203, 0.025, 0.025),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_wood_oak
+)
+orient_z_to_z(bracket_L_horizontal_plate)
+
+# Align top_face of horizontal to bottom_face of vertical
+# Vertical Plate Bottom Face Center:
+# Vertical Plate Location: (0, 0.075, -0.0375)
+# Vertical Plate Dimensions: 0.025, 0.150, 0.025
+# Bottom Face Z: -0.0375 - 0.0125 = -0.05
+# Center X: 0
+# Center Y: 0.075
+# Target: (0, 0.075, -0.05)
+
+# Horizontal Plate Top Face Center (initially at 0,0,0):
+# Dimensions: 0.203, 0.025, 0.025
+# Top Face Z: 0.0125
+# Center X: 0
+# Center Y: 0
+# Diff: (0, 0.075, -0.0625)
+# Location after align: (0, 0.075, -0.0625)
+# Offset (0,0,0)
+
+align_face_to_face_center(bracket_L_horizontal_plate, 'top', bracket_L_vertical_plate, 'bottom', Vector((0, 0, 0)))
+
+# --- SECTION 3 – Create right bracket ---
+
+# bracket_R_vertical_plate
+# Create primitive cuboid with size 0.025×0.150×0.025 m and name it bracket_R_vertical_plate.
+# Rotate bracket_R_vertical_plate so its +Z axis aligns +Z (world).
+# Align bracket_R_vertical_plate.back_face to shelf_panel.bottom_face.
+# Then move by offset(0.711, 0, -0.025).
+
+bracket_R_vertical_plate = add_cube(
+    name="bracket_R_vertical_plate",
+    size=(0.025, 0.150, 0.025),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_wood_oak
+)
+orient_z_to_z(bracket_R_vertical_plate)
+
+# Align back_face to shelf_panel.bottom_face
+# Shelf Bottom Face Center: (0, 0, -0.0125)
+# Bracket Back Face Center (initially at 0,0,0): (0, -0.075, 0)
+# Diff: (0, 0.075, -0.0125)
+# Location after align: (0, 0.075, -0.0125)
+# Offset (0.711, 0, -0.025)
+# Final Location: (0.711, 0.075, -0.0375)
+
+align_face_to_face_center(bracket_R_vertical_plate, 'back', shelf_panel, 'bottom', Vector((0.711, 0, -0.025)))
+
+# bracket_R_horizontal_plate
+# Create primitive cuboid with size 0.203×0.025×0.025 m and name it bracket_R_horizontal_plate.
+# Rotate bracket_R_horizontal_plate so its +Z axis aligns +Z (world).
+# Align bracket_R_horizontal_plate.top_face to bracket_R_vertical_plate.bottom_face.
+# Then move by offset(0, 0, 0).
+
+bracket_R_horizontal_plate = add_cube(
+    name="bracket_R_horizontal_plate",
+    size=(0.203, 0.025, 0.025),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_wood_oak
+)
+orient_z_to_z(bracket_R_horizontal_plate)
+
+# Align top_face of horizontal to bottom_face of vertical
+# Vertical Plate Location: (0.711, 0.075, -0.0375)
+# Vertical Plate Bottom Face Center: (0.711, 0.075, -0.05)
+# Horizontal Plate Top Face Center (initially at 0,0,0): (0, 0, 0.0125)
+# Diff: (0.711, 0.075, -0.0625)
+# Location after align: (0.711, 0.075, -0.0625)
+# Offset (0,0,0)
+
+align_face_to_face_center(bracket_R_horizontal_plate, 'top', bracket_R_vertical_plate, 'bottom', Vector((0, 0, 0)))
+```

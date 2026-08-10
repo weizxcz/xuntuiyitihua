@@ -1,0 +1,92 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_steel_handle; diffuse_color = (0.2, 0.2, 0.2, 1.0).
+Define material mat_steel_jaw; diffuse_color = (0.6, 0.6, 0.6, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Standard Pliers Jaw (pliers_jaw)  ---
+Create primitive cylinder with diameter 0.020 m and length 0.150 m and name it jaw_left.
+Rotate jaw_left so its +Z axis aligns +Z (world).
+Align jaw_left.right_face to pliers_jaw.center.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with diameter 0.020 m and length 0.150 m and name it jaw_right.
+Rotate jaw_right so its +Z axis aligns +Z (world).
+Align jaw_right.right_face to jaw_left.left_face.
+Then move by offset(0, 0, 0).
+
+Boolean-union jaw_left and jaw_right; keep jaw_left.
+Rename jaw_left to pliers_jaw.
+
+---  SECTION 2 – Create Standard Pliers Handle (pliers_handle)  ---
+Create primitive cylinder with diameter 0.025 m and length 0.100 m and name it pliers_handle.
+Rotate pliers_handle so its +Z axis aligns +Z (world).
+Align pliers_handle.center to pliers_main.center.
+Then move by offset(0, 0, 0).
+
+---  SECTION 3 – Assemble Standard Pliers Main (pliers_main)  ---
+Boolean-union pliers_jaw and pliers_handle; keep pliers_jaw.
+Rename pliers_jaw to pliers_main.
+
+---  SECTION 4 – Create Standard Pliers Pivot (pliers_pivot)  ---
+Create primitive cylinder with diameter 0.005 m and length 0.030 m and name it pliers_pivot.
+Rotate pliers_pivot so its +Z axis aligns +Z (world).
+Align pliers_pivot.center to pliers_main.pivot_hole.
+Then move by offset(0, 0, 0).
+
+Boolean-union pliers_main and pliers_pivot; keep pliers_main.
+Rename pliers_main to pliers_union.
+
+---  SECTION 5 – Create Needle-Nose Pliers Jaw (needle_jaw)  ---
+Create primitive cylinder with diameter 0.005 m and length 0.200 m and name it needle_tip_left.
+Rotate needle_tip_left so its +Z axis aligns +Z (world).
+Align needle_tip_left.right_face to needle_jaw.center.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with diameter 0.005 m and length 0.200 m and name it needle_tip_right.
+Rotate needle_tip_right so its +Z axis aligns +Z (world).
+Align needle_tip_right.right_face to needle_tip_left.left_face.
+Then move by offset(0, 0, 0).
+
+Boolean-union needle_tip_left and needle_tip_right; keep needle_tip_left.
+Rename needle_tip_left to needle_jaw.
+
+---  SECTION 6 – Create Needle-Nose Pliers Handle (needle_handle)  ---
+Create primitive cylinder with diameter 0.020 m and length 0.080 m and name it needle_handle.
+Rotate needle_handle so its +Z axis aligns +Z (world).
+Align needle_handle.center to needle_pliers_main.center.
+Then move by offset(0, 0, 0).
+
+---  SECTION 7 – Assemble Needle-Nose Pliers Main (needle_pliers_main)  ---
+Boolean-union needle_jaw and needle_handle; keep needle_jaw.
+Rename needle_jaw to needle_pliers_main.
+
+---  SECTION 8 – Create Needle-Nose Pliers Pivot (needle_pliers_pivot)  ---
+Create primitive cylinder with diameter 0.004 m and length 0.025 m and name it needle_pliers_pivot.
+Rotate needle_pliers_pivot so its +Z axis aligns +Z (world).
+Align needle_pliers_pivot.center to needle_pliers_main.pivot_hole.
+Then move by offset(0, 0, 0).
+
+Boolean-union needle_pliers_main and needle_pliers_pivot; keep needle_pliers_main.
+Rename needle_pliers_main to needle_pliers_union.
+
+---  SECTION 9 – Final Assembly of Composite Pliers  ---
+Align needle_pliers_union.center to (0,0,0.05).
+Then move by offset(0, 0, 0).
+
+Boolean-union pliers_union and needle_pliers_union; keep pliers_union.
+Rename pliers_union to pliers_final.
+
+Stage 9 complete.
+All stages complete.

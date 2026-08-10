@@ -1,0 +1,18 @@
+-- MATERIAL LIBRARY --
+arrow_green | diffuse_color=(0,128,0,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| recycling_symbol | Composite union of three identical arrow segments forming a continuous clockwise loop | assembly_order=[arrow_0], [arrow_1], [arrow_2]; create_method=union; mat=- |
+
+Layer 1 – Primary Structure (Arrow Segments)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| arrow_0 | Arrow segment 1 (0°) | Align(XY) arrow_0.center to recycling_symbol.center; orientation=axis:+Z; mat=arrow_green; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Define a 2D arrow profile pointing radially outward. Outer radius R=0.150 m, inner radius r=0.050 m. Arrow head width W_head=0.040 m, tail width W_tail=0.020 m. Head height H_head=0.020 m, body length L_body=0.080 m. Vertices: Start at (r, 0), extend to (R, 0), flare to (R, W_head/2), tip to (R+H_head, 0), flare to (R, -W_head/2), contract to (r, -W_tail/2), close to (r, 0). Extrude thickness t=0.005 m along +Z with caps. |
+| arrow_1 | Arrow segment 2 (120°) | Align(XY) arrow_1.center to recycling_symbol.center; orientation=axis:+Z; mat=arrow_green; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Same profile as arrow_0. Extrude thickness t=0.005 m along +Z with caps. |
+| arrow_2 | Arrow segment 3 (240°) | Align(XY) arrow_2.center to recycling_symbol.center; orientation=axis:+Z; mat=arrow_green; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Same profile as arrow_0. Extrude thickness t=0.005 m along +Z with caps. |
+
+# ----------  END_GRAPH  ----------

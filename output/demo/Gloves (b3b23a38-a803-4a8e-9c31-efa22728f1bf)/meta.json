@@ -1,0 +1,45 @@
+{
+  "id": "b3b23a38-a803-4a8e-9c31-efa22728f1bf",
+  "name": "Gloves",
+  "instruction": "Make a pair of gloves with a snug fit and five fingers.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pair of gloves.",
+        "Each glove has five fingers.",
+        "The gloves are designed for a snug fit."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The fingers are proportionate to the overall size of the gloves.",
+        "The width of the gloves is appropriate for a snug fit."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The gloves are designed to conform to the shape of a human hand.",
+        "Each finger is distinct and properly separated."
+      ],
+      "Object distance and contact": [
+        "The gloves fit closely to the skin without excessive gaps.",
+        "There is no overlapping of fingers within the gloves."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the requirement for a snug fit.",
+        "The gloves have five fingers as specified."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

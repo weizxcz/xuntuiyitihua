@@ -1,0 +1,1 @@
+Design a five-pointed star emblem with a circular border around it.

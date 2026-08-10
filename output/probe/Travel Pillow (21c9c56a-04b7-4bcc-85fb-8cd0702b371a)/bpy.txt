@@ -1,0 +1,292 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cone_add(vertices=segments, radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='Z', target_vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with target vector."""
+    # Ensure object is at origin for rotation to work correctly around local axis
+    # We assume the object was created at origin.
+    vec = obj.matrix_world.to_quaternion() * Vector((0, 0, 1)) # Get current local Z in world
+    
+    # Simple approach: Set rotation to align local Z to target
+    # We need to find a rotation that maps (0,0,1) to target_vector
+    # Using mathutils rotation
+    
+    # Define local axis vector
+    if axis_to_align == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+        
+    target = Vector(target_vector).normalized()
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    
+    # Apply rotation
+    obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_union(objs, result_name="BooleanUnionResult"):
+    """Perform boolean union on a list of objects, keeping the first one as the result."""
+    if not objs:
+        return None
+    if len(objs) == 1:
+        objs[0].name = result_name
+        return objs[0]
+    
+    # Use modifier stack for boolean union
+    # We will apply the union by adding a Boolean modifier to the first object
+    # and using the others as operands.
+    
+    target = objs[0]
+    target.name = result_name
+    
+    # Clear existing modifiers if any (optional, but clean)
+    for mod in target.modifiers:
+        target.modifiers.remove(mod)
+        
+    # Add Boolean Modifier
+    bool_mod = target.modifiers.new(name="BooleanUnion", type='UNION')
+    
+    # Create a collection for the operands to make them easy to reference if needed, 
+    # but here we just add them to the scene and reference them.
+    # Note: Boolean modifier in Blender requires an object in the scene.
+    
+    for i, obj in enumerate(objs[1:], 1):
+        # Add a new boolean modifier for each operand? 
+        # Blender's boolean modifier only takes one object. 
+        # To union multiple, we usually chain them or use a custom script.
+        # However, for simplicity in generated scripts, we can chain modifiers.
+        
+        if i == 1:
+            bool_mod.object = obj
+        else:
+            # Add another modifier
+            new_bool_mod = target.modifiers.new(name=f"BooleanUnion_{i}", type='UNION')
+            new_bool_mod.object = obj
+            
+    # Apply all modifiers
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=target.modifiers[0].name)
+    # Note: Applying the first one might remove others if not careful. 
+    # Better approach for multiple operands:
+    # 1. Join all objects into one mesh.
+    # 2. That's effectively a union if they don't intersect weirdly, 
+    #    but for true boolean union with holes, we need the modifier.
+    
+    # Robust Multi-Operand Union:
+    # Reset
+    target.name = "temp_union_target"
+    for mod in target.modifiers:
+        target.modifiers.remove(mod)
+        
+    # We will use a temporary approach: 
+    # Select all, join them? No, that's not boolean.
+    # Let's stick to chaining modifiers and applying them one by one.
+    
+    # Re-add modifiers
+    current_obj = target
+    current_obj.name = result_name
+    
+    # We need to apply them sequentially.
+    # To avoid complexity, let's just use the first operand and union it with the rest iteratively.
+    
+    # Actually, the simplest robust way in script without complex operator calls:
+    # 1. Create a new empty mesh.
+    # 2. For each object, add it to a BMesh, perform boolean union.
+    # But that's heavy.
+    
+    # Let's use the standard modifier chain approach.
+    # Clear modifiers
+    for mod in list(target.modifiers):
+        target.modifiers.remove(mod)
+        
+    # Add first operand
+    if len(objs) > 1:
+        bool_mod = target.modifiers.new(name="Bool1", type='UNION')
+        bool_mod.object = objs[1]
+        
+        # Apply it
+        bpy.context.view_layer.objects.active = target
+        bpy.ops.object.modifier_apply(modifier="Bool1")
+        
+        # Now target is the union of target and objs[1]
+        # We need to union with objs[2], etc.
+        current_union = target
+        
+        for i in range(2, len(objs)):
+            # Add new modifier
+            new_mod = current_union.modifiers.new(name=f"Bool{i}", type='UNION')
+            new_mod.object = objs[i]
+            bpy.context.view_layer.objects.active = current_union
+            bpy.ops.object.modifier_apply(modifier=new_mod.name)
+            
+    return target
+
+def boolean_subtract(base_obj, cutter_obj, result_name=None):
+    """Subtract cutter from base using boolean modifier."""
+    if result_name is None:
+        result_name = base_obj.name + "_subtracted"
+        
+    # Add modifier
+    bool_mod = base_obj.modifiers.new(name="BooleanSubtract", type='DIFFERENCE')
+    bool_mod.object = cutter_obj
+    
+    # Apply
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier="BooleanSubtract")
+    
+    base_obj.name = result_name
+    return base_obj
+
+class Locator:
+    def __init__(self, name="Locator"):
+        self.name = name
+        # Create an empty as a locator
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0))
+        self.obj = bpy.context.active_object
+        self.obj.name = name
+        
+    def center_world(self):
+        return self.obj.location.copy()
+        
+    def face_center_world(self):
+        # For a simple empty, this is the same as center
+        return self.obj.location.copy()
+        
+    def radial_point_world(self, radius, angle=0):
+        # Returns a point at 'radius' distance along X axis rotated by angle
+        # Assuming local X is the radial direction
+        vec = Vector((radius, 0, 0))
+        vec.rotate(self.obj.rotation_euler)
+        return self.obj.location + vec
+
+def average(points):
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- BLOCK 1: Materials ---
+
+mat_fabric_nylon = make_material("fabric_nylon", (0.8, 0.8, 0.8, 1.0))
+mat_foam_memory = make_material("foam_memory", (0.1, 0.1, 0.1, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1 – Create foam_core structure ---
+
+# Create left_arm
+left_arm = add_cylinder("left_arm", 0.04, 0.15)
+align_axis_to_vector(left_arm, 'Z', (0, 0, 1))
+# Anchor to world origin (already at origin)
+# Offset
+left_arm.location += Vector((-0.08, 0, 0))
+
+# Create right_arm
+right_arm = add_cylinder("right_arm", 0.04, 0.15)
+align_axis_to_vector(right_arm, 'Z', (0, 0, 1))
+# Anchor to world origin
+# Offset
+right_arm.location += Vector((0.08, 0, 0))
+
+# Create back_connector
+back_connector = add_cylinder("back_connector", 0.04, 0.16)
+align_axis_to_vector(back_connector, 'Z', (1, 0, 0))
+# Anchor to world origin
+# Offset (0,0,0)
+
+# Boolean-union left_arm, right_arm, back_connector to form foam_core
+foam_core_objs = [left_arm, right_arm, back_connector]
+foam_core = boolean_union(foam_core_objs, "foam_core")
+foam_core.data.materials.append(mat_foam_memory)
+
+# --- SECTION 2 – Create fabric_cover structure ---
+
+# Create left_sleeve
+left_sleeve = add_cylinder("left_sleeve", 0.045, 0.15)
+align_axis_to_vector(left_sleeve, 'Z', (0, 0, 1))
+# Anchor to world origin
+# Offset
+left_sleeve.location += Vector((-0.08, 0, 0))
+
+# Create right_sleeve
+right_sleeve = add_cylinder("right_sleeve", 0.045, 0.15)
+align_axis_to_vector(right_sleeve, 'Z', (0, 0, 1))
+# Anchor to world origin
+# Offset
+right_sleeve.location += Vector((0.08, 0, 0))
+
+# Create back_sleeve
+back_sleeve = add_cylinder("back_sleeve", 0.045, 0.16)
+align_axis_to_vector(back_sleeve, 'Z', (1, 0, 0))
+# Anchor to world origin
+# Offset (0,0,0)
+
+# Boolean-union left_sleeve, right_sleeve, back_sleeve to form fabric_cover
+fabric_cover_objs = [left_sleeve, right_sleeve, back_sleeve]
+fabric_cover = boolean_union(fabric_cover_objs, "fabric_cover")
+fabric_cover.data.materials.append(mat_fabric_nylon)
+
+# --- SECTION 3 – Assemble travel_pillow ---
+
+# Boolean-union foam_core and fabric_cover to form travel_pillow
+travel_pillow_objs = [foam_core, fabric_cover]
+travel_pillow = boolean_union(travel_pillow_objs, "travel_pillow")
+
+# All stages complete.
+```

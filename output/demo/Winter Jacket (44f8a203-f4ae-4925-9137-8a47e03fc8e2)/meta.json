@@ -1,0 +1,50 @@
+{
+  "id": "44f8a203-f4ae-4925-9137-8a47e03fc8e2",
+  "name": "Winter Jacket",
+  "instruction": "Design a winter jacket. It should have a hood, a front zipper, and pockets on both sides. The jacket should be long enough to cover the hips.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The jacket features a hood.",
+        "The jacket has a front zipper.",
+        "There are pockets on both sides of the jacket.",
+        "The jacket is long enough to cover the hips."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hood is proportionate to the size of the jacket.",
+        "The pockets are appropriately sized for usability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hood is positioned correctly on the jacket.",
+        "The front zipper is centrally located for ease of use.",
+        "The pockets are symmetrically placed on both sides.",
+        "The length of the jacket allows for proper coverage of the hips."
+      ],
+      "Object distance and contact": [
+        "The hood does not interfere with the front zipper.",
+        "The pockets are easily accessible without obstruction.",
+        "The jacket fits comfortably around the torso."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a hood, front zipper, and side pockets.",
+        "The length of the jacket meets the requirement to cover the hips."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

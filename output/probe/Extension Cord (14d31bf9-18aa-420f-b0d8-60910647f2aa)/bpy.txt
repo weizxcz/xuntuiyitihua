@@ -1,0 +1,331 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(name, type, **kwargs):
+    """Helper to add primitives and return the object."""
+    if type == 'CUBE':
+        bpy.ops.mesh.primitive_cube_add(**kwargs)
+    elif type == 'CYLINDER':
+        bpy.ops.mesh.primitive_cylinder_add(**kwargs)
+    elif type == 'CONE':
+        bpy.ops.mesh.primitive_cone_add(**kwargs)
+    elif type == 'UVSPHERE':
+        bpy.ops.mesh.primitive_uv_sphere_add(**kwargs)
+    elif type == 'DISC':
+        # Disc is a cylinder with 0 height or a circle mesh
+        bpy.ops.mesh.primitive_cylinder_add(**kwargs)
+        obj = bpy.context.active_object
+        obj.scale[2] = 0.001 # Make it very thin to act as a disc
+    else:
+        raise ValueError(f"Unknown primitive type: {type}")
+    
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # axis: 'X', 'Y', 'Z'
+    # vector: target world direction
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    else:
+        return
+
+    # Normalize inputs
+    local_axis = local_axis.normalized()
+    target = vector.normalized()
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type):
+    """
+    Calculate the world center of a specific face of an object.
+    Assumes object is axis-aligned or we are approximating based on dimensions.
+    face_type: 'center', 'top_face', 'bottom_face', 'front_face', 'back_face', 'left_face', 'right_face'
+    """
+    # Get object dimensions in world space (approximate if rotated, but here we assume simple alignment)
+    # For robustness with rotations, we should transform the local bounds.
+    # However, for this script, objects are mostly aligned to axes.
+    
+    # Local bounds
+    min_b = obj.dimensions[0] / 2
+    max_b = obj.dimensions[0] / 2
+    min_y = obj.dimensions[1] / 2
+    max_y = obj.dimensions[1] / 2
+    min_z = obj.dimensions[2] / 2
+    max_z = obj.dimensions[2] / 2
+    
+    # Local center
+    local_center = Vector((0, 0, 0))
+    
+    # Define local face centers
+    face_centers_local = {
+        'center': Vector((0, 0, 0)),
+        'top_face': Vector((0, 0, max_b)), # Assuming Z is up for cubes/cyls usually
+        'bottom_face': Vector((0, 0, -max_b)),
+        'front_face': Vector((0, max_b, 0)), # Assuming Y is front
+        'back_face': Vector((0, -max_b, 0)),
+        'right_face': Vector((max_b, 0, 0)),
+        'left_face': Vector((-max_b, 0, 0))
+    }
+    
+    # Note: The prompt uses 'top_face', 'front_face' etc.
+    # Standard Blender Cube: Z is up. Y is front/back. X is left/right.
+    # Standard Blender Cylinder: Z is up.
+    
+    # We need to transform local face center to world space
+    local_fc = face_centers_local.get(face_type, Vector((0,0,0)))
+    
+    # Transform using object matrix
+    world_fc = obj.matrix_world @ local_fc
+    
+    return world_fc
+
+def align_to_anchor(obj, anchor_obj, anchor_type='center'):
+    """
+    Align object center to anchor object's specific point.
+    anchor_type: 'center', 'top_face', 'front_face', etc.
+    """
+    if anchor_type == 'center':
+        target_loc = anchor_obj.location
+    else:
+        target_loc = get_face_center(anchor_obj, anchor_type)
+    
+    # Calculate offset needed to move obj's center to target_loc
+    # We don't move it yet, we just record the alignment logic.
+    # The prompt says "Align ... Then move by offset".
+    # So we set the location to the target, then apply offset.
+    obj.location = target_loc
+
+def apply_offset(obj, offset_vec):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vec
+
+def assign_material(obj, mat_name):
+    """Assign a material to an object."""
+    if mat_name in bpy.data.materials:
+        mat = bpy.data.materials[mat_name]
+        if obj.data.materials:
+            obj.data.materials[0] = mat
+        else:
+            obj.data.materials.append(mat)
+
+# ==============================================================================
+# MAIN SCRIPT
+# ==============================================================================
+
+def main():
+    # Block 0: Scene Reset & Units
+    clear_scene()
+    set_units()
+
+    # Block 1: Materials
+    mat_cable_jacket = make_material("cable_jacket", (0.94, 0.94, 0.94, 1))
+    mat_cord_wire = make_material("cord_wire", (0.39, 0.39, 0.39, 1))
+    mat_outlet_body = make_material("outlet_body", (0.96, 0.96, 0.96, 1))
+    mat_outlet_shutter = make_material("outlet_shutter", (0.20, 0.20, 0.20, 1))
+    mat_plug_housing = make_material("plug_housing", (0.96, 0.96, 0.96, 1))
+    mat_plug_prong = make_material("plug_prong", (0.71, 0.71, 0.71, 1))
+
+    # Helper to create and assign material
+    def create_obj(name, type, radius=0.5, depth=1.0, size=(1,1,1), mat=None, **kwargs):
+        if type in ['CYLINDER', 'DISC']:
+            # Cylinder args: radius, depth
+            # Note: Blender primitive_cylinder_add uses radius and depth
+            # But we need to handle diameter vs radius.
+            # The prompt gives diameter.
+            dia = kwargs.get('diameter', radius * 2)
+            h = kwargs.get('height', depth)
+            obj = add_primitive(name, 'CYLINDER', radius=dia/2, depth=h, location=(0,0,0))
+        elif type == 'CUBE':
+            # Cube args: size
+            s = kwargs.get('size', size)
+            obj = add_primitive(name, 'CUBE', size=s, location=(0,0,0))
+        else:
+            obj = add_primitive(name, type, location=(0,0,0))
+        
+        if mat:
+            assign_material(obj, mat)
+        return obj
+
+    # We need a 'root' anchor. Since no root object is created, we assume root is at (0,0,0).
+    # We will create a dummy invisible object or just use (0,0,0) for alignment if needed.
+    # However, the prompt says "Align ... to root.center".
+    # Let's create a dummy root object to serve as the anchor.
+    root = add_primitive("root", 'CUBE', size=(0.001, 0.001, 0.001), location=(0,0,0))
+    root.hide_viewport = True
+    root.hide_render = True
+
+    # ==============================================================================
+    # BLOCK 2: Geometry Generation
+    # ==============================================================================
+
+    # --- SECTION 1 – Create Cable Coil Loops ---
+    
+    # Helper for cable loops
+    def create_cable_loop(name, offset_x):
+        # Cylinder diameter 0.040, height 0.010
+        obj = create_obj(name, 'CYLINDER', diameter=0.040, height=0.010, mat="cable_jacket")
+        
+        # Rotate so +Z aligns +Z (world) - it's already aligned by default
+        align_axis_to_vector(obj, 'Z', Vector((0, 0, 1)))
+        
+        # Align center to root.center
+        align_to_anchor(obj, root, 'center')
+        
+        # Offset
+        apply_offset(obj, Vector((offset_x, 0, 0)))
+        
+        return obj
+
+    create_cable_loop("cable_loop_1", 0)
+    create_cable_loop("cable_loop_2", 0.045)
+    create_cable_loop("cable_loop_3", 0.090)
+    create_cable_loop("cable_loop_4", 0.135)
+    create_cable_loop("cable_loop_5", 0.180)
+
+    # --- SECTION 2 – Create Power Strip Body ---
+    
+    # Cube size 0.300x0.050x0.020
+    strip_body = create_obj("strip_body", 'CUBE', size=(0.300, 0.050, 0.020), mat="outlet_body")
+    
+    # Rotate +Z aligns +Z
+    align_axis_to_vector(strip_body, 'Z', Vector((0, 0, 1)))
+    
+    # Align center to root.center
+    align_to_anchor(strip_body, root, 'center')
+    
+    # Offset
+    apply_offset(strip_body, Vector((0.225, 0, 0)))
+
+    # --- SECTION 3 – Create Outlet 1 Components ---
+    
+    # Socket Housing 1
+    socket_housing_1 = create_obj("socket_housing_1", 'CUBE', size=(0.040, 0.040, 0.015), mat="outlet_body")
+    align_axis_to_vector(socket_housing_1, 'Z', Vector((0, 0, 1)))
+    align_to_anchor(socket_housing_1, strip_body, 'top_face')
+    apply_offset(socket_housing_1, Vector((-0.100, 0, 0.0175)))
+
+    # Shutter 1a
+    shutter_1a = create_obj("shutter_1a", 'CYLINDER', diameter=0.005, height=0.002, mat="outlet_shutter")
+    align_axis_to_vector(shutter_1a, 'Z', Vector((1, 0, 0))) # Align +Z to +X
+    align_to_anchor(shutter_1a, socket_housing_1, 'front_face')
+    apply_offset(shutter_1a, Vector((-0.008, 0, 0.0075)))
+
+    # Shutter 1b
+    shutter_1b = create_obj("shutter_1b", 'CYLINDER', diameter=0.005, height=0.002, mat="outlet_shutter")
+    align_axis_to_vector(shutter_1b, 'Z', Vector((1, 0, 0))) # Align +Z to +X
+    align_to_anchor(shutter_1b, socket_housing_1, 'front_face')
+    apply_offset(shutter_1b, Vector((0.008, 0, 0.0075)))
+
+    # --- SECTION 4 – Create Outlet 2 Components ---
+    
+    # Socket Housing 2
+    socket_housing_2 = create_obj("socket_housing_2", 'CUBE', size=(0.040, 0.040, 0.015), mat="outlet_body")
+    align_axis_to_vector(socket_housing_2, 'Z', Vector((0, 0, 1)))
+    align_to_anchor(socket_housing_2, strip_body, 'top_face')
+    apply_offset(socket_housing_2, Vector((0, 0, 0.0175)))
+
+    # Shutter 2a
+    shutter_2a = create_obj("shutter_2a", 'CYLINDER', diameter=0.005, height=0.002, mat="outlet_shutter")
+    align_axis_to_vector(shutter_2a, 'Z', Vector((1, 0, 0)))
+    align_to_anchor(shutter_2a, socket_housing_2, 'front_face')
+    apply_offset(shutter_2a, Vector((-0.008, 0, 0.0075)))
+
+    # Shutter 2b
+    shutter_2b = create_obj("shutter_2b", 'CYLINDER', diameter=0.005, height=0.002, mat="outlet_shutter")
+    align_axis_to_vector(shutter_2b, 'Z', Vector((1, 0, 0)))
+    align_to_anchor(shutter_2b, socket_housing_2, 'front_face')
+    apply_offset(shutter_2b, Vector((0.008, 0, 0.0075)))
+
+    # --- SECTION 5 – Create Outlet 3 Components ---
+    
+    # Socket Housing 3
+    socket_housing_3 = create_obj("socket_housing_3", 'CUBE', size=(0.040, 0.040, 0.015), mat="outlet_body")
+    align_axis_to_vector(socket_housing_3, 'Z', Vector((0, 0, 1)))
+    align_to_anchor(socket_housing_3, strip_body, 'top_face')
+    apply_offset(socket_housing_3, Vector((0.100, 0, 0.0175)))
+
+    # Shutter 3a
+    shutter_3a = create_obj("shutter_3a", 'CYLINDER', diameter=0.005, height=0.002, mat="outlet_shutter")
+    align_axis_to_vector(shutter_3a, 'Z', Vector((1, 0, 0)))
+    align_to_anchor(shutter_3a, socket_housing_3, 'front_face')
+    apply_offset(shutter_3a, Vector((-0.008, 0, 0.0075)))
+
+    # Shutter 3b
+    shutter_3b = create_obj("shutter_3b", 'CYLINDER', diameter=0.005, height=0.002, mat="outlet_shutter")
+    align_axis_to_vector(shutter_3b, 'Z', Vector((1, 0, 0)))
+    align_to_anchor(shutter_3b, socket_housing_3, 'front_face')
+    apply_offset(shutter_3b, Vector((0.008, 0, 0.0075)))
+
+    # --- SECTION 6 – Create Plug Head Components ---
+    
+    # Plug Body
+    plug_body = create_obj("plug_body", 'CUBE', size=(0.050, 0.040, 0.030), mat="plug_housing")
+    align_axis_to_vector(plug_body, 'Z', Vector((0, 0, 1)))
+    align_to_anchor(plug_body, root, 'center')
+    apply_offset(plug_body, Vector((-0.025, 0, 0)))
+
+    # Prong 1
+    prong_1 = create_obj("prong_1", 'CYLINDER', diameter=0.004, height=0.020, mat="plug_prong")
+    align_axis_to_vector(prong_1, 'Z', Vector((0, 0, -1))) # Align +Z to -Z
+    align_to_anchor(prong_1, plug_body, 'back_face')
+    apply_offset(prong_1, Vector((-0.010, 0, 0)))
+
+    # Prong 2
+    prong_2 = create_obj("prong_2", 'CYLINDER', diameter=0.004, height=0.020, mat="plug_prong")
+    align_axis_to_vector(prong_2, 'Z', Vector((0, 0, -1)))
+    align_to_anchor(prong_2, plug_body, 'back_face')
+    apply_offset(prong_2, Vector((0.010, 0, 0)))
+
+    # Prong 3
+    prong_3 = create_obj("prong_3", 'CYLINDER', diameter=0.004, height=0.020, mat="plug_prong")
+    align_axis_to_vector(prong_3, 'Z', Vector((0, 0, -1)))
+    align_to_anchor(prong_3, plug_body, 'back_face')
+    apply_offset(prong_3, Vector((0, 0.015, 0)))
+
+    # Select all created objects for convenience
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in bpy.context.scene.objects:
+        if obj.name != "root":
+            obj.select_set(True)
+
+if __name__ == "__main__":
+    main()
+```

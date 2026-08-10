@@ -1,0 +1,1 @@
+Create a 3D model of a calendar icon. It should be a square with a small rectangle at the top representing the binding. Add the numbers "1" in the center.

@@ -1,0 +1,59 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.75,1.0)
+mat_black_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_blue_plastic | diffuse_color=(0.1,0.3,0.8,1.0)
+mat_green_plastic | diffuse_color=(0.1,0.6,0.1,1.0)
+mat_glass | diffuse_color=(0.9,0.95,0.95,0.3)
+mat_white_plastic | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of panel_box + door + breakers | assembly_order=[panel_box, door, breakers] |
+
+Layer 1 – Primary Structure (Panel Box)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| panel_box | Composite of back_plate + side_frames + top_frame + bottom_frame | assembly_order=[back_plate, side_frames, top_frame, bottom_frame] |
+| back_plate | Rectangular plate 0.600×0.800×0.005 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| side_frames | Composite of left_frame + right_frame | assembly_order=[left_frame, right_frame] |
+| left_frame | Rectangular bar 0.020×0.800×0.005 m | Align(XZ) left_frame.right_face to back_plate.left_face; offset(0,0,0); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| right_frame | Rectangular bar 0.020×0.800×0.005 m | Align(XZ) right_frame.left_face to back_plate.right_face; offset(0,0,0); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| top_frame | Rectangular bar 0.600×0.020×0.005 m | Align(XZ) top_frame.bottom_face to back_plate.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| bottom_frame | Rectangular bar 0.600×0.020×0.005 m | Align(XZ) bottom_frame.top_face to back_plate.bottom_face; offset(0,0,0); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+
+Layer 2 – Door Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door | Composite of door_frame + door_panel + handle + latch | assembly_order=[door_frame, door_panel, handle, latch] |
+| door_frame | Rectangular frame 0.560×0.760×0.005 m | Align(XZ) door_frame.center to back_plate.center; offset(0,0,0.010); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| door_panel | Solid plate 0.560×0.760×0.005 m | Align(XZ) door_panel.center to door_frame.center; offset(0,0,0.002); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| handle | Cylindrical grip Ø0.020×0.150 m | Align(XY) handle.center to door_panel.right_face; offset(0.010,0,0); orientation=axis:+X; mat=mat_black_plastic; create_method=primitive |
+| latch | Small rectangular block 0.010×0.010×0.005 m | Align(XZ) latch.right_face to door_panel.left_face; offset(0,0.350,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+
+Layer 3 – Circuit Breakers (Pattern)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| breaker_template | Composite of breaker_body + switch + label | assembly_order=[breaker_body, switch, label] |
+| breaker_body | Rectangular block 0.040×0.060×0.020 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| switch | Small rectangular toggle 0.010×0.030×0.005 m | Align(XZ) switch.bottom_face to breaker_body.top_face; offset(0,0,0.012); orientation=axis:+Z; mat=mat_blue_plastic; create_method=primitive |
+| label | Thin rectangular plate 0.030×0.010×0.001 m | Align(XZ) label.bottom_face to breaker_body.front_face; offset(0,0.025,0.010); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive |
+| breaker_1 | Instance of breaker_template | Align(XZ) breaker_1.center to Avg(breaker_2.center, breaker_3.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(-0.060, -0.080)) |
+| breaker_2 | Instance of breaker_template | Align(XZ) breaker_2.center to Avg(breaker_1.center, breaker_3.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(0, -0.080)) |
+| breaker_3 | Instance of breaker_template | Align(XZ) breaker_3.center to Avg(breaker_1.center, breaker_2.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(0.060, -0.080)) |
+| breaker_4 | Instance of breaker_template | Align(XZ) breaker_4.center to Avg(breaker_5.center, breaker_6.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(-0.060, 0)) |
+| breaker_5 | Instance of breaker_template | Align(XZ) breaker_5.center to Avg(breaker_4.center, breaker_6.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(0, 0)) |
+| breaker_6 | Instance of breaker_template | Align(XZ) breaker_6.center to Avg(breaker_4.center, breaker_5.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(0.060, 0)) |
+| breaker_7 | Instance of breaker_template | Align(XZ) breaker_7.center to Avg(breaker_8.center, breaker_9.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(-0.060, 0.080)) |
+| breaker_8 | Instance of breaker_template | Align(XZ) breaker_8.center to Avg(breaker_7.center, breaker_9.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(0, 0.080)) |
+| breaker_9 | Instance of breaker_template | Align(XZ) breaker_9.center to Avg(breaker_7.center, breaker_8.center); offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive; pattern=grid(rows:1, cols:3, x_spacing:0.060, y_spacing:0.080, start_offset:(0.060, 0.080)) |
+
+Layer 4 – Internal Wiring & Mounting
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bus_bar | Rectangular bar 0.500×0.010×0.005 m | Align(XZ) bus_bar.center to back_plate.center; offset(0,0.350,0.010); orientation=axis:+X; mat=mat_aluminum; create_method=primitive |
+| wire_tray | Rectangular channel 0.500×0.020×0.010 m | Align(XZ) wire_tray.center to back_plate.center; offset(0,-0.350,0.010); orientation=axis:+X; mat=mat_black_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

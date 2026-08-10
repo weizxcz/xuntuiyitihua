@@ -1,0 +1,41 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_plastic_grey; diffuse_color = (0.5,0.5,0.5,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base  ---
+Create primitive cylinder with diameter 0.30 m and height 0.01 m and name it base.
+Rotate base so its +Z axis aligns +Z (world).
+Align base.center to trash_can.center using axes XY.
+Align base.bottom_face to trash_can.bottom_face using axis Z.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create body  ---
+Create primitive cylinder with diameter 0.30 m and height 0.40 m and name it body.
+Rotate body so its +Z axis aligns +Z (world).
+Align body.center to trash_can.center using axes XY.
+Align body.bottom_face to base.top_face using axis Z.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create rim  ---
+Create primitive cylinder with diameter 0.32 m and height 0.01 m and name it rim.
+Rotate rim so its +Z axis aligns +Z (world).
+Align rim.center to trash_can.center using axes XY.
+Align rim.bottom_face to body.top_face using axis Z.
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+All stages complete.

@@ -1,0 +1,97 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_beige; diffuse_color = (0.96,0.92,0.84,1.0).
+Define material plastic_black; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material wood_brown; diffuse_color = (0.55,0.35,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base pad  ---
+Create primitive cuboid with size 0.8×0.8×0.05 m and name it base_pad.
+Rotate base_pad so its +Z axis aligns +Z (world).
+Align base_pad.XY_face to (0,0).
+Align base_pad.bottom_face to (0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create base footprint  ---
+Create primitive cuboid with size 0.82×0.82×0.01 m and name it base_footprint.
+Rotate base_footprint so its +Z axis aligns +Z (world).
+Align base_footprint.XY_face to (0,0).
+Align base_footprint.bottom_face to base_pad.bottom_face.
+Then move by offset(0,0,-0.005).
+Stage 2 complete.
+
+---  SECTION 3 – Create post  ---
+Create primitive cylinder with Ø0.1×1.2 m and name it post.
+Rotate post so its +Z axis aligns +Z (world).
+Align post.XY_face to base_pad.center.
+Align post.bottom_face to base_pad.top_face.
+Stage 3 complete.
+
+---  SECTION 4 – Create platform L1  ---
+Create primitive cuboid with size 0.5×0.5×0.03 m and name it platform_L1.
+Rotate platform_L1 so its +Z axis aligns +Z (world).
+Align platform_L1.XY_face to post.center.
+Align platform_L1.bottom_face to post.side_at(0°).
+Then move by offset(0.25,0,0).
+Stage 4 complete.
+
+---  SECTION 5 – Create platform L2  ---
+Create primitive cuboid with size 0.5×0.5×0.03 m and name it platform_L2.
+Rotate platform_L2 so its +Z axis aligns +Z (world).
+Align platform_L2.XY_face to post.center.
+Align platform_L2.bottom_face to post.side_at(90°).
+Then move by offset(0,0.25,0.4).
+Stage 5 complete.
+
+---  SECTION 6 – Create platform L3  ---
+Create primitive cuboid with size 0.5×0.5×0.03 m and name it platform_L3.
+Rotate platform_L3 so its +Z axis aligns +Z (world).
+Align platform_L3.XY_face to post.center.
+Align platform_L3.bottom_face to post.side_at(180°).
+Then move by offset(-0.25,0,0.8).
+Stage 6 complete.
+
+---  SECTION 7 – Create box body  ---
+Create primitive cuboid with size 0.3×0.3×0.3 m and name it box_body.
+Rotate box_body so its +Z axis aligns +Z (world).
+Align box_body.XY_face to platform_L3.center.
+Align box_body.bottom_face to platform_L3.top_face.
+Then move by offset(0,0,0.15).
+Stage 7 complete.
+
+---  SECTION 8 – Create box roof  ---
+Create primitive cuboid with size 0.32×0.32×0.02 m and name it box_roof.
+Rotate box_roof so its +Z axis aligns +Z (world).
+Align box_roof.XY_face to box_body.center.
+Align box_roof.bottom_face to box_body.top_face.
+Then move by offset(0,0,0.01).
+Stage 8 complete.
+
+---  SECTION 9 – Create toy string  ---
+Create primitive cylinder with Ø0.005×0.2 m and name it toy_string.
+Rotate toy_string so its +Z axis aligns +Z (world).
+Align toy_string.XY_face to platform_L2.center.
+Align toy_string.top_face to platform_L2.bottom_face.
+Then move by offset(0.1,0.1,0).
+Stage 9 complete.
+
+---  SECTION 10 – Create toy feather  ---
+Create primitive sphere with Ø0.05 m and name it toy_feather.
+Rotate toy_feather so its +Z axis aligns +Z (world).
+Align toy_feather.XY_face to toy_string.center.
+Align toy_feather.top_face to toy_string.bottom_face.
+Then move by offset(0,0,-0.15).
+Stage 10 complete.
+
+All stages complete.

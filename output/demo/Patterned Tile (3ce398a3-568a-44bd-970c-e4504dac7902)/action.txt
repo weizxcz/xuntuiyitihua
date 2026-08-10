@@ -1,0 +1,46 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material tile_base; diffuse_color = (0.85,0.85,0.85,1.0).
+Define material tile_pattern; diffuse_color = (0.75,0.75,0.75,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create tile base  ---
+Create primitive cuboid with size 0.305×0.305×0.012 m and name it tile_base.
+Rotate tile_base so its +Z axis aligns +Z (world).
+Anchor tile_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create pattern grid  ---
+Create an Empty helper (cube display) and name it pattern_grid.
+Rotate pattern_grid so its axis aligns +Z (world).
+Move pattern_grid to (0,0,0.006).
+Scale pattern_grid to match overall size (AUTO → 0.305 m inferred width/depth).
+For r in 0…3 and c in 0…3:
+  Create primitive cylinder with Ø0.025×0.003 m and name it floral_motif_r_c.
+  Rotate floral_motif_r_c so its +Z axis aligns +Z (world).
+  Anchor floral_motif_r_c to pattern_grid.
+  Then offset(-0.15225 + c·0.07625, -0.15225 + r·0.07625, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Assemble floral motifs into composite  ---
+Boolean-union floral_motif_0_0, floral_motif_0_1, floral_motif_0_2, floral_motif_0_3, floral_motif_1_0, floral_motif_1_1, floral_motif_1_2, floral_motif_1_3, floral_motif_2_0, floral_motif_2_1, floral_motif_2_2, floral_motif_2_3, floral_motif_3_0, floral_motif_3_1, floral_motif_3_2, floral_motif_3_3; keep floral_motif_0_0.  // produces composite floral motif
+Stage 3 complete.
+
+---  SECTION 4 – Final Assembly  ---
+Align tile_pattern (composite floral motif) .+Z_face to tile_base .+Z_face.
+Then move by offset(0,0,0).
+Stage 4 complete.
+
+All stages complete.

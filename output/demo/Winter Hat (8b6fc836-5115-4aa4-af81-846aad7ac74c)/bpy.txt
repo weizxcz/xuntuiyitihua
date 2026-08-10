@@ -1,0 +1,270 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, degrees
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, height, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder mesh."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (cylinder with height 0)."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, height, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone/tapered cylinder."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=height, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def boolean_subtract(target, cutter):
+    """Perform boolean subtract using a modifier."""
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    # Apply immediately to keep scene clean
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(target, union_obj):
+    """Perform boolean union using a modifier."""
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN' )
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with a world vector."""
+    # Ensure vector is normalized
+    v = Vector(vector).normalized()
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(v)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find specific points on an object's geometry."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.mesh = obj.data
+        self.verts = self.mesh.vertices
+        self.has_calc = False
+        self._calc_bbox()
+
+    def _calc_bbox(self):
+        """Pre-calculate bounding box corners in world space."""
+        # Transform vertices to world space
+        world_verts = [self.obj.matrix_world @ v.co for v in self.verts]
+        if not world_verts:
+            self.bbox_min = Vector((0,0,0))
+            self.bbox_max = Vector((0,0,0))
+            return
+            
+        xs = [v.x for v in world_verts]
+        ys = [v.y for v in world_verts]
+        zs = [v.z for v in world_verts]
+        
+        self.bbox_min = Vector((min(xs), min(ys), min(zs)))
+        self.bbox_max = Vector((max(xs), max(ys), max(zs)))
+        self.has_calc = True
+
+    def center_world(self):
+        """Return the center of the bounding box in world space."""
+        if not self.has_calc:
+            self._calc_bbox()
+        return (self.bbox_min + self.bbox_max) / 2.0
+
+    def face_center_world(self, face_type='top'):
+        """Return the center of a specific face (top, bottom, left, right, front, back)."""
+        if not self.has_calc:
+            self._calc_bbox()
+            
+        if face_type == 'top':
+            return Vector((self.center_world().x, self.center_world().y, self.bbox_max.z))
+        elif face_type == 'bottom':
+            return Vector((self.center_world().x, self.center_world().y, self.bbox_min.z))
+        elif face_type == 'left':
+            return Vector((self.bbox_min.x, self.center_world().y, self.center_world().z))
+        elif face_type == 'right':
+            return Vector((self.bbox_max.x, self.center_world().y, self.center_world().z))
+        elif face_type == 'front':
+            return Vector((self.center_world().x, self.bbox_max.y, self.center_world().z))
+        elif face_type == 'back':
+            return Vector((self.center_world().x, self.bbox_min.y, self.center_world().z))
+        return self.center_world()
+
+    def radial_point_world(self, direction='X', height_factor=0.5):
+        """Return a point on the radial surface."""
+        if not self.has_calc:
+            self._calc_bbox()
+            
+        center = self.center_world()
+        z = center.z + (self.bbox_max.z - self.bbox_min.z) * (height_factor - 0.5)
+        
+        if direction == 'X':
+            return Vector((self.bbox_max.x, center.y, z))
+        elif direction == '-X':
+            return Vector((self.bbox_min.x, center.y, z))
+        elif direction == 'Y':
+            return Vector((center.x, self.bbox_max.y, z))
+        elif direction == '-Y':
+            return Vector((center.x, self.bbox_min.y, z))
+        return center
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_fabric_main = make_material("fabric_main", (0.8, 0.1, 0.1, 1.0))
+    mat_pom_pom_fur = make_material("pom_pom_fur", (0.95, 0.95, 0.95, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create hat_base (Main Crown) ---
+    hat_base = add_cylinder("hat_base", radius=0.110, height=0.250, location=(0,0,0), rotation=(0,0,0))
+    apply_material(hat_base, mat_fabric_main)
+    
+    # Rotate hat_base so its +Z axis aligns +Z (world) - already default for cylinder
+    align_axis_to_vector(hat_base, 'Z', (0,0,1))
+    
+    # Anchor hat_base to world.origin
+    hat_base.location = (0, 0, 0)
+    
+    # Stage 1 complete
+
+    # --- SECTION 2 – Create ear_flap_L and ear_flap_R ---
+    
+    # Create ear_flap_L
+    ear_flap_L = add_cylinder("ear_flap_L", radius=0.050, height=0.150, location=(0,0,0), rotation=(0,0,0))
+    apply_material(ear_flap_L, mat_fabric_main)
+    
+    # Rotate ear_flap_L so its +Z axis aligns +Z (world)
+    align_axis_to_vector(ear_flap_L, 'Z', (0,0,1))
+    
+    # Align ear_flap_L.XY_face to hat_base.left_face
+    # Note: Cylinder Z is height. XY face is top/bottom. 
+    # "Align ear_flap_L.XY_face to hat_base.left_face" implies positioning the flap's top/bottom center 
+    # to the left face center of the hat base.
+    loc_L = Locator(hat_base)
+    target_pos_L = loc_L.face_center_world('left')
+    
+    # Position ear_flap_L center to target
+    ear_flap_L.location = target_pos_L
+    
+    # Then move by offset(0, 0, -0.075)
+    # Offset is in reference local axes. Since Z is aligned to world Z, local Z is world Z.
+    ear_flap_L.location += Vector((0, 0, -0.075))
+    
+    # Create ear_flap_R
+    ear_flap_R = add_cylinder("ear_flap_R", radius=0.050, height=0.150, location=(0,0,0), rotation=(0,0,0))
+    apply_material(ear_flap_R, mat_fabric_main)
+    
+    # Rotate ear_flap_R so its +Z axis aligns +Z (world)
+    align_axis_to_vector(ear_flap_R, 'Z', (0,0,1))
+    
+    # Align ear_flap_R.XY_face to hat_base.right_face
+    loc_R = Locator(hat_base)
+    target_pos_R = loc_R.face_center_world('right')
+    
+    # Position ear_flap_R center to target
+    ear_flap_R.location = target_pos_R
+    
+    # Then move by offset(0, 0, -0.075)
+    ear_flap_R.location += Vector((0, 0, -0.075))
+    
+    # Stage 2 complete
+
+    # --- SECTION 3 – Create pom_pom ---
+    pom_pom = add_uvsphere("pom_pom", radius=0.060, location=(0,0,0), rotation=(0,0,0))
+    apply_material(pom_pom, mat_pom_pom_fur)
+    
+    # Rotate pom_pom so its +Z axis aligns +Z (world) - Sphere is symmetric, but good practice
+    align_axis_to_vector(pom_pom, 'Z', (0,0,1))
+    
+    # Align pom_pom.center to hat_base.top_face
+    loc_pom = Locator(hat_base)
+    target_pos_pom = loc_pom.face_center_world('top')
+    
+    # Position pom_pom center to target
+    pom_pom.location = target_pos_pom
+    
+    # Then move by offset(0, 0, 0.050)
+    pom_pom.location += Vector((0, 0, 0.050))
+    
+    # Stage 3 complete
+
+if __name__ == "__main__":
+    main()
+```

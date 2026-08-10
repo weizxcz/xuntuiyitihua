@@ -1,0 +1,210 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.diffuse_color = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=depth, location=location)
+    obj = bpy.context.object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_center_to_target(source_obj, target_obj):
+    """Aligns the center of source_obj to the center of target_obj."""
+    target_loc = target_obj.location
+    source_loc = source_obj.location
+    offset = target_loc - source_loc
+    source_obj.location += offset
+
+def apply_offset(obj, offset_vec):
+    """Applies an offset vector to the object's location."""
+    obj.location += offset_vec
+
+def orient_z_to_y(obj):
+    """Rotates object so its local +Z aligns with world +Y."""
+    # World +Y is (0, 1, 0). Local +Z is (0, 0, 1).
+    # Rotation of -90 degrees around X axis maps Z to Y.
+    obj.rotation_euler = (math.radians(-90), 0, 0)
+
+def orient_z_to_x(obj):
+    """Rotates object so its local +Z aligns with world +X."""
+    # World +X is (1, 0, 0). Local +Z is (0, 0, 1).
+    # Rotation of +90 degrees around Y axis maps Z to X.
+    obj.rotation_euler = (0, math.radians(90), 0)
+
+def orient_z_to_z(obj):
+    """Ensures object local +Z aligns with world +Z (identity)."""
+    obj.rotation_euler = (0, 0, 0)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_aluminum = make_material("mat_aluminum", (0.8, 0.8, 0.85, 1.0))
+mat_hardshell = make_material("mat_hardshell", (0.1, 0.1, 0.15, 1.0))
+mat_polyurethane = make_material("mat_polyurethane", (0.05, 0.05, 0.05, 1.0))
+mat_rubber = make_material("mat_rubber", (0.15, 0.15, 0.15, 1.0))
+mat_zinc = make_material("mat_zinc", (0.6, 0.6, 0.65, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create main shell and outer casing ---
+
+# Create main_shell
+main_shell = add_cube("main_shell", (0.65, 0.45, 0.28), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(main_shell)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+apply_offset(main_shell, (0, 0, 0))
+
+# Create outer_shell
+outer_shell = add_cube("outer_shell", (0.65, 0.45, 0.28), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(outer_shell)
+align_center_to_target(outer_shell, main_shell)
+# Offset (0,0,0)
+apply_offset(outer_shell, (0, 0, 0))
+
+# --- SECTION 2 – Create inner lining ---
+
+# Create inner_lining
+inner_lining = add_cube("inner_lining", (0.63, 0.43, 0.26), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(inner_lining)
+align_center_to_target(inner_lining, main_shell)
+# Offset (0,0,0)
+apply_offset(inner_lining, (0, 0, 0))
+
+# --- SECTION 3 – Create zipper track ---
+
+# Create zipper_track
+zipper_track = add_cube("zipper_track", (0.66, 0.01, 0.29), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(zipper_track)
+align_center_to_target(zipper_track, main_shell)
+# Offset (0,0,0)
+apply_offset(zipper_track, (0, 0, 0))
+
+# --- SECTION 4 – Create handle base ---
+
+# Create handle_base
+handle_base = add_cube("handle_base", (0.1, 0.02, 0.05), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(handle_base)
+align_center_to_target(handle_base, main_shell)
+# Offset (0, 0.225, -0.14)
+apply_offset(handle_base, (0, 0.225, -0.14))
+
+# --- SECTION 5 – Create telescopic tube 1 ---
+
+# Create telescopic_tube_1
+telescopic_tube_1 = add_cylinder("telescopic_tube_1", 0.0075, 0.3, (0, 0, 0), (0, 0, 0))
+orient_z_to_y(telescopic_tube_1)
+align_center_to_target(telescopic_tube_1, handle_base)
+# Offset (0, 0.01, 0)
+apply_offset(telescopic_tube_1, (0, 0.01, 0))
+
+# --- SECTION 6 – Create telescopic tube 2 ---
+
+# Create telescopic_tube_2
+telescopic_tube_2 = add_cylinder("telescopic_tube_2", 0.006, 0.3, (0, 0, 0), (0, 0, 0))
+orient_z_to_y(telescopic_tube_2)
+align_center_to_target(telescopic_tube_2, telescopic_tube_1)
+# Offset (0, 0.15, 0)
+apply_offset(telescopic_tube_2, (0, 0.15, 0))
+
+# --- SECTION 7 – Create handle grip ---
+
+# Create handle_grip
+handle_grip = add_cylinder("handle_grip", 0.01, 0.15, (0, 0, 0), (0, 0, 0))
+orient_z_to_y(handle_grip)
+align_center_to_target(handle_grip, telescopic_tube_2)
+# Offset (0, 0.15, 0)
+apply_offset(handle_grip, (0, 0.15, 0))
+
+# --- SECTION 8 – Create wheel mounts ---
+
+# Create wheel_mount_fl
+wheel_mount_fl = add_cube("wheel_mount_fl", (0.05, 0.05, 0.05), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(wheel_mount_fl)
+align_center_to_target(wheel_mount_fl, main_shell)
+# Offset (-0.25, -0.225, 0.12)
+apply_offset(wheel_mount_fl, (-0.25, -0.225, 0.12))
+
+# Create wheel_mount_fr
+wheel_mount_fr = add_cube("wheel_mount_fr", (0.05, 0.05, 0.05), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(wheel_mount_fr)
+align_center_to_target(wheel_mount_fr, main_shell)
+# Offset (0.25, -0.225, 0.12)
+apply_offset(wheel_mount_fr, (0.25, -0.225, 0.12))
+
+# Create wheel_mount_rl
+wheel_mount_rl = add_cube("wheel_mount_rl", (0.05, 0.05, 0.05), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(wheel_mount_rl)
+align_center_to_target(wheel_mount_rl, main_shell)
+# Offset (-0.25, -0.225, -0.12)
+apply_offset(wheel_mount_rl, (-0.25, -0.225, -0.12))
+
+# Create wheel_mount_rr
+wheel_mount_rr = add_cube("wheel_mount_rr", (0.05, 0.05, 0.05), (0, 0, 0), (0, 0, 0))
+orient_z_to_y(wheel_mount_rr)
+align_center_to_target(wheel_mount_rr, main_shell)
+# Offset (0.25, -0.225, -0.12)
+apply_offset(wheel_mount_rr, (0.25, -0.225, -0.12))
+
+# --- SECTION 9 – Create front-left wheel ---
+
+# Create wheel_fl
+wheel_fl = add_cylinder("wheel_fl", 0.01, 0.02, (0, 0, 0), (0, 0, 0))
+orient_z_to_x(wheel_fl)
+align_center_to_target(wheel_fl, wheel_mount_fl)
+# Offset (0, -0.025, 0)
+apply_offset(wheel_fl, (0, -0.025, 0))
+
+# --- SECTION 10 – Create front-right wheel ---
+
+# Create wheel_fr
+wheel_fr = add_cylinder("wheel_fr", 0.01, 0.02, (0, 0, 0), (0, 0, 0))
+orient_z_to_x(wheel_fr)
+align_center_to_target(wheel_fr, wheel_mount_fr)
+# Offset (0, -0.025, 0)
+apply_offset(wheel_fr, (0, -0.025, 0))
+
+# --- SECTION 11 – Create rear-left wheel ---
+
+# Create wheel_rl
+wheel_rl = add_cylinder("wheel_rl", 0.01, 0.02, (0, 0, 0), (0, 0, 0))
+orient_z_to_x(wheel_rl)
+align_center_to_target(wheel_rl, wheel_mount_rl)
+# Offset (0, -0.025, 0)
+apply_offset(wheel_rl, (0, -0.025, 0))
+
+# --- SECTION 12 – Create rear-right wheel ---
+
+# Create wheel_rr
+wheel_rr = add_cylinder("wheel_rr", 0.01, 0.02, (0, 0, 0), (0, 0, 0))
+orient_z_to_x(wheel_rr)
+align_center_to_target(wheel_rr, wheel_mount_rr)
+# Offset (0, -0.025, 0)
+apply_offset(wheel_rr, (0, -0.025, 0))

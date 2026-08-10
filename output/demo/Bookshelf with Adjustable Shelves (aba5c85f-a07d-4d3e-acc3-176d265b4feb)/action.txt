@@ -1,0 +1,68 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_dark; diffuse_color = (0.35, 0.20, 0.10, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create side panels  ---
+Create primitive cuboid with size 0.025×1.829×0.305 m and name it side_L.
+Rotate side_L so its +Z axis aligns +Z (world).
+Anchor side_L to world origin.
+Then move by offset(-0.762, 0.9145, 0).
+
+Create primitive cuboid with size 0.025×1.829×0.305 m and name it side_R.
+Rotate side_R so its +Z axis aligns +Z (world).
+Anchor side_R to world origin.
+Then move by offset(0.762, 0.9145, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create shelves  ---
+Create primitive cuboid with size 0.712×0.025×0.305 m and name it shelf_1.
+Rotate shelf_1 so its +Z axis aligns +Z (world).
+Align shelf_1.left_face to side_L.right_face.
+Align shelf_1.right_face to side_R.left_face.
+Align shelf_1.bottom_face to side_L.bottom_face.
+Then move by offset(0, 0, 0.305).
+
+Create primitive cuboid with size 0.712×0.025×0.305 m and name it shelf_2.
+Rotate shelf_2 so its +Z axis aligns +Z (world).
+Align shelf_2.left_face to side_L.right_face.
+Align shelf_2.right_face to side_R.left_face.
+Align shelf_2.bottom_face to side_L.bottom_face.
+Then move by offset(0, 0, 0.610).
+
+Create primitive cuboid with size 0.712×0.025×0.305 m and name it shelf_3.
+Rotate shelf_3 so its +Z axis aligns +Z (world).
+Align shelf_3.left_face to side_L.right_face.
+Align shelf_3.right_face to side_R.left_face.
+Align shelf_3.bottom_face to side_L.bottom_face.
+Then move by offset(0, 0, 0.914).
+
+Create primitive cuboid with size 0.712×0.025×0.305 m and name it shelf_4.
+Rotate shelf_4 so its +Z axis aligns +Z (world).
+Align shelf_4.left_face to side_L.right_face.
+Align shelf_4.right_face to side_R.left_face.
+Align shelf_4.bottom_face to side_L.bottom_face.
+Then move by offset(0, 0, 1.219).
+
+Create primitive cuboid with size 0.712×0.025×0.305 m and name it shelf_5.
+Rotate shelf_5 so its +Z axis aligns +Z (world).
+Align shelf_5.left_face to side_L.right_face.
+Align shelf_5.right_face to side_R.left_face.
+Align shelf_5.bottom_face to side_L.bottom_face.
+Then move by offset(0, 0, 1.524).
+
+Stage 2 complete.
+
+All stages complete.

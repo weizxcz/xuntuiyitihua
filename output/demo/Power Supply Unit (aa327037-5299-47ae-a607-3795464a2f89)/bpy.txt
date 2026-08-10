@@ -1,0 +1,306 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube with specific size."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def add_primitive_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, target_vector, align_axis='Z'):
+    """Rotate object so its local axis aligns with target_vector."""
+    # Get current direction of the axis
+    if align_axis == 'Z':
+        current_dir = obj.matrix_world.to_3x3() @ Vector((0, 0, 1))
+    elif align_axis == 'Y':
+        current_dir = obj.matrix_world.to_3x3() @ Vector((0, 1, 0))
+    elif align_axis == 'X':
+        current_dir = obj.matrix_world.to_3x3() @ Vector((1, 0, 0))
+    
+    # Calculate rotation
+    rot_quat = current_dir.rotation_difference(target_vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='center'):
+    """
+    Get the world location of a specific face center.
+    face_type: 'center', 'left', 'right', 'top', 'bottom', 'front', 'back'
+    Assumes object is axis-aligned or we approximate based on scale/rotation.
+    For simplicity in this script, we calculate based on object bounds and rotation.
+    """
+    # Get local bounds
+    min_x, min_y, min_z = obj.dimensions[0]/-2, obj.dimensions[1]/-2, obj.dimensions[2]/-2
+    max_x, max_y, max_z = obj.dimensions[0]/2, obj.dimensions[1]/2, obj.dimensions[2]/2
+    
+    # Define local face centers
+    faces = {
+        'center': Vector((0, 0, 0)),
+        'left': Vector((-max_x, 0, 0)),
+        'right': Vector((max_x, 0, 0)),
+        'top': Vector((0, max_z, 0)),
+        'bottom': Vector((0, -max_z, 0)),
+        'front': Vector((0, 0, max_y)), # Assuming Y is front/back in local space usually, but let's stick to standard cube
+        'back': Vector((0, 0, -max_y)),
+    }
+    
+    # Note: Standard Blender Cube: X=Right/Left, Y=Front/Back, Z=Top/Bottom
+    # The prompt uses "left_face", "right_face", "back_face".
+    # We need to map these to the object's local axes after rotation.
+    
+    # Let's use a simpler approach: Transform the local face vector by the object's world matrix
+    local_vec = faces.get(face_type, Vector((0,0,0)))
+    world_vec = obj.matrix_world @ local_vec
+    return world_vec
+
+def boolean_subtract(cutter_name, target_name):
+    """
+    Perform Boolean Subtract using the modifier stack.
+    cutter_name: The object to subtract (will be hidden/kept as cutter)
+    target_name: The object being cut
+    """
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Add boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Hide or delete cutter? Prompt says "keep psu_chassis". 
+    # Usually cutters are temporary. Let's hide them to keep scene clean, or leave them.
+    # I will hide them.
+    cutter.hide_viewport = True
+    cutter.hide_render = True
+
+def boolean_union(target_name, other_name):
+    """Perform Boolean Union."""
+    target = bpy.data.objects[target_name]
+    other = bpy.data.objects[other_name]
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_aluminum = make_material("mat_aluminum", (0.75, 0.75, 0.75, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_copper = make_material("mat_copper", (0.85, 0.37, 0.27, 1.0))
+mat_green_pcb = make_material("mat_green_pcb", (0.1, 0.4, 0.1, 1.0))
+mat_metal_grill = make_material("mat_metal_grill", (0.2, 0.2, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: Create PSU Chassis Base ---
+# Create primitive cuboid with size 0.150×0.086×0.015 m and name it psu_chassis.
+# Rotate psu_chassis so its +Z axis aligns +Z (world).
+# Move psu_chassis to (0,0,0).
+psu_chassis = add_primitive_cube("psu_chassis", (0.150, 0.086, 0.015), location=(0,0,0), rotation=(0,0,0))
+apply_material(psu_chassis, mat_black_plastic)
+
+# --- SECTION 2: Create PSU Case ---
+# Create primitive cuboid with size 0.150×0.086×0.015 m and name it psu_case.
+# Rotate psu_case so its +Z axis aligns +Z (world).
+# Align psu_case.center to psu_chassis.center.
+# Boolean-subtract psu_case from psu_chassis; keep psu_chassis.
+psu_case = add_primitive_cube("psu_case", (0.150, 0.086, 0.015), location=(0,0,0), rotation=(0,0,0))
+apply_material(psu_case, mat_black_plastic)
+
+# Align centers (already at 0,0,0, but explicit step)
+psu_case.location = psu_chassis.location
+
+# Boolean Subtract
+boolean_subtract("psu_case", "psu_chassis")
+
+# --- SECTION 3: Create Internal PCB ---
+# Create primitive cuboid with size 0.140×0.070×0.002 m and name it psu_pcb.
+# Rotate psu_pcb so its +Z axis aligns +Z (world).
+# Align psu_pcb.center to psu_case.center.
+# Then move by offset(0,0,0.005).
+psu_pcb = add_primitive_cube("psu_pcb", (0.140, 0.070, 0.002), location=(0,0,0), rotation=(0,0,0))
+apply_material(psu_pcb, mat_green_pcb)
+
+# Align center
+psu_pcb.location = psu_case.location # psu_case is at 0,0,0
+
+# Offset
+psu_pcb.location += Vector((0, 0, 0.005))
+
+# --- SECTION 4: Create Transformer ---
+# Create primitive cuboid with size 0.060×0.040×0.030 m and name it psu_transformer.
+# Rotate psu_transformer so its +Z axis aligns +Z (world).
+# Align psu_transformer.center to psu_pcb.center.
+# Then move by offset(0,0,0.015).
+psu_transformer = add_primitive_cube("psu_transformer", (0.060, 0.040, 0.030), location=(0,0,0), rotation=(0,0,0))
+apply_material(psu_transformer, mat_aluminum)
+
+# Align center
+psu_transformer.location = psu_pcb.location
+
+# Offset
+psu_transformer.location += Vector((0, 0, 0.015))
+
+# --- SECTION 5: Create Capacitors Array ---
+# Helper for capacitors
+def create_capacitor(name, offset):
+    # Create primitive cylinder with Ø0.015×0.025 m
+    # Radius = 0.0075, Depth = 0.025
+    cap = add_primitive_cylinder(name, 0.0075, 0.025, location=(0,0,0), rotation=(0,0,0))
+    apply_material(cap, mat_copper)
+    
+    # Align center to psu_pcb.center
+    cap.location = psu_pcb.location
+    
+    # Offset
+    cap.location += Vector(offset)
+    return cap
+
+psu_capacitor_0 = create_capacitor("psu_capacitor_0", (-0.045, -0.025, 0.015))
+psu_capacitor_1 = create_capacitor("psu_capacitor_1", (0.045, -0.025, 0.015))
+psu_capacitor_2 = create_capacitor("psu_capacitor_2", (-0.045, 0.025, 0.015))
+psu_capacitor_3 = create_capacitor("psu_capacitor_3", (0.045, 0.025, 0.015))
+
+# --- SECTION 6: Create Fan Grill ---
+# Create primitive cuboid with size 0.080×0.080×0.005 m and name it psu_fan_grill.
+# Rotate psu_fan_grill so its +Z axis aligns -X (world).
+# Align psu_fan_grill.center to psu_case.left_face.center.
+# Then move by offset(-0.005,0,0).
+
+psu_fan_grill = add_primitive_cube("psu_fan_grill", (0.080, 0.080, 0.005), location=(0,0,0), rotation=(0,0,0))
+apply_material(psu_fan_grill, mat_metal_grill)
+
+# Rotate +Z to align with -X
+# Current +Z is (0,0,1). Target is (-1,0,0).
+# Rotation around Y axis by -90 degrees (or 270) or +90?
+# (0,0,1) rotated -90 deg around Y -> (1,0,0). No.
+# (0,0,1) rotated +90 deg around Y -> (-1,0,0). Yes.
+align_axis_to_vector(psu_fan_grill, Vector((-1, 0, 0)), 'Z')
+
+# Align center to psu_case.left_face.center
+# psu_case is at 0,0,0. Dimensions 0.150, 0.086, 0.015.
+# Left face is at X = -0.150/2 = -0.075.
+# We need to find the world location of psu_case's left face center.
+# Since psu_case is not rotated, left face center is (-0.075, 0, 0).
+# However, the helper function calculates this dynamically.
+left_face_center = get_face_center(psu_case, 'left')
+psu_fan_grill.location = left_face_center
+
+# Offset (-0.005, 0, 0) in local axes.
+# Since the object is rotated, local X is now aligned with World -X.
+# Local offset (-0.005, 0, 0) means moving along local X by -0.005.
+# Local X is World -X. So moving -0.005 along Local X is moving +0.005 along World X.
+# Let's apply the offset vector in local space.
+offset_vec = Vector((-0.005, 0, 0))
+# Transform local offset to world
+world_offset = psu_fan_grill.matrix_world.to_3x3() @ offset_vec
+psu_fan_grill.location += world_offset
+
+# --- SECTION 7: Create Power Switch ---
+# Create primitive cuboid with size 0.010×0.010×0.010 m and name it psu_switch.
+# Rotate psu_switch so its +Z axis aligns +X (world).
+# Align psu_switch.center to psu_case.right_face.center.
+# Then move by offset(0.005,0,0).
+
+psu_switch = add_primitive_cube("psu_switch", (0.010, 0.010, 0.010), location=(0,0,0), rotation=(0,0,0))
+apply_material(psu_switch, mat_black_plastic)
+
+# Rotate +Z to align with +X
+# (0,0,1) to (1,0,0). Rotation around Y by +90 deg gives (-1,0,0). Rotation around Y by -90 gives (1,0,0).
+align_axis_to_vector(psu_switch, Vector((1, 0, 0)), 'Z')
+
+# Align center to psu_case.right_face.center
+right_face_center = get_face_center(psu_case, 'right')
+psu_switch.location = right_face_center
+
+# Offset (0.005, 0, 0) in local axes.
+# Local X is World +X.
+offset_vec = Vector((0.005, 0, 0))
+world_offset = psu_switch.matrix_world.to_3x3() @ offset_vec
+psu_switch.location += world_offset
+
+# --- SECTION 8: Create Connectors Array ---
+# Helper for connectors
+def create_connector(name, offset):
+    # Create primitive cuboid with size 0.015×0.010×0.015 m
+    conn = add_primitive_cube(name, (0.015, 0.010, 0.015), location=(0,0,0), rotation=(0,0,0))
+    apply_material(conn, mat_aluminum)
+    
+    # Rotate +Z to align +Z (world) - already default
+    # Align center to psu_case.back_face.center
+    # psu_case is at 0,0,0. Dimensions 0.150, 0.086, 0.015.
+    # Back face is usually -Y in local space for a cube?
+    # Standard Blender Cube: Y is Front/Back. 
+    # Let's assume 'back_face' refers to the face at -Y local.
+    back_face_center = get_face_center(psu_case, 'back')
+    conn.location = back_face_center
+    
+    # Offset (-0.03, 0, 0.005) etc.
+    # Local axes: X=Right, Y=Front, Z=Up.
+    # Offset is in local axes.
+    offset_vec = Vector(offset)
+    world_offset = conn.matrix_world.to_3x3() @ offset_vec
+    conn.location += world_offset
+    
+    return conn
+
+psu_connector_0 = create_connector("psu_connector_0", (-0.03, 0, 0.005))
+psu_connector_1 = create_connector("psu_connector_1", (0, 0, 0.005))
+psu_connector_2 = create_connector("psu_connector_2", (0.03, 0, 0.005))
+
+print("All stages complete.")
+```

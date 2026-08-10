@@ -1,0 +1,66 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material ceramic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material ceramic_gloss; diffuse_color = (0.98,0.98,0.98,0.8).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Jar Body  ---
+Create primitive cylinder with radius 0.10 m and height 0.25 m and name it jar_body_outer.
+Rotate jar_body_outer so its +Z axis aligns +Z (world).
+Anchor jar_body_outer to world origin.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with radius 0.09 m and height 0.25 m and name it jar_body_inner.
+Rotate jar_body_inner so its +Z axis aligns +Z (world).
+Anchor jar_body_inner to jar_body_outer.center.
+Then move by offset(0,0,0).
+
+Boolean-subtract jar_body_inner from jar_body_outer; discard jar_body_inner.
+
+---  SECTION 2 – Create Jar Lip  ---
+Create primitive cylinder with radius 0.10 m and height 0.010 m and name it jar_lip.
+Rotate jar_lip so its +Z axis aligns +Z (world).
+Align jar_lip.center to jar_body_outer.top_face.
+Align jar_lip.bottom_face to jar_body_outer.top_face.
+Then move by offset(0,0,0.005).
+
+---  SECTION 3 – Create Lid Dome  ---
+Create full_sphere and name it lid_dome_sphere with radius 0.10 m.
+Rotate lid_dome_sphere so its +Z axis aligns +Z (world).
+Anchor lid_dome_sphere to jar_body_outer.top_face.
+Then move by offset(0,0,0.010).
+
+Create plane_cutter and name it lid_dome_cut with size 0.25×0.25 m; orientation=axis:+Z.
+Anchor lid_dome_cut to lid_dome_sphere.center.
+Then move by offset(0,0,0.05).
+
+Boolean-subtract lid_dome_cut from lid_dome_sphere; keep lid_dome_sphere.
+Rotate lid_dome_sphere so its curved face points +Z.
+
+---  SECTION 4 – Create Lid Base  ---
+Create primitive cylinder with radius 0.095 m and height 0.020 m and name it lid_base.
+Rotate lid_base so its +Z axis aligns +Z (world).
+Align lid_base.center to jar_body_outer.top_face.
+Align lid_base.bottom_face to jar_body_outer.top_face.
+Then move by offset(0,0,0.010).
+
+---  SECTION 5 – Create Lid Knob  ---
+Create primitive sphere with radius 0.015 m and name it lid_knob.
+Rotate lid_knob so its +Z axis aligns +Z (world).
+Align lid_knob.center to lid_dome_sphere.top_face.
+Align lid_knob.bottom_face to lid_dome_sphere.top_face.
+Then move by offset(0,0,0.015).
+
+Stage 5 complete.
+All stages complete.

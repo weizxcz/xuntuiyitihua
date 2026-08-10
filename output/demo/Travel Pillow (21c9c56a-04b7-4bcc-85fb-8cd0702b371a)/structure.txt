@@ -1,0 +1,27 @@
+-- MATERIAL LIBRARY --
+fabric_cover | diffuse_color=(240,240,240,255)
+memory_foam | diffuse_color=(200,200,200,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| travel_pillow | Composite of foam core + fabric cover; U-shaped ergonomic neck support | assembly_order=[foam_core], [fabric_cover] |
+
+Layer 1 – Primary Structure (Foam Core)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| foam_core | Composite of left_arm + right_arm + back_connector; U-shaped memory foam block | assembly_order=[left_arm], [right_arm], [back_connector] |
+| left_arm | Cylinder Ø0.08×0.25 m (radius 0.04 m) | Align(XY) left_arm.center to travel_pillow.center; orientation=axis:+Z; mat=memory_foam; create_method=primitive |
+| right_arm | Cylinder Ø0.08×0.25 m (radius 0.04 m) | Align(XY) right_arm.center to travel_pillow.center; orientation=axis:+Z; mat=memory_foam; create_method=primitive |
+| back_connector | Cylinder Ø0.08×0.15 m (radius 0.04 m) | Align(XY) back_connector.center to travel_pillow.center; orientation=axis:+Z; mat=memory_foam; create_method=primitive |
+
+Layer 2 – Secondary Structure (Fabric Cover)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| fabric_cover | Composite of left_sleeve + right_sleeve + back_sleeve; U-shaped fabric casing | assembly_order=[left_sleeve], [right_sleeve], [back_sleeve] |
+| left_sleeve | Cylinder Ø0.09×0.25 m (radius 0.045 m) | Align(XY) left_sleeve.center to left_arm.center; orientation=axis:+Z; mat=fabric_cover; create_method=primitive |
+| right_sleeve | Cylinder Ø0.09×0.25 m (radius 0.045 m) | Align(XY) right_sleeve.center to right_arm.center; orientation=axis:+Z; mat=fabric_cover; create_method=primitive |
+| back_sleeve | Cylinder Ø0.09×0.15 m (radius 0.045 m) | Align(XY) back_sleeve.center to back_connector.center; orientation=axis:+Z; mat=fabric_cover; create_method=primitive |
+# ----------  END_GRAPH  ----------

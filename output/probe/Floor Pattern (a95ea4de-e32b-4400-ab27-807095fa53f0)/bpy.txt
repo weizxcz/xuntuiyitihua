@@ -1,0 +1,228 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, radians
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location, rotation, material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location, rotation, material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def boolean_union(target, operands):
+    """
+    Perform boolean union on target using operands.
+    Returns the modified target object.
+    """
+    if not operands:
+        return target
+    
+    # Add modifier to target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    
+    # Create a collection to hold operands for the modifier
+    # Blender modifiers can reference objects directly in newer versions, 
+    # but often it's safer to join them or use a single object if possible.
+    # However, for multiple operands, we can join them into a temporary object.
+    
+    if len(operands) == 1:
+        mod.object = operands[0]
+    else:
+        # Join all operands into a single temporary object
+        bpy.ops.object.select_all(action='DESELECT')
+        for op in operands:
+            op.select_set(True)
+        bpy.context.view_layer.objects.active = operands[0]
+        bpy.ops.object.join()
+        mod.object = operands[0]
+        
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup operands
+    for op in operands:
+        if op != target:
+            bpy.data.objects.remove(op, do_unlink=True)
+            
+    return target
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler
+    # This is a simplified alignment for standard axes. 
+    # For +Z to +Z, no rotation needed if default.
+    # For +Z to -Z, rotate X by pi.
+    # For +Z to +X, rotate Y by -pi/2.
+    pass # Specific logic handled in creation steps below for simplicity
+
+def average(points):
+    """Calculate the average of a list of Vector points."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.location.copy()
+    
+    def face_center_world(self):
+        # Assuming "face center" implies the center of the mesh geometry in world space
+        # For a primitive, this is usually the object location.
+        return self.obj.location.copy()
+        
+    def radial_point_world(self, index=0):
+        # Placeholder for radial point logic if needed
+        return self.obj.location.copy()
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_dark_grout = make_material("mat_dark_grout", (0.15, 0.15, 0.15, 1.0))
+mat_tile_blue = make_material("mat_tile_blue", (0.2, 0.4, 0.8, 1.0))
+mat_tile_white = make_material("mat_tile_white", (0.95, 0.95, 0.95, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create 4x4 Tile Grid Unit
+
+# 1. Create floor_base helper
+floor_base = add_cube("floor_base", size=0.01, location=(0,0,0), rotation=(0,0,0))
+# Ensure it's an empty-like helper but we need it for boolean union later, 
+# so we keep it as a mesh or convert to empty? 
+# The prompt says "Boolean-union all tile_r_c objects into floor_base". 
+# This implies floor_base must be a mesh object to receive the boolean.
+# Let's make it a large flat cube to serve as the base mesh.
+bpy.ops.object.select_all(action='DESELECT')
+floor_base.select_set(True)
+bpy.context.view_layer.objects.active = floor_base
+bpy.ops.object.shade_flat()
+
+# Rotate floor_base so its axis aligns +Z (world). 
+# Cube default is +Z up, so no rotation needed.
+floor_base.rotation_euler = (0, 0, 0)
+floor_base.location = (0, 0, 0)
+
+# 2. Create Tiles
+tiles_to_union = []
+blue_coords = [(5,6), (6,7), (9,10), (10,11), (11,12)]
+
+# Note: The prompt says "For r in 0…3 and c in 0…3". 
+# But then it references coordinates like (5,6) which are outside 0-3.
+# This is a contradiction. 
+# Interpretation: The loop is 0..3 for r and c, creating 16 tiles.
+# The condition "If (r,c) is (5,6)..." will never be true for r,c in 0..3.
+# However, looking at the indices: 5,6,9,10,11,12. These look like flattened indices or specific tile IDs.
+# Let's assume the prompt meant to iterate over a larger grid or specific IDs.
+# But "4x4 Tile Grid" implies 16 tiles.
+# Let's re-read carefully: "For r in 0…3 and c in 0…3".
+# If the condition is never met, all tiles are white.
+# However, usually these prompts have specific logic. 
+# Let's look at the offset: dx = -0.155 + c*0.11, dy = 0.155 - r*0.11.
+# This creates a grid.
+# Let's assume the condition refers to the *name* or a calculated index, OR the prompt has a typo in the loop range vs condition.
+# Given "4x4", I will stick to r in 0..3, c in 0..3.
+# I will check if the tuple (r,c) matches the list. It won't.
+# I will apply mat_tile_white to all.
+# WAIT: Maybe the prompt implies a 1D index? Or maybe the loop is larger?
+# "Create 4x4 Tile Grid Unit".
+# Let's assume the condition is a distractor or I should map r,c to a linear index?
+# No, it says "If (r,c) is...".
+# Let's look at the numbers: 5,6,9,10,11,12.
+# If r and c were 0-indexed in a larger grid, e.g. 4x4 is 16 tiles.
+# Maybe the prompt meant "If the tile index is..."?
+# Let's assume the prompt text is literal. If (r,c) is in that list.
+# Since r,c are 0..3, none match.
+# I will proceed with r in 0..3, c in 0..3. All tiles will be white.
+# If I suspect an error, I might check if the user meant a different loop.
+# But as a code generator, I must follow instructions.
+# Instruction: "For r in 0…3 and c in 0…3".
+# Instruction: "If (r,c) is (5,6)...".
+# Result: Condition False.
+
+for r in range(4):
+    for c in range(4):
+        # Create primitive cylinder
+        # Ø0.3 -> radius 0.15. Height 0.02.
+        # Name: tile_r_c
+        tile_name = f"tile_{r}_{c}"
+        
+        # Calculate position
+        # Offset: dx = -0.155 + c*0.11, dy = 0.155 - r*0.11, dz=0
+        dx = -0.155 + c * 0.11
+        dy = 0.155 - r * 0.11
+        dz = 0
+        
+        # Anchor/Align: Align tile_r_c.Z_face to floor_base.Z_face.
+        # floor_base is at 0,0,0. Z face is up.
+        # Cylinder default Z is up.
+        # We place it at the offset location.
+        
+        loc = (dx, dy, dz)
+        
+        # Determine material
+        if (r, c) in blue_coords:
+            mat = mat_tile_blue
+        else:
+            mat = mat_tile_white
+            
+        tile = add_cylinder(tile_name, radius=0.15, depth=0.02, location=loc, rotation=(0,0,0), material=mat)
+        
+        # Rotate tile_r_c so its +Z axis aligns +Z (world).
+        # Default cylinder is +Z up. No rotation needed.
+        tile.rotation_euler = (0, 0, 0)
+        
+        tiles_to_union.append(tile)
+
+# 3. Boolean-union all tile_r_c objects into floor_base
+floor_base = boolean_union(floor_base, tiles_to_union)
+
+# Discard individual tile_r_c references (already removed by boolean_union helper)
+
+# Stage 1 complete.
+```

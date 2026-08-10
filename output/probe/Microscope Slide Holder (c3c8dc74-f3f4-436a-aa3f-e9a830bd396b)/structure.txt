@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+mat_black_plastic | diffuse_color=(0.10,0.10,0.10,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly for the microscope slide holder | assembly_order=[base_unit] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_unit | Composite of base_plate + 12 slide_slots | assembly_order=[base_plate, slots_group] |
+| base_plate | Rectangular base plate 0.200×0.150×0.010 m | Align(XY) base_plate.center to root.center; orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive(cube); size=(0.200, 0.150, 0.010) |
+| slots_group | Composite union of 12 individual slide slots | assembly_order=[slot_01, slot_02, slot_03, slot_04, slot_05, slot_06, slot_07, slot_08, slot_09, slot_10, slot_11, slot_12] |
+| slot_01 | Slide slot 1: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_01.center to base_plate.top_face.center; offset(-0.075, 0.060, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_01; target_id=base_plate |
+| slot_02 | Slide slot 2: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_02.center to base_plate.top_face.center; offset(-0.050, 0.060, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_02; target_id=base_plate |
+| slot_03 | Slide slot 3: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_03.center to base_plate.top_face.center; offset(-0.025, 0.060, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_03; target_id=base_plate |
+| slot_04 | Slide slot 4: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_04.center to base_plate.top_face.center; offset(0.000, 0.060, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_04; target_id=base_plate |
+| slot_05 | Slide slot 5: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_05.center to base_plate.top_face.center; offset(0.025, 0.060, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_05; target_id=base_plate |
+| slot_06 | Slide slot 6: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_06.center to base_plate.top_face.center; offset(0.050, 0.060, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_06; target_id=base_plate |
+| slot_07 | Slide slot 7: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_07.center to base_plate.top_face.center; offset(-0.075, 0.030, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_07; target_id=base_plate |
+| slot_08 | Slide slot 8: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_08.center to base_plate.top_face.center; offset(-0.050, 0.030, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_08; target_id=base_plate |
+| slot_09 | Slide slot 9: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_09.center to base_plate.top_face.center; offset(-0.025, 0.030, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_09; target_id=base_plate |
+| slot_10 | Slide slot 10: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_10.center to base_plate.top_face.center; offset(0.000, 0.030, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_10; target_id=base_plate |
+| slot_11 | Slide slot 11: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_11.center to base_plate.top_face.center; offset(0.025, 0.030, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_11; target_id=base_plate |
+| slot_12 | Slide slot 12: U-shaped channel 0.075×0.010×0.002 m | Align(XY) slot_12.center to base_plate.top_face.center; offset(0.050, 0.030, 0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_subtract; tool_id=cutter_12; target_id=base_plate |
+| cutter_01 | Cutter for slot 1: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_01.center to slot_01.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_02 | Cutter for slot 2: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_02.center to slot_02.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_03 | Cutter for slot 3: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_03.center to slot_03.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_04 | Cutter for slot 4: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_04.center to slot_04.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_05 | Cutter for slot 5: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_05.center to slot_05.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_06 | Cutter for slot 6: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_06.center to slot_06.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_07 | Cutter for slot 7: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_07.center to slot_07.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_08 | Cutter for slot 8: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_08.center to slot_08.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_09 | Cutter for slot 9: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_09.center to slot_09.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_10 | Cutter for slot 10: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_10.center to slot_10.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_11 | Cutter for slot 11: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_11.center to slot_11.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+| cutter_12 | Cutter for slot 12: Rectangular prism 0.075×0.010×0.010 m | Align(XY) cutter_12.center to slot_12.center; offset(0, 0, -0.005); orientation=axis:+Z; mat=-; create_method=primitive(cube); size=(0.075, 0.010, 0.010) |
+# ----------  END_GRAPH  ----------

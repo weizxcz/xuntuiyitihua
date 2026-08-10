@@ -1,0 +1,465 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to the first material slot of an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive(type, name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    bpy.ops.mesh.primitive_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    
+    # Scale based on type
+    if type == 'cube':
+        obj.scale = (size[0], size[1], size[2])
+    elif type == 'cylinder' or type == 'disc':
+        # size is (diameter, height)
+        radius = size[0] / 2.0
+        height = size[1]
+        obj.scale = (radius, radius, height)
+    elif type == 'cone':
+        radius = size[0] / 2.0
+        height = size[1]
+        obj.scale = (radius, radius, height)
+    elif type == 'sphere':
+        radius = size[0] / 2.0
+        obj.scale = (radius, radius, radius)
+        
+    obj.rotation_euler = rotation
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Rotate object so its local axis aligns with target_vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.copy()
+    
+    # Define basis vectors
+    axes = {
+        '+X': Vector((1, 0, 0)),
+        '-X': Vector((-1, 0, 0)),
+        '+Y': Vector((0, 1, 0)),
+        '-Y': Vector((0, -1, 0)),
+        '+Z': Vector((0, 0, 1)),
+        '-Z': Vector((0, 0, -1))
+    }
+    
+    if axis_to_align not in axes:
+        return
+
+    current_axis = axes[axis_to_align]
+    target = target_vector.normalized()
+    
+    # Calculate rotation matrix to align current_axis to target
+    # We need to rotate the object such that its local axis points to target
+    # This is equivalent to rotating the world such that target aligns with current_axis,
+    # then applying inverse to object.
+    
+    # Simple approach: Use mathutils rotation
+    # We want to rotate 'current_axis' to 'target'
+    if current_axis.normalized() == target:
+        return # Already aligned
+    
+    if current_axis.normalized() == -target:
+        # 180 degree rotation around any perpendicular axis
+        # Find perpendicular axis
+        perp = current_axis.cross(Vector((1,0,0)))
+        if perp.length < 0.001:
+            perp = current_axis.cross(Vector((0,1,0)))
+        perp.normalize()
+        rot = perp.to_track_quat('Z', 'Y') # Placeholder, better to use specific axis
+        # Actually, just rotate 180 around an axis perpendicular to current_axis
+        # Let's use a simpler method: set rotation directly if possible or use quaternion
+        pass
+
+    # Robust alignment using Quaternion
+    q_align = current_axis.rotation_difference(target)
+    
+    # Apply this rotation to the object's current rotation
+    # Note: Object rotation is in Euler. We convert to Quat, rotate, convert back.
+    q_obj = obj.rotation_euler.to_quaternion()
+    q_new = q_align @ q_obj
+    obj.rotation_euler = q_new.to_euler()
+
+def get_face_normal(obj, face_axis):
+    """Get the world direction of a specific face axis (+X, -X, etc.)"""
+    # The normal of the face in local space
+    local_normals = {
+        '+X': Vector((1, 0, 0)),
+        '-X': Vector((-1, 0, 0)),
+        '+Y': Vector((0, 1, 0)),
+        '-Y': Vector((0, -1, 0)),
+        '+Z': Vector((0, 0, 1)),
+        '-Z': Vector((0, 0, -1))
+    }
+    
+    if face_axis not in local_normals:
+        return Vector((0,0,0))
+        
+    local_n = local_normals[face_axis]
+    # Transform to world space
+    world_n = obj.matrix_world.to_3x3() @ local_n
+    return world_n.normalized()
+
+def get_face_center(obj, face_axis):
+    """Get the world location of the center of a specific face."""
+    # Get local bounds
+    min_x, max_x = obj.bound_box[0][0], obj.bound_box[4][0]
+    min_y, max_y = obj.bound_box[0][1], obj.bound_box[1][1]
+    min_z, max_z = obj.bound_box[0][2], obj.bound_box[3][2]
+    
+    # Local center of the face
+    local_center = Vector((0,0,0))
+    if face_axis == '+X': local_center.x = max_x
+    elif face_axis == '-X': local_center.x = min_x
+    elif face_axis == '+Y': local_center.y = max_y
+    elif face_axis == '-Y': local_center.y = min_y
+    elif face_axis == '+Z': local_center.z = max_z
+    elif face_axis == '-Z': local_center.z = min_z
+    
+    # Transform to world
+    return obj.matrix_world @ local_center
+
+def align_to_face(obj_target, target_face_axis, obj_source, source_face_axis):
+    """Align obj_target's face to obj_source's face."""
+    # 1. Align normals
+    target_normal = get_face_normal(obj_target, target_face_axis)
+    source_normal = get_face_normal(obj_source, source_face_axis)
+    
+    # We want target_normal to point in the same direction as source_normal
+    # (for face-to-face contact, usually normals are opposite if touching, 
+    # but "align face to face" usually means parallel planes. 
+    # If we want them to touch, we need to handle position separately.
+    # The prompt says "Align top_cover.-Z_face to chassis.+Z_face".
+    # This implies the surfaces are coincident.
+    
+    # Align rotation first
+    align_axis_to_vector(obj_target, target_face_axis, source_normal)
+    
+    # 2. Align positions
+    # Calculate the offset required to make the faces touch
+    # Distance between centers projected onto the normal
+    target_center = obj_target.location
+    source_center = obj_source.location
+    
+    # Vector from source center to target center
+    vec = target_center - source_center
+    
+    # Project vec onto the normal
+    dist = vec.dot(source_normal)
+    
+    # The target face is at distance 'half_height' from target center along normal
+    # The source face is at distance 'half_height' from source center along normal
+    # We want: target_center + (target_half * normal) = source_center + (source_half * normal)
+    # => target_center = source_center + (source_half - target_half) * normal
+    
+    # Get half extents in the direction of the normal
+    # Since we aligned normals, we can just use the object's dimensions along that axis
+    # However, simpler: Move target so its face touches source's face.
+    
+    # Current distance from target center to its face along normal
+    # We need to know the size of the object along that axis.
+    # Since we aligned it, the local axis matches world axis roughly.
+    
+    # Let's use a robust method:
+    # Move target along the normal so that the faces coincide.
+    
+    # Calculate current position of target face
+    current_target_face_pos = get_face_center(obj_target, target_face_axis)
+    current_source_face_pos = get_face_center(obj_source, source_face_axis)
+    
+    # Vector from source face to target face
+    diff = current_target_face_pos - current_source_face_pos
+    
+    # We want to move target by -diff along the normal? 
+    # No, we want the faces to be at the same location.
+    # Move target by (current_source_face_pos - current_target_face_pos)
+    move_vec = current_source_face_pos - current_target_face_pos
+    
+    # Apply move
+    obj_target.location += move_vec
+
+def offset_object(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using modifier."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure cutter is a mesh
+    if cutter.type != 'MESH':
+        cutter.data = cutter.to_mesh(preserve_all_data_layers=True, depsgraph=bpy.context.evaluated_depsgraph())
+        
+    # Add boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter)
+
+def boolean_union(union_name, target_name):
+    """Perform boolean union."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    if union.type != 'MESH':
+        union.data = union.to_mesh(preserve_all_data_layers=True, depsgraph=bpy.context.evaluated_depsgraph())
+        
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union)
+
+def add_bevel(obj_name, width=0.01, segments=4):
+    """Add bevel modifier to object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply bevel
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_metal_silver = make_material("metal_silver", (0.75, 0.75, 0.80, 1.0))
+mat_plastic_black = make_material("plastic_black", (0.10, 0.10, 0.10, 1.0))
+mat_glass_transparent = make_material("glass_transparent", (0.90, 0.95, 0.95, 0.3))
+mat_metal_heating = make_material("metal_heating", (0.80, 0.20, 0.10, 1.0))
+mat_chrome = make_material("chrome", (0.90, 0.90, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create Body Group (Chassis & Top Cover) ---
+
+# Create chassis
+chassis = add_primitive('cube', 'chassis', (0.40, 0.30, 0.25), location=(0,0,0), rotation=(0,0,0))
+apply_material(chassis, mat_plastic_black)
+
+# Rotate chassis so its +Z axis aligns +Z (world) - already default
+align_axis_to_vector(chassis, '+Z', Vector((0,0,1)))
+
+# Anchor chassis to world origin
+chassis.location = (0, 0, 0)
+
+# Move by offset(0, 0.15, 0)
+offset_object(chassis, Vector((0, 0.15, 0)))
+
+# Create top_cover
+top_cover = add_primitive('cube', 'top_cover', (0.40, 0.30, 0.005), location=(0,0,0), rotation=(0,0,0))
+apply_material(top_cover, mat_plastic_black)
+
+# Rotate top_cover so its +Z axis aligns +Z (world)
+align_axis_to_vector(top_cover, '+Z', Vector((0,0,1)))
+
+# Align top_cover.-Z_face to chassis.+Z_face
+align_to_face(top_cover, '-Z', chassis, '+Z')
+
+# Move by offset(0, 0, 0.005)
+offset_object(top_cover, Vector((0, 0, 0.005)))
+
+# --- SECTION 2 – Create Door Assembly (Frame, Glass, Handle, Hinge) ---
+
+# Create door_frame
+door_frame = add_primitive('cube', 'door_frame', (0.38, 0.28, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(door_frame, mat_plastic_black)
+
+# Rotate door_frame so its +Z axis aligns +Z (world)
+align_axis_to_vector(door_frame, '+Z', Vector((0,0,1)))
+
+# Align door_frame.center to chassis.+X_face.center
+# This is a center-to-center alignment relative to the face center
+# We need to move door_frame so its center is at chassis.+X_face.center
+chassis_x_face_center = get_face_center(chassis, '+X')
+door_frame.location = chassis_x_face_center
+
+# Move by offset(0, 0, 0.002)
+offset_object(door_frame, Vector((0, 0, 0.002)))
+
+# Create door_glass
+door_glass = add_primitive('cube', 'door_glass', (0.30, 0.20, 0.004), location=(0,0,0), rotation=(0,0,0))
+apply_material(door_glass, mat_glass_transparent)
+
+# Rotate door_glass so its +Z axis aligns +Z (world)
+align_axis_to_vector(door_glass, '+Z', Vector((0,0,1)))
+
+# Align door_glass.center to door_frame.center
+door_glass.location = door_frame.location
+
+# Move by offset(0, 0, 0.001)
+offset_object(door_glass, Vector((0, 0, 0.001)))
+
+# Create door_handle
+door_handle = add_primitive('cylinder', 'door_handle', (0.01, 0.25), location=(0,0,0), rotation=(0,0,0))
+apply_material(door_handle, mat_chrome)
+
+# Rotate door_handle so its +Z axis aligns +X (world)
+align_axis_to_vector(door_handle, '+Z', Vector((1,0,0)))
+
+# Align door_handle.center to door_frame.-Z_face.center
+door_frame_z_face_center = get_face_center(door_frame, '-Z')
+door_handle.location = door_frame_z_face_center
+
+# Move by offset(0, 0, 0.015)
+offset_object(door_handle, Vector((0, 0, 0.015)))
+
+# Create door_hinge
+door_hinge = add_primitive('cube', 'door_hinge', (0.02, 0.02, 0.01), location=(0,0,0), rotation=(0,0,0))
+apply_material(door_hinge, mat_chrome)
+
+# Rotate door_hinge so its +Z axis aligns +Z (world)
+align_axis_to_vector(door_hinge, '+Z', Vector((0,0,1)))
+
+# Align door_hinge.center to door_frame.+Z_face.center
+door_frame_z_face_center_pos = get_face_center(door_frame, '+Z')
+door_hinge.location = door_frame_z_face_center_pos
+
+# Move by offset(0, 0, 0.001)
+offset_object(door_hinge, Vector((0, 0, 0.001)))
+
+# --- SECTION 3 – Create Interior Components (Heating Elements & Rack) ---
+
+# Create heating_element_top
+heating_element_top = add_primitive('cylinder', 'heating_element_top', (0.005, 0.30), location=(0,0,0), rotation=(0,0,0))
+apply_material(heating_element_top, mat_metal_heating)
+
+# Rotate heating_element_top so its +Z axis aligns +Z (world)
+align_axis_to_vector(heating_element_top, '+Z', Vector((0,0,1)))
+
+# Align heating_element_top.center to chassis.+Z_face.center
+chassis_z_face_center = get_face_center(chassis, '+Z')
+heating_element_top.location = chassis_z_face_center
+
+# Move by offset(0, 0, -0.02)
+offset_object(heating_element_top, Vector((0, 0, -0.02)))
+
+# Create heating_element_bottom
+heating_element_bottom = add_primitive('cylinder', 'heating_element_bottom', (0.005, 0.30), location=(0,0,0), rotation=(0,0,0))
+apply_material(heating_element_bottom, mat_metal_heating)
+
+# Rotate heating_element_bottom so its +Z axis aligns +Z (world)
+align_axis_to_vector(heating_element_bottom, '+Z', Vector((0,0,1)))
+
+# Align heating_element_bottom.center to chassis.-Z_face.center
+chassis_neg_z_face_center = get_face_center(chassis, '-Z')
+heating_element_bottom.location = chassis_neg_z_face_center
+
+# Move by offset(0, 0, 0.02)
+offset_object(heating_element_bottom, Vector((0, 0, 0.02)))
+
+# Create food_rack
+food_rack = add_primitive('cube', 'food_rack', (0.30, 0.20, 0.002), location=(0,0,0), rotation=(0,0,0))
+apply_material(food_rack, mat_metal_silver)
+
+# Rotate food_rack so its +Z axis aligns +Z (world)
+align_axis_to_vector(food_rack, '+Z', Vector((0,0,1)))
+
+# Align food_rack.center to chassis.center
+food_rack.location = chassis.location
+
+# Move by offset(0, 0, 0.05)
+offset_object(food_rack, Vector((0, 0, 0.05)))
+
+# --- SECTION 4 – Create Controls (Panel & Dials) ---
+
+# Create control_panel
+control_panel = add_primitive('cube', 'control_panel', (0.10, 0.05, 0.005), location=(0,0,0), rotation=(0,0,0))
+apply_material(control_panel, mat_plastic_black)
+
+# Rotate control_panel so its +Z axis aligns +Z (world)
+align_axis_to_vector(control_panel, '+Z', Vector((0,0,1)))
+
+# Align control_panel.center to chassis.+Z_face.center
+control_panel.location = chassis_z_face_center
+
+# Move by offset(0, 0, 0.01)
+offset_object(control_panel, Vector((0, 0, 0.01)))
+
+# Create dial_temp
+dial_temp = add_primitive('cylinder', 'dial_temp', (0.02, 0.01), location=(0,0,0), rotation=(0,0,0))
+apply_material(dial_temp, mat_chrome)
+
+# Rotate dial_temp so its +Z axis aligns +Z (world)
+align_axis_to_vector(dial_temp, '+Z', Vector((0,0,1)))
+
+# Align dial_temp.center to control_panel.-X_face.center
+control_panel_neg_x_face_center = get_face_center(control_panel, '-X')
+dial_temp.location = control_panel_neg_x_face_center
+
+# Move by offset(0, 0, 0.005)
+offset_object(dial_temp, Vector((0, 0, 0.005)))
+
+# Create dial_timer
+dial_timer = add_primitive('cylinder', 'dial_timer', (0.02, 0.01), location=(0,0,0), rotation=(0,0,0))
+apply_material(dial_timer, mat_chrome)
+
+# Rotate dial_timer so its +Z axis aligns +Z (world)
+align_axis_to_vector(dial_timer, '+Z', Vector((0,0,1)))
+
+# Align dial_timer.center to control_panel.+X_face.center
+control_panel_pos_x_face_center = get_face_center(control_panel, '+X')
+dial_timer.location = control_panel_pos_x_face_center
+
+# Move by offset(0, 0, 0.005)
+offset_object(dial_timer, Vector((0, 0, 0.005)))
+
+print("All stages complete.")
+```

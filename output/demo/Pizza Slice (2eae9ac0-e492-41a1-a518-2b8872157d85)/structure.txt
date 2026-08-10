@@ -1,0 +1,29 @@
+-- MATERIAL LIBRARY --
+cheese_yellow | diffuse_color=(0.9, 0.8, 0.1, 1.0)
+crust_brown | diffuse_color=(0.6, 0.3, 0.1, 1.0)
+pepperoni_red | diffuse_color=(0.8, 0.1, 0.1, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pizza_slice | Composite of crust, cheese, and pepperoni slices forming a triangular wedge | assembly_order=[crust_base], [cheese_layer], [pepperoni_toppings] |
+
+Layer 1 – Primary Structure (Crust & Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| crust_base | Triangular wedge representing the pizza base and crust edge | Align(XY) crust_base.bottom_face to world.origin; orientation=axis:+Z; mat=crust_brown; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Define a triangle with vertices at (0,0), (0.3, 0.15), and (0.3, -0.15). The base width is 0.3m, height is 0.3m. Extrude thickness t=0.015m along +Z. Caps enabled. |
+
+Layer 2 – Secondary Structure (Cheese)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cheese_layer | Thin layer of melted cheese covering the crust | Align(XY) cheese_layer.bottom_face to crust_base.top_face; offset(0,0,0.001); orientation=axis:+Z; mat=cheese_yellow; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Same triangular profile as crust_base but slightly inset to simulate melted cheese edges. Vertices: (0.01, 0.01), (0.29, 0.14), (0.29, -0.14). Extrude thickness t=0.002m along +Z. Caps enabled. |
+
+Layer 3 – Toppings (Pepperoni)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pepperoni_1 | First pepperoni slice | Align(XY) pepperoni_1.bottom_face to cheese_layer.top_face; offset(0.1, 0.05, 0.001); orientation=axis:+Z; mat=pepperoni_red; create_method=cylinder; constraint=Ø0.04×0.003m |
+| pepperoni_2 | Second pepperoni slice | Align(XY) pepperoni_2.bottom_face to cheese_layer.top_face; offset(0.15, -0.05, 0.001); orientation=axis:+Z; mat=pepperoni_red; create_method=cylinder; constraint=Ø0.04×0.003m |
+| pepperoni_3 | Third pepperoni slice | Align(XY) pepperoni_3.bottom_face to cheese_layer.top_face; offset(0.2, 0.0, 0.001); orientation=axis:+Z; mat=pepperoni_red; create_method=cylinder; constraint=Ø0.04×0.003m |
+# ----------  END_GRAPH  ----------

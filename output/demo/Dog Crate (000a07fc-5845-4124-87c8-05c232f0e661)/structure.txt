@@ -1,0 +1,58 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.8,0.8,0.85,1.0)
+mat_plastic_black | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_plastic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| crate_root | Composite assembly of the entire dog crate structure | assembly_order=[base_assembly, side_assemblies, top_assembly, door_assembly, hardware] |
+
+Layer 1 – Primary Structure (Base & Sides)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Solid rectangular base plate providing structural foundation | size=0.8×0.5×0.02 m (L×W×T); mat=mat_plastic_white; create_method=primitive(cube); pos=(0,0,0); orientation=axis:+Z |
+| base_frame_rail_x1 | Longitudinal support rail (Front) | size=0.8×0.04×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0, -0.23, 0.015); orientation=axis:+Z |
+| base_frame_rail_x2 | Longitudinal support rail (Back) | size=0.8×0.04×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0, 0.23, 0.015); orientation=axis:+Z |
+| base_frame_rail_y1 | Transverse support rail (Left) | size=0.04×0.5×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(-0.38, 0, 0.015); orientation=axis:+Z |
+| base_frame_rail_y2 | Transverse support rail (Right) | size=0.04×0.5×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0.38, 0, 0.015); orientation=axis:+Z |
+| side_panel_left | Left wall panel with ventilation slots | size=0.02×0.5×0.45 m (T×W×H); mat=mat_plastic_white; create_method=boolean_subtract; pos=(-0.4, 0, 0.235); orientation=axis:+Z; constraint=boolean_subtract: 5 horizontal slots (0.05m wide, 0.02m thick) spaced evenly in Y |
+| side_panel_right | Right wall panel with ventilation slots | size=0.02×0.5×0.45 m; mat=mat_plastic_white; create_method=boolean_subtract; pos=(0.4, 0, 0.235); orientation=axis:+Z; constraint=boolean_subtract: 5 horizontal slots (0.05m wide, 0.02m thick) spaced evenly in Y |
+| side_panel_back | Back wall panel (solid for safety) | size=0.02×0.8×0.45 m; mat=mat_plastic_white; create_method=primitive(cube); pos=(0, 0.24, 0.235); orientation=axis:+Z |
+| side_panel_front | Front wall panel (door opening预留) | size=0.02×0.8×0.45 m; mat=mat_plastic_white; create_method=boolean_subtract; pos=(0, -0.24, 0.235); orientation=axis:+Z; constraint=boolean_subtract: door opening 0.6m W × 0.35m H centered at bottom |
+
+Layer 2 – Top Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| top_panel | Solid roof panel | size=0.8×0.5×0.02 m; mat=mat_plastic_white; create_method=primitive(cube); pos=(0, 0, 0.46); orientation=axis:+Z |
+| top_frame_rail_x1 | Top longitudinal rail (Front) | size=0.8×0.04×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0, -0.23, 0.445); orientation=axis:+Z |
+| top_frame_rail_x2 | Top longitudinal rail (Back) | size=0.8×0.04×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0, 0.23, 0.445); orientation=axis:+Z |
+| top_frame_rail_y1 | Top transverse rail (Left) | size=0.04×0.5×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(-0.38, 0, 0.445); orientation=axis:+Z |
+| top_frame_rail_y2 | Top transverse rail (Right) | size=0.04×0.5×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0.38, 0, 0.445); orientation=axis:+Z |
+
+Layer 3 – Door Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_panel | Main door panel | size=0.02×0.6×0.35 m; mat=mat_plastic_white; create_method=primitive(cube); pos=(0, -0.24, 0.175); orientation=axis:+Z |
+| door_frame_top | Top door frame piece | size=0.02×0.6×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0, -0.24, 0.34); orientation=axis:+Z |
+| door_frame_bottom | Bottom door frame piece | size=0.02×0.6×0.03 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0, -0.24, 0.01); orientation=axis:+Z |
+| door_frame_left | Left door frame piece | size=0.02×0.03×0.35 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(-0.285, -0.24, 0.175); orientation=axis:+Z |
+| door_frame_right | Right door frame piece | size=0.02×0.03×0.35 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0.285, -0.24, 0.175); orientation=axis:+Z |
+| door_handle | Plastic handle for opening door | size=0.02×0.1×0.02 m; mat=mat_plastic_black; create_method=primitive(cube); pos=(0.2, -0.25, 0.2); orientation=axis:+Z |
+
+Layer 4 – Hardware & Fasteners
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hinge_left_top | Top left hinge connecting door to front panel | size=0.01×0.02×0.03 m; mat=mat_aluminum; create_method=primitive(cylinder); pos=(-0.285, -0.24, 0.34); orientation=axis:+X |
+| hinge_left_bottom | Bottom left hinge connecting door to front panel | size=0.01×0.02×0.03 m; mat=mat_aluminum; create_method=primitive(cylinder); pos=(-0.285, -0.24, 0.01); orientation=axis:+X |
+| hinge_right_top | Top right hinge connecting door to front panel | size=0.01×0.02×0.03 m; mat=mat_aluminum; create_method=primitive(cylinder); pos=(0.285, -0.24, 0.34); orientation=axis:+X |
+| hinge_right_bottom | Bottom right hinge connecting door to front panel | size=0.01×0.02×0.03 m; mat=mat_aluminum; create_method=primitive(cylinder); pos=(0.285, -0.24, 0.01); orientation=axis:+X |
+| latch_mechanism | Door latch and locking mechanism | size=0.03×0.05×0.02 m; mat=mat_aluminum; create_method=boolean_subtract; pos=(0.2, -0.25, 0.2); orientation=axis:+Z; constraint=boolean_subtract: slot for latch bolt |
+| foot_pad_fl | Front-left rubber foot pad | size=0.05×0.05×0.01 m; mat=mat_plastic_black; create_method=primitive(cylinder); pos=(-0.38, -0.23, 0.005); orientation=axis:+Z |
+| foot_pad_fr | Front-right rubber foot pad | size=0.05×0.05×0.01 m; mat=mat_plastic_black; create_method=primitive(cylinder); pos=(0.38, -0.23, 0.005); orientation=axis:+Z |
+| foot_pad_bl | Back-left rubber foot pad | size=0.05×0.05×0.01 m; mat=mat_plastic_black; create_method=primitive(cylinder); pos=(-0.38, 0.23, 0.005); orientation=axis:+Z |
+| foot_pad_br | Back-right rubber foot pad | size=0.05×0.05×0.01 m; mat=mat_plastic_black; create_method=primitive(cylinder); pos=(0.38, 0.23, 0.005); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

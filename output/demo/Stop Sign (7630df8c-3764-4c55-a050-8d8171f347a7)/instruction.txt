@@ -1,0 +1,1 @@
+Create a simple stop sign with an octagonal shape and the word "STOP" in bold letters.

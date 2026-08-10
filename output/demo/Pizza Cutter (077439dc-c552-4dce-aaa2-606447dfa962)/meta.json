@@ -1,0 +1,46 @@
+{
+  "id": "077439dc-c552-4dce-aaa2-606447dfa962",
+  "name": "Pizza Cutter",
+  "instruction": "Hi there, can you make a 3D model of a pizza cutter for me? I envision a circular blade attached to a handle. The handle should be ergonomic, allowing for a firm grip. The blade should be sharp and rotate smoothly to easily slice through a pizza.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pizza cutter.",
+        "The blade is circular.",
+        "The handle is elongated and ergonomic."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The handle is proportioante to the cutter."
+      ],
+      "Texture and surface detail": [
+        "The blade should appear metallic or stainless steel.",
+        "The handle should appear to be made of a non-slip material."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blade is properly attached to the handle.",
+        "The blade is positioned at an appropriate angle for cutting.",
+        "The handle is long enough to provide leverage."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the blade and the handle.",
+        "The blade rotates freely without obstruction."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the pizza cutter are accurately represented.",
+        "The design aligns with the user's vision of an ergonomic handle and sharp blade."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

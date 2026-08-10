@@ -1,0 +1,45 @@
+{
+  "id": "eef9d88f-f51a-427b-8b08-2dd9be9eb3cb",
+  "name": "Geometric Logo Comparison",
+  "instruction": "Compare two geometric logos. The first logo should feature interlocking triangles forming a hexagon, while the second logo should consist of overlapping circles creating a flower-like pattern. Both logos should be monochromatic and have clean lines.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The first logo consists of interlocking triangles.",
+        "The interlocking triangles form a hexagon.",
+        "The second logo consists of overlapping circles.",
+        "The overlapping circles create a flower-like pattern."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The patterns in the logo are proportionate to the logo."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The interlocking triangles in the first logo are arranged to create a cohesive hexagonal shape.",
+        "The overlapping circles in the second logo are arranged to form a symmetrical flower-like pattern."
+      ],
+      "Object distance and contact": [
+        "In the first logo, the triangles are positioned to interlock without gaps.",
+        "In the second logo, the circles overlap seamlessly to create the flower-like effect."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both logos are accurately described as per the instructions.",
+        "The specified geometric shapes and patterns are correctly represented."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

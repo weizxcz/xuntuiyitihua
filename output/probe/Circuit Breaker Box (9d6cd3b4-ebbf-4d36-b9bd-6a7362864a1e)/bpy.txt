@@ -1,0 +1,215 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def apply_transform(obj):
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+def get_world_center(obj):
+    # Transform the local origin (0,0,0) by the object's world matrix
+    return obj.matrix_world.to_translation()
+
+def boolean_subtract(cutter_obj, target_obj):
+    # Ensure target is active for modifier application if needed, 
+    # but standard approach: add modifier to target, apply.
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply Modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def align_z_to_world_z(obj):
+    # Ensure object is upright. Default cube/cylinder is upright.
+    # If rotation was passed, we assume it's already handled in creation.
+    pass
+
+# --- Block 0: Scene Reset & Units ---
+
+# Clear existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.length_unit = 'METRES'
+
+# --- Block 1: Materials ---
+
+mat_aluminum = make_material("mat_aluminum", (0.75, 0.75, 0.75, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_copper = make_material("mat_copper", (0.85, 0.37, 0.2, 1.0))
+mat_green_plastic = make_material("mat_green_plastic", (0.1, 0.5, 0.1, 1.0))
+mat_white_plastic = make_material("mat_white_plastic", (0.9, 0.9, 0.9, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create main_shell (Outer Enclosure)
+# Create primitive cylinder with diameter 0.400 m and height 0.150 m and name it main_shell.
+# Radius = 0.200
+main_shell = add_cylinder("main_shell", 0.200, 0.150, (0, 0, 0), (0, 0, 0))
+# Rotate main_shell so its +Z axis aligns +Z (world). (Already default)
+# Anchor main_shell to world origin. (Already at 0,0,0)
+# Then move by offset(0,0,0).
+main_shell.location += Vector((0, 0, 0))
+
+# Create primitive cuboid with size 0.400×0.300×0.150 m and name it main_shell_cut.
+main_shell_cut = add_cube("main_shell_cut", (0.400, 0.300, 0.150), (0, 0, 0), (0, 0, 0))
+# Rotate main_shell_cut so its +Z axis aligns +Z (world).
+# Anchor main_shell_cut to main_shell.
+# Center-to-center anchoring: move cutter to main_shell's world center.
+main_shell_cut.location = get_world_center(main_shell)
+# Then move by offset(0,0,0).
+main_shell_cut.location += Vector((0, 0, 0))
+
+# Boolean-subtract main_shell_cut from main_shell; discard main_shell_cut.
+boolean_subtract(main_shell_cut, main_shell)
+
+# SECTION 2 – Create inner_chassis (Inner Support Frame)
+# Create primitive cylinder with diameter 0.380 m and height 0.140 m and name it inner_chassis.
+inner_chassis = add_cylinder("inner_chassis", 0.190, 0.140, (0, 0, 0), (0, 0, 0))
+# Rotate inner_chassis so its +Z axis aligns +Z (world).
+# Anchor inner_chassis to main_shell.
+inner_chassis.location = get_world_center(main_shell)
+# Then move by offset(0,0,0.005).
+inner_chassis.location += Vector((0, 0, 0.005))
+
+# Create primitive cuboid with size 0.380×0.280×0.140 m and name it inner_chassis_cut.
+inner_chassis_cut = add_cube("inner_chassis_cut", (0.380, 0.280, 0.140), (0, 0, 0), (0, 0, 0))
+# Rotate inner_chassis_cut so its +Z axis aligns +Z (world).
+# Anchor inner_chassis_cut to inner_chassis.
+inner_chassis_cut.location = get_world_center(inner_chassis)
+# Then move by offset(0,0,0).
+inner_chassis_cut.location += Vector((0, 0, 0))
+
+# Boolean-subtract inner_chassis_cut from inner_chassis; discard inner_chassis_cut.
+boolean_subtract(inner_chassis_cut, inner_chassis)
+
+# SECTION 3 – Create door (Hinged Front Cover)
+# Create primitive cuboid with size 0.400×0.300×0.005 m and name it door.
+door = add_cube("door", (0.400, 0.300, 0.005), (0, 0, 0), (0, 0, 0))
+# Rotate door so its +Z axis aligns +Z (world).
+# Anchor door to main_shell.
+door.location = get_world_center(main_shell)
+# Then move by offset(0,0.152,0).
+door.location += Vector((0, 0.152, 0))
+
+# SECTION 4 – Create busbar_main (Main Power Distribution Bar)
+# Create primitive cuboid with size 0.350×0.020×0.005 m and name it busbar_main.
+busbar_main = add_cube("busbar_main", (0.350, 0.020, 0.005), (0, 0, 0), (0, 0, 0))
+# Rotate busbar_main so its +Z axis aligns +Z (world).
+# Anchor busbar_main to inner_chassis.
+busbar_main.location = get_world_center(inner_chassis)
+# Then move by offset(0,0,0.05).
+busbar_main.location += Vector((0, 0, 0.05))
+
+# SECTION 5 – Create breaker_1 (Circuit Breaker Unit 1)
+# Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_1.
+breaker_1 = add_cube("breaker_1", (0.050, 0.020, 0.040), (0, 0, 0), (0, 0, 0))
+# Rotate breaker_1 so its +Z axis aligns +Z (world).
+# Anchor breaker_1 to busbar_main.
+breaker_1.location = get_world_center(busbar_main)
+# Then move by offset(-0.15,0,0.07).
+breaker_1.location += Vector((-0.15, 0, 0.07))
+
+# SECTION 6 – Create breaker_2 (Circuit Breaker Unit 2)
+# Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_2.
+breaker_2 = add_cube("breaker_2", (0.050, 0.020, 0.040), (0, 0, 0), (0, 0, 0))
+# Rotate breaker_2 so its +Z axis aligns +Z (world).
+# Anchor breaker_2 to busbar_main.
+breaker_2.location = get_world_center(busbar_main)
+# Then move by offset(-0.05,0,0.07).
+breaker_2.location += Vector((-0.05, 0, 0.07))
+
+# SECTION 7 – Create breaker_3 (Circuit Breaker Unit 3)
+# Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_3.
+breaker_3 = add_cube("breaker_3", (0.050, 0.020, 0.040), (0, 0, 0), (0, 0, 0))
+# Rotate breaker_3 so its +Z axis aligns +Z (world).
+# Anchor breaker_3 to busbar_main.
+breaker_3.location = get_world_center(busbar_main)
+# Then move by offset(0.05,0,0.07).
+breaker_3.location += Vector((0.05, 0, 0.07))
+
+# SECTION 8 – Create breaker_4 (Circuit Breaker Unit 4)
+# Create primitive cuboid with size 0.050×0.020×0.040 m and name it breaker_4.
+breaker_4 = add_cube("breaker_4", (0.050, 0.020, 0.040), (0, 0, 0), (0, 0, 0))
+# Rotate breaker_4 so its +Z axis aligns +Z (world).
+# Anchor breaker_4 to busbar_main.
+breaker_4.location = get_world_center(busbar_main)
+# Then move by offset(0.15,0,0.07).
+breaker_4.location += Vector((0.15, 0, 0.07))
+
+# SECTION 9 – Create handle_1 (Toggle Handle for Breaker 1)
+# Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_1.
+handle_1 = add_cube("handle_1", (0.010, 0.005, 0.020), (0, 0, 0), (0, 0, 0))
+# Rotate handle_1 so its +Z axis aligns +Z (world).
+# Anchor handle_1 to breaker_1.
+handle_1.location = get_world_center(breaker_1)
+# Then move by offset(-0.15,0.015,0.09).
+handle_1.location += Vector((-0.15, 0.015, 0.09))
+
+# SECTION 10 – Create handle_2 (Toggle Handle for Breaker 2)
+# Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_2.
+handle_2 = add_cube("handle_2", (0.010, 0.005, 0.020), (0, 0, 0), (0, 0, 0))
+# Rotate handle_2 so its +Z axis aligns +Z (world).
+# Anchor handle_2 to breaker_2.
+handle_2.location = get_world_center(breaker_2)
+# Then move by offset(-0.05,0.015,0.09).
+handle_2.location += Vector((-0.05, 0.015, 0.09))
+
+# SECTION 11 – Create handle_3 (Toggle Handle for Breaker 3)
+# Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_3.
+handle_3 = add_cube("handle_3", (0.010, 0.005, 0.020), (0, 0, 0), (0, 0, 0))
+# Rotate handle_3 so its +Z axis aligns +Z (world).
+# Anchor handle_3 to breaker_3.
+handle_3.location = get_world_center(breaker_3)
+# Then move by offset(0.05,0.015,0.09).
+handle_3.location += Vector((0.05, 0.015, 0.09))
+
+# SECTION 12 – Create handle_4 (Toggle Handle for Breaker 4)
+# Create primitive cuboid with size 0.010×0.005×0.020 m and name it handle_4.
+handle_4 = add_cube("handle_4", (0.010, 0.005, 0.020), (0, 0, 0), (0, 0, 0))
+# Rotate handle_4 so its +Z axis aligns +Z (world).
+# Anchor handle_4 to breaker_4.
+handle_4.location = get_world_center(breaker_4)
+# Then move by offset(0.15,0.015,0.09).
+handle_4.location += Vector((0.15, 0.015, 0.09))
+
+# SECTION 13 – Create label_plate (Identification Plate)
+# Create primitive cuboid with size 0.100×0.050×0.001 m and name it label_plate.
+label_plate = add_cube("label_plate", (0.100, 0.050, 0.001), (0, 0, 0), (0, 0, 0))
+# Rotate label_plate so its +Z axis aligns +Z (world).
+# Anchor label_plate to door.
+label_plate.location = get_world_center(door)
+# Then move by offset(0,0.152,0.001).
+label_plate.location += Vector((0, 0.152, 0.001))

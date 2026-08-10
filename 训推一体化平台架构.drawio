@@ -1,0 +1,405 @@
+<mxfile host="app.diagrams.net" modified="2026-07-03T11:30:00.000Z" agent="Claude" version="24.7.0" type="device">
+  <diagram name="整体架构" id="arch-main">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- 标题 -->
+        <mxCell id="title" value="YHCADLabeller-platform —— 训推一体化平台&#10;（几何特征识别 · 标注 · 训练 · 部署）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="1254" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- 状态图例 -->
+        <mxCell id="legend-box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666" vertex="1" parent="1">
+          <mxGeometry x="1180" y="90" width="280" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="图例" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1180" y="95" width="280" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-1" value="实线/绿色 = 已集成&#10;虚线/橙色 = 集成中&#10;灰线/灰色 = 待集成&#10;双向箭头 = 数据流&#10;单向箭头 = 调用/依赖" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1180" y="120" width="280" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 第1层: 用户交互层 UI ===== -->
+        <mxCell id="ui-layer" value="① 用户交互层 (UI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="1100" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-file" value="文件选项卡&#10;file_tab.py&#10;(导入/导出 STEP/IGS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="80" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-general" value="选择/显示选项卡&#10;general_tab.py&#10;+ 5 个可视化按钮★" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="320" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-label" value="标注选项卡&#10;label_tab.py&#10;特征标注/批量标注/撤销" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="560" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-ai" value="AI 选项卡 (待加)&#10;调用 SmartCleaner 推理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="800" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-train" value="训练选项卡 (待加)&#10;调用 Geo-Rec 训练任务" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="1020" y="150" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 第2层: 业务逻辑层 ===== -->
+        <mxCell id="logic-layer" value="② 业务逻辑层 (Logic)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="1100" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="logic-mouse" value="mouse_event_delegate&#10;鼠标事件委托" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="80" y="300" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="logic-label" value="label_feature_panel&#10;标注/撤销/自动保存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="260" y="300" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="logic-viz" value="on_visualize.py ★&#10;5 个可视化&#10;(属性/拓扑/网格/点云/多视图)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="440" y="290" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="logic-doc" value="on_new_document / on_new_assembly&#10;文档生命周期" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="660" y="300" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="logic-io" value="dialog/import_file.py 等&#10;文件 I/O 桥接" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="840" y="300" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="logic-orc" value="训练编排 (待加)&#10;提交训练任务/查看日志" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="1020" y="300" width="100" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 第3层: AI 推理层 (YHCADSmartCleaner) ===== -->
+        <mxCell id="inf-layer" value="③ AI 推理层 —— YHCADSmartCleaner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="40" y="400" width="1100" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-status" value="(待集成)" style="text;html=1;strokeColor=none;fillColor=none;align=right;fontSize=11;fontStyle=2;fontColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="1010" y="405" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-fillet" value="圆角识别&#10;on_find_fillet&#10;on_find_fillet_by_ai&#10;on_find_fillet_hyper" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="60" y="445" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-hole" value="孔系识别&#10;on_find_blind_hole_stp&#10;on_find_countersunk_hole_stp&#10;on_find_through_step_*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="260" y="445" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-other" value="几何基础&#10;on_find_cylinder / cone&#10;on_find_plane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="460" y="445" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-remove" value="特征清理&#10;on_remove_feature&#10;(doc.RunCommand)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="630" y="445" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-ai" value="AAGNet 推理核心&#10;ai/AAGNet_infer&#10;ncti.AiModel → 后处理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="800" y="445" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-utils" value="几何工具&#10;sampler.py / b_face_classify.py&#10;reindex.py (IndexManager)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="1000" y="445" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 第4层: AI 训练层 (Geo-Rec) ===== -->
+        <mxCell id="train-layer" value="④ AI 训练层 —— Geo-Rec-Geo-Rec2.1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="40" y="570" width="1100" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="train-status" value="(待集成)" style="text;html=1;strokeColor=none;fillColor=none;align=right;fontSize=11;fontStyle=2;fontColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="1010" y="575" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="train-aagnet" value="AAGNet 训练&#10;AAG 图 + DGL&#10;src/models/aagnet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="60" y="615" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="train-mfr" value="BrepMFR 训练&#10;Transformer 编码器&#10;src/models/brepMFR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="300" y="615" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="train-da" value="域适应训练&#10;DANN 框架&#10;梯度反转 + 域判别器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="615" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="train-cfg" value="配置驱动&#10;configs/configs.yaml&#10;model_name / train_mode" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="780" y="615" width="180" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="train-entry" value="train_main.py&#10;inference: infer_main.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450" vertex="1" parent="1">
+          <mxGeometry x="980" y="615" width="140" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 第5层: 数据转换层 (YHDataConverter, 5 转换已集成) ===== -->
+        <mxCell id="data-layer" value="⑤ 数据转换层 —— YHDataConverter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="40" y="720" width="1100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="data-status" value="5 转换 + 5 可视化 全部已集成 ★" style="text;html=1;strokeColor=none;fillColor=none;align=right;fontSize=11;fontStyle=1;fontColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="850" y="725" width="280" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="data-attr" value="属性提取&#10;13D面+12D边 → JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="60" y="760" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="data-graph" value="拓扑提取&#10;AAG 图 + UV 网格" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="230" y="760" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="data-uv" value="网格采样&#10;5×5×7 面/边" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="400" y="760" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="data-ply" value="点云采样&#10;20000 点 → PLY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="570" y="760" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="data-img" value="多视图渲染&#10;6 视角 → PNG" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="740" y="760" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="data-nb" value="训练数据集导出&#10;seg / inst / bottom" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="910" y="760" width="210" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 第6层: 基础引擎层 ===== -->
+        <mxCell id="engine-layer" value="⑥ 基础引擎层 (Engine)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="40" y="850" width="1100" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-ncti" value="NCTI SDK&#10;炎核统一接口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="885" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-occ" value="OCC 几何内核&#10;B-Rep 解析" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="260" y="885" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-gmsh" value="GMSH 网格引擎&#10;面网格采样" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="460" y="885" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-vk" value="Vulkan 渲染引擎&#10;3D 视图嵌入" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="660" y="885" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-pt" value="PyTorch + DGL&#10;AI 训练/推理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="860" y="885" width="260" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 数据流 (左右双向) ===== -->
+        <mxCell id="flow-user" value="用户" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0" vertex="1" parent="1">
+          <mxGeometry x="-30" y="160" width="40" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-user-ui" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000" edge="1" parent="1" source="flow-user" target="ui-general">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow-ui-logic" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366" edge="1" parent="1" source="ui-layer" target="logic-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-logic-infer" style="endArrow=classic;html=1;rounded=0;dashed=1;strokeColor=#d79b00" edge="1" parent="1" source="logic-layer" target="inf-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-logic-data" style="endArrow=classic;html=1;rounded=0;strokeColor=#82b366" edge="1" parent="1" source="logic-layer" target="data-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-infer-train" style="endArrow=classic;html=1;rounded=0;dashed=1;strokeColor=#b85450" edge="1" parent="1" source="inf-layer" target="train-layer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1170" y="470" />
+              <mxPoint x="1170" y="630" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flow-data-train" style="endArrow=classic;html=1;rounded=0;dashed=1;strokeColor=#b85450" edge="1" parent="1" source="data-layer" target="train-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flow-everything-engine" style="endArrow=classic;html=1;rounded=0;strokeColor=#9673a6" edge="1" parent="1" source="data-layer" target="engine-layer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 闭环标注 -->
+        <mxCell id="loop-label" value="闭环: 标注 → 训练 → 推理 → 用户校准 → 重新训练" style="text;html=1;strokeColor=#b85450;fillColor=#ffffff;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="1180" y="350" width="280" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="loop-arrow" style="endArrow=classic;html=1;rounded=0;strokeColor=#b85450;strokeWidth=2;curved=1" edge="1" parent="1" source="loop-label" target="ui-label">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="训推闭环数据流" id="data-flow">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title2" value="训推闭环数据流" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="1254" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- 节点定义 -->
+        <mxCell id="n1" value="① 用户导入 STEP / IGES&#10;(file_tab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="② 3D 视图显示&#10;(NCTI Vulkan)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="320" y="100" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="③ 5 种数据转换 ★&#10;(YHDataConverter 已集成)&#10;属性/拓扑/网格/点云/多视图" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="560" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" value="④ AI 推理识别&#10;(SmartCleaner 待集成)&#10;AAGNet + 几何规则" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" value="⑤ 用户校准 / 标注&#10;(label_tab)&#10;→ 导出 seg/inst/bottom JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1120" y="100" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n6" value="⑥ 数据预处理&#10;(Geo-Rec 待集成)&#10;STEP → AAG/MFR JSON → DGL bin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="1120" y="240" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n7" value="⑦ 模型训练&#10;(Geo-Rec 待集成)&#10;AAGNet | BrepMFR 监督/域适应" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="240" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n8" value="⑧ 模型权重更新&#10;.pth 推到 ai/AAGNet_infer/weights" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="560" y="240" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n9" value="⑨ 推理准确性提升&#10;特征召回率 ↑ 误检 ↓" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="320" y="240" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n10" value="⑩ 新一轮识别&#10;回到 ④" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;dashed=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- 数据流箭头 -->
+        <mxCell id="e1-2" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000" edge="1" parent="1" source="n1" target="n2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2-3" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000" edge="1" parent="1" source="n2" target="n3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3-4" style="endArrow=classic;html=1;rounded=0;strokeColor=#d79b00" edge="1" parent="1" source="n3" target="n4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4-5" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000" edge="1" parent="1" source="n4" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5-6" style="endArrow=classic;html=1;rounded=0;strokeColor=#b85450" edge="1" parent="1" source="n5" target="n6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6-7" style="endArrow=classic;html=1;rounded=0;strokeColor=#b85450" edge="1" parent="1" source="n6" target="n7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7-8" style="endArrow=classic;html=1;rounded=0;strokeColor=#d79b00" edge="1" parent="1" source="n7" target="n8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8-9" style="endArrow=classic;html=1;rounded=0;strokeColor=#82b366" edge="1" parent="1" source="n8" target="n9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9-10" style="endArrow=classic;html=1;rounded=0;strokeColor=#82b366" edge="1" parent="1" source="n9" target="n10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10-4" style="endArrow=classic;html=1=1;rounded=0;dashed=1;strokeColor=#b85450;strokeWidth=2" edge="1" parent="1" source="n10" target="n4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="160" />
+              <mxPoint x="40" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 闭环说明 -->
+        <mxCell id="loop-box" value="★ 闭环核心 ★&#10;平台以 GUI 形式承载：&#10;· 标注产出训练数据 → 喂给 Geo-Rec&#10;· Geo-Rec 训练新权重 → 推到 SmartCleaner 推理&#10;· SmartCleaner 在 GUI 内给预标注结果 → 用户只需校准" style="text;html=1;strokeColor=#b85450;fillColor=#ffffff;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontStyle=1;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="380" width="900" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- 图例 -->
+        <mxCell id="legend2-box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666" vertex="1" parent="1">
+          <mxGeometry x="80" y="510" width="1380" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-1" value="蓝色 = UI 交互" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="100" y="520" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-2" value="紫色 = 引擎/渲染" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="260" y="520" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-3" value="绿色 = 已集成模块" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="420" y="520" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-4" value="橙色 = 待集成 (推理)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="580" y="520" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-5" value="红色 = 待集成 (训练)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="770" y="520" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-6" value="粗体★ = 关键集成节点" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="960" y="520" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2-7" value="虚线 = 跨项目数据流" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1170" y="520" width="200" height="20" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="集成路线图" id="roadmap">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title3" value="集成路线图 / 开发计划" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="1254" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- 时间轴 -->
+        <mxCell id="timeline" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=3" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="120" as="sourcePoint" />
+            <mxPoint x="1480" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 阶段 1: 已完成 -->
+        <mxCell id="p1-node" value="阶段 1&#10;已集成 ✅" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-detail" value="✅ 5 个可视化按钮迁移自 YHDataConverter&#10;✅ on_visualize.py (属性/拓扑/网格/点云/多视图)&#10;✅ general_tab.py 工具栏改造&#10;✅ 平台基础架构 (UI/Logic/Engine 三层)&#10;✅ NCTI SDK 初始化 + 标注/导出 JSON" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="320" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- 阶段 2 -->
+        <mxCell id="p2-node" value="阶段 2&#10;近期 (1-2 周)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="430" y="80" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-detail" value="🟡 集成 YHCADSmartCleaner 推理入口&#10;· 在 main_window 新增 AI 选项卡&#10;· 按钮触发 17 个 on_find_* 函数&#10;· 复用 global_scope (NCTI/doc) 桥接&#10;· AAGNet 权重路径统一 (ai/AAGNet_infer/weights)&#10;· 推理结果高亮 + 一键加入标注行" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="380" y="180" width="320" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- 阶段 3 -->
+        <mxCell id="p3-node" value="阶段 3&#10;中期 (2-4 周)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="800" y="80" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-detail" value="🟠 集成 YHDataConverter 转换桥接&#10;· 5 个转换脚本封装为 function/on_convert_*&#10;· 在 file_tab 加转换按钮 (单文件)&#10;· scripts/ 批量入口 (目录批处理)&#10;· 输出统一入 data/processed/ 目录&#10;· 给 Geo-Rec 喂入 AAG/MFR 格式数据" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="750" y="180" width="320" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- 阶段 4 -->
+        <mxCell id="p4-node" value="阶段 4&#10;长期 (1-2 月)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1170" y="80" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-detail" value="🔴 集成 Geo-Rec-Geo-Rec2.1 训练任务&#10;· 训练选项卡: 模型选择/参数配置&#10;· subprocess 调用 train_main.py&#10;· 实时日志 (tail -f) 进度条&#10;· 训练完成自动复制 .pth 到 SmartCleaner&#10;· 推理 vs 标注对比面板 (评估指标)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1120" y="180" width="320" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- 阶段连线 -->
+        <mxCell id="p1-2" style="endArrow=classic;html=1;rounded=0;strokeColor=#82b366;strokeWidth=2" edge="1" parent="1" source="p1-node" target="p2-node">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-3" style="endArrow=classic;html=1;rounded=0;strokeColor=#d6b656;strokeWidth=2" edge="1" parent="1" source="p2-node" target="p3-node">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-4" style="endArrow=classic;html=1;rounded=0;strokeColor=#d79b00;strokeWidth=2" edge="1" parent="1" source="p3-node" target="p4-node">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 关键技术债 -->
+        <mxCell id="debt-title" value="🔧 关键技术债务 &amp; 风险" style="text;html=1;strokeColor=#b85450;fillColor=#ffffff;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontStyle=1;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="340" width="1380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="debt-1" value="⚠ NCTI SDK 路径配置: 需统一到 config/system_config.json, 3 个项目各写一份, 应抽公共配置" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left" vertex="1" parent="1">
+          <mxGeometry x="60" y="380" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="debt-2" value="⚠ 依赖冲突: SmartCleaner 推 PyTorch+DGL, Geo-Rec 推 PyTorch Lightning, 平台目前无 AI 依赖 — 需决策是否纳入 requirements.txt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left" vertex="1" parent="1">
+          <mxGeometry x="760" y="380" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="debt-3" value="⚠ face_id 对齐: NCTI 的 ai.FaceID 位置索引 vs STEP 实体号 — 跨 SDK 标识需统一 (参考 ncti_cellid_align)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left" vertex="1" parent="1">
+          <mxGeometry x="60" y="430" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="debt-4" value="⚠ 训练硬件: Geo-Rec 推荐 Linux 容器训练, 平台当前 Windows — 训练需远程调度 (SSH/Docker 提交)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left" vertex="1" parent="1">
+          <mxGeometry x="760" y="430" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="debt-5" value="⚠ YHCADLabeller-web 同步: web 版未集成, 需评估是否复用本平台后端 (建议后续走 REST API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left" vertex="1" parent="1">
+          <mxGeometry x="60" y="480" width="1380" height="40" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

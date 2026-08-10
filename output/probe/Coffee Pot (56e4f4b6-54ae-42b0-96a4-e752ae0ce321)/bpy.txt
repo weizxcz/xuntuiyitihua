@@ -1,0 +1,443 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_cylinder(radius, depth, name, fill_type='NGON'):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, fill_type=fill_type, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(radius, name):
+    """Add a disc aligned with Z axis."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='NGON', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, name):
+    """Add a cone aligned with Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, name):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_torus(major_radius, minor_radius, angle_deg, name):
+    """Add a torus segment aligned with Z axis (default 360)."""
+    angle_rad = math.radians(angle_deg)
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=64, minor_segments=32, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # Torus default is 360 degrees. We need to cut it.
+    # Simplest way in script is to add full torus and use a boolean cutter or mesh cut.
+    # However, for simplicity and robustness in this generator, we will add a full torus
+    # and if angle < 360, we will use a boolean cutter to slice it.
+    if angle_deg < 360:
+        cutter_name = f"{name}_torus_cutter"
+        # Create a plane cutter to slice the torus
+        bpy.ops.mesh.primitive_plane_add(size=1.0, location=(0, 0, 0))
+        cutter = bpy.context.active_object
+        cutter.name = cutter_name
+        cutter.scale = (1.0, 1.0, 1.0)
+        
+        # Orient cutter to slice along Y axis (keeping XZ plane)
+        cutter.rotation_euler = (0, 0, 0) 
+        
+        # We need to position the cutter to keep the desired angle.
+        # Default torus starts at X axis (0 rad) and goes counter-clockwise.
+        # To keep 0 to angle_deg, we cut at angle_deg.
+        # The cut plane should be at angle angle_deg/2 + 90? 
+        # Actually, let's just use a boolean modifier for simplicity if needed, 
+        # but for a single script without complex boolean trees, 
+        # it's often easier to just add the full torus and note it, 
+        # OR use a mesh cut operator.
+        # Let's use a boolean modifier approach for robustness.
+        
+        # Add boolean modifier to Torus
+        mod = obj.modifiers.new(name="Cut", type='BOOLEAN')
+        mod.object = cutter
+        mod.operation = 'DIFFERENCE'
+        
+        # Position cutter to slice off the unwanted part.
+        # We want to keep 0 to angle_deg.
+        # Cut plane normal should be at angle_deg/2 + 90 degrees?
+        # Let's place the cutter plane at the bisector of the unwanted region.
+        # Unwanted region is angle_deg to 360. Bisector is angle_deg + (360-angle_deg)/2.
+        cut_angle = math.radians(angle_deg + (360 - angle_deg) / 2)
+        dist = major_radius + minor_radius + 0.1
+        cutter.location = (math.cos(cut_angle) * dist, math.sin(cut_angle) * dist, 0)
+        # Rotate cutter to face center
+        cutter.rotation_euler = (0, 0, cut_angle - math.pi/2)
+        
+        # Apply modifier
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove cutter
+        bpy.data.objects.remove(cutter)
+        
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    # Current axis vectors
+    if axis == 'X':
+        current = Vector((1, 0, 0))
+    elif axis == 'Y':
+        current = Vector((0, 1, 0))
+    elif axis == 'Z':
+        current = Vector((0, 0, 1))
+    else:
+        return
+
+    target = vector.normalized()
+    
+    # Calculate rotation
+    rot_quat = current.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='center'):
+    """Get the world location of a specific face or center."""
+    obj.update_from_editmode() # Ensure mesh is updated
+    matrix_world = obj.matrix_world
+    
+    if face_type == 'center':
+        return matrix_world.translation
+    
+    # We need to find the specific face. 
+    # Since we just created primitives, we can assume standard orientations.
+    # However, after rotation, faces move.
+    # Robust way: iterate faces, find normal closest to world axis, then project.
+    
+    # Helper to get face center in world space
+    def get_face_world_center(face):
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bmesh.ops.transform(bm, matrix=matrix_world, verts=bm.verts)
+        # Calculate center
+        co = Vector((0,0,0))
+        for v in face.verts:
+            co += v.co
+        co /= len(face.verts)
+        bm.free()
+        return co
+
+    # Determine target normal direction based on face_type
+    # 'top_face' usually means +Z local face
+    # 'bottom_face' usually means -Z local face
+    # 'right_face' usually means +X local face
+    # 'left_face' usually means -X local face
+    
+    # We need to find the face whose normal is closest to the rotated axis.
+    # But obj.rotation_euler is applied.
+    # Let's transform the target axis to local space or vice versa.
+    
+    # Easier: Transform world axes to local space using inverse matrix
+    inv_mat = matrix_world.inverted()
+    
+    if face_type == 'top_face':
+        target_local = inv_mat @ Vector((0, 0, 1))
+    elif face_type == 'bottom_face':
+        target_local = inv_mat @ Vector((0, 0, -1))
+    elif face_type == 'right_face':
+        target_local = inv_mat @ Vector((1, 0, 0))
+    elif face_type == 'left_face':
+        target_local = inv_mat @ Vector((-1, 0, 0))
+    else:
+        return matrix_world.translation
+
+    # Find face with normal closest to target_local
+    best_face = None
+    best_dot = -1
+    
+    # We need a bmesh from the mesh
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.transform(bm, matrix=matrix_world, verts=bm.verts) # Not needed for normal check if we use local normals
+    
+    # Check local normals
+    for face in bm.faces:
+        # Local normal
+        local_normal = face.normal
+        dot = local_normal.dot(target_local)
+        if dot > best_dot:
+            best_dot = dot
+            best_face = face
+            
+    bm.free()
+    
+    if best_face:
+        # Calculate world center of this face
+        co = Vector((0,0,0))
+        for v in best_face.verts:
+            co += v.co
+        co /= len(best_face.verts)
+        return matrix_world @ co # Wait, v.co is already in world space if we transformed? 
+        # No, bmesh.from_mesh gives local coords. 
+        # Let's recalculate properly.
+        
+        # Recalculate world center
+        world_co = Vector((0,0,0))
+        for v in best_face.verts:
+            world_co += matrix_world @ v.co
+        world_co /= len(best_face.verts)
+        return world_co
+        
+    return matrix_world.translation
+
+def boolean_subtract(cutter, target):
+    """Perform boolean subtract using modifier."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.object = cutter
+    mod.operation = 'DIFFERENCE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Remove cutter
+    if cutter.name in bpy.data.objects:
+        bpy.data.objects.remove(cutter)
+
+def boolean_union(union_obj, target):
+    """Perform boolean union."""
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.object = union_obj
+    mod.operation = 'UNION'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    if union_obj.name in bpy.data.objects:
+        bpy.data.objects.remove(union_obj)
+
+def align_to_face(obj, target_obj, face_type):
+    """Align obj's center to target_obj's face center."""
+    target_center = get_face_center(target_obj, face_type)
+    obj_center = obj.matrix_world.translation
+    
+    # Move obj so its center matches target face center
+    delta = target_center - obj_center
+    obj.location += delta
+
+def offset_object(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+
+mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95))
+mat_metal_silver = make_material("metal_silver", (0.7, 0.7, 0.7))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create body group ---
+
+# Create body
+body = add_cylinder(0.050, 0.150, "body")
+# Rotate body so its +Z axis aligns +Z (world) - already default
+align_axis_to_vector(body, 'Z', Vector((0, 0, 1)))
+# Anchor body to world origin
+body.location = (0, 0, 0)
+# Move body by offset(0,0,0)
+offset_object(body, Vector((0, 0, 0)))
+
+# Create body_bottom
+body_bottom = add_cylinder(0.050, 0.005, "body_bottom")
+# Rotate body_bottom so its +Z axis aligns +Z (world)
+align_axis_to_vector(body_bottom, 'Z', Vector((0, 0, 1)))
+# Align body_bottom.center to body.bottom_face
+align_to_face(body_bottom, body, 'bottom_face')
+# Then move by offset(0,0,-0.002)
+offset_object(body_bottom, Vector((0, 0, -0.002)))
+
+# --- SECTION 2 – Create spout group ---
+
+# Create spout_base
+spout_base = add_cylinder(0.015, 0.040, "spout_base")
+# Rotate spout_base so its +Z axis aligns +X (world)
+align_axis_to_vector(spout_base, 'Z', Vector((1, 0, 0)))
+# Align spout_base.center to body.right_face
+align_to_face(spout_base, body, 'right_face')
+# Then move by offset(0.050,0,0)
+offset_object(spout_base, Vector((0.050, 0, 0)))
+
+# Create spout_tip
+spout_tip = add_cone(0.010, 0.005, 0.030, "spout_tip")
+# Rotate spout_tip so its +Z axis aligns +X (world)
+align_axis_to_vector(spout_tip, 'Z', Vector((1, 0, 0)))
+# Align spout_tip.bottom_face to spout_base.top_face
+# Note: Cone default orientation: bottom face is at Z=0 (if depth is positive and center is 0,0,0? No, cone is centered at 0,0,0 usually? 
+# Blender primitive_cone_add creates cone centered at 0,0,0 with height along Z.
+# So bottom face is at -height/2, top face at +height/2.
+# We need to align spout_tip.bottom_face to spout_base.top_face.
+align_to_face(spout_tip, spout_base, 'top_face')
+# Then move by offset(0.020,0,0)
+offset_object(spout_tip, Vector((0.020, 0, 0)))
+
+# Create spout_curve
+# Torus segment: major radius 0.040, minor radius 0.015, angle 90 degrees
+spout_curve = add_torus(0.040, 0.015, 90, "spout_curve")
+# Rotate spout_curve so its +Z axis aligns +Z (world) - already default
+align_axis_to_vector(spout_curve, 'Z', Vector((0, 0, 1)))
+# Align spout_curve.center to spout_base.top_face
+align_to_face(spout_curve, spout_base, 'top_face')
+# Then move by offset(0.020,0,0.020)
+offset_object(spout_curve, Vector((0.020, 0, 0.020)))
+
+# --- SECTION 3 – Create handle group ---
+
+# Create handle_arch
+# Torus segment: major radius 0.040, minor radius 0.008, angle 180 degrees
+handle_arch = add_torus(0.040, 0.008, 180, "handle_arch")
+# Rotate handle_arch so its +Z axis aligns +Z (world)
+align_axis_to_vector(handle_arch, 'Z', Vector((0, 0, 1)))
+# Align handle_arch.center to body.left_face
+align_to_face(handle_arch, body, 'left_face')
+# Then move by offset(-0.050,0,0.050)
+offset_object(handle_arch, Vector((-0.050, 0, 0.050)))
+
+# Create handle_mount_L
+handle_mount_L = add_cylinder(0.005, 0.020, "handle_mount_L")
+# Rotate handle_mount_L so its +Z axis aligns +X (world)
+align_axis_to_vector(handle_mount_L, 'Z', Vector((1, 0, 0)))
+# Align handle_mount_L.center to body.left_face
+align_to_face(handle_mount_L, body, 'left_face')
+# Then move by offset(-0.050,0,0.050)
+offset_object(handle_mount_L, Vector((-0.050, 0, 0.050)))
+
+# Create handle_mount_R
+handle_mount_R = add_cylinder(0.005, 0.020, "handle_mount_R")
+# Rotate handle_mount_R so its +Z axis aligns +X (world)
+align_axis_to_vector(handle_mount_R, 'Z', Vector((1, 0, 0)))
+# Align handle_mount_R.center to body.left_face
+align_to_face(handle_mount_R, body, 'left_face')
+# Then move by offset(-0.050,0,0.050)
+offset_object(handle_mount_R, Vector((-0.050, 0, 0.050)))
+
+# --- SECTION 4 – Create lid group ---
+
+# Create lid_dome
+lid_dome = add_uvsphere(0.050, "lid_dome")
+# Rotate lid_dome so its +Z axis aligns +Z (world)
+align_axis_to_vector(lid_dome, 'Z', Vector((0, 0, 1)))
+# Align lid_dome.center to body.top_face
+align_to_face(lid_dome, body, 'top_face')
+# Then move by offset(0,0,0.150)
+offset_object(lid_dome, Vector((0, 0, 0.150)))
+
+# Create plane_cutter
+lid_dome_cut = add_cube(0.100, "lid_dome_cut")
+# Orientation=axis:+Z (default)
+align_axis_to_vector(lid_dome_cut, 'Z', Vector((0, 0, 1)))
+# Boolean-subtract lid_dome_cut from lid_dome
+boolean_subtract(lid_dome_cut, lid_dome)
+
+# Rotate lid_dome so its curved face points +Z
+# After cutting a sphere with a plane at Z=0 (if centered), we get a hemisphere.
+# The flat face is at Z=0, curved face at Z>0.
+# If we want curved face to point +Z, it's already pointing +Z if the cut was at the bottom.
+# Let's check the cut position.
+# The cutter was created at (0,0,0). The sphere was aligned to body.top_face.
+# body.top_face is at Z=0.075 (radius 0.05 + height 0.15/2? No, body height 0.15, center 0,0,0. Top face Z=0.075).
+# So lid_dome center is at Z=0.075.
+# Cutter is at Z=0.
+# So the cutter cuts the bottom half of the sphere.
+# The remaining part is the top hemisphere. Curved face points +Z.
+# So no rotation needed if the cut was below the center.
+# However, if the cut was above, it would be the bottom hemisphere.
+# Given the offset logic, the cutter is at global 0,0,0.
+# Lid_dome center is at body.top_face (Z=0.075).
+# So the cutter is below the center. The top hemisphere remains.
+# Curved face points +Z. Correct.
+
+# Create lid_knob
+lid_knob = add_uvsphere(0.0075, "lid_knob")
+# Rotate lid_knob so its +Z axis aligns +Z (world)
+align_axis_to_vector(lid_knob, 'Z', Vector((0, 0, 1)))
+# Align lid_knob.center to lid_dome.top_face
+# lid_dome is a hemisphere. The "top_face" in terms of bounding box is the pole.
+# get_face_center might struggle with a hemisphere if it looks for a flat face.
+# Let's assume top_face means the highest point.
+# For a sphere/hemisphere aligned with Z, the top is at center + radius.
+# We can manually calculate or use a helper.
+# Let's use a simple approach: get the face with normal closest to +Z.
+# Since it's a hemisphere, the pole is a vertex or small face.
+# Let's use the center of the hemisphere's flat face as reference? No, "top_face" implies the top of the dome.
+# Let's assume the user means the highest point of the dome.
+# We can approximate this by getting the center of the object and adding the radius in Z.
+# Or, we can find the face with normal (0,0,1).
+# For a UV sphere, the top vertex is at (0,0,r).
+# Let's use the center of the object + (0,0,radius).
+# But wait, the object might be scaled or rotated.
+# Let's use the get_face_center logic but specifically for 'top' in local space.
+# Since lid_dome is aligned with Z, local +Z is world +Z.
+# The top of the hemisphere is at local (0,0,radius).
+# World position = matrix_world @ (0,0,radius).
+# Radius is 0.050.
+lid_dome_top = lid_dome.matrix_world @ Vector((0, 0, 0.050))
+lid_knob_center = lid_dome_top
+lid_knob_location = lid_knob.matrix_world.translation
+lid_knob.location += (lid_dome_top - lid_knob_location)
+
+# Then move by offset(0,0,0.050)
+offset_object(lid_knob, Vector((0, 0, 0.050)))
+
+# Assign materials (Optional, but good practice)
+# body.material_slots[0].material = mat_ceramic_white
+# ... etc. 
+# The prompt didn't explicitly ask to assign materials to objects, just define them.
+# I will leave material assignment out unless specified, to keep script clean.
+```

@@ -1,0 +1,43 @@
+{
+  "id": "ca0823c7-d889-41f1-ae8c-665a8ce8286e",
+  "name": "Hand Mixer",
+  "instruction": "Highlight the key features of a hand mixer. It has a pair of beaters, a speed control dial, and a comfortable grip handle.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The shape of the hand mixer is not specified in the instruction."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The beaters are positioned at the front of the mixer.",
+        "The speed control dial is located on the body of the mixer.",
+        "The handle is at the rear, allowing for a natural grip."
+      ],
+      "Object distance and contact": [
+        "The size of the beaters is proportionate to the mixer body.",
+        "The handle is appropriately sized for average hand dimensions."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All key features mentioned in the instruction are accurately represented.",
+        "There are no omissions of specified components."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

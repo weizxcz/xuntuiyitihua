@@ -1,0 +1,91 @@
+{
+  "method": "featurefox_ncti_inst_threshold_scan",
+  "edge_threshold": 0.35,
+  "offset": 50500,
+  "timestamp": "2026-06-23 15:51:13",
+  "valid_files": 462,
+  "elapsed": 1271.0,
+  "scan": [
+    {
+      "inst_thr": 0.1,
+      "precision": 85.55,
+      "recall": 63.25,
+      "f1": 72.73,
+      "tp": 296,
+      "fp": 50,
+      "fn": 172
+    },
+    {
+      "inst_thr": 0.15,
+      "precision": 88.89,
+      "recall": 63.25,
+      "f1": 73.91,
+      "tp": 296,
+      "fp": 37,
+      "fn": 172
+    },
+    {
+      "inst_thr": 0.2,
+      "precision": 91.36,
+      "recall": 63.25,
+      "f1": 74.75,
+      "tp": 296,
+      "fp": 28,
+      "fn": 172
+    },
+    {
+      "inst_thr": 0.25,
+      "precision": 91.36,
+      "recall": 63.25,
+      "f1": 74.75,
+      "tp": 296,
+      "fp": 28,
+      "fn": 172
+    },
+    {
+      "inst_thr": 0.3,
+      "precision": 91.36,
+      "recall": 63.25,
+      "f1": 74.75,
+      "tp": 296,
+      "fp": 28,
+      "fn": 172
+    },
+    {
+      "inst_thr": 0.4,
+      "precision": 91.28,
+      "recall": 62.61,
+      "f1": 74.27,
+      "tp": 293,
+      "fp": 28,
+      "fn": 175
+    },
+    {
+      "inst_thr": 0.5,
+      "precision": 92.06,
+      "recall": 61.97,
+      "f1": 74.07,
+      "tp": 290,
+      "fp": 25,
+      "fn": 178
+    },
+    {
+      "inst_thr": 0.8,
+      "precision": 96.03,
+      "recall": 61.97,
+      "f1": 75.32,
+      "tp": 290,
+      "fp": 12,
+      "fn": 178
+    }
+  ],
+  "best_f1": {
+    "inst_thr": 0.8,
+    "precision": 96.03,
+    "recall": 61.97,
+    "f1": 75.32,
+    "tp": 290,
+    "fp": 12,
+    "fn": 178
+  }
+}

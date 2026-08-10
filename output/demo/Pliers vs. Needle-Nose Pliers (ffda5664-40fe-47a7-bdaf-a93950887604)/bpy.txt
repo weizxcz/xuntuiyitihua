@@ -1,0 +1,392 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cone."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_top, radius2=radius_bottom, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a UV Sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_bevel(obj, width, segments=2):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(base_obj, cutter_obj):
+    """Perform boolean subtract using BMesh."""
+    # Ensure base is active
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    base_obj.select_set(True)
+    
+    # Create modifier
+    mod = base_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    return base_obj
+
+def boolean_union(base_obj, other_obj):
+    """Perform boolean union using BMesh."""
+    # Ensure base is active
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    base_obj.select_set(True)
+    
+    # Create modifier
+    mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup other
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+    return base_obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+        
+    target = vector.normalized()
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='right'):
+    """Get the world center of a specific face of a Z-aligned cylinder."""
+    # Assuming Z-aligned cylinder, right face is +Z, left is -Z
+    if face_type == 'right':
+        offset = obj.dimensions.z / 2
+    elif face_type == 'left':
+        offset = -obj.dimensions.z / 2
+    else:
+        offset = 0
+        
+    # Local to World
+    local_center = Vector((0, 0, offset))
+    world_center = obj.matrix_world @ local_center
+    return world_center
+
+def get_object_center(obj):
+    """Get world center of object."""
+    return obj.matrix_world.to_translation()
+
+def align_to_face(obj_source, obj_target, source_face='right', target_face='center'):
+    """Align source object's face to target object's face/center."""
+    target_loc = get_object_center(obj_target)
+    
+    # Calculate offset in local space of source
+    if source_face == 'right':
+        local_offset = Vector((0, 0, obj_source.dimensions.z / 2))
+    elif source_face == 'left':
+        local_offset = Vector((0, 0, -obj_source.dimensions.z / 2))
+    else:
+        local_offset = Vector((0,0,0))
+        
+    # We want the source face to be at target_loc
+    # Current source center is obj_source.location
+    # Source face world pos = obj_source.location + (obj_source.matrix_world @ local_offset)
+    # We want: obj_source.location + (obj_source.matrix_world @ local_offset) = target_loc
+    # So: obj_source.location = target_loc - (obj_source.matrix_world @ local_offset)
+    
+    # However, since we align axes first, matrix_world is just translation + rotation.
+    # If aligned to Z, rotation is identity or 180.
+    # Let's just move the object so its face hits the target.
+    
+    # Simple approach: Move object so its face center matches target center
+    # Face center in local space is (0,0, +/- z/2)
+    # In world space, if aligned to Z, it's (0,0, +/- z/2) relative to object loc.
+    
+    sign = 1 if source_face == 'right' else -1
+    move_vec = Vector((0, 0, sign * obj_source.dimensions.z / 2))
+    
+    # Target position for object center
+    new_loc = target_loc - move_vec
+    obj_source.location = new_loc
+
+def align_to_center(obj_source, obj_target):
+    """Align source object center to target object center."""
+    target_loc = get_object_center(obj_target)
+    obj_source.location = target_loc
+
+def apply_offset(obj, offset_vec):
+    """Apply offset to object location."""
+    obj.location += offset_vec
+
+def create_locator(name, location):
+    """Create a simple empty locator."""
+    bpy.ops.object.empty_add(location=location, type='PLAIN_AXES')
+    loc = bpy.context.active_object
+    loc.name = name
+    return loc
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+
+mat_steel_handle = make_material("mat_steel_handle", (0.2, 0.2, 0.2, 1.0))
+mat_steel_jaw = make_material("mat_steel_jaw", (0.6, 0.6, 0.6, 1.0))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create Standard Pliers Jaw (pliers_jaw) ---
+
+# Create jaw_left
+jaw_left = add_cylinder("jaw_left", radius=0.010, depth=0.150, location=(0,0,0), rotation=(0,0,0), material=mat_steel_jaw)
+# Rotate so +Z aligns +Z (already default, but explicit)
+align_axis_to_vector(jaw_left, 'Z', (0,0,1))
+
+# Align jaw_left.right_face to pliers_jaw.center
+# Note: pliers_jaw doesn't exist yet as a named object, but the instruction says "pliers_jaw.center".
+# In the context of the prompt, "pliers_jaw" seems to refer to the logical group or a placeholder.
+# However, looking at Section 3, pliers_jaw is the result of the union.
+# The instruction "Align jaw_left.right_face to pliers_jaw.center" likely implies a global center or a specific anchor.
+# Given "pliers_jaw" is the name of the final object in this section, and no other anchor is defined,
+# let's assume "pliers_jaw.center" refers to the global origin (0,0,0) or a specific anchor point defined elsewhere.
+# Since no anchor object "pliers_jaw" exists yet, and it's the subject of the section, 
+# I will interpret "pliers_jaw.center" as the global origin (0,0,0) for the first piece, 
+# OR it might be a typo for a global anchor. Let's assume global origin for the first piece if no anchor exists.
+# Actually, looking at Section 2, "pliers_main.center" is used. 
+# Let's create a temporary anchor or assume global origin.
+# Standard interpretation: If the target object doesn't exist, use global origin.
+align_to_face(jaw_left, bpy.context.scene.objects[0] if bpy.context.scene.objects else None, source_face='right', target_face='center')
+# If no objects, align to origin
+if not bpy.context.scene.objects:
+    jaw_left.location = Vector((0, 0, -0.075)) # Right face at 0,0,0 means center at -0.075
+else:
+    # Re-align to origin if the scene was empty
+    jaw_left.location = Vector((0, 0, -0.075))
+
+# Offset
+apply_offset(jaw_left, Vector((0, 0, 0)))
+
+# Create jaw_right
+jaw_right = add_cylinder("jaw_right", radius=0.010, depth=0.150, location=(0,0,0), rotation=(0,0,0), material=mat_steel_jaw)
+align_axis_to_vector(jaw_right, 'Z', (0,0,1))
+
+# Align jaw_right.right_face to jaw_left.left_face
+align_to_face(jaw_right, jaw_left, source_face='right', target_face='left')
+
+# Offset
+apply_offset(jaw_right, Vector((0, 0, 0)))
+
+# Boolean-union jaw_left and jaw_right; keep jaw_left
+pliers_jaw = boolean_union(jaw_left, jaw_right)
+pliers_jaw.name = "pliers_jaw"
+
+# --- SECTION 2 – Create Standard Pliers Handle (pliers_handle) ---
+
+# Create pliers_handle
+pliers_handle = add_cylinder("pliers_handle", radius=0.0125, depth=0.100, location=(0,0,0), rotation=(0,0,0), material=mat_steel_handle)
+align_axis_to_vector(pliers_handle, 'Z', (0,0,1))
+
+# Align pliers_handle.center to pliers_main.center
+# pliers_main doesn't exist yet. This is likely a logical reference to the jaw assembly's center or global origin.
+# Given the sequence, it probably means align to the jaw assembly's center.
+# Let's align to pliers_jaw.center
+align_to_center(pliers_handle, pliers_jaw)
+
+# Offset
+apply_offset(pliers_handle, Vector((0, 0, 0)))
+
+# --- SECTION 3 – Assemble Standard Pliers Main (pliers_main) ---
+
+# Boolean-union pliers_jaw and pliers_handle; keep pliers_jaw
+pliers_main = boolean_union(pliers_jaw, pliers_handle)
+pliers_main.name = "pliers_main"
+
+# --- SECTION 4 – Create Standard Pliers Pivot (pliers_pivot) ---
+
+# Create pliers_pivot
+pliers_pivot = add_cylinder("pliers_pivot", radius=0.0025, depth=0.030, location=(0,0,0), rotation=(0,0,0), material=mat_steel_handle)
+align_axis_to_vector(pliers_pivot, 'Z', (0,0,1))
+
+# Align pliers_pivot.center to pliers_main.pivot_hole
+# "pliers_main.pivot_hole" implies a specific location. Since no hole is created, 
+# we assume a logical position, typically near the top of the jaw.
+# Let's assume the pivot is at the top of the jaw (local Z = +0.075).
+# We create a temporary locator at that position to act as the "pivot_hole" anchor.
+pivot_hole_loc = pliers_main.matrix_world @ Vector((0, 0, 0.075))
+pivot_hole_anchor = create_locator("pliers_main.pivot_hole", pivot_hole_loc)
+
+align_to_center(pliers_pivot, pivot_hole_anchor)
+
+# Offset
+apply_offset(pliers_pivot, Vector((0, 0, 0)))
+
+# Boolean-union pliers_main and pliers_pivot; keep pliers_main
+pliers_union = boolean_union(pliers_main, pliers_pivot)
+pliers_union.name = "pliers_union"
+
+# --- SECTION 5 – Create Needle-Nose Pliers Jaw (needle_jaw) ---
+
+# Create needle_tip_left
+needle_tip_left = add_cylinder("needle_tip_left", radius=0.0025, depth=0.200, location=(0,0,0), rotation=(0,0,0), material=mat_steel_jaw)
+align_axis_to_vector(needle_tip_left, 'Z', (0,0,1))
+
+# Align needle_tip_left.right_face to needle_jaw.center
+# Similar to Section 1, needle_jaw is the target group. Assume global origin or logical start.
+needle_tip_left.location = Vector((0, 0, -0.100)) # Right face at 0,0,0
+
+# Offset
+apply_offset(needle_tip_left, Vector((0, 0, 0)))
+
+# Create needle_tip_right
+needle_tip_right = add_cylinder("needle_tip_right", radius=0.0025, depth=0.200, location=(0,0,0), rotation=(0,0,0), material=mat_steel_jaw)
+align_axis_to_vector(needle_tip_right, 'Z', (0,0,1))
+
+# Align needle_tip_right.right_face to needle_tip_left.left_face
+align_to_face(needle_tip_right, needle_tip_left, source_face='right', target_face='left')
+
+# Offset
+apply_offset(needle_tip_right, Vector((0, 0, 0)))
+
+# Boolean-union needle_tip_left and needle_tip_right; keep needle_tip_left
+needle_jaw = boolean_union(needle_tip_left, needle_tip_right)
+needle_jaw.name = "needle_jaw"
+
+# --- SECTION 6 – Create Needle-Nose Pliers Handle (needle_handle) ---
+
+# Create needle_handle
+needle_handle = add_cylinder("needle_handle", radius=0.010, depth=0.080, location=(0,0,0), rotation=(0,0,0), material=mat_steel_handle)
+align_axis_to_vector(needle_handle, 'Z', (0,0,1))
+
+# Align needle_handle.center to needle_pliers_main.center
+# needle_pliers_main doesn't exist yet. Assume logical center of needle_jaw or global.
+# Align to needle_jaw center
+align_to_center(needle_handle, needle_jaw)
+
+# Offset
+apply_offset(needle_handle, Vector((0, 0, 0)))
+
+# --- SECTION 7 – Assemble Needle-Nose Pliers Main (needle_pliers_main) ---
+
+# Boolean-union needle_jaw and needle_handle; keep needle_jaw
+needle_pliers_main = boolean_union(needle_jaw, needle_handle)
+needle_pliers_main.name = "needle_pliers_main"
+
+# --- SECTION 8 – Create Needle-Nose Pliers Pivot (needle_pliers_pivot) ---
+
+# Create needle_pliers_pivot
+needle_pliers_pivot = add_cylinder("needle_pliers_pivot", radius=0.002, depth=0.025, location=(0,0,0), rotation=(0,0,0), material=mat_steel_handle)
+align_axis_to_vector(needle_pliers_pivot, 'Z', (0,0,1))
+
+# Align needle_pliers_pivot.center to needle_pliers_main.pivot_hole
+# Assume pivot is at the top of the needle jaw assembly.
+# Needle jaw is 0.2m long. Top is +0.1m from center.
+# Needle handle is 0.08m long.
+# The pivot is usually where the jaws meet the handles.
+# Let's assume the pivot is at the top of the needle_jaw (local Z = +0.1).
+pivot_hole_loc2 = needle_pliers_main.matrix_world @ Vector((0, 0, 0.1))
+pivot_hole_anchor2 = create_locator("needle_pliers_main.pivot_hole", pivot_hole_loc2)
+
+align_to_center(needle_pliers_pivot, pivot_hole_anchor2)
+
+# Offset
+apply_offset(needle_pliers_pivot, Vector((0, 0, 0)))
+
+# Boolean-union needle_pliers_main and needle_pliers_pivot; keep needle_pliers_main
+needle_pliers_union = boolean_union(needle_pliers_main, needle_pliers_pivot)
+needle_pliers_union.name = "needle_pliers_union"
+
+# --- SECTION 9 – Final Assembly of Composite Pliers ---
+
+# Align needle_pliers_union.center to (0,0,0.05)
+needle_pliers_union.location = Vector((0, 0, 0.05))
+
+# Offset
+apply_offset(needle_pliers_union, Vector((0, 0, 0)))
+
+# Boolean-union pliers_union and needle_pliers_union; keep pliers_union
+pliers_final = boolean_union(pliers_union, needle_pliers_union)
+pliers_final.name = "pliers_final"
+
+print("Stage 9 complete.")
+print("All stages complete.")
+```

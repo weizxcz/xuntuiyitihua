@@ -1,0 +1,39 @@
+-- MATERIAL LIBRARY --
+mat_black_plastic | diffuse_color=(0.10,0.10,0.10,1.00)
+mat_blue_mat | diffuse_color=(0.20,0.40,0.80,1.00)
+mat_brush_bristles | diffuse_color=(0.90,0.90,0.90,1.00)
+mat_brush_handle | diffuse_color=(0.80,0.20,0.20,1.00)
+mat_clipper_blade | diffuse_color=(0.60,0.60,0.65,1.00)
+mat_clipper_body | diffuse_color=(0.15,0.15,0.15,1.00)
+mat_comb_teeth | diffuse_color=(0.85,0.85,0.85,1.00)
+mat_comb_handle | diffuse_color=(0.80,0.20,0.20,1.00)
+mat_stainless_bowl | diffuse_color=(0.70,0.70,0.75,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| grooming_kit_case | Composite of case_base + case_lid + grooming_tools; Compact storage unit | Align(XY) grooming_kit_case.center to (0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=boolean_union; assembly_order=[case_base, case_lid, grooming_tools] |
+| feeding_set | Composite of feeding_mat + bowl_water + bowl_food; Open accessible layout | Align(XY) feeding_set.center to (0.5,0,0); orientation=axis:+Z; mat=mat_blue_mat; create_method=boolean_union; assembly_order=[feeding_mat, bowl_water, bowl_food] |
+
+Layer 1 – Primary Structure (Grooming Kit)
+| ID | Description | Key attributes / placement |
+| case_base | Rectangular base box Ø0.200×0.050 m (W×H) | Align(XY) case_base.center to grooming_kit_case.center; Align(Z) case_base.bottom_face to (0,0,-0.025); orientation=axis:+Z; mat=mat_black_plastic; create_method=cube; assembly_order=case_base |
+| case_lid | Rectangular lid Ø0.200×0.010 m (W×H) | Align(XY) case_lid.center to grooming_kit_case.center; Align(Z) case_lid.bottom_face to case_base.top_face; offset(0,0,0.050); orientation=axis:+Z; mat=mat_black_plastic; create_method=cube; assembly_order=case_lid |
+| grooming_tools | Composite of brush + comb + clippers; Organized inside case | Align(XY) grooming_tools.center to case_base.center; Align(Z) grooming_tools.bottom_face to case_base.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=-; create_method=boolean_union; assembly_order=[brush, comb, clippers] |
+
+Layer 2 – Grooming Tools Details
+| ID | Description | Key attributes / placement |
+| brush | Handle with bristle pad Ø0.050×0.015 m (W×H) | Align(XY) brush.center to case_base.center; offset(-0.05, 0, 0); Align(Z) brush.bottom_face to grooming_tools.bottom_face; orientation=axis:+Z; mat=mat_brush_handle; create_method=boolean_union; assembly_order=brush |
+| brush_bristles | Bristle pad on brush Ø0.040×0.005 m (W×H) | Align(XY) brush_bristles.center to brush.center; Align(Z) brush_bristles.bottom_face to brush.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_brush_bristles; create_method=cylinder; assembly_order=brush_bristles |
+| comb | Handle with teeth row Ø0.040×0.010 m (W×H) | Align(XY) comb.center to case_base.center; offset(0, 0, 0); Align(Z) comb.bottom_face to grooming_tools.bottom_face; orientation=axis:+Z; mat=mat_comb_handle; create_method=boolean_union; assembly_order=comb |
+| comb_teeth | Teeth row on comb Ø0.030×0.002 m (W×H) | Align(XY) comb_teeth.center to comb.center; Align(Z) comb_teeth.bottom_face to comb.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_comb_teeth; create_method=cube; assembly_order=comb_teeth |
+| clippers | Body with blade Ø0.030×0.015 m (W×H) | Align(XY) clippers.center to case_base.center; offset(0.05, 0, 0); Align(Z) clippers.bottom_face to grooming_tools.bottom_face; orientation=axis:+Z; mat=mat_clipper_body; create_method=boolean_union; assembly_order=clippers |
+| clipper_blade | Metal blade on clippers Ø0.020×0.002 m (W×H) | Align(XY) clipper_blade.center to clippers.center; Align(Z) clipper_blade.bottom_face to clippers.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_clipper_blade; create_method=cylinder; assembly_order=clipper_blade |
+
+Layer 3 – Primary Structure (Feeding Set)
+| ID | Description | Key attributes / placement |
+| feeding_mat | Large rectangular mat Ø0.400×0.005 m (W×H) | Align(XY) feeding_mat.center to feeding_set.center; Align(Z) feeding_mat.bottom_face to (0,0,-0.0025); orientation=axis:+Z; mat=mat_blue_mat; create_method=cube; assembly_order=feeding_mat |
+| bowl_water | Water bowl Ø0.100×0.060 m (W×H) | Align(XY) bowl_water.center to feeding_mat.center; offset(-0.10, 0, 0); Align(Z) bowl_water.bottom_face to feeding_mat.top_face; orientation=axis:+Z; mat=mat_stainless_bowl; create_method=cylinder; assembly_order=bowl_water |
+| bowl_food | Food bowl Ø0.100×0.060 m (W×H) | Align(XY) bowl_food.center to feeding_mat.center; offset(0.10, 0, 0); Align(Z) bowl_food.bottom_face to feeding_mat.top_face; orientation=axis:+Z; mat=mat_stainless_bowl; create_method=cylinder; assembly_order=bowl_food |
+# ----------  END_GRAPH  ----------

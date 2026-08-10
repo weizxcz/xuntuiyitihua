@@ -1,0 +1,24 @@
+-- MATERIAL LIBRARY --
+blade_steel | diffuse_color=(192,192,200,1)
+handle_grip | diffuse_color=(30,30,30,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| blade_base | Composite of blade_body + blade_teeth | A. Composite of blade_body + blade_teeth; create_method=boolean_union |
+
+Layer 1 – Primary Structure (Blade)
+| ID | Description | Key attributes / placement |
+| blade_body | Rectangular prism 0.280×0.040×0.002 m (L×W×T) | Align(XY) blade_body.center to (0,0,0); orientation=axis:+X; mat=blade_steel; create_method=primitive |
+| blade_teeth | Array of 12 semi-cylindrical protrusions on top edge | Align(XY) blade_teeth.center to blade_body.top_face.center; orientation=axis:+Z; mat=blade_steel; create_method=boolean_subtract; constraint=12 teeth, pitch 0.020 m, radius 0.005 m, depth 0.001 m |
+
+Layer 2 – Handle Assembly
+| ID | Description | Key attributes / placement |
+| handle_core | Tapered cylinder 0.120×0.030×0.025 m (L×W×H) | Align(X) handle_core.left_face to blade_body.right_face; orientation=axis:+X; mat=handle_grip; create_method=primitive |
+| handle_grip | Ergonomic contour overlay on handle_core | Align(XYZ) handle_grip.center to handle_core.center; orientation=axis:+X; mat=handle_grip; create_method=boolean_union; constraint=extrude_from_sketch: ergonomic cross-section profile, thickness 0.005 m |
+
+Layer 3 – Final Assembly
+| ID | Description | Key attributes / placement |
+| bread_knife | Composite of blade_base + handle_core + handle_grip | A. Composite of blade_base + handle_core + handle_grip; create_method=boolean_union; assembly_order=[blade_base], [handle_core], [handle_grip] |
+# ----------  END_GRAPH  ----------

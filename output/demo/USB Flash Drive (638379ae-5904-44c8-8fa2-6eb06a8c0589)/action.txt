@@ -1,0 +1,45 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_body; diffuse_color = (0.15,0.15,0.15,1.0).
+Define material mat_cap; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material mat_connector; diffuse_color = (0.9,0.8,0.3,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create body_group (body + connector)  ---
+Create primitive cuboid with size 0.060×0.020×0.005 m and name it body.
+Rotate body so its +Z axis aligns +Z (world).
+Anchor body to world origin.
+Then move by offset(0, 0, 0).
+
+Create primitive cuboid with size 0.012×0.029×0.004 m and name it connector.
+Rotate connector so its +Z axis aligns +Z (world).
+Align connector.bottom_face to body.top_face.
+Then move by offset(0, 0, 0.0025).
+
+Boolean-union connector to body; keep body.
+Stage 1 complete.
+
+---  SECTION 2 – Create cap_group (cap)  ---
+Create primitive cuboid with size 0.060×0.020×0.005 m and name it cap.
+Rotate cap so its +Z axis aligns +Z (world).
+Align cap.bottom_face to body.top_face.
+Then move by offset(0, 0, 0.005).
+
+Stage 2 complete.
+
+---  SECTION 3 – Assemble usb_drive  ---
+Boolean-union cap to body; keep body.
+Stage 3 complete.
+
+All stages complete.

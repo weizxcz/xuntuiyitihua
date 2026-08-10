@@ -1,0 +1,40 @@
+-- MATERIAL LIBRARY --
+fabric_waterproof | diffuse_color=(0.15,0.25,0.35,1.0)
+fabric_lining | diffuse_color=(0.85,0.85,0.90,1.0)
+insulation | diffuse_color=(0.95,0.95,0.95,1.0)
+zipper_metal | diffuse_color=(0.60,0.60,0.65,1.0)
+zipper_pull | diffuse_color=(0.20,0.20,0.20,1.0)
+pocket_trim | diffuse_color=(0.10,0.10,0.10,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| jacket_root | Composite of shell, lining, insulation, hood, zipper, and pockets | A. Composite of shell + lining + insulation + hood + zipper + pockets; B. Assembly order: [shell], [insulation], [lining], [hood], [zipper], [pockets] |
+
+Layer 1 – Primary Structure (Shell & Lining)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shell_outer | Outer shell of the jacket (Waterproof fabric) | A. Composite of front_panel + back_panel + left_sleeve + right_sleeve + left_cuff + right_cuff; B. Material: fabric_waterproof; C. Create method: boolean_union; D. Assembly: Align(Z) front_panel.back_face to back_panel.front_face; offset(0,0,0.002) for seam allowance; Align(X) front_panel.left_edge to left_sleeve.right_edge; Align(X) front_panel.right_edge to right_sleeve.left_edge; Align(Z) left_sleeve.bottom_edge to left_cuff.top_edge; Align(Z) right_sleeve.bottom_edge to right_cuff.top_edge |
+| shell_inner | Inner shell surface (Lining fabric) | A. Composite of front_panel_inner + back_panel_inner + left_sleeve_inner + right_sleeve_inner; B. Material: fabric_lining; C. Create method: boolean_union; D. Assembly: Align(Z) front_panel_inner.back_face to back_panel_inner.front_face; offset(0,0,0.002); Align(X) front_panel_inner.left_edge to left_sleeve_inner.right_edge; Align(X) front_panel_inner.right_edge to right_sleeve_inner.left_edge |
+| insulation_layer | Thermal insulation layer | A. Composite of front_insulation + back_insulation + left_sleeve_insulation + right_sleeve_insulation; B. Material: insulation; C. Create method: boolean_union; D. Assembly: Align(Z) front_insulation.back_face to back_insulation.front_face; offset(0,0,0.002); Align(X) front_insulation.left_edge to left_sleeve_insulation.right_edge; Align(X) front_insulation.right_edge to right_sleeve_insulation.left_edge |
+
+Layer 2 – Hood
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hood | Hood attached to the back of the jacket | A. Composite of hood_front + hood_back; B. Material: fabric_waterproof; C. Create method: boolean_union; D. Assembly: Align(Z) hood_front.back_face to hood_back.front_face; offset(0,0,0.002); Align(Z) hood.bottom_face to shell_outer.back_panel.top_face; offset(0,0,0.005) for seam |
+
+Layer 3 – Zipper
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| zipper_track | Metal zipper track | A. Composite of left_track + right_track; B. Material: zipper_metal; C. Create method: boolean_union; D. Assembly: Align(X) left_track.right_edge to right_track.left_edge; offset(0,0,0.001) for gap; Align(Z) zipper_track.bottom_face to shell_outer.front_panel.bottom_face; offset(0,0,0.005) |
+| zipper_pull | Zipper pull tab | A. Cylinder Ø0.010×0.020 m; B. Material: zipper_pull; C. Create method: primitive; D. Assembly: Align(Z) zipper_pull.bottom_face to zipper_track.top_face; offset(0,0,0.005) |
+
+Layer 4 – Pockets
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| left_pocket | Left side pocket | A. Composite of pocket_left_front + pocket_left_back; B. Material: pocket_trim; C. Create method: boolean_union; D. Assembly: Align(Z) pocket_left_front.back_face to pocket_left_back.front_face; offset(0,0,0.002); Align(Z) left_pocket.bottom_face to shell_outer.front_panel.bottom_face; offset(0,0,0.005); Align(X) left_pocket.right_edge to shell_outer.front_panel.left_edge; offset(0.05,0,0) |
+| right_pocket | Right side pocket | A. Composite of pocket_right_front + pocket_right_back; B. Material: pocket_trim; C. Create method: boolean_union; D. Assembly: Align(Z) pocket_right_front.back_face to pocket_right_back.front_face; offset(0,0,0.002); Align(Z) right_pocket.bottom_face to shell_outer.front_panel.bottom_face; offset(0,0,0.005); Align(X) right_pocket.left_edge to shell_outer.front_panel.right_edge; offset(-0.05,0,0) |
+
+# ----------  END_GRAPH  ----------

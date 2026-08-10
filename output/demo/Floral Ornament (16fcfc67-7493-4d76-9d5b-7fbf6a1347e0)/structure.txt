@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+leaf_green | diffuse_color=(0.15,0.45,0.15,1.0)
+petal_pink | diffuse_color=(0.95,0.65,0.75,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| floral_orament | Composite of interwoven petals and leaves forming a floral ornament | assembly_order=[petals_group],[leaves_group] |
+
+Layer 1 – Primary Structure (Petals)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| petals_group | Composite union of 5 petal primitives arranged in a radial pattern | assembly_order=[petal_0],[petal_1],[petal_2],[petal_3],[petal_4] |
+| petal_0 | Petal primitive approx 0.050×0.020×0.002 m (L×W×T) | Align(XY) petal_0.center to floral_orament.center; orientation=axis:+Z; mat=petal_pink; create_method=primitive; constraint=petal_shape: elongated ellipse with pointed tip |
+| petal_1 | Petal primitive approx 0.050×0.020×0.002 m (L×W×T) | Align(XY) petal_1.center to floral_orament.center; orientation=axis:+Z; mat=petal_pink; create_method=primitive; constraint=petal_shape: elongated ellipse with pointed tip |
+| petal_2 | Petal primitive approx 0.050×0.020×0.002 m (L×W×T) | Align(XY) petal_2.center to floral_orament.center; orientation=axis:+Z; mat=petal_pink; create_method=primitive; constraint=petal_shape: elongated ellipse with pointed tip |
+| petal_3 | Petal primitive approx 0.050×0.020×0.002 m (L×W×T) | Align(XY) petal_3.center to floral_orament.center; orientation=axis:+Z; mat=petal_pink; create_method=primitive; constraint=petal_shape: elongated ellipse with pointed tip |
+| petal_4 | Petal primitive approx 0.050×0.020×0.002 m (L×W×T) | Align(XY) petal_4.center to floral_orament.center; orientation=axis:+Z; mat=petal_pink; create_method=primitive; constraint=petal_shape: elongated ellipse with pointed tip |
+
+Layer 2 – Primary Structure (Leaves)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| leaves_group | Composite union of 3 leaf primitives arranged radially between petals | assembly_order=[leaf_0],[leaf_1],[leaf_2] |
+| leaf_0 | Leaf primitive approx 0.040×0.015×0.001 m (L×W×T) | Align(XY) leaf_0.center to floral_orament.center; orientation=axis:+Z; mat=leaf_green; create_method=primitive; constraint=leaf_shape: ovate with serrated edge |
+| leaf_1 | Leaf primitive approx 0.040×0.015×0.001 m (L×W×T) | Align(XY) leaf_1.center to floral_orament.center; orientation=axis:+Z; mat=leaf_green; create_method=primitive; constraint=leaf_shape: ovate with serrated edge |
+| leaf_2 | Leaf primitive approx 0.040×0.015×0.001 m (L×W×T) | Align(XY) leaf_2.center to floral_orament.center; orientation=axis:+Z; mat=leaf_green; create_method=primitive; constraint=leaf_shape: ovate with serrated edge |
+
+# ----------  END_GRAPH  ----------

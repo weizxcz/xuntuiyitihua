@@ -1,0 +1,53 @@
+{
+  "id": "aa5af618-2df5-4ec2-8546-64d8d8ed091c",
+  "name": "Teddy Bear",
+  "instruction": "Design a teddy bear. It should have a round head with two ears, a small nose, and eyes. The body should be plump with arms and legs. Add a small bow around its neck. The teddy bear should have a friendly and welcoming appearance.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a teddy bear.",
+        "The teddy bear has a round head.",
+        "The teddy bear features two ears on top of the head.",
+        "The nose is small and placed centrally on the face.",
+        "The teddy bear has two eyes.",
+        "The body is plump.",
+        "The teddy bear has arms and legs."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head is proportionate to the body.",
+        "The arms and legs are plump and match the body size."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The ears are positioned symmetrically on the head.",
+        "The arms are attached to the sides of the body.",
+        "The legs are positioned at the bottom of the body.",
+        "The bow is placed around the neck, not obstructing the face."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the head and the body.",
+        "The arms and legs are properly attached to the body without gaps.",
+        "The bow is securely placed around the neck."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The teddy bear has a friendly and welcoming appearance as instructed.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

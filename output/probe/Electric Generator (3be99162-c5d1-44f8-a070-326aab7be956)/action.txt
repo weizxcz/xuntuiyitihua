@@ -1,0 +1,117 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material copper_wire; diffuse_color = (0.87,0.27,0.09,1.0).
+Define material magnetic_steel; diffuse_color = (0.4,0.4,0.45,1.0).
+Define material steel_alloy; diffuse_color = (0.3,0.3,0.35,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Stator Frame: Outer Housing  ---
+Create primitive cylinder with diameter 0.200 m and height 0.150 m and name it outer_housing.
+Rotate outer_housing so its +Z axis aligns +Z (world).
+Move outer_housing to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Stator Frame: Inner Core Ring  ---
+Create primitive cylinder with diameter 0.180 m and height 0.140 m and name it inner_core_ring.
+Rotate inner_core_ring so its +Z axis aligns +Z (world).
+Align inner_core_ring.bottom_face to outer_housing.top_face.
+Then move by offset(0,0,0.005).
+Stage 2 complete.
+
+---  SECTION 3 – Create Stator Frame: Winding Slots  ---
+Create an Empty helper (cube display) and name it winding_slots.
+Rotate winding_slots so its axis aligns +Z (world).
+Align winding_slots.center to outer_housing.center.
+Align winding_slots.bottom_face to outer_housing.top_face.
+Then move by offset(0,0,0.005).
+
+For i in 0…3:
+  Create primitive cuboid with size 0.010×0.010×0.140 m and name it slot_cut_i.
+  Rotate slot_cut_i so its +Z axis aligns +Z (world).
+  Anchor slot_cut_i to winding_slots.
+  Then position at polar(i*90°; dr=0.085).
+  Boolean-subtract slot_cut_i from outer_housing; discard slot_cut_i.
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Rotor Core: Core Body  ---
+Create primitive cylinder with diameter 0.100 m and height 0.120 m and name it core_body.
+Rotate core_body so its +Z axis aligns +Z (world).
+Move core_body to pos=(0,0,0.075).
+Stage 4 complete.
+
+---  SECTION 5 – Create Rotor Core: Magnets  ---
+Create an Empty helper (cube display) and name it magnets.
+Rotate magnets so its axis aligns +Z (world).
+Align magnets.center to core_body.center.
+Align magnets.bottom_face to core_body.top_face.
+Then move by offset(0,0,0.001).
+
+For i in 0…3:
+  Create primitive cuboid with size 0.020×0.020×0.010 m and name it magnet_i.
+  Rotate magnet_i so its +Z axis aligns +Z (world).
+  Anchor magnet_i to magnets.
+  Then position at polar(i*90°; dr=0.045).
+  Boolean-union magnet_i with core_body; discard magnet_i.
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Rotor Core: Windings  ---
+Create an Empty helper (cube display) and name it windings.
+Rotate windings so its axis aligns +Z (world).
+Align windings.center to core_body.center.
+Align windings.bottom_face to core_body.top_face.
+Then move by offset(0,0,0.011).
+
+For i in 0…3:
+  Create primitive cylinder with diameter 0.015 m and height 0.020 m and name it coil_i.
+  Rotate coil_i so its +Z axis aligns +Z (world).
+  Anchor coil_i to windings.
+  Then position at polar(i*90°; dr=0.045).
+  Boolean-union coil_i with core_body; discard coil_i.
+
+Stage 6 complete.
+
+---  SECTION 7 – Create Shaft  ---
+Create primitive cylinder with diameter 0.020 m and height 0.200 m and name it shaft.
+Rotate shaft so its +Z axis aligns +Z (world).
+Align shaft.center to generator_assembly.center.
+Align shaft.bottom_face to stator_frame.bottom_face.
+Then move by offset(0,0,-0.025).
+Stage 7 complete.
+
+---  SECTION 8 – Assemble Rotor Core to Shaft  ---
+Align rotor_core.center to shaft.center.
+Align rotor_core.bottom_face to shaft.top_face.
+Then move by offset(0,0,0.060).
+Boolean-union rotor_core with shaft; discard rotor_core.
+Stage 8 complete.
+
+---  SECTION 9 – Create End Cover Top  ---
+Create primitive cylinder with diameter 0.180 m and height 0.010 m and name it end_cover_top.
+Rotate end_cover_top so its +Z axis aligns +Z (world).
+Align end_cover_top.center to generator_assembly.center.
+Align end_cover_top.bottom_face to stator_frame.top_face.
+Then move by offset(0,0,0.005).
+Stage 9 complete.
+
+---  SECTION 10 – Create End Cover Bottom  ---
+Create primitive cylinder with diameter 0.180 m and height 0.010 m and name it end_cover_bottom.
+Rotate end_cover_bottom so its +Z axis aligns +Z (world).
+Align end_cover_bottom.center to generator_assembly.center.
+Align end_cover_bottom.top_face to stator_frame.bottom_face.
+Then move by offset(0,0,-0.005).
+Stage 10 complete.
+
+All stages complete.

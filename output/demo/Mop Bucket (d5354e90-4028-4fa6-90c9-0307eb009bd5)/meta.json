@@ -1,0 +1,47 @@
+{
+  "id": "d5354e90-4028-4fa6-90c9-0307eb009bd5",
+  "name": "Mop Bucket",
+  "instruction": "Create a 3D model of a mop bucket. The bucket should be round with a flat bottom and include a wringer attachment on one side. Add a handle for carrying.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a mop bucket.",
+        "The bucket is round in shape.",
+        "The bottom of the bucket is flat.",
+        "The wringer attachment is located on one side of the bucket."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The wringer attachment is proportionate to the size of the bucket.",
+        "The handle is appropriately sized for comfortable carrying."
+      ],
+      "Texture and surface detail": [
+        "The bucket may have a smooth plastic texture.",
+        "The wringer may have a textured surface for grip."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The wringer attachment is positioned correctly on the side of the bucket.",
+        "The handle is securely attached and positioned for easy carrying."
+      ],
+      "Object distance and contact": [
+        "The wringer does not overlap with the main body of the bucket.",
+        "The handle is clear of the wringer attachment."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The round shape, flat bottom, wringer attachment, and handle are all included."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

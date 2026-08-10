@@ -1,0 +1,44 @@
+{
+  "id": "ecebe090-bfbf-42c3-b49b-0f5017c9d9d2",
+  "name": "Heart Symbol",
+  "instruction": "Can you create a simple heart symbol?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a heart symbol.",
+        "The heart shape is symmetrical.",
+        "The heart has a pointed bottom and two rounded lobes at the top."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The heart is proportionagte to the entire symbol"
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The heart symbol is flat and occupies a defined area.",
+        "The lobes of the heart are evenly spaced."
+      ],
+      "Object distance and contact": [
+        "There are no overlapping elements in the heart symbol.",
+        "The heart shape is complete without any gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The heart symbol is created as requested.",
+        "There are no deviations from the instruction."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,1 @@
+Imagine a medical syringe. It should have a cylindrical body with measurement markings, a plunger that can be pushed and pulled, and a needle at the end. The needle should be thin and long. The syringe should be capable of holding up to 10 milliliters of liquid. Consider adding a safety cap for the needle.

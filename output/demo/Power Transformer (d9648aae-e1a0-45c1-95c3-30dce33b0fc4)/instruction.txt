@@ -1,0 +1,1 @@
+Design a power transformer. Start with a large, rectangular core. Add coils around the core, with primary and secondary windings on opposite sides. Include terminals for electrical connections at the top. Surround the core and coils with a protective casing, and add cooling fins on the sides.

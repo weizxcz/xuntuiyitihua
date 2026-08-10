@@ -1,0 +1,34 @@
+-- MATERIAL LIBRARY --
+mat_clear_plastic | diffuse_color=(240,240,240,0.3)
+mat_paper_blue | diffuse_color=(100,149,237,1.0)
+mat_paper_green | diffuse_color=(144,238,144,1.0)
+mat_paper_pink | diffuse_color=(255,192,203,1.0)
+mat_paper_yellow | diffuse_color=(255,255,224,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sticky_notes_set | Composite of holder + 4 stacks of notes | assembly_order=[holder_group, note_stacks] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| holder_group | Clear plastic holder | assembly_order=[holder_base, holder_back] |
+| note_stacks | Four stacks of colored sticky notes | assembly_order=[stack_yellow, stack_blue, stack_green, stack_pink] |
+
+Layer 2 – Holder Components
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| holder_base | Base of the holder | cylinder Ø0.100×0.015 m; mat=mat_clear_plastic; create_method=primitive; orientation=axis:+Z; pos=(0,0,0) |
+| holder_back | Back wall of the holder | cube 0.100×0.080×0.015 m; mat=mat_clear_plastic; create_method=primitive; orientation=axis:+Z; Align(XY) holder_back.bottom_face to holder_base.top_face; offset(0,0,0.0075) |
+
+Layer 3 – Note Stacks
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| stack_yellow | Stack of yellow sticky notes | cube 0.075×0.075×0.010 m; mat=mat_paper_yellow; create_method=primitive; orientation=axis:+Z; Align(XY) stack_yellow.center to holder_base.center; Align(Z) stack_yellow.bottom_face to holder_base.top_face; offset(0,0,0.015) |
+| stack_blue | Stack of blue sticky notes | cube 0.075×0.075×0.010 m; mat=mat_paper_blue; create_method=primitive; orientation=axis:+Z; Align(XY) stack_blue.center to holder_base.center; Align(Z) stack_blue.bottom_face to holder_base.top_face; offset(0,0,0.025) |
+| stack_green | Stack of green sticky notes | cube 0.075×0.075×0.010 m; mat=mat_paper_green; create_method=primitive; orientation=axis:+Z; Align(XY) stack_green.center to holder_base.center; Align(Z) stack_green.bottom_face to holder_base.top_face; offset(0,0,0.035) |
+| stack_pink | Stack of pink sticky notes | cube 0.075×0.075×0.010 m; mat=mat_paper_pink; create_method=primitive; orientation=axis:+Z; Align(XY) stack_pink.center to holder_base.center; Align(Z) stack_pink.bottom_face to holder_base.top_face; offset(0,0,0.045) |
+# ----------  END_GRAPH  ----------

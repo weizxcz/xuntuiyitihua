@@ -1,0 +1,85 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.75, 0.75, 0.80, 1.0).
+Define material mat_steel; diffuse_color = (0.30, 0.30, 0.35, 1.0).
+Define material mat_steel_dark; diffuse_color = (0.15, 0.15, 0.15, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Shell Group  ---
+Create primitive cuboid with size 0.600×0.400×0.010 m and name it box_base.
+Rotate box_base so its +Z axis aligns +Z (world).
+Anchor box_base to world.origin.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.600×0.500×0.010 m and name it box_back.
+Rotate box_back so its +Z axis aligns +Z (world).
+Align box_back.front_face to box_base.back_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.400×0.500×0.010 m and name it box_left.
+Rotate box_left so its +Z axis aligns +Z (world).
+Align box_left.right_face to box_base.left_face.
+Align box_left.bottom_face to box_base.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.400×0.500×0.010 m and name it box_right.
+Rotate box_right so its +Z axis aligns +Z (world).
+Align box_right.left_face to box_base.right_face.
+Align box_right.bottom_face to box_base.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.600×0.400×0.010 m and name it box_top.
+Rotate box_top so its +Z axis aligns +Z (world).
+Align box_top.bottom_face to box_base.top_face.
+Align box_top.front_face to box_back.top_face.
+Then move by offset(0,0,0).
+
+Boolean-union box_base, box_back, box_left, box_right, box_top; keep box_base.
+Stage 1 complete.
+
+---  SECTION 2 – Create Door Group  ---
+Create primitive cuboid with size 0.600×0.500×0.010 m and name it door_panel.
+Rotate door_panel so its +Z axis aligns +Z (world).
+Align door_panel.back_face to box_base.front_face.
+Align door_panel.bottom_face to box_base.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.020 m and length 0.050 m and name it door_hinge.
+Rotate door_hinge so its +Z axis aligns +X (world).
+Align door_hinge.center to box_left.front_face.
+Then move by offset(0.050, 0.025, 0.025).
+
+Create primitive cylinder with diameter 0.010 m and length 0.150 m and name it door_handle.
+Rotate door_handle so its +Z axis aligns +Y (world).
+Align door_handle.center to door_panel.right_face.
+Then move by offset(0.005, 0.000, 0.000).
+
+Boolean-union door_panel, door_hinge, door_handle; keep door_panel.
+Stage 2 complete.
+
+---  SECTION 3 – Create Vent Group  ---
+Create primitive cylinder with diameter 0.010 m and length 0.010 m and name it vent_left.
+Rotate vent_left so its +Z axis aligns +X (world).
+Align vent_left.center to box_left.center.
+Then move by offset(-0.005, 0.000, 0.000).
+
+Create primitive cylinder with diameter 0.010 m and length 0.010 m and name it vent_right.
+Rotate vent_right so its +Z axis aligns +X (world).
+Align vent_right.center to box_right.center.
+Then move by offset(0.005, 0.000, 0.000).
+
+Boolean-union vent_left, vent_right; keep vent_left.
+Stage 3 complete.
+
+All stages complete.

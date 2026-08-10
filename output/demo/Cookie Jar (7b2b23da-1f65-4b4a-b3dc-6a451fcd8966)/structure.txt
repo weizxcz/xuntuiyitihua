@@ -1,0 +1,25 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+ceramic_gloss | diffuse_color=(0.98,0.98,0.98,0.8)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cookie_jar | Composite of jar_body + lid; a cylindrical container with a fitted lid | assembly_order=[jar_body], [lid] |
+
+Layer 1 – Primary Structure (Jar Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| jar_body | Hollow cylinder Ø0.200×0.250 m (Outer Diameter 0.2m, Height 0.25m, Wall Thickness 0.01m) | pos=(0,0,0); orientation=axis:+Z; mat=ceramic_white; create_method=primitive (cylinder with boolean_subtract inner cylinder) |
+| jar_lip | Thin cylindrical rim Ø0.200×0.010 m on top of jar_body | Align(XY) jar_lip.center to jar_body.top_face; Align(Z) jar_lip.bottom_face to jar_body.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+
+Layer 2 – Lid Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lid_dome | Spherical cap Ø0.200×0.050 m (Radius 0.1m, Height 0.05m) | Align(XY) lid_dome.center to jar_body.top_face; Align(Z) lid_dome.bottom_face to jar_body.top_face; offset(0,0,0.010); orientation=axis:+Z; mat=ceramic_gloss; create_method=primitive (sphere boolean_subtract plane) |
+| lid_base | Cylindrical skirt Ø0.190×0.020 m (Inner Diameter 0.19m, Height 0.02m) | Align(XY) lid_base.center to jar_body.top_face; Align(Z) lid_base.bottom_face to jar_body.top_face; offset(0,0,0.010); orientation=axis:+Z; mat=ceramic_gloss; create_method=primitive |
+| lid_knob | Small sphere Ø0.030 m on top of lid_dome | Align(XY) lid_knob.center to lid_dome.top_face; Align(Z) lid_knob.bottom_face to lid_dome.top_face; offset(0,0,0.015); orientation=axis:+Z; mat=ceramic_gloss; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

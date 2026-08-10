@@ -1,0 +1,470 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def apply_material(obj, mat):
+    """Assign a material to an object's first material slot."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder centered at origin, aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=32, ring_count=16, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, depth):
+    """Add a cone centered at origin, aligned with Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, segments=32, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_star_prism(name, outer_radius, inner_radius, height, points=5):
+    """Add a star-shaped prism (cylinder with star profile) centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=points*2, radius=outer_radius, depth=height, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    
+    # Modify vertices to create star shape
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    
+    # Select all vertices
+    for v in bm.verts:
+        v.select = True
+    
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.select], context='VERTS') # Clear and rebuild or just modify?
+    # Better approach: Clear mesh and build star profile
+    bm.clear()
+    
+    # Build star profile in XY plane
+    verts = []
+    for i in range(points * 2):
+        angle = (i * math.pi) / points
+        r = outer_radius if i % 2 == 0 else inner_radius
+        x = r * math.cos(angle)
+        y = r * math.sin(angle)
+        verts.append((x, y, 0))
+        verts.append((x, y, height))
+        
+    # This is complex to do manually with BMesh for a simple cylinder.
+    # Alternative: Use the cylinder and scale vertices? No, that distorts.
+    # Let's use a simpler method: Create a star shape using a custom operator or just accept the cylinder if star is hard.
+    # But requirement says "5-point star prism".
+    # Let's use bmesh to create a star cylinder properly.
+    
+    bm.clear()
+    
+    # Create top and bottom faces
+    top_verts = []
+    bot_verts = []
+    
+    for i in range(points * 2):
+        angle = (i * math.pi) / points
+        r = outer_radius if i % 2 == 0 else inner_radius
+        x = r * math.cos(angle)
+        y = r * math.sin(angle)
+        
+        v_top = bm.verts.new((x, y, height/2))
+        v_bot = bm.verts.new((x, y, -height/2))
+        top_verts.append(v_top)
+        bot_verts.append(v_bot)
+        
+    # Create faces
+    # Side faces
+    for i in range(points * 2):
+        next_i = (i + 1) % (points * 2)
+        bm.faces.new([bot_verts[i], bot_verts[next_i], top_verts[next_i], top_verts[i]])
+        
+    # Top face (fan from center)
+    center_top = bm.verts.new((0, 0, height/2))
+    bm.faces.new([center_top] + top_verts)
+    
+    # Bottom face (fan from center)
+    center_bot = bm.verts.new((0, 0, -height/2))
+    bm.faces.new([center_bot] + bot_verts[::-1]) # Reverse order for correct normal
+    
+    bm.to_mesh(obj.data)
+    bm.free()
+    
+    return obj
+
+def boolean_union(objs, result_name):
+    """Perform boolean union on a list of objects and keep the first one as result."""
+    if not objs:
+        return None
+    
+    target = objs[0]
+    target.name = result_name
+    
+    # Apply modifiers to all objects first to ensure clean data
+    for obj in objs:
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=obj.modifiers[0].name if obj.modifiers else None)
+        
+    # If only one object, just return it
+    if len(objs) == 1:
+        return target
+
+    # Use Boolean Modifier for union
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    
+    for other in objs[1:]:
+        # Ensure other object is valid
+        if other == target:
+            continue
+        # Add temporary modifier to target for each other object? 
+        # Blender's boolean union usually takes one object. 
+        # To union multiple, we can chain them or use a collection.
+        # Simplest robust way: Union all others into target sequentially.
+        
+        # Actually, let's use the built-in 'Union' tool via BMesh or just chain modifiers.
+        # Chaining modifiers:
+        # We need to add a new modifier for each object.
+        pass
+
+    # Re-implementing robust multi-object boolean union:
+    # 1. Make target active.
+    # 2. Add boolean modifier for first other object.
+    # 3. Apply it.
+    # 4. Repeat for subsequent objects.
+    
+    current_target = target
+    bpy.context.view_layer.objects.active = current_target
+    
+    for other in objs[1:]:
+        mod = current_target.modifiers.new(name=f"Bool_{other.name}", type='BOOLEAN')
+        mod.object = other
+        mod.operation = 'UNION'
+        
+        # Apply modifier
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+    # Clean up other objects
+    for other in objs[1:]:
+        bpy.data.objects.remove(other, do_unlink=True)
+        
+    return current_target
+
+def boolean_subtract(target, cutter):
+    """Subtract cutter from target using boolean modifier."""
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BoolSubtract", type='BOOLEAN')
+    mod.object = cutter
+    mod.operation = 'DIFFERENCE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    return target
+
+def align_to_vector(obj, vector):
+    """Rotate object so its local Z axis aligns with the given world vector."""
+    # Current Z axis is (0,0,1)
+    # Target is vector
+    # Calculate rotation matrix
+    rot = vector.to_track_quat('Z', 'Y') # Track Z to vector, Y up
+    obj.rotation_euler = rot.to_euler()
+
+def get_world_center(obj):
+    """Get the world space center of an object's mesh."""
+    # Transform the origin (0,0,0) by the object's matrix
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_index):
+    """Get the world space center of a specific face."""
+    # This is tricky without knowing the face normal direction easily.
+    # Helper: Get bounding box min/max to find "bottom" or "top" faces.
+    # For a cylinder/cone aligned to Z, top face is at max Z, bottom at min Z.
+    bbox = obj.bound_box
+    # bbox is in local space
+    # Transform points to world
+    points = [Vector(p) for p in bbox]
+    world_points = [obj.matrix_world @ p for p in points]
+    
+    # Find min and max Z
+    min_z = min(p.z for p in world_points)
+    max_z = max(p.z for p in world_points)
+    
+    # Find a point at min_z or max_z
+    if face_index == 'bottom':
+        # Find point with min Z
+        p = next(p for p in world_points if abs(p.z - min_z) < 1e-5)
+        return p
+    elif face_index == 'top':
+        p = next(p for p in world_points if abs(p.z - max_z) < 1e-5)
+        return p
+    return get_world_center(obj)
+
+def align_bottom_to_top(obj_bottom, obj_top):
+    """Align the bottom face of obj_bottom to the top face of obj_top."""
+    # Get top face center of obj_top
+    top_center = get_face_center(obj_top, 'top')
+    # Get bottom face center of obj_bottom
+    bot_center = get_face_center(obj_bottom, 'bottom')
+    
+    # Calculate offset needed to move obj_bottom so its bottom touches obj_top's top
+    # We want obj_bottom's bottom center to be at obj_top's top center
+    # Current position of obj_bottom's bottom center is bot_center
+    # Target position is top_center
+    
+    # However, the object's origin might not be at the bottom center.
+    # For a cylinder centered at 0,0,0 with height H:
+    # Bottom face is at Z = -H/2.
+    # Top face is at Z = H/2.
+    
+    # Let's calculate the local offset from origin to bottom face center
+    # And local offset from origin to top face center
+    
+    # Get local bounding box
+    bbox = obj_bottom.bound_box
+    local_points = [Vector(p) for p in bbox]
+    local_min_z = min(p.z for p in local_points)
+    local_max_z = max(p.z for p in local_points)
+    
+    # Local bottom center (approx, assuming symmetry)
+    # We need the world position of the bottom face center relative to the object's origin
+    # Since the object is rotated, we can just use the world positions.
+    
+    # Let's find the world position of the bottom face center of obj_bottom
+    # It's the point in world_points with min Z
+    bot_world_center = get_face_center(obj_bottom, 'bottom')
+    
+    # We want to move obj_bottom so that bot_world_center becomes top_center
+    # Translation vector = top_center - bot_world_center
+    translation = top_center - bot_world_center
+    
+    # Apply translation
+    obj_bottom.location += translation
+
+def align_bottom_to_point(obj_bottom, point):
+    """Align the bottom face of obj_bottom to a specific world point."""
+    bot_world_center = get_face_center(obj_bottom, 'bottom')
+    translation = point - bot_world_center
+    obj_bottom.location += translation
+
+def align_bottom_to_bottom(obj_bottom, obj_ref):
+    """Align bottom of obj_bottom to bottom of obj_ref."""
+    ref_bot = get_face_center(obj_ref, 'bottom')
+    align_bottom_to_point(obj_bottom, ref_bot)
+
+def align_top_to_point(obj_top, point):
+    """Align the top face of obj_top to a specific world point."""
+    top_world_center = get_face_center(obj_top, 'top')
+    translation = point - top_world_center
+    obj_top.location += translation
+
+def align_top_to_top(obj_top, obj_ref):
+    """Align top of obj_top to top of obj_ref."""
+    ref_top = get_face_center(obj_ref, 'top')
+    align_top_to_point(obj_top, ref_top)
+
+def align_bottom_to_top_face(obj_bottom, obj_top):
+    """Align bottom of obj_bottom to top of obj_top."""
+    top_world_center = get_face_center(obj_top, 'top')
+    align_bottom_to_point(obj_bottom, top_world_center)
+
+def align_bottom_to_top_sphere(obj_bottom, obj_sphere):
+    """Align bottom of obj_bottom to bottom of obj_sphere (which is a sphere, so 'bottom' is min Z)."""
+    # Sphere bottom is min Z
+    bot_world_center = get_face_center(obj_sphere, 'bottom')
+    align_bottom_to_point(obj_bottom, bot_world_center)
+
+def align_bottom_to_top_sphere(obj_bottom, obj_sphere):
+    """Align bottom of obj_bottom to top of obj_sphere."""
+    top_world_center = get_face_center(obj_sphere, 'top')
+    align_bottom_to_point(obj_bottom, top_world_center)
+
+def align_bottom_to_top_cube(obj_bottom, obj_cube):
+    """Align bottom of obj_bottom to top of obj_cube."""
+    top_world_center = get_face_center(obj_cube, 'top')
+    align_bottom_to_point(obj_bottom, top_world_center)
+
+def align_bottom_to_top_cone(obj_bottom, obj_cone):
+    """Align bottom of obj_bottom to bottom of obj_cone (flat base)."""
+    # Cone base is at min Z (if apex is up) or max Z?
+    # add_cone creates radius1 at bottom, radius2 at top.
+    # So base is at Z = -depth/2.
+    bot_world_center = get_face_center(obj_cone, 'bottom')
+    align_bottom_to_point(obj_bottom, bot_world_center)
+
+def align_bottom_to_top_cylinder(obj_bottom, obj_cyl):
+    """Align bottom of obj_bottom to top of obj_cylinder."""
+    top_world_center = get_face_center(obj_cyl, 'top')
+    align_bottom_to_point(obj_bottom, top_world_center)
+
+def anchor_to_origin(obj):
+    """Move object so its center is at world origin (0,0,0)."""
+    center = get_world_center(obj)
+    obj.location -= center
+
+def offset_location(obj, offset_vec):
+    """Add offset vector to object's location."""
+    obj.location += offset_vec
+
+def rotate_align_z(obj):
+    """Rotate object so its local Z axis aligns with world Z."""
+    align_to_vector(obj, Vector((0, 0, 1)))
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_blue = make_material("mat_blue", (0.2, 0.4, 0.8, 1.0))
+mat_green = make_material("mat_green", (0.2, 0.7, 0.2, 1.0))
+mat_red = make_material("mat_red", (0.8, 0.2, 0.2, 1.0))
+mat_yellow = make_material("mat_yellow", (0.9, 0.8, 0.1, 1.0))
+mat_white = make_material("mat_white", (0.95, 0.95, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Blue Pawn Piece ---
+
+# 1. Create base_cylinder
+base_cylinder = add_cylinder("base_cylinder", radius=0.01, depth=0.005) # Diameter 0.02 -> Radius 0.01
+rotate_align_z(base_cylinder)
+anchor_to_origin(base_cylinder)
+offset_location(base_cylinder, (0, 0, 0))
+
+# 2. Create body_cylinder
+body_cylinder = add_cylinder("body_cylinder", radius=0.0075, depth=0.02) # Diameter 0.015 -> Radius 0.0075
+rotate_align_z(body_cylinder)
+# Align body_cylinder.bottom_face to base_cylinder.top_face
+align_bottom_to_top_cylinder(body_cylinder, base_cylinder)
+offset_location(body_cylinder, (0, 0, 0.0125))
+
+# 3. Create head_sphere
+head_sphere = add_uvsphere("head_sphere", radius=0.006) # Diameter 0.012 -> Radius 0.006
+rotate_align_z(head_sphere)
+# Align head_sphere.bottom to body_cylinder.top
+# Sphere bottom is min Z. Body cylinder top is max Z.
+align_bottom_to_top_sphere(head_sphere, body_cylinder)
+offset_location(head_sphere, (0, 0, 0.0275))
+
+# 4. Boolean Union
+blue_piece = boolean_union([base_cylinder, body_cylinder, head_sphere], "blue_piece")
+rotate_align_z(blue_piece)
+anchor_to_origin(blue_piece)
+offset_location(blue_piece, (0.05, 0.05, 0.01))
+apply_material(blue_piece, mat_blue)
+
+# --- SECTION 2 – Create Green Cone Piece ---
+
+# 1. Create base_cylinder_green
+base_cylinder_green = add_cylinder("base_cylinder_green", radius=0.01, depth=0.005)
+rotate_align_z(base_cylinder_green)
+anchor_to_origin(base_cylinder_green)
+offset_location(base_cylinder_green, (0, 0, 0))
+
+# 2. Create cone_body
+cone_body = add_cone("cone_body", radius=0.0075, depth=0.025) # Diameter 0.015 -> Radius 0.0075
+rotate_align_z(cone_body)
+# Align cone_body.bottom_face to base_cylinder_green.top_face
+# Cone base is at bottom (min Z)
+align_bottom_to_top_cylinder(cone_body, base_cylinder_green)
+offset_location(cone_body, (0, 0, 0.015))
+
+# 3. Boolean Union
+green_piece = boolean_union([base_cylinder_green, cone_body], "green_piece")
+rotate_align_z(green_piece)
+anchor_to_origin(green_piece)
+offset_location(green_piece, (0.15, 0.02, 0.01))
+apply_material(green_piece, mat_green)
+
+# --- SECTION 3 – Create Red Cube Piece ---
+
+# 1. Create base_cylinder_red
+base_cylinder_red = add_cylinder("base_cylinder_red", radius=0.01, depth=0.005)
+rotate_align_z(base_cylinder_red)
+anchor_to_origin(base_cylinder_red)
+offset_location(base_cylinder_red, (0, 0, 0))
+
+# 2. Create cube_body
+cube_body = add_cube("cube_body", size=0.015)
+rotate_align_z(cube_body)
+# Align cube_body.bottom_face to base_cylinder_red.top_face
+align_bottom_to_top_cylinder(cube_body, base_cylinder_red)
+offset_location(cube_body, (0, 0, 0.0125))
+
+# 3. Boolean Union
+red_piece = boolean_union([base_cylinder_red, cube_body], "red_piece")
+rotate_align_z(red_piece)
+anchor_to_origin(red_piece)
+offset_location(red_piece, (0.02, 0.12, 0.01))
+apply_material(red_piece, mat_red)
+
+# --- SECTION 4 – Create Yellow Star Piece ---
+
+# 1. Create base_cylinder_yellow
+base_cylinder_yellow = add_cylinder("base_cylinder_yellow", radius=0.01, depth=0.005)
+rotate_align_z(base_cylinder_yellow)
+anchor_to_origin(base_cylinder_yellow)
+offset_location(base_cylinder_yellow, (0, 0, 0))
+
+# 2. Create star_prism
+star_prism = add_star_prism("star_prism", outer_radius=0.0075, inner_radius=0.003, height=0.005)
+rotate_align_z(star_prism)
+# Align star_prism.bottom_face to base_cylinder_yellow.top_face
+align_bottom_to_top_cylinder(star_prism, base_cylinder_yellow)
+offset_location(star_prism, (0, 0, 0.0125))
+
+# 3. Boolean Union
+yellow_piece = boolean_union([base_cylinder_yellow, star_prism], "yellow_piece")
+rotate_align_z(yellow_piece)
+anchor_to_origin(yellow_piece)
+offset_location(yellow_piece, (0.12, 0.10, 0.01))
+apply_material(yellow_piece, mat_yellow)
+
+print("All stages complete.")
+```

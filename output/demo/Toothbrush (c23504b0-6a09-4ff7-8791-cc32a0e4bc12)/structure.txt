@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+mat_brush_head | diffuse_color=(0.1,0.4,0.9,1.0)
+mat_brush_head_grip | diffuse_color=(0.9,0.9,0.9,1.0)
+mat_bristle | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| toothbrush | Composite of handle + head + bristles; standard manual toothbrush | assembly_order=[handle_group], [head_group], [bristle_group] |
+
+Layer 1 – Primary Structure (Handle)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_main | Cuboid 0.020×0.015×0.180 m (W×H×L) | pos=(0,0,0); orientation=axis:+Z; mat=mat_brush_head; create_method=primitive |
+| handle_grip | Cuboid 0.018×0.013×0.100 m (W×H×L) | Align(XY) handle_grip.center to handle_main.center; Align(Z) handle_grip.bottom_face to handle_main.bottom_face; offset(0,0,0.040); mat=mat_brush_head_grip; create_method=primitive |
+
+Layer 2 – Head Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| head_main | Cuboid 0.025×0.008×0.045 m (W×H×L) | Align(XY) head_main.center to handle_main.top_face; Align(Z) head_main.bottom_face to handle_main.top_face; offset(0,0,0.004); mat=mat_brush_head; create_method=primitive |
+| head_neck | Cuboid 0.015×0.006×0.020 m (W×H×L) | Align(XY) head_neck.center to handle_main.top_face; Align(Z) head_neck.bottom_face to handle_main.top_face; offset(0,0,0.090); mat=mat_brush_head; create_method=primitive |
+
+Layer 3 – Bristles
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bristle_template | Cylinder Ø0.0015×0.012 m (D×H) | orientation=axis:+Z; mat=mat_bristle; create_method=primitive |
+| bristle_grid | Pattern of 30 bristles (5 cols × 6 rows) | pattern=grid(rows:6, cols:5, x_spacing:0.004, y_spacing:0.004, start_offset:(-0.008,-0.010)); Align(XY) bristle_template.center to head_main.top_face; Align(Z) bristle_template.bottom_face to head_main.top_face; offset(0,0,0.004); mat=mat_bristle; create_method=primitive |
+# ----------  END_GRAPH  ----------

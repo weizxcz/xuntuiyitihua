@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+black_key_mat | diffuse_color=(0,0,0,1)
+control_panel_mat | diffuse_color=(30,30,30,1)
+white_key_mat | diffuse_color=(240,240,240,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_frame | Composite of white_key_base + black_key_base + control_panel_base | A. Composite of white_key_base + black_key_base + control_panel_base; create_method=boolean_union |
+
+Layer 1 – Primary Structure (Base & Key Beds)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| white_key_base | White key base block (88 keys) | size=(0.700, 0.150, 0.050); pos=(0, 0, 0); mat=white_key_mat; create_method=cube; assembly_order=[base_frame] |
+| black_key_base | Black key base block (52 keys) | size=(0.400, 0.150, 0.030); pos=(0, 0, 0.010); mat=black_key_mat; create_method=cube; assembly_order=[base_frame] |
+| control_panel_base | Control panel base | size=(0.100, 0.150, 0.050); pos=(0.400, 0, 0); mat=control_panel_mat; create_method=cube; assembly_order=[base_frame] |
+
+Layer 2 – White Keys (Pattern)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| white_key_template | Single white key | size=(0.007, 0.150, 0.050); mat=white_key_mat; create_method=cube; pattern=grid(rows:1, cols:88, x_spacing:0.007, y_spacing:0, start_offset:(-0.3065, 0, 0.050)) |
+
+Layer 3 – Black Keys (Pattern)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| black_key_template | Single black key | size=(0.004, 0.090, 0.025); pos=(0, 0, 0.025); mat=black_key_mat; create_method=cube; pattern=grid(rows:1, cols:52, x_spacing:0.028, y_spacing:0, start_offset:(-0.292, 0, 0)) |
+
+Layer 4 – Control Panel Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| control_screen | Display screen | size=(0.080, 0.080, 0.002); pos=(0.010, 0, 0.026); mat=control_panel_mat; create_method=cube; assembly_order=[control_panel_details] |
+| control_buttons | Button array | size=(0.080, 0.020, 0.005); pos=(0.010, 0, 0.010); mat=control_panel_mat; create_method=cube; assembly_order=[control_panel_details] |
+
+Layer 5 – Final Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| piano_assembly | Final Piano | A. Composite of base_frame + white_key_template + black_key_template + control_panel_details; create_method=boolean_union; assembly_order=[piano_assembly] |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,34 @@
+-- MATERIAL LIBRARY --
+mat_arm_band | diffuse_color=(220,220,220,255)
+mat_buckle | diffuse_color=(30,30,30,255)
+mat_display_casing | diffuse_color=(50,50,50,255)
+mat_display_screen | diffuse_color=(0,0,0,255)
+mat_inner_pad | diffuse_color=(255,255,255,255)
+mat_sleeve | diffuse_color=(240,240,240,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bp_cuff_root | Composite assembly of the entire blood pressure cuff system | assembly_order=[sleeve_assembly, display_module, closure_system] |
+
+Layer 1 – Primary Structure (Sleeve & Pad)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sleeve_main | Main inflatable bladder sleeve | size=0.350×0.120×0.002 m (L×W×T); mat=sleeve; create_method=primitive; constraint=flexible_tubular_bladder; orientation=axis:+Z |
+| inner_pad | Soft foam padding layer | size=0.340×0.110×0.005 m; mat=inner_pad; create_method=primitive; pos=(0,0,0.001); orientation=axis:+Z |
+
+Layer 2 – Closure System
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| velcro_strap | Adjustable hook-and-loop strap | size=0.200×0.040×0.002 m; mat=mat_arm_band; create_method=primitive; Align(Z) velcro_strap.bottom_face to sleeve_main.top_face; offset(0,0,0.001); orientation=axis:+Z |
+| buckle_frame | Plastic buckle housing | size=0.050×0.030×0.010 m; mat=buckle; create_method=primitive; Align(XY) buckle_frame.center to sleeve_main.left_face; offset(0.025,0,0); orientation=axis:+Z |
+
+Layer 3 – Display Module
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| display_unit | Digital display unit housing | size=0.080×0.060×0.015 m; mat=display_casing; create_method=primitive; Align(XY) display_unit.bottom_face to sleeve_main.top_face; offset(0.100,0,0.002); orientation=axis:+Z |
+| screen_panel | LCD screen surface | size=0.070×0.050×0.001 m; mat=display_screen; create_method=primitive; Align(XY) screen_panel.center to display_unit.top_face; offset(0,0,0.008); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,49 @@
+{
+  "id": "6f920f0d-adbd-4fca-90fd-b74a32fc82cf",
+  "name": "Desk Calendar",
+  "instruction": "Let's design a 3D model of a desk calendar. The calendar should have a rectangular base and a vertical stand that holds the calendar pages. The pages should be easy to flip, and the stand should be stable enough to hold the calendar upright. The base can include a small compartment for storing notes or pens.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a desk calendar.",
+        "The calendar has a rectangular base.",
+        "The stand is vertical and supports the calendar pages.",
+        "The pages are designed to be easily flipped."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the base is proportionate to the height of the stand.",
+        "The stand is stable enough to support the calendar without tipping."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The base is positioned horizontally and provides a stable foundation.",
+        "The stand is vertically aligned with the base.",
+        "The pages are positioned at an angle for easy visibility."
+      ],
+      "Object distance and contact": [
+        "The stand is securely attached to the base.",
+        "There is no gap between the base and the stand.",
+        "The compartment for storing notes or pens is integrated into the base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes a compartment for storing notes or pens.",
+        "The calendar pages are designed to be easy to flip."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

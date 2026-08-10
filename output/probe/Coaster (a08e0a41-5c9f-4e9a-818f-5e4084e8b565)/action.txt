@@ -1,0 +1,42 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_cork; diffuse_color = (0.6, 0.5, 0.3, 1.0).
+Define material mat_rubber; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create coaster base  ---
+Create primitive cylinder with diameter 0.102 m and height 0.005 m and name it coaster_base.
+Rotate coaster_base so its +Z axis aligns +Z (world).
+Anchor coaster_base to world origin.
+Then move by offset(0,0,0).
+Apply material mat_cork to coaster_base.
+Stage 1 complete.
+
+---  SECTION 2 – Create rubber ring  ---
+Create primitive torus with major radius 0.051 m and minor radius 0.001 m and name it rubber_ring.
+Rotate rubber_ring so its +Z axis aligns +Z (world).
+Align rubber_ring.center to coaster_base.center.
+Then move by offset(0,0,0.001).
+Apply material mat_rubber to rubber_ring.
+Stage 2 complete.
+
+---  SECTION 3 – Create rubber center  ---
+Create primitive cylinder with diameter 0.050 m and height 0.002 m and name it rubber_center.
+Rotate rubber_center so its +Z axis aligns +Z (world).
+Align rubber_center.center to coaster_base.center.
+Then move by offset(0,0,0.001).
+Apply material mat_rubber to rubber_center.
+Stage 3 complete.
+
+All stages complete.

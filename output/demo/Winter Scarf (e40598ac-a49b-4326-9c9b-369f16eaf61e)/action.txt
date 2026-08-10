@@ -1,0 +1,61 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_blue; diffuse_color = (0.1,0.2,0.4,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main scarf body  ---
+Create primitive cuboid with size 0.25×1.8×0.002 m and name it scarf_main.
+Rotate scarf_main so its +Z axis aligns +Z (world).
+Anchor scarf_main to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create left fringe cluster  ---
+Create Empty helper (cube display) and name it fringe_L.
+Rotate fringe_L so its axis aligns +Z (world).
+Move fringe_L to (0,0,0).
+Scale fringe_L to match overall size (AUTO → 0.002 m inferred height).
+Align fringe_L.+Z_face to scarf_main.+Z_face.
+Align fringe_L to scarf_main.left_face.center.
+Then move by offset(0,0,0).
+
+For i in 0…19:
+  Create primitive cylinder with radius 0.001 m and length 0.15 m and name it fringe_L_thread_i.
+  Rotate fringe_L_thread_i so its +Z axis aligns +Z (world).
+  Anchor fringe_L_thread_i to fringe_L.
+  Then offset(dx=-0.12 + i*0.0127, dy=0, dz=0).
+
+---  SECTION 3 – Create right fringe cluster  ---
+Create Empty helper (cube display) and name it fringe_R.
+Rotate fringe_R so its axis aligns +Z (world).
+Move fringe_R to (0,0,0).
+Scale fringe_R to match overall size (AUTO → 0.002 m inferred height).
+Align fringe_R.+Z_face to scarf_main.+Z_face.
+Align fringe_R to scarf_main.right_face.center.
+Then move by offset(0,0,0).
+
+For i in 0…19:
+  Create primitive cylinder with radius 0.001 m and length 0.15 m and name it fringe_R_thread_i.
+  Rotate fringe_R_thread_i so its +Z axis aligns +Z (world).
+  Anchor fringe_R_thread_i to fringe_R.
+  Then offset(dx=-0.12 + i*0.0127, dy=0, dz=0).
+
+---  SECTION 4 – Assemble final scarf body  ---
+Boolean-union scarf_main, fringe_L, and fringe_R to create scarf_body.
+Align scarf_body.center to world origin.
+Then move by offset(0,0,0).
+
+Assembly guideline satisfied.
+Stage 1 complete.
+
+All stages complete.

@@ -1,0 +1,565 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_text_object(text, name, location=(0,0,0), size=0.1):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.size = size
+    obj.data.body = text
+    return obj
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (short cylinder) primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone primitive."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_top, radius2=radius_bottom, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj_name, width=0.001, segments=2):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this script context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using a cutter object."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Remove cutter if desired, but keeping it for reference is safer
+    # bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    """Perform boolean union."""
+    target = bpy.data.objects[target_name]
+    union_obj = bpy.data.objects[union_name]
+    
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    # This is a simplified helper. For strict alignment, we calculate rotation.
+    # Here we assume standard orientations or simple flips if needed.
+    # For this script, we mostly rely on creation rotation and simple offsets.
+    pass
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to calculate positions based on object geometry."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.bound_box = obj.bound_box
+        # Convert local bound box to world space
+        self.world_box = [obj.matrix_world @ Vector((v[0], v[1], v[2])) for v in self.bound_box]
+        
+    def center_world(self):
+        """Return the world center of the object."""
+        return average(self.world_box)
+    
+    def face_center_world(self, face='XY'):
+        """Return the center of a specific face in world space."""
+        # Simplified: assumes axis-aligned bounding box for simplicity in this generator
+        # Find min/max for each axis
+        xs = [v.x for v in self.world_box]
+        ys = [v.y for v in self.world_box]
+        zs = [v.z for v in self.world_box]
+        
+        cx = sum(xs) / 2
+        cy = sum(ys) / 2
+        cz = sum(zs) / 2
+        
+        if face == 'XY':
+            # Top face (max Z) or Bottom face (min Z)? 
+            # Convention: XY_face usually implies the face normal to Z.
+            # Let's return the center of the top face (max Z) by default for "XY_face" alignment context
+            # unless specified otherwise. However, "Align XY_face to origin" usually means center the projection.
+            # Let's return the center of the face at max Z.
+            return Vector((cx, cy, max(zs)))
+        elif face == 'XZ':
+            return Vector((cx, max(ys), cz))
+        elif face == 'YZ':
+            return Vector((max(xs), cy, cz))
+        return Vector((cx, cy, cz))
+
+    def radial_point_world(self, direction='X'):
+        """Return a point on the radial edge."""
+        xs = [v.x for v in self.world_box]
+        ys = [v.y for v in self.world_box]
+        zs = [v.z for v in self.world_box]
+        
+        cx = sum(xs) / 2
+        cy = sum(ys) / 2
+        cz = sum(zs) / 2
+        
+        if direction == 'X':
+            return Vector((max(xs), cy, cz))
+        elif direction == 'Y':
+            return Vector((cx, max(ys), cz))
+        elif direction == 'Z':
+            return Vector((cx, cy, max(zs)))
+        return Vector((cx, cy, cz))
+
+def get_face_center(obj, face_type='XY', side='top'):
+    """
+    Helper to get the center of a specific face for alignment.
+    face_type: 'XY', 'XZ', 'YZ'
+    side: 'top' (max), 'bottom' (min), 'front', 'back', 'left', 'right'
+    """
+    xs = [v.x for v in obj.bound_box]
+    ys = [v.y for v in obj.bound_box]
+    zs = [v.z for v in obj.bound_box]
+    
+    cx = sum(xs) / 2
+    cy = sum(ys) / 2
+    cz = sum(zs) / 2
+    
+    if face_type == 'XY':
+        if side == 'top':
+            return Vector((cx, cy, max(zs)))
+        elif side == 'bottom':
+            return Vector((cx, cy, min(zs)))
+    elif face_type == 'XZ':
+        if side == 'front': # +Y
+            return Vector((cx, max(ys), cz))
+        elif side == 'back': # -Y
+            return Vector((cx, min(ys), cz))
+    elif face_type == 'YZ':
+        if side == 'right': # +X
+            return Vector((max(xs), cy, cz))
+        elif side == 'left': # -X
+            return Vector((min(xs), cy, cz))
+            
+    return Vector((cx, cy, cz))
+
+def align_and_offset(obj, align_to_obj, align_face_type='XY', align_side='bottom', 
+                     offset_obj, offset_vector):
+    """
+    Aligns obj's specified face to align_to_obj's specified face,
+    then applies an offset relative to the offset_obj's local axes.
+    """
+    # 1. Align
+    # Get target face center
+    target_center = get_face_center(align_to_obj, align_face_type, align_side)
+    
+    # Get source face center
+    source_center = get_face_center(obj, align_face_type, align_side)
+    
+    # Calculate translation to align faces
+    # We want source_center to move to target_center
+    # But we also need to consider the offset direction.
+    # The prompt says: "Align ... Then move by offset".
+    # So first, snap the face to the other face.
+    
+    # Current location of obj
+    current_loc = obj.location
+    
+    # Vector from source center to target center
+    align_vec = target_center - source_center
+    
+    # Apply alignment
+    obj.location += align_vec
+    
+    # 2. Offset
+    # The offset is in reference local axes of the offset_obj.
+    # We need to transform the offset_vector from offset_obj's local space to world space.
+    if offset_obj:
+        # Get the rotation matrix of the offset object
+        rot_matrix = offset_obj.matrix_world.to_3x3()
+        # Transform offset vector
+        world_offset = rot_matrix @ offset_vector
+        obj.location += world_offset
+    else:
+        # If no offset object, assume world space? 
+        # Prompt says "offset is in reference local axes". 
+        # If no object provided, we might assume the aligned object's local axes or world.
+        # Given the examples, offset_obj is often the base or the aligned object.
+        # Let's assume world space if no specific offset object is passed, 
+        # but usually, we pass the object we just aligned or a base.
+        # For this script, I will pass the object being aligned as the reference for local axes if not specified.
+        # However, the prompt implies "offset(0,0,0.010)" is relative to the object's orientation.
+        # Since all objects are aligned to Z-up, local Z is world Z.
+        obj.location += offset_vector
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_aluminum = make_material("mat_aluminum", (0.75, 0.75, 0.80, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.10, 0.10, 0.10, 1.0))
+mat_blue_acrylic = make_material("mat_blue_acrylic", (0.10, 0.30, 0.80, 0.80))
+mat_glass = make_material("mat_glass", (0.90, 0.95, 1.00, 0.30))
+mat_steel = make_material("mat_steel", (0.60, 0.60, 0.65, 1.0))
+mat_white_plastic = make_material("mat_white_plastic", (0.95, 0.95, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create base plate ---
+# Create primitive cuboid with size 0.200×0.020×0.200 m and name it base_plate.
+base_plate = add_cube("base_plate", size=0.020, location=(0,0,0), rotation=(0,0,0))
+# Note: add_cube size is half-width. So 0.200x0.020x0.200 means size=0.100, 0.010, 0.100?
+# Blender's primitive_cube_add 'size' parameter is the total edge length.
+# So for 0.200x0.020x0.200, we need to scale or use size parameter correctly.
+# Actually, primitive_cube_add(size=1) creates a 2x2x2 cube centered at 0.
+# So to get 0.2x0.02x0.2, we should set size=0.1, 0.01, 0.1? No, size is uniform.
+# Better to create with size=1 and scale, or use add_cube helper that handles dimensions.
+# Let's redefine add_cube to take dimensions.
+
+def add_cube_dims(name, dimensions, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube with specific dimensions (x,y,z)."""
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (dimensions[0]/2, dimensions[1]/2, dimensions[2]/2)
+    return obj
+
+# Re-create base_plate with correct dimensions
+bpy.data.objects.remove(base_plate, do_unlink=True)
+base_plate = add_cube_dims("base_plate", (0.200, 0.020, 0.200), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate base_plate so its +Z axis aligns +Z (world). (Already aligned by default)
+# Align base_plate.XY_face to world origin (0,0,0).
+# "XY_face" usually means the face perpendicular to Z. 
+# "Align to origin" likely means center the projection on XY plane to (0,0), 
+# and set the face position. 
+# Let's assume it means center the object at (0,0,0) on XY, and set Z based on face.
+# If "XY_face" means the bottom face (min Z), let's align that to Z=0.
+# Or if it means the center of the XY face (top/bottom), align that to Z=0.
+# Given "Then move by offset(0, 0, 0.010)", it suggests the object sits ON the origin.
+# Let's align the bottom face (min Z) to Z=0.
+
+# Align base_plate bottom face to Z=0
+bp_bottom_z = min([v.z for v in base_plate.bound_box])
+base_plate.location.z -= bp_bottom_z
+
+# Then move by offset(0, 0, 0.010).
+base_plate.location.z += 0.010
+
+# Assign material
+if base_plate.data.materials:
+    base_plate.data.materials[0] = mat_aluminum
+else:
+    base_plate.data.materials.append(mat_aluminum)
+
+# --- SECTION 2 – Create motor assembly ---
+
+# Create primitive cuboid with size 0.040×0.040×0.050 m and name it stepper_motor.
+stepper_motor = add_cube_dims("stepper_motor", (0.040, 0.040, 0.050), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate stepper_motor so its +Z axis aligns +Z (world). (Already aligned)
+
+# Align stepper_motor.XY_face to base_plate.XY_face.
+# Assuming "XY_face" means the bottom face (min Z) for stacking, or top?
+# "Align ... to ..." usually means match the position.
+# If base_plate is at Z=0.010 (bottom), its top is at Z=0.030.
+# Let's align stepper_motor's bottom face to base_plate's top face.
+# Base plate top Z:
+bp_top_z = max([v.z for v in base_plate.bound_box])
+# Stepper motor bottom Z:
+sm_bottom_z = min([v.z for v in stepper_motor.bound_box])
+# Move stepper motor so its bottom is at bp_top_z
+stepper_motor.location.z += (bp_top_z - sm_bottom_z)
+
+# Then move by offset(0, -0.050, 0.010).
+stepper_motor.location.y -= 0.050
+stepper_motor.location.z += 0.010
+
+if stepper_motor.data.materials:
+    stepper_motor.data.materials[0] = mat_black_plastic
+else:
+    stepper_motor.data.materials.append(mat_black_plastic)
+
+# Create primitive cylinder with Ø0.006×0.150 m and name it lead_screw.
+# Radius = 0.003, Depth = 0.150
+lead_screw = add_cylinder("lead_screw", radius=0.003, depth=0.150, location=(0,0,0), rotation=(0,0,0))
+
+# Rotate lead_screw so its +Z axis aligns +Z (world). (Already aligned)
+
+# Align lead_screw.bottom_face to stepper_motor.top_face.
+sm_top_z = max([v.z for v in stepper_motor.bound_box])
+ls_bottom_z = min([v.z for v in lead_screw.bound_box])
+lead_screw.location.z += (sm_top_z - ls_bottom_z)
+
+# Then move by offset(0, 0, 0.025).
+lead_screw.location.z += 0.025
+
+if lead_screw.data.materials:
+    lead_screw.data.materials[0] = mat_steel
+else:
+    lead_screw.data.materials.append(mat_steel)
+
+# Create primitive cuboid with size 0.010×0.010×0.010 m and name it nut_block.
+nut_block = add_cube_dims("nut_block", (0.010, 0.010, 0.010), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate nut_block so its +Z axis aligns +Z (world).
+
+# Align nut_block.bottom_face to lead_screw.top_face.
+ls_top_z = max([v.z for v in lead_screw.bound_box])
+nb_bottom_z = min([v.z for v in nut_block.bound_box])
+nut_block.location.z += (ls_top_z - nb_bottom_z)
+
+# Then move by offset(0, 0, 0.075).
+nut_block.location.z += 0.075
+
+if nut_block.data.materials:
+    nut_block.data.materials[0] = mat_black_plastic
+else:
+    nut_block.data.materials.append(mat_black_plastic)
+
+# --- SECTION 3 – Create display module ---
+
+# Create primitive cuboid with size 0.120×0.080×0.005 m and name it bezel.
+bezel = add_cube_dims("bezel", (0.120, 0.080, 0.005), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate bezel so its +Z axis aligns +Z (world).
+
+# Align bezel.XY_face to base_plate.XY_face.
+# Aligning to base_plate's XY face (likely bottom or center). 
+# Let's align bezel's bottom face to base_plate's top face (stacking).
+bp_top_z = max([v.z for v in base_plate.bound_box])
+bz_bottom_z = min([v.z for v in bezel.bound_box])
+bezel.location.z += (bp_top_z - bz_bottom_z)
+
+# Then move by offset(0, 0.060, 0.010).
+bezel.location.y += 0.060
+bezel.location.z += 0.010
+
+if bezel.data.materials:
+    bezel.data.materials[0] = mat_white_plastic
+else:
+    bezel.data.materials.append(mat_white_plastic)
+
+# Create primitive cuboid with size 0.100×0.060×0.002 m and name it lcd_screen.
+lcd_screen = add_cube_dims("lcd_screen", (0.100, 0.060, 0.002), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate lcd_screen so its +Z axis aligns +Z (world).
+
+# Align lcd_screen.XY_face to bezel.XY_face.
+# Align lcd_screen bottom to bezel top.
+bz_top_z = max([v.z for v in bezel.bound_box])
+ls_bottom_z = min([v.z for v in lcd_screen.bound_box])
+lcd_screen.location.z += (bz_top_z - ls_bottom_z)
+
+# Then move by offset(0, 0, 0.003).
+lcd_screen.location.z += 0.003
+
+if lcd_screen.data.materials:
+    lcd_screen.data.materials[0] = mat_glass
+else:
+    lcd_screen.data.materials.append(mat_glass)
+
+# Create primitive cuboid with size 0.120×0.040×0.002 m and name it control_panel.
+control_panel = add_cube_dims("control_panel", (0.120, 0.040, 0.002), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate control_panel so its +Z axis aligns +Z (world).
+
+# Align control_panel.XY_face to bezel.XY_face.
+bz_top_z = max([v.z for v in bezel.bound_box])
+cp_bottom_z = min([v.z for v in control_panel.bound_box])
+control_panel.location.z += (bz_top_z - cp_bottom_z)
+
+# Then move by offset(0, -0.060, 0.005).
+control_panel.location.y -= 0.060
+control_panel.location.z += 0.005
+
+if control_panel.data.materials:
+    control_panel.data.materials[0] = mat_blue_acrylic
+else:
+    control_panel.data.materials.append(mat_blue_acrylic)
+
+# --- SECTION 4 – Create syringe holder ---
+
+# Create primitive cuboid with size 0.150×0.020×0.010 m and name it guide_rail.
+guide_rail = add_cube_dims("guide_rail", (0.150, 0.020, 0.010), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate guide_rail so its +Z axis aligns +Z (world).
+
+# Align guide_rail.XY_face to base_plate.XY_face.
+bp_top_z = max([v.z for v in base_plate.bound_box])
+gr_bottom_z = min([v.z for v in guide_rail.bound_box])
+guide_rail.location.z += (bp_top_z - gr_bottom_z)
+
+# Then move by offset(0.050, 0.020, 0.010).
+guide_rail.location.x += 0.050
+guide_rail.location.y += 0.020
+guide_rail.location.z += 0.010
+
+if guide_rail.data.materials:
+    guide_rail.data.materials[0] = mat_black_plastic
+else:
+    guide_rail.data.materials.append(mat_black_plastic)
+
+# Create primitive cuboid with size 0.030×0.030×0.010 m and name it syringe_clamp.
+syringe_clamp = add_cube_dims("syringe_clamp", (0.030, 0.030, 0.010), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate syringe_clamp so its +Z axis aligns +Z (world).
+
+# Align syringe_clamp.XY_face to guide_rail.XY_face.
+gr_top_z = max([v.z for v in guide_rail.bound_box])
+sc_bottom_z = min([v.z for v in syringe_clamp.bound_box])
+syringe_clamp.location.z += (gr_top_z - sc_bottom_z)
+
+# Then move by offset(0, 0, 0.010).
+syringe_clamp.location.z += 0.010
+
+if syringe_clamp.data.materials:
+    syringe_clamp.data.materials[0] = mat_black_plastic
+else:
+    syringe_clamp.data.materials.append(mat_black_plastic)
+
+# Create primitive cuboid with size 0.020×0.020×0.010 m and name it plunger_pusher.
+plunger_pusher = add_cube_dims("plunger_pusher", (0.020, 0.020, 0.010), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate plunger_pusher so its +Z axis aligns +Z (world).
+
+# Align plunger_pusher.XY_face to guide_rail.XY_face.
+gr_top_z = max([v.z for v in guide_rail.bound_box])
+pp_bottom_z = min([v.z for v in plunger_pusher.bound_box])
+plunger_pusher.location.z += (gr_top_z - pp_bottom_z)
+
+# Then move by offset(0, -0.020, 0.010).
+plunger_pusher.location.y -= 0.020
+plunger_pusher.location.z += 0.010
+
+if plunger_pusher.data.materials:
+    plunger_pusher.data.materials[0] = mat_black_plastic
+else:
+    plunger_pusher.data.materials.append(mat_black_plastic)
+
+# --- SECTION 5 – Create syringe components ---
+
+# Create primitive cylinder with Ø0.020×0.100 m and name it syringe_barrel.
+syringe_barrel = add_cylinder("syringe_barrel", radius=0.010, depth=0.100, location=(0,0,0), rotation=(0,0,0))
+
+# Rotate syringe_barrel so its +Z axis aligns +Z (world).
+
+# Align syringe_barrel.XY_face to syringe_clamp.XY_face.
+sc_top_z = max([v.z for v in syringe_clamp.bound_box])
+sb_bottom_z = min([v.z for v in syringe_barrel.bound_box])
+syringe_barrel.location.z += (sc_top_z - sb_bottom_z)
+
+# Then move by offset(0, 0, 0.010).
+syringe_barrel.location.z += 0.010
+
+if syringe_barrel.data.materials:
+    syringe_barrel.data.materials[0] = mat_glass
+else:
+    syringe_barrel.data.materials.append(mat_glass)
+
+# Create primitive cylinder with Ø0.015×0.080 m and name it syringe_plunger.
+syringe_plunger = add_cylinder("syringe_plunger", radius=0.0075, depth=0.080, location=(0,0,0), rotation=(0,0,0))
+
+# Rotate syringe_plunger so its +Z axis aligns +Z (world).
+
+# Align syringe_plunger.XY_face to syringe_barrel.XY_face.
+sb_top_z = max([v.z for v in syringe_barrel.bound_box])
+sp_bottom_z = min([v.z for v in syringe_plunger.bound_box])
+syringe_plunger.location.z += (sb_top_z - sp_bottom_z)
+
+# Then move by offset(0, 0, 0.050).
+syringe_plunger.location.z += 0.050
+
+if syringe_plunger.data.materials:
+    syringe_plunger.data.materials[0] = mat_black_plastic
+else:
+    syringe_plunger.data.materials.append(mat_black_plastic)
+
+```

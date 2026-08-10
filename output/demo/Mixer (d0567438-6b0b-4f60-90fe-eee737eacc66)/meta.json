@@ -1,0 +1,51 @@
+{
+  "id": "d0567438-6b0b-4f60-90fe-eee737eacc66",
+  "name": "Mixer",
+  "instruction": "Can you create a 3D model of a mixer?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a mixer.",
+        "The mixer has a base that is rectangular.",
+        "The mixing bowl is round and sits on top of the base.",
+        "The mixer features a handle for easy operation.",
+        "The mixing attachments are visible and correctly shaped."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The mixing bowl is proportionate to the base.",
+        "The handle is appropriately sized in relation to the mixer."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The mixing bowl is correctly positioned on the base.",
+        "The handle is attached at an angle for ergonomic use.",
+        "The mixing attachments are properly aligned with the bowl.",
+        "The base is stable and supports the entire structure."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the mixing bowl and the base.",
+        "The handle is securely attached to the mixer.",
+        "The mixing attachments fit snugly into the bowl.",
+        "The base does not wobble and is in contact with the surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The mixer is accurately represented as per the request.",
+        "All specified attributes of a mixer are included."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

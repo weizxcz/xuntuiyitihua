@@ -1,0 +1,446 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    if name in bpy.data.materials:
+        return bpy.data.materials[name]
+    
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube aligned to axes."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_object_face_to_object_face(source_obj, target_obj, source_face='bottom', target_face='top', offset=0):
+    """
+    Aligns a face of source_obj to a face of target_obj.
+    Assumes objects are axis-aligned.
+    source_face/target_face: 'top', 'bottom', 'front', 'back', 'left', 'right'
+    """
+    # Get bounding boxes
+    src_min = Vector(source_obj.matrix_world @ source_obj.bound_box[0])
+    src_max = Vector(source_obj.matrix_world @ source_obj.bound_box[4])
+    tgt_min = Vector(target_obj.matrix_world @ target_obj.bound_box[0])
+    tgt_max = Vector(target_obj.matrix_world @ target_obj.bound_box[4])
+    
+    # Calculate current centers
+    src_center = (src_min + src_max) / 2
+    tgt_center = (tgt_min + tgt_max) / 2
+    
+    # Determine alignment vector and distance
+    # We want to move source_obj so its specific face touches target_obj's specific face
+    
+    # Helper to get face coordinate
+    def get_face_coord(center, min_v, max_v, face):
+        if face == 'top': return max_v.z
+        if face == 'bottom': return min_v.z
+        if face == 'front': return max_v.y # Assuming Y is front in Blender default
+        if face == 'back': return min_v.y
+        if face == 'right': return max_v.x
+        if face == 'left': return min_v.x
+        return 0
+
+    # Calculate target position for source center
+    # Target face position
+    tgt_face_pos = get_face_coord(tgt_center, tgt_min, tgt_max, target_face)
+    src_face_pos = get_face_coord(src_center, src_min, src_max, source_face)
+    
+    # Distance to move
+    # If aligning source bottom to target top:
+    # src_bottom should equal tgt_top
+    # src_center.z - (src_height/2) = tgt_top
+    # src_center.z = tgt_top + src_height/2
+    
+    # General logic:
+    # We want: src_face_pos_new = tgt_face_pos
+    # src_face_pos_new = src_center_new + (src_face_pos - src_center)
+    # src_center_new = tgt_face_pos - (src_face_pos - src_center)
+    
+    offset_vec = tgt_face_pos - src_face_pos
+    new_center = tgt_center + offset_vec
+    
+    # Apply offset
+    move_vec = new_center - src_center
+    source_obj.location += move_vec + (Vector((0,0,offset)) if source_face in ['top','bottom'] else Vector((0,0,0))) # Simplified offset application
+    
+    # Refined offset application based on axis
+    if source_face in ['top', 'bottom']:
+        source_obj.location.z += offset
+    elif source_face in ['front', 'back']:
+        source_obj.location.y += offset
+    elif source_face in ['left', 'right']:
+        source_obj.location.x += offset
+
+def align_object_center_to_object_center(source_obj, target_obj):
+    """Aligns the center of source_obj to the center of target_obj."""
+    tgt_center = (Vector(target_obj.matrix_world @ target_obj.bound_box[0]) + Vector(target_obj.matrix_world @ target_obj.bound_box[4])) / 2
+    src_center = (Vector(source_obj.matrix_world @ source_obj.bound_box[0]) + Vector(source_obj.matrix_world @ source_obj.bound_box[4])) / 2
+    source_obj.location += (tgt_center - src_center)
+
+def apply_offset(obj, offset_vec):
+    """Applies a local offset to an object's location."""
+    # Assuming standard orientation where local axes align with world for simple offsets
+    # If rotated, we might need to transform offset, but instructions imply simple offsets
+    obj.location += offset_vec
+
+def set_material(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_black_plastic = make_material("mat_black_plastic", (0.10, 0.10, 0.10, 1.00))
+mat_glass_window = make_material("mat_glass_window", (0.80, 0.90, 0.95, 0.30))
+mat_light_gray_plastic = make_material("mat_light_gray_plastic", (0.75, 0.75, 0.75, 1.00))
+mat_metal_interior = make_material("mat_metal_interior", (0.60, 0.60, 0.65, 1.00))
+mat_transparent_glass = make_material("mat_transparent_glass", (0.90, 0.95, 1.00, 0.10))
+mat_white_plastic = make_material("mat_white_plastic", (0.95, 0.95, 0.95, 1.00))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Outer Casing ---
+
+# Create main_body_shell
+# Size 0.520x0.400x0.300. Cube size is side length.
+# Blender cube size is total width. So size=0.520 means -0.26 to 0.26.
+# We need to scale it or create with specific dimensions.
+# Using add_cube with size parameter creates a cube of that total width.
+# To get 0.520x0.400x0.300, we create a cube of size 0.520 and scale it.
+obj_main_body_shell = add_cube("main_body_shell", 0.520, location=(0, 0.150, 0), rotation=(0, 0, 0))
+obj_main_body_shell.scale = (1, 0.400/0.520, 0.300/0.520)
+set_material(obj_main_body_shell, mat_black_plastic)
+
+# Create top_panel
+# Size 0.520x0.400x0.005
+obj_top_panel = add_cube("top_panel", 0.520, location=(0, 0.150, 0), rotation=(0, 0, 0))
+obj_top_panel.scale = (1, 0.400/0.520, 0.005/0.520)
+set_material(obj_top_panel, mat_light_gray_plastic)
+
+# Align top_panel.bottom_face to main_body_shell.top_face
+align_object_face_to_object_face(obj_top_panel, obj_main_body_shell, source_face='bottom', target_face='top')
+# Offset (0,0,0)
+apply_offset(obj_top_panel, (0, 0, 0))
+
+# Create back_panel
+# Size 0.520x0.300x0.005
+obj_back_panel = add_cube("back_panel", 0.520, location=(0, 0.150, 0), rotation=(0, 0, 0))
+obj_back_panel.scale = (1, 0.300/0.520, 0.005/0.520)
+set_material(obj_back_panel, mat_light_gray_plastic)
+
+# Align back_panel.front_face to main_body_shell.back_face
+# Note: In Blender default, +Y is front, -Y is back.
+# main_body_shell is centered at Y=0.150.
+# back_panel needs to be at the back (-Y side) of main_body_shell.
+align_object_face_to_object_face(obj_back_panel, obj_main_body_shell, source_face='front', target_face='back')
+# Offset (0,0,0)
+apply_offset(obj_back_panel, (0, 0, 0))
+
+# --- SECTION 2 – Create Interior Assembly ---
+
+# Create cavity_inner
+# Size 0.480x0.360x0.280
+obj_cavity_inner = add_cube("cavity_inner", 0.480, location=(0, 0.140, 0.010), rotation=(0, 0, 0))
+obj_cavity_inner.scale = (1, 0.360/0.480, 0.280/0.480)
+set_material(obj_cavity_inner, mat_metal_interior)
+
+# Create turntable
+# Cylinder Ø0.250 (radius 0.125) x 0.005
+obj_turntable = add_cylinder("turntable", 0.125, 0.005, location=(0, 0.140, 0.010), rotation=(0, 0, 0))
+set_material(obj_turntable, mat_white_plastic)
+
+# Align turntable.center to cavity_inner.center
+align_object_center_to_object_center(obj_turntable, obj_cavity_inner)
+# Align turntable.bottom_face to cavity_inner.bottom_face
+align_object_face_to_object_face(obj_turntable, obj_cavity_inner, source_face='bottom', target_face='bottom')
+# Offset (0,0,0.005)
+apply_offset(obj_turntable, (0, 0, 0.005))
+
+# Create turntable_motor
+# Cylinder Ø0.050 (radius 0.025) x 0.040
+obj_turntable_motor = add_cylinder("turntable_motor", 0.025, 0.040, location=(0, 0.140, 0.010), rotation=(0, 0, 0))
+set_material(obj_turntable_motor, mat_metal_interior)
+
+# Align turntable_motor.center to cavity_inner.center
+align_object_center_to_object_center(obj_turntable_motor, obj_cavity_inner)
+# Align turntable_motor.bottom_face to cavity_inner.bottom_face
+align_object_face_to_object_face(obj_turntable_motor, obj_cavity_inner, source_face='bottom', target_face='bottom')
+# Offset (0,0,0)
+apply_offset(obj_turntable_motor, (0, 0, 0))
+
+# --- SECTION 3 – Create Door Assembly ---
+
+# Create door_frame
+# Size 0.480x0.020x0.280
+obj_door_frame = add_cube("door_frame", 0.480, location=(0, 0.150, 0), rotation=(0, 0, 0))
+obj_door_frame.scale = (1, 0.020/0.480, 0.280/0.480)
+set_material(obj_door_frame, mat_black_plastic)
+
+# Align door_frame.front_face to main_body_shell.front_face
+# main_body_shell front is +Y side.
+align_object_face_to_object_face(obj_door_frame, obj_main_body_shell, source_face='front', target_face='front')
+# Offset (0,0,0.010) -> Move in local Z? Or global? Instructions say "offset(0,0,0.010)".
+# Usually offsets are in local space or relative to the alignment.
+# Given the context of "front face", moving by Z might not make sense for a door frame attached to front.
+# However, standard interpretation of "offset(x,y,z)" after alignment is adding to location.
+# Let's assume global offset as per simple instruction.
+apply_offset(obj_door_frame, (0, 0, 0.010))
+
+# Create door_window
+# Size 0.300x0.005x0.200
+obj_door_window = add_cube("door_window", 0.300, location=(0, 0.150, 0), rotation=(0, 0, 0))
+obj_door_window.scale = (1, 0.005/0.300, 0.200/0.300)
+set_material(obj_door_window, mat_glass_window)
+
+# Align door_window.center to door_frame.center
+align_object_center_to_object_center(obj_door_window, obj_door_frame)
+# Align door_window.back_face to door_frame.front_face
+align_object_face_to_object_face(obj_door_window, obj_door_frame, source_face='back', target_face='front')
+# Offset (0,0,0.005)
+apply_offset(obj_door_window, (0, 0, 0.005))
+
+# Create door_gasket
+# Size 0.480x0.002x0.280
+obj_door_gasket = add_cube("door_gasket", 0.480, location=(0, 0.150, 0), rotation=(0, 0, 0))
+obj_door_gasket.scale = (1, 0.002/0.480, 0.280/0.480)
+set_material(obj_door_gasket, mat_black_plastic)
+
+# Align door_gasket.front_face to door_frame.back_face
+align_object_face_to_object_face(obj_door_gasket, obj_door_frame, source_face='front', target_face='back')
+# Offset (0,0,-0.001)
+apply_offset(obj_door_gasket, (0, 0, -0.001))
+
+# --- SECTION 4 – Create Control Panel ---
+
+# Create panel_base
+# Size 0.040x0.020x0.280
+# Rotate so +Z aligns +X (world).
+# Default cube +Z is up. We want +Z to point along World +X.
+# Rotation: Rotate around Y by -90 degrees?
+# If we rotate -90 deg around Y, local Z becomes World X.
+rot_panel = (0, -math.radians(90), 0)
+obj_panel_base = add_cube("panel_base", 0.040, location=(0, 0.150, 0), rotation=rot_panel)
+obj_panel_base.scale = (1, 0.020/0.040, 0.280/0.040)
+set_material(obj_panel_base, mat_light_gray_plastic)
+
+# Align panel_base.left_face to main_body_shell.right_face
+# main_body_shell right face is +X side.
+# panel_base is rotated. Its local left face is -X.
+# We need to align local -X face of panel_base to global +X face of main_body_shell.
+# This requires careful handling of rotated objects.
+# Let's use a locator approach or manual calculation.
+
+# Get main_body_shell right face world position
+# main_body_shell is axis aligned.
+# Right face X = main_body_shell.location.x + (0.520/2)
+# Left face of panel_base (local -X) needs to touch this.
+# Panel base center X needs to be calculated.
+
+# Helper for rotated object face alignment
+def align_rotated_face_to_axis_aligned_face(source_obj, target_obj, source_local_face_axis, target_world_axis, target_world_pos):
+    """
+    Aligns a face of a rotated source object to a specific world coordinate plane defined by target.
+    source_local_face_axis: 'x', 'y', 'z' (positive direction of local axis)
+    target_world_axis: 'x', 'y', 'z'
+    target_world_pos: The coordinate value on that axis where the face should be.
+    """
+    # Get source object's local face world position relative to its center
+    # We need the world matrix of the source
+    mat = source_obj.matrix_world
+    inv_mat = mat.inverted()
+    
+    # Define local face point (e.g., for left face (-X), point is (-size/2, 0, 0) in local space)
+    # But we need the center of the face.
+    # Let's approximate center of face by taking the corner and averaging, or just using the extent.
+    # Simpler: The face center in local space is (axis * size/2, 0, 0) etc.
+    
+    size = source_obj.dimensions
+    local_face_center = Vector((0,0,0))
+    if source_local_face_axis == 'x': local_face_center.x = size.x / 2
+    elif source_local_face_axis == 'x_neg': local_face_center.x = -size.x / 2
+    elif source_local_face_axis == 'y': local_face_center.y = size.y / 2
+    elif source_local_face_axis == 'y_neg': local_face_center.y = -size.y / 2
+    elif source_local_face_axis == 'z': local_face_center.z = size.z / 2
+    elif source_local_face_axis == 'z_neg': local_face_center.z = -size.z / 2
+    
+    # Transform to world
+    world_face_center = mat @ local_face_center
+    
+    # Current source center in world
+    src_center_world = source_obj.location
+    
+    # We want: world_face_center_new = target_world_pos on the specific axis
+    # world_face_center_new = src_center_new + (world_face_center - src_center_world)
+    
+    # Calculate offset vector from current center to current face center
+    offset_to_face = world_face_center - src_center_world
+    
+    # New center should be:
+    # target_pos - offset_to_face
+    new_center = Vector((0,0,0))
+    if target_world_axis == 'x': new_center.x = target_world_pos - offset_to_face.x
+    elif target_world_axis == 'y': new_center.y = target_world_pos - offset_to_face.y
+    elif target_world_axis == 'z': new_center.z = target_world_pos - offset_to_face.z
+    
+    # Move source object
+    move_vec = new_center - src_center_world
+    source_obj.location += move_vec
+
+# Align panel_base.left_face (-X local) to main_body_shell.right_face (+X world)
+# main_body_shell right face X position:
+mb_shell_right_x = obj_main_body_shell.location.x + (obj_main_body_shell.dimensions.x / 2)
+align_rotated_face_to_axis_aligned_face(obj_panel_base, obj_main_body_shell, 'x_neg', 'x', mb_shell_right_x)
+
+# Offset (0.010, 0, 0)
+apply_offset(obj_panel_base, (0.010, 0, 0))
+
+# Create keypad
+# Size 0.030x0.002x0.150
+# Rotate so +Z aligns +X (world)
+obj_keypad = add_cube("keypad", 0.030, location=(0, 0.150, 0), rotation=rot_panel)
+obj_keypad.scale = (1, 0.002/0.030, 0.150/0.030)
+set_material(obj_keypad, mat_black_plastic)
+
+# Align keypad.left_face to panel_base.right_face
+# panel_base is rotated. Its right face is +X local.
+# keypad is rotated. Its left face is -X local.
+# We need to align keypad's -X local face to panel_base's +X local face.
+# This is a face-to-face alignment between two rotated objects.
+
+def align_face_to_face(source_obj, target_obj, source_local_axis, target_local_axis):
+    """
+    Aligns source_obj's local face (defined by axis) to target_obj's local face.
+    Assumes both objects have same orientation or we handle rotation.
+    Here both are rotated by rot_panel.
+    """
+    mat_src = source_obj.matrix_world
+    mat_tgt = target_obj.matrix_world
+    
+    # Get local face centers
+    src_size = source_obj.dimensions
+    tgt_size = target_obj.dimensions
+    
+    src_local_face = Vector((0,0,0))
+    if source_local_axis == 'x': src_local_face.x = src_size.x / 2
+    elif source_local_axis == 'x_neg': src_local_face.x = -src_size.x / 2
+    elif source_local_axis == 'y': src_local_face.y = src_size.y / 2
+    elif source_local_axis == 'y_neg': src_local_face.y = -src_size.y / 2
+    elif source_local_axis == 'z': src_local_face.z = src_size.z / 2
+    elif source_local_axis == 'z_neg': src_local_face.z = -src_size.z / 2
+    
+    tgt_local_face = Vector((0,0,0))
+    if target_local_axis == 'x': tgt_local_face.x = tgt_size.x / 2
+    elif target_local_axis == 'x_neg': tgt_local_face.x = -tgt_size.x / 2
+    elif target_local_axis == 'y': tgt_local_face.y = tgt_size.y / 2
+    elif target_local_axis == 'y_neg': tgt_local_face.y = -tgt_size.y / 2
+    elif target_local_axis == 'z': tgt_local_face.z = tgt_size.z / 2
+    elif target_local_axis == 'z_neg': tgt_local_face.z = -tgt_size.z / 2
+    
+    # World positions of these faces
+    src_face_world = mat_src @ src_local_face
+    tgt_face_world = mat_tgt @ tgt_local_face
+    
+    src_center_world = source_obj.location
+    tgt_center_world = target_obj.location
+    
+    # Offset from src center to src face
+    src_offset = src_face_world - src_center_world
+    
+    # We want src_face_world_new = tgt_face_world
+    # src_center_new = tgt_face_world - src_offset
+    new_src_center = tgt_face_world - src_offset
+    
+    move_vec = new_src_center - src_center_world
+    source_obj.location += move_vec
+
+# Align keypad.left_face (-X) to panel_base.right_face (+X)
+align_face_to_face(obj_keypad, obj_panel_base, 'x_neg', 'x')
+
+# Offset (0.005, 0, 0)
+apply_offset(obj_keypad, (0.005, 0, 0))
+
+# Create button_1
+# Cylinder Ø0.010 (radius 0.005) x 0.002
+# Rotate so +Z aligns +X (world)
+obj_button_1 = add_cylinder("button_1", 0.005, 0.002, location=(0, 0.150, 0), rotation=rot_panel)
+set_material(obj_button_1, mat_white_plastic)
+
+# Align button_1.center to keypad.center
+align_object_center_to_object_center(obj_button_1, obj_keypad)
+
+# Offset (0, 0.050, 0.001)
+apply_offset(obj_button_1, (0, 0.050, 0.001))
+
+# Create button_2
+obj_button_2 = add_cylinder("button_2", 0.005, 0.002, location=(0, 0.150, 0), rotation=rot_panel)
+set_material(obj_button_2, mat_white_plastic)
+
+# Align button_2.center to keypad.center
+align_object_center_to_object_center(obj_button_2, obj_keypad)
+
+# Offset (0, 0, 0.001)
+apply_offset(obj_button_2, (0, 0, 0.001))
+
+# Create button_3
+obj_button_3 = add_cylinder("button_3", 0.005, 0.002, location=(0, 0.150, 0), rotation=rot_panel)
+set_material(obj_button_3, mat_white_plastic)
+
+# Align button_3.center to keypad.center
+align_object_center_to_object_center(obj_button_3, obj_keypad)
+
+# Offset (0, -0.050, 0.001)
+apply_offset(obj_button_3, (0, -0.050, 0.001))
+```

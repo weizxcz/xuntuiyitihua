@@ -1,0 +1,49 @@
+{
+  "id": "ef0fd27d-03e4-43c4-bcec-351a8ff87fbb",
+  "name": "Modern Living Room vs. Classic Living Room",
+  "instruction": "Create a 3D model comparing a modern living room and a classic living room. The modern living room should have minimalist furniture, a large flat-screen TV, and sleek design elements. The classic living room should have traditional furniture, a fireplace, and ornate decorations. Position them side by side to highlight the differences.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The modern living room features minimalist furniture with clean lines.",
+        "The classic living room contains traditional furniture with ornate details.",
+        "The large flat-screen TV is accurately represented in the modern living room.",
+        "The fireplace is a prominent feature in the classic living room."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The furniture in the modern living room is proportionate to the space.",
+        "The traditional furniture in the classic living room is appropriately scaled."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The modern living room layout promotes open space and flow.",
+        "The classic living room layout is more enclosed and cozy.",
+        "The flat-screen TV is positioned for optimal viewing in the modern living room.",
+        "The fireplace is centrally located in the classic living room."
+      ],
+      "Object distance and contact": [
+        "There is sufficient space between furniture pieces in the modern living room.",
+        "In the classic living room, furniture is arranged to encourage conversation.",
+        "The two living rooms are positioned side by side without overlap."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both living rooms are accurately represented according to the specified styles.",
+        "The side-by-side positioning effectively highlights the differences between modern and classic designs."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

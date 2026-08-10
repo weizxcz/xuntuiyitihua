@@ -1,0 +1,76 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_cork; diffuse_color = (0.6,0.4,0.2,1.0).
+Define material mat_cork_pad; diffuse_color = (0.8,0.6,0.4,1.0).
+Define material mat_wood; diffuse_color = (0.4,0.2,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create coaster_0_0 base and pad  ---
+Create primitive cylinder with diameter 0.090 m and height 0.005 m and name it coaster_0_0_base.
+Rotate coaster_0_0_base so its +Z axis aligns +Z (world).
+Align coaster_0_0_base.center to coaster_set.center using axes XY.
+Then move by offset(-0.050, -0.050, 0).
+Create primitive cylinder with diameter 0.080 m and height 0.002 m and name it coaster_0_0_pad.
+Rotate coaster_0_0_pad so its +Z axis aligns +Z (world).
+Align coaster_0_0_pad.center to coaster_0_0_base.center using axes XY.
+Align coaster_0_0_pad.bottom_face to coaster_0_0_base.top_face using axis Z.
+Then move by offset(0, 0, 0.0025).
+Boolean-union coaster_0_0_pad into coaster_0_0_base; discard coaster_0_0_pad.
+Stage 1 complete.
+
+---  SECTION 2 – Create coaster_0_1 base and pad  ---
+Create primitive cylinder with diameter 0.090 m and height 0.005 m and name it coaster_0_1_base.
+Rotate coaster_0_1_base so its +Z axis aligns +Z (world).
+Align coaster_0_1_base.center to coaster_set.center using axes XY.
+Then move by offset(0.050, -0.050, 0).
+Create primitive cylinder with diameter 0.080 m and height 0.002 m and name it coaster_0_1_pad.
+Rotate coaster_0_1_pad so its +Z axis aligns +Z (world).
+Align coaster_0_1_pad.center to coaster_0_1_base.center using axes XY.
+Align coaster_0_1_pad.bottom_face to coaster_0_1_base.top_face using axis Z.
+Then move by offset(0, 0, 0.0025).
+Boolean-union coaster_0_1_pad into coaster_0_1_base; discard coaster_0_1_pad.
+Stage 2 complete.
+
+---  SECTION 3 – Create coaster_1_0 base and pad  ---
+Create primitive cylinder with diameter 0.090 m and height 0.005 m and name it coaster_1_0_base.
+Rotate coaster_1_0_base so its +Z axis aligns +Z (world).
+Align coaster_1_0_base.center to coaster_set.center using axes XY.
+Then move by offset(-0.050, 0.050, 0).
+Create primitive cylinder with diameter 0.080 m and height 0.002 m and name it coaster_1_0_pad.
+Rotate coaster_1_0_pad so its +Z axis aligns +Z (world).
+Align coaster_1_0_pad.center to coaster_1_0_base.center using axes XY.
+Align coaster_1_0_pad.bottom_face to coaster_1_0_base.top_face using axis Z.
+Then move by offset(0, 0, 0.0025).
+Boolean-union coaster_1_0_pad into coaster_1_0_base; discard coaster_1_0_pad.
+Stage 3 complete.
+
+---  SECTION 4 – Create coaster_1_1 base and pad  ---
+Create primitive cylinder with diameter 0.090 m and height 0.005 m and name it coaster_1_1_base.
+Rotate coaster_1_1_base so its +Z axis aligns +Z (world).
+Align coaster_1_1_base.center to coaster_set.center using axes XY.
+Then move by offset(0.050, 0.050, 0).
+Create primitive cylinder with diameter 0.080 m and height 0.002 m and name it coaster_1_1_pad.
+Rotate coaster_1_1_pad so its +Z axis aligns +Z (world).
+Align coaster_1_1_pad.center to coaster_1_1_base.center using axes XY.
+Align coaster_1_1_pad.bottom_face to coaster_1_1_base.top_face using axis Z.
+Then move by offset(0, 0, 0.0025).
+Boolean-union coaster_1_1_pad into coaster_1_1_base; discard coaster_1_1_pad.
+Stage 4 complete.
+
+---  SECTION 5 – Assemble coaster set  ---
+Boolean-union coaster_0_0_base into coaster_set; discard coaster_0_0_base.
+Boolean-union coaster_0_1_base into coaster_set; discard coaster_0_1_base.
+Boolean-union coaster_1_0_base into coaster_set; discard coaster_1_0_base.
+Boolean-union coaster_1_1_base into coaster_set; discard coaster_1_1_base.
+All stages complete.

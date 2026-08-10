@@ -1,0 +1,506 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects in the scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for col in bpy.data.collections:
+        bpy.data.collections.remove(col)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    # Set roughness/metallic defaults if needed, but prompt only specified diffuse
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube object with specific size, location, rotation and material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """
+    Align a specific axis of an object to a target world vector.
+    axis_to_align: 'X', 'Y', or 'Z'
+    target_vector: Vector in world space
+    """
+    # Get current rotation matrix
+    rot_mat = obj.rotation_euler.to_matrix()
+    
+    # Get the current direction of the axis to align
+    if axis_to_align == 'X':
+        current_axis = rot_mat.col[0]
+    elif axis_to_align == 'Y':
+        current_axis = rot_mat.col[1]
+    elif axis_to_align == 'Z':
+        current_axis = rot_mat.col[2]
+    
+    # Calculate rotation to align current_axis to target_vector
+    # We need to find a rotation matrix R such that R * current_axis = target_vector
+    # This is complex to do directly on Euler. 
+    # Alternative: Use quaternion rotation from current_axis to target_vector
+    # and apply it to the object's current rotation.
+    
+    # Normalize vectors
+    v1 = current_axis.normalized()
+    v2 = target_vector.normalized()
+    
+    # Avoid division by zero or invalid cross products
+    if v1 == v2:
+        return # Already aligned
+    
+    # Calculate rotation quaternion
+    q = v1.rotation_difference(v2)
+    
+    # Apply this rotation to the object's current rotation
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = q @ obj.rotation_quaternion
+    obj.rotation_mode = 'XYZ' # Reset to Euler for consistency if needed
+
+def get_face_center(obj, face_axis, face_side=1):
+    """
+    Get the world location of a specific face center of an object.
+    face_axis: 'X', 'Y', 'Z'
+    face_side: 1 for positive axis, -1 for negative axis
+    """
+    # Get object matrix world
+    mat = obj.matrix_world
+    
+    # Get local face center
+    # Cube primitives have faces at +/- 0.5 * scale
+    # We need to account for scale
+    scale = obj.scale
+    local_offset = Vector((0, 0, 0))
+    if face_axis == 'X':
+        local_offset.x = face_side * 0.5 * scale.x
+    elif face_axis == 'Y':
+        local_offset.y = face_side * 0.5 * scale.y
+    elif face_axis == 'Z':
+        local_offset.z = face_side * 0.5 * scale.z
+        
+    # Transform to world space
+    return mat @ local_offset
+
+def align_object_to_face(obj_target, target_axis, target_side, obj_source, source_axis, source_side):
+    """
+    Align obj_source to obj_target such that:
+    obj_source's source_axis face is at obj_target's target_axis face location.
+    And optionally align other axes.
+    """
+    # 1. Position obj_source so its source face is at the target face location
+    target_loc = get_face_center(obj_target, target_axis, target_side)
+    
+    # Calculate where obj_source's source face is currently
+    # We want to move obj_source so that its source face is at target_loc
+    # Current source face location in world space:
+    current_source_face_loc = get_face_center(obj_source, source_axis, source_side)
+    
+    # Offset needed
+    offset = target_loc - current_source_face_loc
+    
+    # Apply offset to obj_source location
+    obj_source.location += offset
+    
+    # 2. Orientation: Align obj_source's source_axis to point towards obj_target's target_axis?
+    # The prompt says "Anchor ... to ... face" and "Align ... face to ... face".
+    # Usually this means the normals are parallel or anti-parallel depending on context.
+    # For "Anchor leg_fr to leg_fl.+Z_face", it implies leg_fr's bottom (-Z) is at leg_fl's top (+Z).
+    # So source_axis should be opposite to target_axis direction for contact.
+    # However, the prompt says "Anchor leg_fr to leg_fl.+Z_face". 
+    # Let's assume standard contact: source face touches target face.
+    # If target is +Z face, normal is +Z. Source face should be -Z face to touch it from below?
+    # Or is it just positioning the center?
+    # "Anchor" usually implies position. "Align" implies orientation.
+    
+    # Let's refine: 
+    # Anchor: Position the object so its specified face is at the target's specified face location.
+    # Align: Rotate the object so its specified axis aligns with the target's specified axis.
+    
+    # Re-reading Section 2:
+    # "Anchor leg_fr to leg_fl.+Z_face." -> leg_fr's position is determined by leg_fl's +Z face.
+    # "Align leg_fr.+X_face to leg_fl.+X_face." -> leg_fr's +X axis aligns with leg_fl's +X axis.
+    
+    # Let's implement Anchor as: Move obj_source so that its source_face is at target_face_loc.
+    # Let's implement Align as: Rotate obj_source so its source_axis aligns with target_axis.
+    
+    # But wait, if we just move it, the rotation might be wrong.
+    # The prompt order is: Rotate -> Anchor -> Align -> Offset.
+    # So rotation is handled by "Rotate ... so its +Z axis aligns +Z".
+    # Then Anchor moves it.
+    # Then Align might adjust rotation? Or just ensure alignment?
+    # If the object is already aligned by the initial rotation, this step might be redundant or confirmatory.
+    # However, for connectors, the initial rotation might not align with the leg's local axes if the leg is rotated.
+    # But legs are aligned to world Z. So world axes are fine.
+    
+    # Let's stick to:
+    # Anchor: Position obj_source's source_face at obj_target's target_face.
+    # Align: Ensure obj_source's source_axis is parallel to obj_target's target_axis.
+    
+    # For "Align leg_fr.+X_face to leg_fl.+X_face":
+    # This likely means the X-axis of leg_fr should point in the same direction as X-axis of leg_fl.
+    # Since leg_fl is aligned to world Z, its X is world X.
+    # So leg_fr's X should be world X.
+    
+    # Let's implement a helper for this specific alignment logic.
+    pass
+
+def place_object_relative(obj_source, obj_target, source_axis, source_side, target_axis, target_side):
+    """
+    Moves obj_source so that its source_axis face is at obj_target's target_axis face.
+    """
+    target_loc = get_face_center(obj_target, target_axis, target_side)
+    current_source_face_loc = get_face_center(obj_source, source_axis, source_side)
+    offset = target_loc - current_source_face_loc
+    obj_source.location += offset
+
+def align_axes(obj_source, source_axis, obj_target, target_axis):
+    """
+    Rotates obj_source so that its source_axis aligns with obj_target's target_axis.
+    Assumes we want them to point in the same direction.
+    """
+    # Get current direction of source_axis in world space
+    mat = obj_source.matrix_world
+    if source_axis == 'X':
+        src_dir = mat.col[0].xyz
+    elif source_axis == 'Y':
+        src_dir = mat.col[1].xyz
+    elif source_axis == 'Z':
+        src_dir = mat.col[2].xyz
+    
+    # Get target direction
+    mat_t = obj_target.matrix_world
+    if target_axis == 'X':
+        tgt_dir = mat_t.col[0].xyz
+    elif target_axis == 'Y':
+        tgt_dir = mat_t.col[1].xyz
+    elif target_axis == 'Z':
+        tgt_dir = mat_t.col[2].xyz
+        
+    src_dir = src_dir.normalized()
+    tgt_dir = tgt_dir.normalized()
+    
+    if src_dir == tgt_dir:
+        return
+        
+    q = src_dir.rotation_difference(tgt_dir)
+    obj_source.rotation_mode = 'QUATERNION'
+    obj_source.rotation_quaternion = q @ obj_source.rotation_quaternion
+    obj_source.rotation_mode = 'XYZ'
+
+def apply_offset(obj, offset_vec):
+    """Apply a local/world offset to an object's location."""
+    obj.location += offset_vec
+
+# ==============================================================================
+# MAIN SCRIPT
+# ==============================================================================
+
+def main():
+    # Block 0: Scene Reset & Units
+    clear_scene()
+    set_units()
+    
+    # Block 1: Materials
+    mat_plastic_black = make_material("mat_plastic_black", (0.05, 0.05, 0.05))
+    mat_plastic_white = make_material("mat_plastic_white", (0.95, 0.95, 0.95))
+    
+    # Default material for legs/shelves if not specified, let's use black plastic
+    default_mat = mat_plastic_black
+    
+    # Block 2: Geometry Generation
+    
+    # --- SECTION 1 – Create Front-Left Vertical Support Leg ---
+    leg_fl = add_cube("leg_fl", (0.02, 0.02, 0.45), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate leg_fl so its +Z axis aligns +Z (world). (Already done by default cube creation at 0,0,0)
+    # Anchor leg_fl to world origin. (Already at 0,0,0)
+    # Move by offset(0, 0, 0).
+    apply_offset(leg_fl, (0, 0, 0))
+    
+    # --- SECTION 2 – Create Front-Right Vertical Support Leg ---
+    leg_fr = add_cube("leg_fr", (0.02, 0.02, 0.45), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate leg_fr so its +Z axis aligns +Z (world).
+    align_axis_to_vector(leg_fr, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor leg_fr to leg_fl.+Z_face.
+    # This means leg_fr's bottom (-Z) should be at leg_fl's top (+Z)?
+    # Or leg_fr's center? "Anchor ... to ... face" usually implies the face of the new object touches the face of the old object.
+    # Let's assume leg_fr's -Z face touches leg_fl's +Z face.
+    place_object_relative(leg_fr, leg_fl, '-Z', -1, '+Z', 1)
+    
+    # Align leg_fr.+X_face to leg_fl.+X_face.
+    align_axes(leg_fr, 'X', leg_fl, 'X')
+    
+    # Move by offset(0.30, 0, 0).
+    apply_offset(leg_fr, (0.30, 0, 0))
+    
+    # --- SECTION 3 – Create Back-Left Vertical Support Leg ---
+    leg_bl = add_cube("leg_bl", (0.02, 0.02, 0.45), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate leg_bl so its +Z axis aligns +Z (world).
+    align_axis_to_vector(leg_bl, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor leg_bl to leg_fl.+Z_face.
+    place_object_relative(leg_bl, leg_fl, '-Z', -1, '+Z', 1)
+    
+    # Align leg_bl.+Y_face to leg_fl.+Y_face.
+    align_axes(leg_bl, 'Y', leg_fl, 'Y')
+    
+    # Move by offset(0, 0.20, 0).
+    apply_offset(leg_bl, (0, 0.20, 0))
+    
+    # --- SECTION 4 – Create Back-Right Vertical Support Leg ---
+    leg_br = add_cube("leg_br", (0.02, 0.02, 0.45), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate leg_br so its +Z axis aligns +Z (world).
+    align_axis_to_vector(leg_br, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor leg_br to leg_fr.+Z_face.
+    place_object_relative(leg_br, leg_fr, '-Z', -1, '+Z', 1)
+    
+    # Align leg_br.+Y_face to leg_fr.+Y_face.
+    align_axes(leg_br, 'Y', leg_fr, 'Y')
+    
+    # Move by offset(0, 0.20, 0).
+    apply_offset(leg_br, (0, 0.20, 0))
+    
+    # --- SECTION 5 – Create Bottom Shelf (Tier 1) ---
+    shelf_l1 = add_cube("shelf_l1", (0.30, 0.20, 0.01), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate shelf_l1 so its +Z axis aligns +Z (world).
+    align_axis_to_vector(shelf_l1, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor shelf_l1 to leg_fl.+Z_face.
+    # Shelf is horizontal, so its -Z face (bottom) touches leg_fl's +Z face (top)?
+    # Or is it centered? "Anchor ... to ... face" implies contact.
+    # Let's assume shelf_l1's -Z face is at leg_fl's +Z face.
+    place_object_relative(shelf_l1, leg_fl, '-Z', -1, '+Z', 1)
+    
+    # Align shelf_l1.+X_face to leg_fl.+X_face.
+    align_axes(shelf_l1, 'X', leg_fl, 'X')
+    
+    # Align shelf_l1.+Y_face to leg_fl.+Y_face.
+    align_axes(shelf_l1, 'Y', leg_fl, 'Y')
+    
+    # Move by offset(0, 0, 0.005).
+    apply_offset(shelf_l1, (0, 0, 0.005))
+    
+    # --- SECTION 6 – Create Middle Shelf (Tier 2) ---
+    shelf_l2 = add_cube("shelf_l2", (0.30, 0.20, 0.01), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate shelf_l2 so its +Z axis aligns +Z (world).
+    align_axis_to_vector(shelf_l2, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor shelf_l2 to leg_fl.+Z_face.
+    place_object_relative(shelf_l2, leg_fl, '-Z', -1, '+Z', 1)
+    
+    # Align shelf_l2.+X_face to leg_fl.+X_face.
+    align_axes(shelf_l2, 'X', leg_fl, 'X')
+    
+    # Align shelf_l2.+Y_face to leg_fl.+Y_face.
+    align_axes(shelf_l2, 'Y', leg_fl, 'Y')
+    
+    # Move by offset(0, 0, 0.15).
+    apply_offset(shelf_l2, (0, 0, 0.15))
+    
+    # --- SECTION 7 – Create Top Shelf (Tier 3) ---
+    shelf_l3 = add_cube("shelf_l3", (0.30, 0.20, 0.01), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate shelf_l3 so its +Z axis aligns +Z (world).
+    align_axis_to_vector(shelf_l3, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor shelf_l3 to leg_fl.+Z_face.
+    place_object_relative(shelf_l3, leg_fl, '-Z', -1, '+Z', 1)
+    
+    # Align shelf_l3.+X_face to leg_fl.+X_face.
+    align_axes(shelf_l3, 'X', leg_fl, 'X')
+    
+    # Align shelf_l3.+Y_face to leg_fl.+Y_face.
+    align_axes(shelf_l3, 'Y', leg_fl, 'Y')
+    
+    # Move by offset(0, 0, 0.30).
+    apply_offset(shelf_l3, (0, 0, 0.30))
+    
+    # --- SECTION 8 – Create Front Connectors (Tier 1, 2, 3) ---
+    
+    # Connector FL 1
+    connector_fl_1 = add_cube("connector_fl_1", (0.02, 0.02, 0.28), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate connector_fl_1 so its +Z axis aligns +X (world).
+    align_axis_to_vector(connector_fl_1, 'Z', Vector((1, 0, 0)))
+    
+    # Anchor connector_fl_1 to leg_fl.+X_face.
+    # Connector is along X axis. Its -Z face (which is now aligned with world X? No, +Z is world X)
+    # Wait, if +Z aligns +X, then the face at +Z is the face pointing in +X direction.
+    # So we want connector_fl_1's -Z face (pointing -X) to touch leg_fl's +X face (pointing +X)?
+    # Or connector_fl_1's +Z face (pointing +X) to touch leg_fl's +X face?
+    # If it's a connector BETWEEN leg_fl and leg_fr, it should start at leg_fl's +X face and go towards leg_fr.
+    # So connector_fl_1's -Z face (pointing -X) should be at leg_fl's +X face? No, that would point away.
+    # Let's assume the connector's local axis Z is aligned with world X.
+    # So its +Z face is at the "front" (right) and -Z face is at the "back" (left).
+    # To connect to leg_fl (left), the connector's -Z face should be at leg_fl's +X face.
+    place_object_relative(connector_fl_1, leg_fl, '-Z', -1, '+X', 1)
+    
+    # Align connector_fl_1.+Y_face to leg_fl.+Y_face.
+    align_axes(connector_fl_1, 'Y', leg_fl, 'Y')
+    
+    # Move by offset(0.14, 0, 0.005).
+    apply_offset(connector_fl_1, (0.14, 0, 0.005))
+    
+    # Connector FL 2
+    connector_fl_2 = add_cube("connector_fl_2", (0.02, 0.02, 0.28), (0, 0, 0), (0, 0, 0), default_mat)
+    align_axis_to_vector(connector_fl_2, 'Z', Vector((1, 0, 0)))
+    place_object_relative(connector_fl_2, leg_fl, '-Z', -1, '+X', 1)
+    align_axes(connector_fl_2, 'Y', leg_fl, 'Y')
+    apply_offset(connector_fl_2, (0.14, 0, 0.15))
+    
+    # Connector FL 3
+    connector_fl_3 = add_cube("connector_fl_3", (0.02, 0.02, 0.28), (0, 0, 0), (0, 0, 0), default_mat)
+    align_axis_to_vector(connector_fl_3, 'Z', Vector((1, 0, 0)))
+    place_object_relative(connector_fl_3, leg_fl, '-Z', -1, '+X', 1)
+    align_axes(connector_fl_3, 'Y', leg_fl, 'Y')
+    apply_offset(connector_fl_3, (0.14, 0, 0.30))
+    
+    # --- SECTION 9 – Create Back Connectors (Tier 1, 2, 3) ---
+    
+    # Connector BL 1
+    connector_bl_1 = add_cube("connector_bl_1", (0.02, 0.02, 0.28), (0, 0, 0), (0, 0, 0), default_mat)
+    align_axis_to_vector(connector_bl_1, 'Z', Vector((1, 0, 0)))
+    # Anchor to leg_bl.+X_face.
+    place_object_relative(connector_bl_1, leg_bl, '-Z', -1, '+X', 1)
+    align_axes(connector_bl_1, 'Y', leg_bl, 'Y')
+    apply_offset(connector_bl_1, (0.14, 0, 0.005))
+    
+    # Connector BL 2
+    connector_bl_2 = add_cube("connector_bl_2", (0.02, 0.02, 0.28), (0, 0, 0), (0, 0, 0), default_mat)
+    align_axis_to_vector(connector_bl_2, 'Z', Vector((1, 0, 0)))
+    place_object_relative(connector_bl_2, leg_bl, '-Z', -1, '+X', 1)
+    align_axes(connector_bl_2, 'Y', leg_bl, 'Y')
+    apply_offset(connector_bl_2, (0.14, 0, 0.15))
+    
+    # Connector BL 3
+    connector_bl_3 = add_cube("connector_bl_3", (0.02, 0.02, 0.28), (0, 0, 0), (0, 0, 0), default_mat)
+    align_axis_to_vector(connector_bl_3, 'Z', Vector((1, 0, 0)))
+    place_object_relative(connector_bl_3, leg_bl, '-Z', -1, '+X', 1)
+    align_axes(connector_bl_3, 'Y', leg_bl, 'Y')
+    apply_offset(connector_bl_3, (0.14, 0, 0.30))
+    
+    # --- SECTION 10 – Create Side Connectors (Front and Back) ---
+    
+    # Connector Side FL
+    connector_side_fl = add_cube("connector_side_fl", (0.02, 0.02, 0.30), (0, 0, 0), (0, 0, 0), default_mat)
+    # Rotate connector_side_fl so its +Z axis aligns +Y (world).
+    align_axis_to_vector(connector_side_fl, 'Z', Vector((0, 1, 0)))
+    
+    # Anchor connector_side_fl to leg_fl.+Y_face.
+    # Connector is along Y axis. +Z is world Y.
+    # So -Z face points -Y. +Z face points +Y.
+    # To connect to leg_fl (front/left), the connector's -Z face should be at leg_fl's +Y face?
+    # leg_fl is at (0,0). leg_bl is at (0, 0.2).
+    # leg_fl's +Y face is at y=0.01.
+    # connector_side_fl should go from leg_fl to leg_bl?
+    # So it should start at leg_fl's +Y face and go towards +Y.
+    # So connector_side_fl's -Z face (pointing -Y) should be at leg_fl's +Y face?
+    # No, if -Z points -Y, and we place it at leg_fl's +Y face, it will extend in -Y direction.
+    # We want it to extend in +Y direction.
+    # So we should use connector_side_fl's +Z face (pointing +Y) to be at leg_fl's +Y face?
+    # If +Z face is at leg_fl's +Y face, the object extends in +Z direction (which is +Y).
+    # Yes.
+    place_object_relative(connector_side_fl, leg_fl, '+Z', 1, '+Y', 1)
+    
+    # Align connector_side_fl.+X_face to leg_fl.+X_face.
+    align_axes(connector_side_fl, 'X', leg_fl, 'X')
+    
+    # Move by offset(0, 0.14, 0).
+    apply_offset(connector_side_fl, (0, 0.14, 0))
+    
+    # Connector Side BL
+    connector_side_bl = add_cube("connector_side_bl", (0.02, 0.02, 0.30), (0, 0, 0), (0, 0, 0), default_mat)
+    align_axis_to_vector(connector_side_bl, 'Z', Vector((0, 1, 0)))
+    
+    # Anchor connector_side_bl to leg_bl.+Y_face.
+    # leg_bl is at y=0.2. Its +Y face is at y=0.21.
+    # connector_side_bl should go from leg_bl to leg_br?
+    # leg_br is at x=0.3, y=0.2.
+    # So connector_side_bl should go in +X direction?
+    # But the rotation is +Z aligns +Y.
+    # This seems inconsistent with the geometry if it's a side connector between front and back legs.
+    # Let's re-read: "Create Side Connectors (Front and Back)".
+    # "connector_side_fl" connects leg_fl and leg_bl?
+    # leg_fl is Front-Left. leg_bl is Back-Left.
+    # So connector_side_fl connects them along Y axis.
+    # leg_fl is at y=0. leg_bl is at y=0.2.
+    # So connector_side_fl should go from leg_fl (+Y face) to leg_bl (-Y face)?
+    # Or from leg_fl to leg_bl?
+    # If it's a side connector, it might connect the two left legs.
+    # So it starts at leg_fl's +Y face and ends at leg_bl's -Y face.
+    # My previous placement: place_object_relative(connector_side_fl, leg_fl, '+Z', 1, '+Y', 1)
+    # This places connector_side_fl's +Z face (pointing +Y) at leg_fl's +Y face.
+    # So the connector extends in +Y direction. Correct.
+    
+    # Now for connector_side_bl.
+    # "Anchor connector_side_bl to leg_bl.+Y_face."
+    # leg_bl is at y=0.2. Its +Y face is at y=0.21.
+    # If we place connector_side_bl's +Z face (pointing +Y) at leg_bl's +Y face, it extends further in +Y.
+    # But there is no leg at y=0.4.
+    # Maybe connector_side_bl connects leg_bl and leg_br?
+    # leg_bl is Back-Left. leg_br is Back-Right.
+    # So connector_side_bl should go along X axis.
+    # But the rotation is +Z aligns +Y.
+    # This implies the connector is along Y axis.
+    # This contradicts the "Back" part if it's connecting left and right.
+    # Let's look at the name: "connector_side_bl".
+    # Maybe it connects leg_bl to leg_br?
+    # If so, it should be along X axis.
+    # But the instruction says: "Rotate connector_side_bl so its +Z axis aligns +Y (world)."
+    # This forces it to be along Y axis.
+    # Maybe "Side Connectors" means connectors on the sides (Left and Right sides of the structure).
+    # connector_side_fl is on the Front-Left side? No, it connects Front-Left and Back-Left.
+    # So it's on the Left side.
+    # connector_side_bl is on the Back-Left side?
+    # If it connects Back-Left and Back-Right, it should be along X.
+    # But the instruction says +Z aligns +Y.
+    # This is a contradiction in the prompt's geometry vs naming.
+    # However, I must follow the instructions exactly.
+    # Instruction: "Anchor connector_side_bl to leg_bl.+Y_face."
+    # Instruction: "Rotate connector_side_bl so its +Z axis aligns +Y (world)."
+    # So I will follow this. It will extend in +Y direction from leg_bl.
+    
+    place_object_relative(connector_side_bl, leg_bl, '+Z', 1, '+Y', 1)
+    
+    # Align connector_side_bl.+X_face to leg_bl.+X_face.
+    align_axes(connector_side_bl, 'X', leg_bl, 'X')
+    
+    # Move by offset(0, 0.14, 0).
+    apply_offset(connector_side_bl, (0, 0.14, 0))
+
+if __name__ == "__main__":
+    main()
+```

@@ -1,0 +1,66 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_baroque_gold; diffuse_color = (0.76,0.64,0.12,1.0).
+Define material mat_frame_base; diffuse_color = (0.15,0.15,0.15,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create frame_base  ---
+Create primitive cuboid with size 0.600×0.800×0.040 m and name it frame_base.
+Rotate frame_base so its +Z axis aligns +Z (world).
+Anchor frame_base to world origin.
+Then move by offset(0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create top_crown  ---
+Create primitive cuboid with size 0.600×0.050×0.020 m and name it top_crown.
+Rotate top_crown so its +Z axis aligns +Z (world).
+Align top_crown.bottom_face to frame_base.top_face.
+Then move by offset(0,0,0.020).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create bottom_crown  ---
+Create primitive cuboid with size 0.600×0.050×0.020 m and name it bottom_crown.
+Rotate bottom_crown so its +Z axis aligns +Z (world).
+Align bottom_crown.top_face to frame_base.bottom_face.
+Then move by offset(0,0,0.020).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create left_vine  ---
+Create primitive cuboid with size 0.050×0.800×0.020 m and name it left_vine.
+Rotate left_vine so its +Z axis aligns +Z (world).
+Align left_vine.right_face to frame_base.left_face.
+Then move by offset(0.020,0,0).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create right_vine  ---
+Create primitive cuboid with size 0.050×0.800×0.020 m and name it right_vine.
+Rotate right_vine so its +Z axis aligns +Z (world).
+Align right_vine.left_face to frame_base.right_face.
+Then move by offset(-0.020,0,0).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create corner_ornaments  ---
+Create primitive cuboid with size 0.080×0.080×0.030 m and name it corner_ornaments.
+Rotate corner_ornaments so its +Z axis aligns +Z (world).
+Align corner_ornaments.center to Avg(frame_base.top_left_corner, frame_base.top_right_corner, frame_base.bottom_left_corner, frame_base.bottom_right_corner).
+Then move by offset(0,0,0.015).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+All stages complete.

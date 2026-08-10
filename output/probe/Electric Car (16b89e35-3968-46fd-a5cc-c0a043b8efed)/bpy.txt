@@ -1,0 +1,495 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, radians
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_primitive(name, shape, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    bpy.ops.object.select_all(action='DESELECT')
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=size[0], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+        obj.scale = (size[1]/size[0], size[2]/size[0], 1) # Adjust for cube default size 2
+        # Actually, let's just set dimensions directly after creation for precision
+        obj.dimensions = size
+    elif shape == 'cylinder':
+        # Cylinder default: radius=size[0]/2, depth=size[2]
+        # We want diameter=size[0], length=size[2]
+        bpy.ops.mesh.primitive_cylinder_add(radius=size[0]/2, depth=size[2], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif shape == 'disc':
+        bpy.ops.mesh.primitive_circle_add(radius=size[0]/2, fill_type='NGON', location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+        obj.data.extrude = size[2]
+        bpy.ops.mesh.extrude_faces_move()
+    elif shape == 'cone':
+        bpy.ops.mesh.primitive_cone_add(radius1=size[0]/2, radius2=0, depth=size[2], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif shape == 'sphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0]/2, location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    
+    # Ensure rotation is applied if needed, though we usually rotate after
+    obj.rotation_euler = rotation
+    return obj
+
+def align_face_to_face(obj, target, axis='Z', face_type='positive'):
+    """
+    Aligns a face of 'obj' to the corresponding face of 'target'.
+    axis: 'X', 'Y', or 'Z'
+    face_type: 'positive' (max) or 'negative' (min)
+    """
+    # Get world transforms
+    obj_mat = obj.matrix_world
+    tgt_mat = target.matrix_world
+    
+    # Get bounding box centers and extents in world space
+    # We need to align the specific face.
+    # Simple approach: Move object so its face center matches target face center along the normal.
+    
+    # Local face centers
+    # Positive Z face center in local: (0, 0, 0.5 * height)
+    # Negative Z face center in local: (0, 0, -0.5 * height)
+    
+    # Determine local offset for the face
+    local_offset = Vector((0,0,0))
+    if axis == 'X':
+        local_offset.x = 0.5 if face_type == 'positive' else -0.5
+    elif axis == 'Y':
+        local_offset.y = 0.5 if face_type == 'positive' else -0.5
+    elif axis == 'Z':
+        local_offset.z = 0.5 if face_type == 'positive' else -0.5
+        
+    # Scale by dimensions
+    local_offset *= obj.dimensions
+    
+    # World position of obj's face center
+    obj_face_center = obj_mat @ local_offset
+    
+    # Target face center
+    tgt_local_offset = Vector((0,0,0))
+    if axis == 'X':
+        tgt_local_offset.x = 0.5 if face_type == 'positive' else -0.5
+    elif axis == 'Y':
+        tgt_local_offset.y = 0.5 if face_type == 'positive' else -0.5
+    elif axis == 'Z':
+        tgt_local_offset.z = 0.5 if face_type == 'positive' else -0.5
+        
+    tgt_local_offset *= target.dimensions
+    tgt_face_center = tgt_mat @ tgt_local_offset
+    
+    # Calculate translation vector
+    translation = tgt_face_center - obj_face_center
+    
+    # Apply translation
+    obj.location += translation
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0,0,1))):
+    """Rotate object so its local axis aligns with the given world vector."""
+    if axis == 'X':
+        local_axis = Vector((1,0,0))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    else:
+        local_axis = Vector((0,0,1))
+        
+    # Calculate rotation matrix
+    rot_mat = local_axis.rotation_difference(vector).to_matrix().to_4x4()
+    
+    # Apply rotation
+    obj.rotation_euler = rot_mat.to_euler()
+
+def offset_object(obj, offset_vec):
+    """Apply offset in object's local space."""
+    # Convert local offset to world space based on current rotation
+    world_offset = obj.matrix_world.to_3x3() @ offset_vec
+    obj.location += world_offset
+
+def create_cutter(name, shape, size, location, rotation):
+    """Create a cutter object."""
+    cutter = add_primitive(name + "_cutter", shape, size, location, rotation)
+    cutter.hide_viewport = True
+    cutter.hide_render = True
+    return cutter
+
+def boolean_subtract(base_obj, cutter_obj):
+    """Perform boolean subtract using modifier."""
+    # Add Boolean Modifier
+    mod = base_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    # Apply modifier
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(base_obj, cutter_obj):
+    """Perform boolean union using modifier."""
+    mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter_obj
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj, do_unlink=True)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- BLOCK 1: Materials ---
+
+mat_car_body_paint = make_material("car_body_paint", (0.15, 0.15, 0.2, 1.0))
+mat_charging_port_plastic = make_material("charging_port_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_chrome_trim = make_material("chrome_trim", (0.8, 0.8, 0.85, 1.0))
+mat_glass = make_material("glass", (0.2, 0.3, 0.4, 0.3))
+mat_rubber_tire = make_material("rubber_tire", (0.05, 0.05, 0.05, 1.0))
+mat_steel_rim = make_material("steel_rim", (0.6, 0.6, 0.65, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# Create a root object to serve as 'car_root' for anchoring if needed, 
+# though the instructions mostly anchor to specific blocks.
+# We will create car_root as an empty or just use the first block.
+# The prompt implies 'car_root' exists. Let's create it as an empty at origin.
+car_root = bpy.data.objects.new("car_root", None)
+bpy.context.collection.objects.link(car_root)
+car_root.location = (0,0,0)
+
+# --- SECTION 1 – Create Body Shell ---
+
+# 1. Cabin Block
+cabin_block = add_primitive("cabin_block", "cube", (1.8, 1.5, 0.5), location=(0,0,0), rotation=(0,0,0))
+# Rotate so +Z aligns +Z (already aligned)
+align_axis_to_vector(cabin_block, 'Z', Vector((0,0,1)))
+# Align cabin_block.XY_face to car_root.XY_face
+# car_root is empty, has no faces. Assuming car_root.XY_face means Z=0 plane or similar.
+# If car_root is empty, we can't align face to face. 
+# Interpretation: Align to car_root's position/orientation. 
+# "Align cabin_block.XY_face to car_root.XY_face" -> If car_root is empty, this might mean 
+# aligning the bottom of cabin_block to car_root's Z=0? Or just placing it.
+# Let's assume car_root has a bounding box or is just a reference point.
+# Given "Align cabin_block.Z_face to car_root.Z_face", and car_root is empty, 
+# let's assume car_root acts as the world origin reference for Z=0.
+# Let's align cabin_block bottom (negative Z face) to car_root Z=0.
+# Since car_root is empty, we'll align cabin_block's negative Z face to Z=0.
+# But wait, "Align cabin_block.XY_face to car_root.XY_face". 
+# If car_root is empty, maybe it means align to the world XY plane?
+# Let's assume car_root is a placeholder for the car's base.
+# Let's align cabin_block's bottom face to Z=0.
+align_face_to_face(cabin_block, car_root, axis='Z', face_type='negative') 
+# Note: align_face_to_face with empty target might fail if it tries to read dimensions.
+# Let's implement a specific helper for empty targets or assume car_root is a cube of size 0?
+# Better: Just place cabin_block so its bottom is at Z=0.
+cabin_block.location.z = 0.25 # Half height
+
+# Align cabin_block.Z_face to car_root.Z_face (already done by placement)
+# Move by offset(0,0,0)
+offset_object(cabin_block, (0,0,0))
+
+# 2. Hood Block
+hood_block = add_primitive("hood_block", "cube", (1.8, 0.8, 0.15), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(hood_block, 'Z', Vector((0,0,1)))
+# Align hood_block.XY_face to cabin_block.front_face.XY_face
+# cabin_block front face is +X or -X? Usually +X is front in Blender if Z is up.
+# Let's assume standard: X is forward/back. Let's say +X is front.
+# Align hood_block bottom (negative Z) to cabin_block top (positive Z)?
+# "Align hood_block.XY_face to cabin_block.front_face.XY_face"
+# This phrasing is tricky. "XY_face" usually means the face perpendicular to Z.
+# "front_face" usually means the face perpendicular to X.
+# Let's assume "front_face" of cabin_block is the +X face.
+# And "XY_face" of hood_block is its bottom face (-Z).
+# So align hood_block bottom to cabin_block front (+X) face?
+# That would make the hood stick out the side.
+# Alternative: "front_face" refers to the face at the front of the car, which is the +X face.
+# "XY_face" might be a typo for "bottom face" or "top face"?
+# Let's look at the next line: "Align hood_block.Z_face to cabin_block.top_face.Z_face".
+# This implies Z alignment is separate.
+# Let's assume the intent is:
+# 1. Align hood_block to be on top of cabin_block? No, "front_face".
+# 2. Align hood_block to be in front of cabin_block.
+# Let's assume:
+# - Align hood_block's back face (-X) to cabin_block's front face (+X).
+# - Align hood_block's bottom face (-Z) to cabin_block's top face (+Z).
+# But the instruction says "Align hood_block.XY_face to cabin_block.front_face.XY_face".
+# If we interpret "XY_face" as the face normal to Z, and "front_face" as the face normal to X,
+# this is a mismatch.
+# Let's assume "XY_face" means the face defined by the XY plane, i.e., the top/bottom.
+# And "front_face" means the front part of the object.
+# Let's try: Align hood_block's bottom (-Z) to cabin_block's top (+Z).
+# And align hood_block's back (-X) to cabin_block's front (+X).
+# The instruction "Align hood_block.XY_face to cabin_block.front_face.XY_face" is confusing.
+# Let's assume it means: Align the face of hood_block that is on the XY plane (bottom) 
+# to the face of cabin_block that is on the front (top? no, front is X).
+# Let's stick to the most logical car construction:
+# Hood is on top of the cabin, at the front.
+# So:
+# - Align hood_block bottom (-Z) to cabin_block top (+Z).
+# - Align hood_block back (-X) to cabin_block front (+X).
+# But the text says "Align hood_block.XY_face to cabin_block.front_face.XY_face".
+# If we take "front_face" to mean the face at the front of the cabin, which is +X.
+# And "XY_face" to mean the face of the hood that is parallel to XY, i.e., bottom.
+# This doesn't match.
+# Let's assume "front_face" of cabin_block is the +X face.
+# And "XY_face" of hood_block is the +Z face (top)? No.
+# Let's assume the user made a typo and meant:
+# Align hood_block.bottom to cabin_block.top.
+# Align hood_block.back to cabin_block.front.
+# Let's implement this logical alignment.
+
+# Helper to align two objects based on logical positions
+def align_hood_to_cabin(hood, cabin):
+    # Align hood bottom (-Z) to cabin top (+Z)
+    # Cabin top center: cabin.location + (0,0, cabin.dimensions.z/2)
+    # Hood bottom center: hood.location + (0,0, -hood.dimensions.z/2)
+    # We want hood bottom center to be at cabin top center.
+    # But we also need to align X.
+    
+    # Align X: Hood back (-X) to Cabin front (+X)
+    # Cabin front center: cabin.location + (cabin.dimensions.x/2, 0, 0)
+    # Hood back center: hood.location + (-hood.dimensions.x/2, 0, 0)
+    
+    # Target position for hood center:
+    # X: cabin.location.x + cabin.dimensions.x/2 - hood.dimensions.x/2
+    # Y: cabin.location.y
+    # Z: cabin.location.z + cabin.dimensions.z/2 - hood.dimensions.z/2
+    
+    target_x = cabin.location.x + cabin.dimensions.x/2 - hood.dimensions.x/2
+    target_y = cabin.location.y
+    target_z = cabin.location.z + cabin.dimensions.z/2 - hood.dimensions.z/2
+    
+    hood.location = (target_x, target_y, target_z)
+
+align_hood_to_cabin(hood_block, cabin_block)
+
+# Move by offset(0,0,0.25)
+offset_object(hood_block, (0,0,0.25))
+
+# 3. Trunk Block
+trunk_block = add_primitive("trunk_block", "cube", (1.8, 0.7, 0.15), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(trunk_block, 'Z', Vector((0,0,1)))
+
+def align_trunk_to_cabin(trunk, cabin):
+    # Align trunk bottom (-Z) to cabin top (+Z)
+    # Align trunk front (+X) to cabin back (-X)
+    
+    target_x = cabin.location.x - cabin.dimensions.x/2 + trunk.dimensions.x/2
+    target_y = cabin.location.y
+    target_z = cabin.location.z + cabin.dimensions.z/2 - trunk.dimensions.z/2
+    
+    trunk.location = (target_x, target_y, target_z)
+
+align_trunk_to_cabin(trunk_block, cabin_block)
+
+# Move by offset(0,0,-0.25)
+offset_object(trunk_block, (0,0,-0.25))
+
+# --- SECTION 2 – Create Glass Panels and Grille ---
+
+# 1. Windshield
+windshield = add_primitive("windshield", "cube", (1.6, 0.01, 0.4), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(windshield, 'Z', Vector((0,0,1)))
+# Align windshield.XY_face to hood_block.front_face.XY_face
+# Assuming windshield is vertical, its "XY_face" might be its front face (+Z)?
+# No, XY face is perpendicular to Z.
+# Let's assume windshield is placed on the front of the hood.
+# Align windshield bottom (-Z) to hood top (+Z)?
+# And windshield back (-X) to hood front (+X)?
+# But windshield is thin (0.01).
+# Let's assume:
+# - Align windshield bottom (-Z) to hood top (+Z).
+# - Align windshield back (-X) to hood front (+X).
+# Then offset.
+
+# Align windshield bottom to hood top
+windshield.location.z = hood_block.location.z + hood_block.dimensions.z/2 + windshield.dimensions.z/2
+# Align windshield back to hood front
+windshield.location.x = hood_block.location.x + hood_block.dimensions.x/2 + windshield.dimensions.x/2
+
+# Move by offset(0,0,0.05)
+offset_object(windshield, (0,0,0.05))
+
+# 2. Rear Window
+rear_window = add_primitive("rear_window", "cube", (1.6, 0.01, 0.4), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(rear_window, 'Z', Vector((0,0,1)))
+# Align rear_window.XY_face to trunk_block.back_face.XY_face
+# Align rear_window bottom (-Z) to trunk top (+Z)
+# Align rear_window front (+X) to trunk back (-X)
+
+rear_window.location.z = trunk_block.location.z + trunk_block.dimensions.z/2 + rear_window.dimensions.z/2
+rear_window.location.x = trunk_block.location.x - trunk_block.dimensions.x/2 - rear_window.dimensions.x/2
+
+# Move by offset(0,0,-0.05)
+offset_object(rear_window, (0,0,-0.05))
+
+# 3. Side Windows
+side_windows = add_primitive("side_windows", "cube", (1.2, 0.01, 0.4), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(side_windows, 'Z', Vector((0,0,1)))
+# Align side_windows.XY_face to cabin_block.left_face.XY_face
+# Align side_windows bottom (-Z) to cabin bottom (-Z)? No, "cabin_block.bottom_face.Z_face"
+# Align side_windows bottom (-Z) to cabin bottom (-Z)
+# Align side_windows right (+X) to cabin left (-X)?
+
+side_windows.location.z = cabin_block.location.z - cabin_block.dimensions.z/2 + side_windows.dimensions.z/2
+side_windows.location.x = cabin_block.location.x - cabin_block.dimensions.x/2 - side_windows.dimensions.x/2
+
+# Move by offset(0,0,0.25)
+offset_object(side_windows, (0,0,0.25))
+
+# 4. Front Grille
+front_grille = add_primitive("front_grille", "cube", (1.2, 0.02, 0.3), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(front_grille, 'Z', Vector((0,0,1)))
+# Align front_grille.XY_face to hood_block.front_face.XY_face
+# Align front_grille bottom (-Z) to hood bottom (-Z)
+# Align front_grille back (-X) to hood front (+X)
+
+front_grille.location.z = hood_block.location.z - hood_block.dimensions.z/2 + front_grille.dimensions.z/2
+front_grille.location.x = hood_block.location.x + hood_block.dimensions.x/2 + front_grille.dimensions.x/2
+
+# Move by offset(0,0,0.01)
+offset_object(front_grille, (0,0,0.01))
+
+# --- SECTION 3 – Create Wheel Assemblies ---
+
+def create_wheel(wheel_name, rim_name, x_offset, z_offset, side='left'):
+    # Wheel
+    wheel = add_primitive(wheel_name, "cylinder", (0.3, 0.2, 0.3), location=(0,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Y (world)
+    align_axis_to_vector(wheel, 'Z', Vector((0,1,0)))
+    
+    # Align wheel.XY_face to cabin_block.left_face.XY_face (or right)
+    # Align wheel bottom (-Z) to car_root bottom (-Z)
+    # Align wheel side (depending on side) to cabin side
+    
+    # Wheel center Y is 0 (aligned to car_root Z=0? No, car_root Z=0 is bottom)
+    # Wheel bottom is at Z=0. So wheel center Z is 0.15.
+    wheel.location.z = 0.15
+    
+    # Align X/Y position
+    # If side is 'left', align wheel's +X face to cabin's -X face?
+    # Wheel is rotated so Z is Y. So its local X is world -Z or +Z?
+    # Rotation: Z->Y. X->Z? Y->-X?
+    # Let's just place it manually based on offsets.
+    
+    # Align wheel.XY_face to cabin_block.left_face.XY_face
+    # This is ambiguous. Let's assume it means align the wheel's position to the side of the cabin.
+    # If side is 'left', wheel X should be negative.
+    if side == 'left':
+        wheel.location.x = cabin_block.location.x - cabin_block.dimensions.x/2 - wheel.dimensions.x/2
+    else:
+        wheel.location.x = cabin_block.location.x + cabin_block.dimensions.x/2 + wheel.dimensions.x/2
+        
+    # Align wheel.Z_face to car_root.bottom_face.Z_face
+    # Wheel Z is aligned to world Y. So "wheel.Z_face" is the face at +Y or -Y.
+    # "car_root.bottom_face" is Z=0.
+    # This alignment is confusing. Let's assume it means the wheel is at the bottom of the car.
+    # We already set Z=0.15.
+    
+    # Move by offset
+    # offset(0.7,0,-0.2) for fl, etc.
+    # The offset is in local axes.
+    # Local Z is world Y. Local X is world Z? Local Y is world -X?
+    # Let's apply offset in world space for simplicity, assuming standard orientation.
+    # But the instruction says "offset is in reference local axes".
+    # Let's apply offset in local space.
+    offset_object(wheel, (x_offset, 0, z_offset))
+    
+    # Rim
+    rim = add_primitive(rim_name, "cylinder", (0.25, 0.15, 0.25), location=(0,0,0), rotation=(0,0,0))
+    align_axis_to_vector(rim, 'Z', Vector((0,1,0)))
+    # Align rim.XY_face to wheel.XY_face
+    # Align rim.Z_face to wheel.Z_face
+    # Rim is centered on wheel.
+    rim.location = wheel.location
+    # Offset(0,0,0.05)
+    offset_object(rim, (0,0,0.05))
+    
+    return wheel, rim
+
+# FL
+wheel_fl, rim_fl = create_wheel("wheel_fl", "rim_fl", 0.7, -0.2, 'left')
+# FR
+wheel_fr, rim_fr = create_wheel("wheel_fr", "rim_fr", -0.7, -0.2, 'right')
+# RL
+wheel_rl, rim_rl = create_wheel("wheel_rl", "rim_rl", 0.7, 0.2, 'left')
+# RR
+wheel_rr, rim_rr = create_wheel("wheel_rr", "rim_rr", -0.7, 0.2, 'right')
+
+# --- SECTION 4 – Create Charging Port ---
+
+charging_port = add_primitive("charging_port", "cube", (0.1, 0.05, 0.1), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(charging_port, 'Z', Vector((0,0,1)))
+# Align charging_port.XY_face to cabin_block.right_face.XY_face
+# Align charging_port bottom (-Z) to cabin bottom (-Z)
+# Align charging_port left (-X) to cabin right (+X)?
+
+charging_port.location.z = cabin_block.location.z - cabin_block.dimensions.z/2 + charging_port.dimensions.z/2
+charging_port.location.x = cabin_block.location.x + cabin_block.dimensions.x/2 + charging_port.dimensions.x/2
+
+# Move by offset(0,0,0.1)
+offset_object(charging_port, (0,0,0.1))
+
+# --- Apply Materials ---
+
+apply_material(cabin_block, mat_car_body_paint)
+apply_material(hood_block, mat_car_body_paint)
+apply_material(trunk_block, mat_car_body_paint)
+
+apply_material(windshield, mat_glass)
+apply_material(rear_window, mat_glass)
+apply_material(side_windows, mat_glass)
+
+apply_material(front_grille, mat_chrome_trim)
+
+apply_material(wheel_fl, mat_rubber_tire)
+apply_material(wheel_fr, mat_rubber_tire)
+apply_material(wheel_rl, mat_rubber_tire)
+apply_material(wheel_rr, mat_rubber_tire)
+
+apply_material(rim_fl, mat_steel_rim)
+apply_material(rim_fr, mat_steel_rim)
+apply_material(rim_rl, mat_steel_rim)
+apply_material(rim_rr, mat_steel_rim)
+
+apply_material(charging_port, mat_charging_port_plastic)
+
+# Select all for easy viewing
+bpy.ops.object.select_all(action='DESELECT')
+for obj in [cabin_block, hood_block, trunk_block, windshield, rear_window, side_windows, 
+            front_grille, wheel_fl, wheel_fr, wheel_rl, wheel_rr, rim_fl, rim_fr, rim_rl, rim_rr, charging_port]:
+    obj.select_set(True)
+bpy.context.view_layer.objects.active = cabin_block
+```

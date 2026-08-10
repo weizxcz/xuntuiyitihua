@@ -1,0 +1,25 @@
+-- MATERIAL LIBRARY --
+mat_wood_dark | diffuse_color=(0.35,0.20,0.10,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bookshelf | Composite of side_L + side_R + shelf_1 + shelf_2 + shelf_3 + shelf_4 + shelf_5 | assembly_order=[side_group, shelf_group] |
+
+Layer 1 – Primary Structure (Sides)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| side_L | Cuboid 0.025×1.829×0.305 m (Thickness×Height×Depth) | pos=(-0.762, 0.9145, 0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| side_R | Cuboid 0.025×1.829×0.305 m (Thickness×Height×Depth) | pos=(0.762, 0.9145, 0); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+
+Layer 2 – Shelves (Adjustable)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shelf_1 | Cuboid 0.712×0.025×0.305 m (Width×Thickness×Depth) | Align(XZ) shelf_1.left_face to side_L.right_face; Align(XZ) shelf_1.right_face to side_R.left_face; Align(Z) shelf_1.bottom_face to side_L.bottom_face; offset(0,0,0.305); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| shelf_2 | Cuboid 0.712×0.025×0.305 m (Width×Thickness×Depth) | Align(XZ) shelf_2.left_face to side_L.right_face; Align(XZ) shelf_2.right_face to side_R.left_face; Align(Z) shelf_2.bottom_face to side_L.bottom_face; offset(0,0,0.610); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| shelf_3 | Cuboid 0.712×0.025×0.305 m (Width×Thickness×Depth) | Align(XZ) shelf_3.left_face to side_L.right_face; Align(XZ) shelf_3.right_face to side_R.left_face; Align(Z) shelf_3.bottom_face to side_L.bottom_face; offset(0,0,0.914); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| shelf_4 | Cuboid 0.712×0.025×0.305 m (Width×Thickness×Depth) | Align(XZ) shelf_4.left_face to side_L.right_face; Align(XZ) shelf_4.right_face to side_R.left_face; Align(Z) shelf_4.bottom_face to side_L.bottom_face; offset(0,0,1.219); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+| shelf_5 | Cuboid 0.712×0.025×0.305 m (Width×Thickness×Depth) | Align(XZ) shelf_5.left_face to side_L.right_face; Align(XZ) shelf_5.right_face to side_R.left_face; Align(Z) shelf_5.bottom_face to side_L.bottom_face; offset(0,0,1.524); orientation=axis:+Z; mat=mat_wood_dark; create_method=primitive |
+# ----------  END_GRAPH  ----------

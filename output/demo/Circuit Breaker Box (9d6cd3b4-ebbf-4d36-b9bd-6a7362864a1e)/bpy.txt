@@ -1,0 +1,468 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure we are in object mode
+    if bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+def set_units_meters():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube and apply transforms."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to size (size is total dimension, cube default is 2x2x2)
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        apply_material(obj, material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder and apply transforms."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        apply_material(obj, material)
+    return obj
+
+def align_object_to_face(obj, target_obj, axis='Z', face_type='top'):
+    """
+    Aligns obj to target_obj along a specific axis and face.
+    face_type: 'top' (max), 'bottom' (min), 'front' (max), 'back' (min), 'right' (max), 'left' (min)
+    """
+    # Calculate bounding box centers and extents
+    def get_face_center(obj, axis, max_val=True):
+        # Get world matrix
+        wm = obj.matrix_world
+        # Get local bounds
+        min_v, max_v = obj.bound_box
+        # Project to world space to find actual min/max in that axis
+        # Since we align to world axis, we can just check the local axis transformed by rotation
+        # However, simpler approach: use the object's local axis relative to world
+        
+        # Let's use a simpler geometric approach:
+        # Find the vertex/face that is extreme in the target world axis direction
+        
+        # Transform local vertices to world
+        verts_world = [wm @ Vector(v) for v in obj.bound_box]
+        
+        # Determine axis index (0=X, 1=Y, 2=Z)
+        axis_idx = ['X', 'Y', 'Z'].index(axis)
+        
+        # Find min and max values along that axis
+        coords = [v[axis_idx] for v in verts_world]
+        target_val = max(coords) if max_val else min(coords)
+        
+        # Find the vertex closest to that value
+        closest_v = min(verts_world, key=lambda v: abs(v[axis_idx] - target_val))
+        return closest_v
+
+    # Calculate offset needed
+    # We want obj's face to touch target_obj's face
+    # Current obj location is its center.
+    # We need to move obj so its face center matches target's face center.
+    
+    # Note: This helper assumes simple axis-aligned or pre-rotated objects where 
+    # "top" corresponds to the positive world axis direction of the object's local Z/Y/X.
+    # For complex rotations, we need to align the normal.
+    
+    # Simplified for this script: Objects are rotated to align with world axes mostly.
+    # We will calculate the required translation vector.
+    
+    target_face_center = get_face_center(target_obj, axis, max_val=(face_type in ['top', 'front', 'right']))
+    
+    # For the object being aligned, we want its face to be at the same world coordinate
+    # as the target face.
+    # Current center of obj: obj.location
+    # We need to shift obj by (target_face_center - obj_face_center_world)
+    
+    # To find obj_face_center_world, we approximate by taking the obj's center and 
+    # adding/subtracting half its extent in the world axis direction.
+    # This is an approximation if the object is not axis-aligned. 
+    # Better: Use the same get_face_center logic but we need the *current* world position.
+    
+    # Let's just move the object so its bounding box face touches the target's bounding box face.
+    
+    # Get obj's current world bounds
+    obj_wm = obj.matrix_world
+    obj_verts_world = [obj_wm @ Vector(v) for v in obj.bound_box]
+    axis_idx = ['X', 'Y', 'Z'].index(axis)
+    obj_coords = [v[axis_idx] for v in obj_verts_world]
+    obj_min = min(obj_coords)
+    obj_max = max(obj_coords)
+    
+    # Determine which face of obj we are aligning
+    # If face_type is 'top', we align obj's max face to target's max face? 
+    # Usually "Align Z top to top" means the highest Z of obj touches highest Z of target?
+    # Or does it mean they are stacked? "Align bottom to top" usually means stacking.
+    # The prompt says: "Align(Z) mounting_rail_top.bottom_face to outer_shell.top_face"
+    # This implies stacking: Rail Bottom touches Shell Top.
+    
+    # Let's assume standard stacking alignment unless specified otherwise.
+    # If face_type is 'bottom' for source and 'top' for target:
+    # Source Max Z (if Z is up) should equal Target Min Z? No.
+    # Source Bottom (Min Z) should equal Target Top (Max Z).
+    
+    # Let's refine:
+    # Source Face: 'bottom' -> Min Z
+    # Target Face: 'top' -> Max Z
+    # We want Source.MinZ == Target.MaxZ
+    
+    source_is_max = face_type in ['top', 'front', 'right']
+    
+    if source_is_max:
+        # We are aligning Source Max to Target Face
+        # If Target is 'top' (Max), then Source Max == Target Max (Coincident? No, usually implies touching)
+        # If the instruction is "Align A.bottom to B.top", it means A is placed ON TOP of B.
+        # So A.bottom (Min Z) == B.top (Max Z).
+        pass
+    
+    # Let's implement a generic "Touch" alignment
+    # We calculate the translation required to make the specified faces coincide.
+    
+    # 1. Get Target Face World Coordinate
+    t_face_coord = target_face_center[axis_idx]
+    
+    # 2. Get Source Face World Coordinate (Current)
+    if source_is_max:
+        s_face_coord = obj_max
+    else:
+        s_face_coord = obj_min
+        
+    # 3. Calculate Delta
+    delta = t_face_coord - s_face_coord
+    
+    # 4. Apply Delta to Location
+    obj.location[axis_idx] += delta
+    
+    # Note: This simple approach works if the objects are axis-aligned. 
+    # For rotated objects, the "face" normal might not be the axis. 
+    # Given the prompt's explicit rotations, most objects are axis-aligned.
+    # For the breakers aligned to rails, the rails are rotated.
+    # We need a more robust method for rotated objects.
+
+def align_object_to_face_robust(obj, target_obj, source_face='bottom', target_face='top'):
+    """
+    Robustly aligns obj to target_obj.
+    source_face: 'bottom', 'top', 'front', 'back', 'left', 'right'
+    target_face: 'bottom', 'top', 'front', 'back', 'left', 'right'
+    
+    Assumes faces are defined by local axes:
+    Top/Bottom: Z
+    Front/Back: Y
+    Right/Left: X
+    """
+    # Define local axis vectors for faces
+    face_axes = {
+        'top': (0, 0, 1), 'bottom': (0, 0, -1),
+        'front': (0, 1, 0), 'back': (0, -1, 0),
+        'right': (1, 0, 0), 'left': (-1, 0, 0)
+    }
+    
+    src_axis = Vector(face_axes[source_face])
+    tgt_axis = Vector(face_axes[target_face])
+    
+    # Transform axes to world space
+    src_axis_w = obj.matrix_world.to_3x3() @ src_axis
+    tgt_axis_w = target_obj.matrix_world.to_3x3() @ tgt_axis
+    
+    # Get world centers
+    src_center = obj.matrix_world.to_translation()
+    tgt_center = target_obj.matrix_world.to_translation()
+    
+    # Get extents in the direction of the normal
+    # We need the distance from center to face along the normal
+    # This requires projecting the bound box vertices onto the normal
+    
+    def get_extent_to_face(obj, normal_w):
+        wm = obj.matrix_world
+        # Transform local bound box to world
+        verts = [wm @ Vector(v) for v in obj.bound_box]
+        # Project onto normal
+        dists = [v.dot(normal_w) for v in verts]
+        # The face is at the min or max distance depending on normal direction
+        # If normal points OUT of the face, the face is at the max distance
+        return max(dists)
+
+    # Calculate face positions
+    # Source face position
+    src_face_dist = get_extent_to_face(obj, src_axis_w)
+    src_face_pos = src_center + (src_axis_w * src_face_dist) # This is wrong, src_axis_w is unit vector? No, bound box is not unit.
+    
+    # Correct logic:
+    # The face plane is defined by a point and a normal.
+    # We want the Source Face Plane to coincide with the Target Face Plane.
+    
+    # Target Face Plane:
+    # Normal: tgt_axis_w
+    # Point: We need a point on the target face.
+    # Let's find the vertex on the target object that is extreme in the tgt_axis_w direction.
+    tgt_verts_w = [target_obj.matrix_world @ Vector(v) for v in target_obj.bound_box]
+    tgt_proj = [v.dot(tgt_axis_w) for v in tgt_verts_w]
+    tgt_face_val = max(tgt_proj) # Assuming tgt_axis points OUT
+    tgt_face_point = tgt_verts_w[tgt_proj.index(tgt_face_val)]
+    
+    # Source Face Plane:
+    # Normal: src_axis_w
+    # We want to move obj so its face coincides with tgt_face_point.
+    # The source face is at a certain distance from its center.
+    src_verts_w = [obj.matrix_world @ Vector(v) for v in obj.bound_box]
+    src_proj = [v.dot(src_axis_w) for v in src_verts_w]
+    src_face_val = max(src_proj) # Assuming src_axis points OUT
+    src_face_point = src_verts_w[src_proj.index(src_face_val)]
+    
+    # Translation vector
+    # We want src_face_point_new = tgt_face_point
+    # src_face_point_new = src_face_point_old + translation
+    # translation = tgt_face_point - src_face_point
+    
+    translation = tgt_face_point - src_face_point
+    obj.location += translation
+
+def boolean_union(objects, keep_name):
+    """
+    Performs boolean union on a list of objects.
+    Keeps the first object (keep_name) and deletes others.
+    """
+    if not objects:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+    # Apply modifiers if any (safety)
+    for obj in objects:
+        for mod in obj.modifiers:
+            if mod.type == 'BOOLEAN':
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # Use BMesh for boolean union
+    # We'll use the first object as the base
+    base_obj = objects[0]
+    base_obj.select_set(True)
+    bpy.context.view_layer.objects.active = base_obj
+    
+    # Add a boolean modifier to the base object for each other object
+    # Then apply it
+    
+    # Alternative: Use bpy.ops.mesh.boolean_union
+    # This requires all objects to be selected and active is the first one
+    
+    # Let's use the modifier approach for cleaner history if needed, 
+    # but for final geometry, applying is better.
+    
+    # Select all
+    for obj in objects:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = base_obj
+    
+    # Perform boolean union
+    bpy.ops.mesh.boolean_union()
+    
+    # The result is a single mesh in base_obj. 
+    # Other objects are deleted by the operator? 
+    # bpy.ops.mesh.boolean_union() merges selected objects into the active one.
+    
+    # Clean up
+    for obj in objects:
+        if obj != base_obj:
+            bpy.data.objects.remove(obj, do_unlink=True)
+            
+    return base_obj
+
+def boolean_subtract(target, cutter):
+    """
+    Subtracts cutter from target using boolean modifier.
+    """
+    # Add boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units_meters()
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+mat_plastic_grey = make_material("mat_plastic_grey", (0.50, 0.50, 0.50, 1.00))
+mat_plastic_white = make_material("mat_plastic_white", (0.95, 0.95, 0.95, 1.00))
+mat_metal_steel = make_material("mat_metal_steel", (0.40, 0.40, 0.45, 1.00))
+mat_metal_copper = make_material("mat_metal_copper", (0.85, 0.50, 0.20, 1.00))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1: Create outer shell ---
+outer_shell = add_cube("outer_shell", [0.300, 0.200, 0.150], (0, 0, 0), (0, 0, 0), mat_plastic_grey)
+# Rotate so +Z aligns +Z (already aligned)
+# Move to (0,0,0) (already there)
+
+# --- SECTION 2: Create inner void (hollow) ---
+inner_void = add_cube("inner_void", [0.280, 0.180, 0.140], (0, 0, 0), (0, 0, 0), mat_plastic_grey)
+# Rotate so +Z aligns +Z (already aligned)
+# Move to (0,0,0) (already there)
+
+# Boolean subtract inner_void from outer_shell
+boolean_subtract(outer_shell, inner_void)
+
+# --- SECTION 3: Create top mounting rail ---
+# Cylinder Ø0.010 (Radius 0.005) x 0.280
+# Rotate so +Z aligns +X. 
+# Default cylinder is along Z. Rotating +Z to +X is a -90 deg rotation around Y.
+mounting_rail_top = add_cylinder("mounting_rail_top", 0.005, 0.280, (0, 0, 0), (-pi/2, 0, 0), mat_metal_steel)
+# Move to (0, 0.085, 0.070)
+mounting_rail_top.location = (0, 0.085, 0.070)
+
+# --- SECTION 4: Create bottom mounting rail ---
+mounting_rail_bottom = add_cylinder("mounting_rail_bottom", 0.005, 0.280, (0, 0, 0), (-pi/2, 0, 0), mat_metal_steel)
+# Move to (0, -0.085, 0.070)
+mounting_rail_bottom.location = (0, -0.085, 0.070)
+
+# --- SECTION 5: Assemble housing components ---
+# Align(Z) mounting_rail_top.bottom_face to outer_shell.top_face
+# outer_shell top face is at Z = 0.150/2 = 0.075
+# mounting_rail_top is a cylinder along X. Its "bottom" face in Z is its min Z.
+# Current location Z is 0.070. Radius is 0.005.
+# Min Z of rail = 0.070 - 0.005 = 0.065.
+# Target Z = 0.075.
+# Offset needed = 0.075 - 0.065 = 0.010.
+# However, the prompt says: "Align... Then move by offset(0,0,0.005)"
+# Let's follow the instructions literally.
+
+# Align top rail
+align_object_to_face_robust(mounting_rail_top, outer_shell, source_face='bottom', target_face='top')
+
+# Align bottom rail
+align_object_to_face_robust(mounting_rail_bottom, outer_shell, source_face='bottom', target_face='bottom')
+
+# Move by offset (0,0,0.005)
+mounting_rail_top.location += Vector((0, 0, 0.005))
+mounting_rail_bottom.location += Vector((0, 0, 0.005))
+
+# --- SECTION 6: Create breaker A components ---
+breaker_body_A = add_cube("breaker_body_A", [0.030, 0.040, 0.060], (0, 0, 0), (0, 0, 0), mat_plastic_white)
+
+toggle_handle_A = add_cylinder("toggle_handle_A", 0.0025, 0.020, (0, 0, 0), (-pi/2, 0, 0), mat_metal_copper)
+toggle_handle_A.location = (0.015, 0.020, 0.030)
+
+terminal_top_A = add_cylinder("terminal_top_A", 0.002, 0.010, (0, 0, 0), (0, pi/2, 0), mat_metal_copper)
+terminal_top_A.location = (0, 0.020, 0.030)
+
+terminal_bottom_A = add_cylinder("terminal_bottom_A", 0.002, 0.010, (0, 0, 0), (0, pi/2, 0), mat_metal_copper)
+terminal_bottom_A.location = (0, -0.020, 0.030)
+
+# Boolean union
+breaker_A_group = [breaker_body_A, toggle_handle_A, terminal_top_A, terminal_bottom_A]
+breaker_body_A = boolean_union(breaker_A_group, "breaker_body_A")
+
+# Move breaker_body_A to (0, 0.05, 0.075)
+breaker_body_A.location = (0, 0.05, 0.075)
+
+# --- SECTION 7: Create breaker B components ---
+breaker_body_B = add_cube("breaker_body_B", [0.030, 0.040, 0.060], (0, 0, 0), (0, 0, 0), mat_plastic_white)
+
+toggle_handle_B = add_cylinder("toggle_handle_B", 0.0025, 0.020, (0, 0, 0), (-pi/2, 0, 0), mat_metal_copper)
+toggle_handle_B.location = (0.015, 0.020, 0.030)
+
+terminal_top_B = add_cylinder("terminal_top_B", 0.002, 0.010, (0, 0, 0), (0, pi/2, 0), mat_metal_copper)
+terminal_top_B.location = (0, 0.020, 0.030)
+
+terminal_bottom_B = add_cylinder("terminal_bottom_B", 0.002, 0.010, (0, 0, 0), (0, pi/2, 0), mat_metal_copper)
+terminal_bottom_B.location = (0, -0.020, 0.030)
+
+# Boolean union
+breaker_B_group = [breaker_body_B, toggle_handle_B, terminal_top_B, terminal_bottom_B]
+breaker_body_B = boolean_union(breaker_B_group, "breaker_body_B")
+
+# Move breaker_body_B to (0.05, 0.05, 0.075)
+breaker_body_B.location = (0.05, 0.05, 0.075)
+
+# --- SECTION 8: Create breaker C components ---
+breaker_body_C = add_cube("breaker_body_C", [0.030, 0.040, 0.060], (0, 0, 0), (0, 0, 0), mat_plastic_white)
+
+toggle_handle_C = add_cylinder("toggle_handle_C", 0.0025, 0.020, (0, 0, 0), (-pi/2, 0, 0), mat_metal_copper)
+toggle_handle_C.location = (0.015, 0.020, 0.030)
+
+terminal_top_C = add_cylinder("terminal_top_C", 0.002, 0.010, (0, 0, 0), (0, pi/2, 0), mat_metal_copper)
+terminal_top_C.location = (0, 0.020, 0.030)
+
+terminal_bottom_C = add_cylinder("terminal_bottom_C", 0.002, 0.010, (0, 0, 0), (0, pi/2, 0), mat_metal_copper)
+terminal_bottom_C.location = (0, -0.020, 0.030)
+
+# Boolean union
+breaker_C_group = [breaker_body_C, toggle_handle_C, terminal_top_C, terminal_bottom_C]
+breaker_body_C = boolean_union(breaker_C_group, "breaker_body_C")
+
+# Move breaker_body_C to (0.10, 0.05, 0.075)
+breaker_body_C.location = (0.10, 0.05, 0.075)
+
+# --- SECTION 9: Mount breakers on rails ---
+# Align(Z) breaker_A.bottom_face to mounting_rail_top.top_face
+# Note: Breakers are currently at Z=0.075. Rail top is at Z=0.075 + 0.005 (offset) + 0.005 (radius) = 0.085?
+# Let's re-evaluate rail position.
+# Rail center Z was 0.070. Radius 0.005. Top Z = 0.075.
+# After offset (0,0,0.005), Rail center Z = 0.075. Top Z = 0.080.
+# Breaker bottom is at Z = 0.075 - 0.060/2 = 0.045.
+# We need to align Breaker Bottom (Min Z) to Rail Top (Max Z).
+
+align_object_to_face_robust(breaker_body_A, mounting_rail_top, source_face='bottom', target_face='top')
+align_object_to_face_robust(breaker_body_B, mounting_rail_top, source_face='bottom', target_face='top')
+align_object_to_face_robust(breaker_body_C, mounting_rail_top, source_face='bottom', target_face='top')
+
+# Then move by offset(0,0,0.001)
+breaker_body_A.location += Vector((0, 0, 0.001))
+breaker_body_B.location += Vector((0, 0, 0.001))
+breaker_body_C.location += Vector((0, 0, 0.001))
+
+print("All stages complete.")
+```

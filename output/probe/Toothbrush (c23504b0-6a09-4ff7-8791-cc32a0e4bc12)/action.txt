@@ -1,0 +1,68 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_brush_head; diffuse_color = (0.1,0.4,0.8,1.0).
+Define material mat_brush_head_grip; diffuse_color = (0.0,0.0,0.0,1.0).
+Define material mat_neck; diffuse_color = (0.9,0.9,0.9,1.0).
+Define material mat_neck_grip; diffuse_color = (0.0,0.0,0.0,1.0).
+Define material mat_tufts; diffuse_color = (0.8,0.8,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create handle body  ---
+Create primitive cuboid with size 0.150×0.025×0.012 m and name it handle_body.
+Rotate handle_body so its +Z axis aligns +X (world).
+Anchor handle_body to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create handle grip  ---
+Create primitive cuboid with size 0.100×0.027×0.014 m and name it handle_grip.
+Rotate handle_grip so its +Z axis aligns +X (world).
+Align handle_grip.center to handle_body.center.
+Align handle_grip.bottom_face to handle_body.bottom_face.
+Then move by offset(0,0,0.001).
+
+---  SECTION 3 – Create neck body  ---
+Create primitive cuboid with size 0.030×0.020×0.010 m and name it neck_body.
+Rotate neck_body so its +Z axis aligns +X (world).
+Align neck_body.left_face to handle_body.right_face.
+Then move by offset(0,0,0).
+
+---  SECTION 4 – Create neck grip  ---
+Create primitive cuboid with size 0.020×0.022×0.012 m and name it neck_grip.
+Rotate neck_grip so its +Z axis aligns +X (world).
+Align neck_grip.center to neck_body.center.
+Align neck_grip.bottom_face to neck_body.bottom_face.
+Then move by offset(0,0,0.001).
+
+---  SECTION 5 – Create head body  ---
+Create primitive cuboid with size 0.050×0.020×0.010 m and name it head_body.
+Rotate head_body so its +Z axis aligns +X (world).
+Align head_body.left_face to neck_body.right_face.
+Then move by offset(0,0,0).
+
+---  SECTION 6 – Create head grip  ---
+Create primitive cuboid with size 0.040×0.022×0.012 m and name it head_grip.
+Rotate head_grip so its +Z axis aligns +X (world).
+Align head_grip.center to head_body.center.
+Align head_grip.bottom_face to head_body.bottom_face.
+Then move by offset(0,0,0.001).
+
+---  SECTION 7 – Create bristle tufts grid  ---
+For r in 0…2 and c in 0…2:
+  Create primitive cuboid with size 0.002×0.002×0.015 m and name it bristle_tuft_r_c.
+  Rotate bristle_tuft_r_c so its +Z axis aligns -Y (world).
+  Align bristle_tuft_r_c.center to head_body.top_face.center.
+  Then offset(0.015 - c*0.005, 0.005 - r*0.005, 0.005).
+
+Stage 7 complete.
+All stages complete.

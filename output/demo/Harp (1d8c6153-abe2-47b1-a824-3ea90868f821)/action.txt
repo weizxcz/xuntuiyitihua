@@ -1,0 +1,99 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material brass_polished; diffuse_color = (0.9, 0.75, 0.2, 1.0).
+Define material maple_wood; diffuse_color = (0.85, 0.75, 0.55, 1.0).
+Define material nylon_strings; diffuse_color = (0.95, 0.95, 0.95, 1.0).
+Define material steel_pedals; diffuse_color = (0.6, 0.6, 0.65, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Frame Group (Pillar, Soundboard, Neck, Base)  ---
+Create primitive cuboid with size 0.15×1.80×0.15 m and name it pillar.
+Rotate pillar so its +Z axis aligns +Z (world).
+Anchor pillar to world origin.
+Then move by offset(0, 0, 0.90).
+
+Create primitive cuboid with size 0.60×1.20×0.05 m and name it soundboard.
+Rotate soundboard so its +Z axis aligns +Y (world).
+Anchor soundboard to world origin.
+Then move by offset(0, 0.30, 0.60).
+
+Create primitive cuboid with size 0.15×0.80×0.15 m and name it neck.
+Rotate neck so its +Z axis aligns +Y (world).
+Anchor neck to world origin.
+Then move by offset(0, 0.70, 1.50).
+
+Create primitive cuboid with size 0.80×0.10×0.40 m and name it base.
+Rotate base so its +Z axis aligns +Z (world).
+Anchor base to world origin.
+Then move by offset(0, 0, 0.05).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create String Group (1000 Nylon Strings)  ---
+For i in 1…1000:
+  Create primitive cylinder with radius 0.001 m and length 1.80 m and name it string_i.
+  Rotate string_i so its +Z axis aligns +Z (world).
+  Anchor string_i to world origin.
+  Then position at polar(0°; dr=0.001 * (i - 500.5)).
+  Then move by offset(0, 0, 0.90).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Peg Group (Tuning Pegs)  ---
+Create primitive cylinder with radius 0.02 m and length 0.05 m and name it peg_1.
+Rotate peg_1 so its +Z axis aligns +X (world).
+Anchor peg_1 to pillar.top.
+Then move by offset(0.08, 0, 0.85).
+
+Create primitive cylinder with radius 0.02 m and length 0.05 m and name it peg_2.
+Rotate peg_2 so its +Z axis aligns +X (world).
+Anchor peg_2 to pillar.top.
+Then move by offset(0.08, 0, 0.80).
+
+Create primitive cylinder with radius 0.02 m and length 0.05 m and name it peg_3.
+Rotate peg_3 so its +Z axis aligns +X (world).
+Anchor peg_3 to pillar.top.
+Then move by offset(0.08, 0, 0.75).
+
+Create primitive cylinder with radius 0.02 m and length 0.05 m and name it peg_4.
+Rotate peg_4 so its +Z axis aligns +X (world).
+Anchor peg_4 to pillar.top.
+Then move by offset(0.08, 0, 0.70).
+
+Create primitive cylinder with radius 0.02 m and length 0.05 m and name it peg_5.
+Rotate peg_5 so its +Z axis aligns +X (world).
+Anchor peg_5 to pillar.top.
+Then move by offset(0.08, 0, 0.65).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Pedal Group  ---
+Create primitive cuboid with size 0.10×0.05×0.02 m and name it pedal_1.
+Rotate pedal_1 so its +Z axis aligns +Z (world).
+Anchor pedal_1 to base.front.
+Then move by offset(0.2, 0, 0.01).
+
+Create primitive cuboid with size 0.10×0.05×0.02 m and name it pedal_2.
+Rotate pedal_2 so its +Z axis aligns +Z (world).
+Anchor pedal_2 to base.front.
+Then move by offset(0.0, 0, 0.01).
+
+Create primitive cuboid with size 0.10×0.05×0.02 m and name it pedal_3.
+Rotate pedal_3 so its +Z axis aligns +Z (world).
+Anchor pedal_3 to base.front.
+Then move by offset(-0.2, 0, 0.01).
+
+Stage 4 complete.
+
+All stages complete.

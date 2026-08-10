@@ -1,0 +1,90 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_waterproof; diffuse_color = (0.1, 0.15, 0.2, 1.0).
+Define material zipper_metal; diffuse_color = (0.6, 0.6, 0.6, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Torso Panels  ---
+Create primitive cuboid with size 0.60×0.90×0.002 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Move front_panel to (0, 0.30, 0).
+
+Create primitive cuboid with size 0.60×0.90×0.002 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Move back_panel to (0, -0.30, 0).
+
+Create primitive cuboid with size 0.15×0.90×0.002 m and name it left_side.
+Rotate left_side so its +Z axis aligns +Z (world).
+Move left_side to (-0.375, 0, 0).
+
+Create primitive cuboid with size 0.15×0.90×0.002 m and name it right_side.
+Rotate right_side so its +Z axis aligns +Z (world).
+Move right_side to (0.375, 0, 0).
+
+Boolean-union front_panel, back_panel, left_side, and right_side; name the result torso_union.
+Stage 1 complete.
+
+---  SECTION 2 – Create Hood Assembly  ---
+Create primitive sphere with diameter 0.30 m and name it hood_crown.
+Rotate hood_crown so its +Z axis aligns +Z (world).
+Align hood_crown.bottom_face to torso_union.top_face.
+Then move by offset(0, 0.45, 0).
+
+Create primitive cuboid with size 0.10×0.05×0.02 m and name it hood_brims.
+Rotate hood_brims so its +Z axis aligns +Z (world).
+Align hood_brims.bottom_face to hood_crown.front_face.
+Then move by offset(0, 0.55, 0).
+
+Boolean-union hood_crown and hood_brims; name the result hood_union.
+Stage 2 complete.
+
+---  SECTION 3 – Create Sleeve Assembly  ---
+Create primitive cylinder with diameter 0.15 m and length 0.60 m and name it left_sleeve.
+Rotate left_sleeve so its +Z axis aligns +Y (world).
+Align left_sleeve.top_face to torso_union.left_face.
+Then move by offset(-0.30, 0.15, 0).
+
+Create primitive cylinder with diameter 0.15 m and length 0.60 m and name it right_sleeve.
+Rotate right_sleeve so its +Z axis aligns +Y (world).
+Align right_sleeve.top_face to torso_union.right_face.
+Then move by offset(0.30, 0.15, 0).
+
+Boolean-union left_sleeve and right_sleeve; name the result sleeve_union.
+Stage 3 complete.
+
+---  SECTION 4 – Create Accessories  ---
+Create primitive cuboid with size 0.02×0.80×0.001 m and name it zipper_track.
+Rotate zipper_track so its +Z axis aligns +Z (world).
+Align zipper_track.bottom_face to front_panel.top_face.
+Then move by offset(0, 0.30, 0.001).
+
+Create primitive cuboid with size 0.01×0.02×0.005 m and name it zipper_pull.
+Rotate zipper_pull so its +Z axis aligns +Z (world).
+Align zipper_pull.bottom_face to zipper_track.top_face.
+Then move by offset(0, 0.70, 0.001).
+
+Create primitive cuboid with size 0.15×0.20×0.002 m and name it left_pocket.
+Rotate left_pocket so its +Z axis aligns +Z (world).
+Align left_pocket.back_face to front_panel.front_face.
+Then move by offset(-0.20, 0.10, 0.001).
+
+Create primitive cuboid with size 0.15×0.20×0.002 m and name it right_pocket.
+Rotate right_pocket so its +Z axis aligns +Z (world).
+Align right_pocket.back_face to front_panel.front_face.
+Then move by offset(0.20, 0.10, 0.001).
+
+Boolean-union zipper_track, zipper_pull, left_pocket, and right_pocket; name the result accessory_union.
+Stage 4 complete.
+
+All stages complete.

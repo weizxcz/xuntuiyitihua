@@ -1,0 +1,48 @@
+{
+  "id": "77a4f740-5cd2-4b9f-8afb-9f288a90eb7e",
+  "name": "Sunglasses",
+  "instruction": "Create a pair of sunglasses with a sleek, modern design. The lenses should be slightly oversized and tinted. The frame should be thin and minimalistic.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pair of sunglasses.",
+        "The lenses are slightly oversized.",
+        "The frame is thin and minimalistic."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The oversized lenses are proportionate to the thin frame.",
+        "The overall design maintains a balanced and modern look."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The lenses are positioned correctly within the frame.",
+        "The frame supports the lenses without distortion.",
+        "The design allows for a comfortable fit on the face."
+      ],
+      "Object distance and contact": [
+        "The lenses do not overlap with the frame.",
+        "There is no gap between the lenses and the frame.",
+        "The arms of the frame are properly aligned with the lenses."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the sleek and modern aesthetic.",
+        "The oversized lenses and thin frame are both present."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

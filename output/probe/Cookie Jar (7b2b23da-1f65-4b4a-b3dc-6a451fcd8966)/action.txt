@@ -1,0 +1,47 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material ceramic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material mat_lid; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create jar_body  ---
+Create primitive cylinder with radius 0.100 m and height 0.250 m and name it jar_body_outer.
+Rotate jar_body_outer so its +Z axis aligns +Z (world).
+Anchor jar_body_outer to jar_base.bottom_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with radius 0.085 m and height 0.250 m and name it jar_body_inner.
+Rotate jar_body_inner so its +Z axis aligns +Z (world).
+Anchor jar_body_inner to jar_body_outer.bottom_face.
+Then move by offset(0,0,0).
+
+Boolean-subtract jar_body_inner from jar_body_outer; keep jar_body_outer. // produces hollow cylinder
+
+---  SECTION 2 – Create jar_lid  ---
+Create primitive cylinder with radius 0.100 m and height 0.040 m and name it jar_lid_outer.
+Rotate jar_lid_outer so its +Z axis aligns +Z (world).
+Anchor jar_lid_outer to jar_body.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with radius 0.085 m and height 0.040 m and name it jar_lid_inner.
+Rotate jar_lid_inner so its +Z axis aligns +Z (world).
+Anchor jar_lid_inner to jar_lid_outer.bottom_face.
+Then move by offset(0,0,0).
+
+Boolean-subtract jar_lid_inner from jar_lid_outer; keep jar_lid_outer. // produces hollow cylinder
+
+Move jar_lid_outer by offset(0,0,0.002).
+
+Stage 2 complete.
+All stages complete.

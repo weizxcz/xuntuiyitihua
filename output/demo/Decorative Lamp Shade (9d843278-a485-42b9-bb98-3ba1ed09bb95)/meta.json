@@ -1,0 +1,44 @@
+{
+  "id": "9d843278-a485-42b9-bb98-3ba1ed09bb95",
+  "name": "Decorative Lamp Shade",
+  "instruction": "Hello! I'd like you to create a 3D model of a decorative lamp shade. The shade should be conical with an open top and bottom. The surface should have a pattern of cut-out shapes that allow light to pass through. The overall design should be visually appealing and suitable for a living room or bedroom.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a lamp shade.",
+        "The lamp shade is conical in shape.",
+        "The lamp shade has an open top and bottom."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The top and the bottom of the lamp shade are proportionate."
+      ],
+      "Texture and surface detail": [
+        "The surface features a pattern of cut-out shapes."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The conical shape is correctly represented in three dimensions.",
+        "The open top and bottom are accurately modeled."
+      ],
+      "Object distance and contact": [
+        "The cut-out shapes are positioned to effectively allow light to pass through.",
+        "The pattern of cut-outs does not obstruct the overall structure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the lamp shade are accurately represented.",
+        "The conical shape, open top and bottom, and cut-out pattern are correctly implemented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

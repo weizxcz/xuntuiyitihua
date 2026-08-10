@@ -1,0 +1,48 @@
+{
+  "id": "fe0070b4-06c5-4b98-b1d5-e89cba88c3e7",
+  "name": "Wardrobe",
+  "instruction": "Create a 3D model of a wardrobe. It should be tall and rectangular, with two doors on the front. Inside, include a hanging rod for clothes and a few shelves for additional storage. Add a drawer at the bottom for smaller items.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a wardrobe.",
+        "The wardrobe is tall and rectangular.",
+        "There are two doors on the front."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the wardrobe is proportionate to its width and depth.",
+        "The doors are appropriately sized relative to the overall height of the wardrobe."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The two doors are positioned correctly to allow access to the interior.",
+        "The hanging rod is placed at a suitable height for hanging clothes.",
+        "The shelves are evenly spaced for optimal storage.",
+        "The drawer is easily accessible at the bottom of the wardrobe."
+      ],
+      "Object distance and contact": [
+        "The doors do not overlap with the interior features.",
+        "There is sufficient space between the hanging rod and the shelves.",
+        "The drawer fits seamlessly into the bottom section of the wardrobe."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The wardrobe includes two doors, a hanging rod, shelves, and a drawer."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,148 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material paper_backing; diffuse_color = (0.545, 0.271, 0.075, 1).
+Define material paper_sheet; diffuse_color = (1.0, 1.0, 0.0, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create backing  ---
+Create primitive cuboid with size 0.0762×0.0762×0.005 m and name it backing.
+Rotate backing so its +Z axis aligns +Z (world).
+Align backing.XY_face to sticky_note_pad.XY_face.
+Align backing.Z_face to sticky_note_pad.bottom_face.
+Then move by offset(0,0,-0.0025).
+Stage 1 complete.
+
+---  SECTION 2 – Create stacked sheets  ---
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_0.
+Rotate sheet_0 so its +Z axis aligns +Z (world).
+Align sheet_0.XY_face to backing.XY_face.
+Align sheet_0.Z_face to backing.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_1.
+Rotate sheet_1 so its +Z axis aligns +Z (world).
+Align sheet_1.XY_face to backing.XY_face.
+Align sheet_1.Z_face to sheet_0.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_2.
+Rotate sheet_2 so its +Z axis aligns +Z (world).
+Align sheet_2.XY_face to backing.XY_face.
+Align sheet_2.Z_face to sheet_1.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_3.
+Rotate sheet_3 so its +Z axis aligns +Z (world).
+Align sheet_3.XY_face to backing.XY_face.
+Align sheet_3.Z_face to sheet_2.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_4.
+Rotate sheet_4 so its +Z axis aligns +Z (world).
+Align sheet_4.XY_face to backing.XY_face.
+Align sheet_4.Z_face to sheet_3.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_5.
+Rotate sheet_5 so its +Z axis aligns +Z (world).
+Align sheet_5.XY_face to backing.XY_face.
+Align sheet_5.Z_face to sheet_4.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_6.
+Rotate sheet_6 so its +Z axis aligns +Z (world).
+Align sheet_6.XY_face to backing.XY_face.
+Align sheet_6.Z_face to sheet_5.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_7.
+Rotate sheet_7 so its +Z axis aligns +Z (world).
+Align sheet_7.XY_face to backing.XY_face.
+Align sheet_7.Z_face to sheet_6.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_8.
+Rotate sheet_8 so its +Z axis aligns +Z (world).
+Align sheet_8.XY_face to backing.XY_face.
+Align sheet_8.Z_face to sheet_7.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_9.
+Rotate sheet_9 so its +Z axis aligns +Z (world).
+Align sheet_9.XY_face to backing.XY_face.
+Align sheet_9.Z_face to sheet_8.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_10.
+Rotate sheet_10 so its +Z axis aligns +Z (world).
+Align sheet_10.XY_face to backing.XY_face.
+Align sheet_10.Z_face to sheet_9.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_11.
+Rotate sheet_11 so its +Z axis aligns +Z (world).
+Align sheet_11.XY_face to backing.XY_face.
+Align sheet_11.Z_face to sheet_10.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_12.
+Rotate sheet_12 so its +Z axis aligns +Z (world).
+Align sheet_12.XY_face to backing.XY_face.
+Align sheet_12.Z_face to sheet_11.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_13.
+Rotate sheet_13 so its +Z axis aligns +Z (world).
+Align sheet_13.XY_face to backing.XY_face.
+Align sheet_13.Z_face to sheet_12.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_14.
+Rotate sheet_14 so its +Z axis aligns +Z (world).
+Align sheet_14.XY_face to backing.XY_face.
+Align sheet_14.Z_face to sheet_13.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_15.
+Rotate sheet_15 so its +Z axis aligns +Z (world).
+Align sheet_15.XY_face to backing.XY_face.
+Align sheet_15.Z_face to sheet_14.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_16.
+Rotate sheet_16 so its +Z axis aligns +Z (world).
+Align sheet_16.XY_face to backing.XY_face.
+Align sheet_16.Z_face to sheet_15.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_17.
+Rotate sheet_17 so its +Z axis aligns +Z (world).
+Align sheet_17.XY_face to backing.XY_face.
+Align sheet_17.Z_face to sheet_16.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_18.
+Rotate sheet_18 so its +Z axis aligns +Z (world).
+Align sheet_18.XY_face to backing.XY_face.
+Align sheet_18.Z_face to sheet_17.top_face.
+Then move by offset(0,0,0.00005).
+
+Create primitive cuboid with size 0.0762×0.0762×0.0001 m and name it sheet_19.
+Rotate sheet_19 so its +Z axis aligns +Z (world).
+Align sheet_19.XY_face to backing.XY_face.
+Align sheet_19.Z_face to sheet_18.top_face.
+Then move by offset(0,0,0.00005).
+Stage 2 complete.
+
+All stages complete.

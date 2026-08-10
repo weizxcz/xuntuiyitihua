@@ -1,0 +1,35 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_cork; diffuse_color = (0.6,0.4,0.2,1.0).
+Define material mat_pattern; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create coaster base  ---
+Create primitive cylinder with diameter 0.1016 m and height 0.005 m and name it base_disc.
+Rotate base_disc so its +Z axis aligns +Z (world).
+Anchor base_disc to world origin.
+Then move by offset(0,0,0).
+Apply material mat_cork to base_disc.
+
+Create primitive cylinder with diameter 0.080 m and height 0.005 m and name it pattern_ring.
+Rotate pattern_ring so its +Z axis aligns +Z (world).
+Align pattern_ring.center to base_disc.center.
+Align pattern_ring.bottom_face to base_disc.top_face.
+Then move by offset(0,0,0.000).
+Apply material mat_pattern to pattern_ring.
+
+Assembly guideline satisfied.
+Stage 1 complete.
+
+All stages complete.

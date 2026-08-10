@@ -1,0 +1,45 @@
+{
+  "id": "3be99162-c5d1-44f8-a070-326aab7be956",
+  "name": "Electric Generator",
+  "instruction": "Create an electric generator with a rotor and stator.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object includes a rotor.",
+        "The object includes a stator.",
+        "The rotor is typically cylindrical.",
+        "The stator is usually a circular or cylindrical shape surrounding the rotor."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The rotor and stator are proportionately designed for efficient operation."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The rotor is positioned within the stator.",
+        "The rotor should be able to rotate freely within the stator."
+      ],
+      "Object distance and contact": [
+        "There should be a small gap between the rotor and stator to allow for rotation.",
+        "The rotor should not touch the stator during operation."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the rotor and stator are included as specified.",
+        "The design adheres to the basic principles of an electric generator."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

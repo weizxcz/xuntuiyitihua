@@ -1,0 +1,61 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material steel_hardened; diffuse_color = (0.3, 0.3, 0.35, 1.0).
+Define material steel_spring; diffuse_color = (0.2, 0.2, 0.25, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Hook Body (Shank, Throat, Tip)  ---
+Create primitive cylinder with diameter 0.04 m and length 0.3 m and name it shank.
+Rotate shank so its +Z axis aligns +Z (world).
+Move shank to (0, 0, 0.15).
+
+Create primitive torus with major radius 0.06 m and minor radius 0.02 m and name it throat.
+Rotate throat so its +Z axis aligns +Z (world).
+Align throat.+Z_face to shank.+Z_face.
+Then move by offset(0,0,0).
+
+Create primitive cone with base radius 0.02 m and height 0.04 m and name it tip.
+Rotate tip so its +Z axis aligns +Z (world).
+Align tip.+Z_face to throat.+Z_face.
+Then move by offset(0,0,0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Safety Latch Mechanism (Latch Arm, Tip, Spring, Pin)  ---
+Create primitive box with size 0.01×0.01×0.08 m and name it latch_arm.
+Rotate latch_arm so its +Z axis aligns +Z (world).
+Align latch_arm.XY_center to throat.side_at(0°).
+Then move by offset(0,0,0.02).
+
+Create primitive sphere with radius 0.015 m and name it latch_tip.
+Rotate latch_tip so its +Z axis aligns +Z (world).
+Align latch_tip.XY_center to latch_arm.+Z_face.
+Then move by offset(0,0,0.04).
+
+Create primitive cylinder with diameter 0.005 m and length 0.02 m and name it spring.
+Rotate spring so its +Z axis aligns +X (world).
+Align spring.XY_center to latch_arm.side_at(90°).
+Then move by offset(0,0,0.04).
+
+Create primitive cylinder with diameter 0.002 m and length 0.02 m and name it pin.
+Rotate pin so its +Z axis aligns +X (world).
+Align pin.XY_center to latch_arm.side_at(90°).
+Then move by offset(0,0,0.04).
+
+Stage 2 complete.
+
+---  SECTION 3 – Assemble Crane Hook  ---
+Connect crane_hook_assembly to hook_body, safety_latch, spring, and pin.
+
+All stages complete.

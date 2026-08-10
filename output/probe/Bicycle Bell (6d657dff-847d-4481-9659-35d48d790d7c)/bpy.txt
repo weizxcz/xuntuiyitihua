@@ -1,0 +1,381 @@
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def average(points):
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, normal_vector):
+        # Approximate face center by projecting center along normal in local space then to world
+        # For simple primitives, this is often just center + normal * radius/height
+        # However, a robust way for "face" alignment is to find the vertex/edge furthest in that direction
+        # For this script, we assume standard primitives where face is at extent.
+        # Let's use a simpler approach: transform the normal to world space and add to center? 
+        # No, "face" implies a specific surface. 
+        # Let's implement a helper to find the point on the mesh boundary in a given local direction.
+        return self._get_point_on_surface(normal_vector)
+
+    def _get_point_on_surface(self, local_dir):
+        # Transform local direction to world
+        world_dir = self.obj.matrix_world.to_3x3() @ local_dir
+        center = self.center_world()
+        
+        # Raycast from center along world_dir to find surface point
+        # This is computationally expensive but robust. 
+        # For primitives, we can use bounds.
+        # Let's use bounds for speed and reliability on primitives.
+        local_bbox = [self.obj.matrix_world @ Vector(c) for c in self.obj.bound_box]
+        # Find point in local_bbox that is furthest in local_dir
+        best_dot = -float('inf')
+        best_point = center
+        for pt in local_bbox:
+            # Convert pt to local to compare with local_dir? 
+            # Actually, bound_box vertices are in local space relative to object origin? 
+            # No, bound_box is in local space of the object data, but transformed by matrix_world gives world coords.
+            # We need to find which vertex is furthest in the direction of local_dir.
+            # local_dir is in local space.
+            # Let's iterate bound_box vertices (local coords)
+            pass
+        
+        # Simpler: Iterate bound_box vertices (local)
+        max_dot = -float('inf')
+        best_local_pt = Vector((0,0,0))
+        for v in self.obj.bound_box:
+            dot = v.dot(local_dir)
+            if dot > max_dot:
+                max_dot = dot
+                best_local_pt = v
+        
+        # Convert best local point to world
+        return self.obj.matrix_world @ best_local_pt
+
+    def radial_point_world(self, angle_deg, axis='Z'):
+        # Get a point on the "side" (radial) at a given angle
+        # Axis defines the main axis of the cylinder/sphere
+        if axis == 'Z':
+            local_dir = Vector((math.cos(math.radians(angle_deg)), math.sin(math.radians(angle_deg)), 0))
+        elif axis == 'X':
+            local_dir = Vector((0, math.cos(math.radians(angle_deg)), math.sin(math.radians(angle_deg))))
+        elif axis == 'Y':
+            local_dir = Vector((math.cos(math.radians(angle_deg)), 0, math.sin(math.radians(angle_deg))))
+        else:
+            local_dir = Vector((1, 0, 0))
+            
+        return self._get_point_on_surface(local_dir)
+
+def align_axis_to_vector(obj, target_vector, axis='Z'):
+    """Rotate obj so its specified axis aligns with target_vector."""
+    if axis == 'Z':
+        current_axis = Vector((0, 0, 1))
+    elif axis == 'Y':
+        current_axis = Vector((0, 1, 0))
+    elif axis == 'X':
+        current_axis = Vector((1, 0, 0))
+    else:
+        return
+
+    # Normalize
+    current_axis = current_axis.normalized()
+    target_vector = target_vector.normalized()
+    
+    if current_axis.dot(target_vector) > 0.9999:
+        return # Already aligned
+    
+    rotation_quat = current_axis.rotation_difference(target_vector)
+    obj.rotation_euler = rotation_quat.to_euler()
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments, align='WORLD')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    bpy.ops.mesh.primitive_cube_add(size=size, align='WORLD')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, align='WORLD')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, align='WORLD')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_subtract(cutter_obj, target_obj):
+    # Add Boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, other_obj):
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+
+def add_bevel(obj, width, segments=5):
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_bell_dome = make_material("bell_dome", (0.941, 0.843, 0.333, 1))
+mat_clamp_base = make_material("clamp_base", (0.196, 0.196, 0.196, 1))
+mat_lever = make_material("lever", (0.196, 0.196, 0.196, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# Note: The prompt mentions "bell_assembly" as an anchor target. 
+# Since it's not created in the blocks, we assume it exists or is at (0,0,0).
+# To be safe, we create a dummy object named "bell_assembly" at origin if it doesn't exist, 
+# or just use (0,0,0) as the anchor point. 
+# Given the instructions "Align ... to bell_assembly.center", I will create a dummy anchor object 
+# to ensure the script is self-contained and robust.
+
+if "bell_assembly" not in bpy.data.objects:
+    bpy.ops.mesh.primitive_cube_add(size=0.001, align='WORLD')
+    bell_assembly = bpy.context.active_object
+    bell_assembly.name = "bell_assembly"
+    bell_assembly.hide_render = True
+    bell_assembly.hide_viewport = True
+else:
+    bell_assembly = bpy.data.objects["bell_assembly"]
+
+bell_assembly_loc = bell_assembly.matrix_world.to_translation()
+
+# --- SECTION 1 – Create bell_dome (Hemisphere) ---
+
+# Create full_sphere and name it bell_dome_sphere with diameter 0.0508 m.
+# Radius = 0.0254
+bell_dome_sphere = add_uvsphere("bell_dome_sphere", radius=0.0254)
+bell_dome_sphere.data.materials.append(mat_bell_dome)
+
+# Rotate bell_dome_sphere so its +Z axis aligns +Z (world).
+# UV Spheres are already aligned +Z by default, but we ensure it.
+align_axis_to_vector(bell_dome_sphere, Vector((0, 0, 1)), 'Z')
+
+# Create plane_cutter and name it bell_dome_cut with size 0.1×0.1×0.1 m; orientation=axis:+Z.
+# A cube of size 0.1x0.1x0.1 acts as a plane cutter if it's large enough to cover the sphere.
+bell_dome_cut = add_cube("bell_dome_cut", size=0.1)
+bell_dome_cut.data.materials.append(mat_clamp_base) # Material doesn't matter for cutter
+align_axis_to_vector(bell_dome_cut, Vector((0, 0, 1)), 'Z')
+
+# Anchor bell_dome_cut to bell_dome_sphere.center.
+bell_dome_cut_loc = bell_dome_sphere.matrix_world.to_translation()
+bell_dome_cut.location = bell_dome_cut_loc
+
+# Align bell_dome_cut.−Z_face to bell_dome_sphere.−Z_face.
+# Sphere -Z face is at bottom. Cube -Z face is at bottom.
+# They are already aligned by center and orientation.
+# However, to be explicit:
+loc_sphere = Locator(bell_dome_sphere)
+loc_cut = Locator(bell_dome_cut)
+
+# Move cutter so its -Z face aligns with sphere's -Z face.
+# Sphere -Z face point:
+sphere_neg_z = loc_sphere.face_center_world(Vector((0, 0, -1)))
+# Cube -Z face point:
+cut_neg_z = loc_cut.face_center_world(Vector((0, 0, -1)))
+
+# Offset needed: sphere_neg_z - cut_neg_z
+offset_vec = sphere_neg_z - cut_neg_z
+bell_dome_cut.location += offset_vec
+
+# Boolean-subtract bell_dome_cut from bell_dome_sphere; keep bell_dome_sphere.
+boolean_subtract(bell_dome_cut, bell_dome_sphere)
+
+# Rotate bell_dome_sphere so its curved face points +Z.
+# The hemisphere created by cutting the bottom (-Z) leaves the top (+Z) curved part.
+# The flat face is at -Z. The curved part is at +Z.
+# The instruction says "curved face points +Z". This is already the case.
+# If it meant the flat face points +Z, we'd rotate 180. But "curved face points +Z" implies the dome shape is upright.
+# So no rotation needed.
+
+# Rename bell_dome_sphere to bell_dome.
+bell_dome = bell_dome_sphere
+bell_dome.name = "bell_dome"
+
+# Align bell_dome.center to bell_assembly.center.
+bell_dome.location = bell_assembly_loc
+
+# Align bell_dome.−Z_face to bell_assembly.−Z_face.
+# Assuming bell_assembly is a cube at origin, its -Z face is at -0.0005.
+# bell_dome is a hemisphere with flat face at -Z (radius 0.0254 below center).
+# To align -Z faces:
+# bell_dome -Z face is at center.y - 0.0254.
+# bell_assembly -Z face is at center.y - 0.0005.
+# We need to shift bell_dome so its -Z face matches bell_assembly's -Z face.
+loc_dome = Locator(bell_dome)
+loc_assembly = Locator(bell_assembly)
+
+dome_neg_z = loc_dome.face_center_world(Vector((0, 0, -1)))
+assembly_neg_z = loc_assembly.face_center_world(Vector((0, 0, -1)))
+
+shift_vec = assembly_neg_z - dome_neg_z
+bell_dome.location += shift_vec
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create clamp_base ---
+
+# Create primitive cylinder and name it clamp_base with diameter 0.040 m and height 0.015 m.
+# Radius = 0.020
+clamp_base = add_cylinder("clamp_base", radius=0.020, depth=0.015)
+clamp_base.data.materials.append(mat_clamp_base)
+
+# Rotate clamp_base so its +Z axis aligns +Z (world).
+align_axis_to_vector(clamp_base, Vector((0, 0, 1)), 'Z')
+
+# Align clamp_base.center to bell_assembly.center.
+clamp_base.location = bell_assembly_loc
+
+# Align clamp_base.+Z_face to bell_dome.−Z_face.
+loc_clamp = Locator(clamp_base)
+loc_dome = Locator(bell_dome)
+
+clamp_pos_z = loc_clamp.face_center_world(Vector((0, 0, 1)))
+dome_neg_z = loc_dome.face_center_world(Vector((0, 0, -1)))
+
+shift_vec = dome_neg_z - clamp_pos_z
+clamp_base.location += shift_vec
+
+# Then move by offset(0,0,-0.0075).
+clamp_base.location += Vector((0, 0, -0.0075))
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create lever_arm ---
+
+# Create primitive cylinder and name it lever_arm with diameter 0.005 m and height 0.020 m.
+# Radius = 0.0025
+lever_arm = add_cylinder("lever_arm", radius=0.0025, depth=0.020)
+lever_arm.data.materials.append(mat_lever)
+
+# Rotate lever_arm so its +Z axis aligns +X (world).
+align_axis_to_vector(lever_arm, Vector((1, 0, 0)), 'Z')
+
+# Align lever_arm.center to bell_dome.side_at(0°).
+# bell_dome.side_at(0°) usually means along the +X axis from the center.
+loc_dome = Locator(bell_dome)
+side_point = loc_dome.radial_point_world(0, axis='Z') # 0 degrees is +X in XY plane
+
+lever_arm.location = side_point
+
+# Align lever_arm.−Z_face to bell_dome.−Z_face.
+# lever_arm is rotated so its local Z is world X.
+# Its local -Z is world -X.
+# bell_dome -Z face is world -Z.
+# This alignment instruction seems geometrically conflicting if interpreted strictly as "face to face".
+# "Align lever_arm.-Z_face to bell_dome.-Z_face" might mean "Align the position of the -Z face of lever_arm to the position of the -Z face of bell_dome".
+# Or it might mean "Orient lever_arm such that its -Z face normal points towards bell_dome's -Z face".
+# Given "Align ... center to ... side" was done, we are positioning.
+# Let's interpret "Align A.face to B.face" as "Move A so that A's face coincides with B's face".
+# Lever_arm -Z face is at its center - (0,0,0.01) in local space -> World -X direction from center.
+# Bell_dome -Z face is at its center - (0,0,0.0254) in local space -> World -Z direction from center.
+# These are orthogonal. This instruction likely implies a positional constraint on the Z-axis.
+# Let's assume it means: Set the Z-coordinate of lever_arm's -Z face to match bell_dome's -Z face Z-coordinate.
+
+loc_lever = Locator(lever_arm)
+loc_dome = Locator(bell_dome)
+
+lever_neg_z = loc_lever.face_center_world(Vector((0, 0, -1))) # Local -Z
+dome_neg_z = loc_dome.face_center_world(Vector((0, 0, -1)))   # Local -Z
+
+# We want lever_neg_z.z == dome_neg_z.z
+# Current lever_neg_z.z is lever_arm.location.z - 0.01 (since local Z is world X, local -Z is world -X, so Z component is 0? No.)
+# Wait, lever_arm is rotated. Local Z is World X. Local Y is World Y. Local X is World -Z (or similar depending on rotation).
+# Let's check rotation: align_axis_to_vector(lever_arm, (1,0,0), 'Z').
+# Original Z (0,0,1) -> (1,0,0).
+# Original Y (0,1,0) -> (0,1,0).
+# Original X (1,0,0) -> (0,0,-1).
+# So Local -Z (0,0,-1) maps to World -X (-1,0,0).
+# So lever_neg_z is at lever_arm.location + (-0.01, 0, 0).
+# Its Z coordinate is lever_arm.location.z.
+# dome_neg_z Z coordinate is dome_neg_z.z.
+# So we set lever_arm.location.z = dome_neg_z.z.
+
+lever_arm.location.z = dome_neg_z.z
+
+# Then move by offset(0.025,0,0).
+lever_arm.location += Vector((0.025, 0, 0))
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create lever_head ---
+
+# Create primitive sphere and name it lever_head with diameter 0.010 m.
+# Radius = 0.005
+lever_head = add_uvsphere("lever_head", radius=0.005)
+lever_head.data.materials.append(mat_lever)
+
+# Rotate lever_head so its +Z axis aligns +Z (world).
+align_axis_to_vector(lever_head, Vector((0, 0, 1)), 'Z')
+
+# Align lever_head.center to lever_arm.+Z_face.center.
+loc_lever = Locator(lever_arm)
+lever_pos_z = loc_lever.face_center_world(Vector((0, 0, 1))) # Local +Z is World +X
+lever_head.location = lever_pos_z
+
+# Then move by offset(0,0,0.010).
+lever_head.location += Vector((0, 0, 0.010))
+
+# Stage 4 complete.

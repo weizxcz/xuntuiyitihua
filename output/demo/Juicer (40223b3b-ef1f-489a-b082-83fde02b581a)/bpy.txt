@@ -1,0 +1,406 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, roughness=0.5, metallic=0.0):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    return mat
+
+def add_primitive(name, shape, size, location, rotation_euler):
+    """Add a primitive mesh object with specific size and transform."""
+    bpy.ops.mesh.primitive_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    
+    # Apply rotation
+    obj.rotation_euler = rotation_euler
+    
+    # Apply scale based on shape
+    if shape == 'cube':
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        # size is (radius, height) or (diameter, height)? 
+        # Prompt says "size Ø0.02×0.01". Usually Ø implies diameter.
+        # Blender add_cylinder takes radius.
+        radius = size[0] / 2.0
+        height = size[1]
+        obj.scale = (radius, radius, height)
+    elif shape == 'cone':
+        # size Ø0.14×0.15. Bottom radius, height.
+        radius = size[0] / 2.0
+        height = size[1]
+        obj.scale = (radius, radius, height)
+    elif shape == 'uvsphere':
+        radius = size[0] / 2.0
+        obj.scale = (radius, radius, radius)
+        
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Rotate object so its local axis aligns with target vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.to_matrix()
+    
+    # Define local axis vectors
+    local_axes = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    if axis_to_align not in local_axes:
+        return
+
+    current_axis = local_axes[axis_to_align]
+    
+    # Calculate rotation matrix to align current_axis to target_vector
+    # Handle case where vectors are parallel or anti-parallel
+    dot = current_axis.dot(target_vector)
+    
+    if abs(dot - 1.0) < 1e-6:
+        # Already aligned
+        return
+    elif abs(dot + 1.0) < 1e-6:
+        # Anti-aligned, rotate 180 around any perpendicular axis
+        # Use cross product with a non-parallel vector to find axis
+        perp = Vector((1, 0, 0))
+        if abs(current_axis.x) > 0.9:
+            perp = Vector((0, 1, 0))
+        rot_axis = current_axis.cross(perp).normalized()
+        rot_matrix = Matrix.Rotation(math.pi, 3, rot_axis)
+    else:
+        # Standard rotation
+        rot_axis = current_axis.cross(target_vector).normalized()
+        angle = math.acos(dot)
+        rot_matrix = Matrix.Rotation(angle, 3, rot_axis)
+        
+    # Apply rotation
+    obj.rotation_euler = rot_matrix.to_euler()
+
+def boolean_union(objects, target_name):
+    """Perform boolean union on a list of objects, keeping the first one as target."""
+    if not objects:
+        return
+    target = objects[0]
+    modifiers = []
+    
+    for obj in objects[1:]:
+        mod = target.modifiers.new(name=f"Bool_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+        modifiers.append(mod)
+        
+    # Apply modifiers
+    for mod in modifiers:
+        bpy.context.view_layer.objects.active = target
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(target, cutter):
+    """Subtract cutter from target."""
+    mod = target.modifiers.new(name=f"Bool_{cutter.name}", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_faces(obj_a, face_a_axis, obj_b, face_b_axis):
+    """Align face of obj_a to face of obj_b.
+    face_axis: 'X', 'Y', 'Z' for positive, '-X', '-Y', '-Z' for negative.
+    """
+    # This is a simplified alignment. 
+    # We need to move obj_b so its face touches obj_a's face.
+    
+    # Get world matrix of objects
+    mat_a = obj_a.matrix_world
+    mat_b = obj_b.matrix_world
+    
+    # Determine normal direction of face A
+    axis_map = {
+        'X': Vector((1,0,0)), '-X': Vector((-1,0,0)),
+        'Y': Vector((0,1,0)), '-Y': Vector((0,-1,0)),
+        'Z': Vector((0,0,1)), '-Z': Vector((0,0,-1))
+    }
+    
+    normal_a = axis_map[face_a_axis]
+    normal_b = axis_map[face_b_axis]
+    
+    # Transform normal to world space
+    normal_a_w = (mat_a.to_3x3() @ normal_a).normalized()
+    normal_b_w = (mat_b.to_3x3() @ normal_b).normalized()
+    
+    # Calculate center of face A
+    # Assuming primitives, center is object location. 
+    # Face center is location + (size/2 * normal)
+    # We need to know the size of the objects to calculate face center accurately.
+    # Since we created them, we can store size or recalculate from bounds.
+    
+    def get_face_center(obj, axis):
+        # Get bounding box
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bm.transform(obj.matrix_world)
+        
+        # Find face with normal closest to axis
+        best_face = None
+        best_dot = -2
+        for face in bm.faces:
+            dot = face.normal.dot(axis)
+            if dot > best_dot:
+                best_dot = dot
+                best_face = face
+        
+        if best_face:
+            return best_face.calc_center_median()
+        return obj.location
+
+    center_a = get_face_center(obj_a, normal_a)
+    center_b = get_face_center(obj_b, normal_b)
+    
+    # Vector from B center to A center
+    vec = center_a - center_b
+    
+    # We want B's face to touch A's face.
+    # Distance between centers should be sum of half-lengths along the axis.
+    # However, simpler approach: Move B so its face center coincides with A's face center.
+    
+    # Calculate offset vector
+    # Current B face center is center_b. Target is center_a.
+    # But wait, if we just move B to center_a, the faces will overlap or be far apart depending on size.
+    # We want the SURFACES to touch.
+    
+    # Let's assume the objects are axis-aligned for simplicity in this specific script context.
+    # If they are axis aligned, we can just calculate the half-extent.
+    
+    # Get half extents
+    def get_half_extent(obj, axis):
+        # Use bound box
+        bbox = obj.bound_box
+        # Transform bbox to world
+        world_bbox = [obj.matrix_world @ Vector(v) for v in bbox]
+        
+        min_val = float('inf')
+        max_val = float('-inf')
+        
+        if axis == 'X':
+            for p in world_bbox: min_val = min(min_val, p.x); max_val = max(max_val, p.x)
+            return (max_val - min_val) / 2
+        elif axis == '-X':
+            for p in world_bbox: min_val = min(min_val, p.x); max_val = max(max_val, p.x)
+            return (max_val - min_val) / 2
+        elif axis == 'Y':
+            for p in world_bbox: min_val = min(min_val, p.y); max_val = max(max_val, p.y)
+            return (max_val - min_val) / 2
+        elif axis == '-Y':
+            for p in world_bbox: min_val = min(min_val, p.y); max_val = max(max_val, p.y)
+            return (max_val - min_val) / 2
+        elif axis == 'Z':
+            for p in world_bbox: min_val = min(min_val, p.z); max_val = max(max_val, p.z)
+            return (max_val - min_val) / 2
+        elif axis == '-Z':
+            for p in world_bbox: min_val = min(min_val, p.z); max_val = max(max_val, p.z)
+            return (max_val - min_val) / 2
+        return 0
+
+    half_a = get_half_extent(obj_a, face_a_axis)
+    half_b = get_half_extent(obj_b, face_b_axis)
+    
+    # Distance between centers when faces touch
+    dist = half_a + half_b
+    
+    # Direction from A to B
+    dir_vec = (center_b - center_a).normalized()
+    
+    # New position for B
+    # B should be placed such that its face is at center_a.
+    # So B's center should be at center_a + (dir_vec * dist) ?
+    # No. 
+    # Face A is at center_a. Face B is at center_b.
+    # We want Face B to be at center_a.
+    # So B's center should move from center_b to center_a + (normal_b_w * half_b) ?
+    # No, normal_b_w points OUT of B.
+    # If face_b_axis is 'Z', normal points +Z. Face center is at center_b + (0,0,half_b).
+    # We want this point to be center_a.
+    # So new_center_b + (0,0,half_b) = center_a
+    # new_center_b = center_a - (0,0,half_b)
+    
+    # General formula:
+    # Face Center B = Obj Center B + (normal_b_w * half_b)
+    # We want Face Center B = center_a
+    # Obj Center B_new = center_a - (normal_b_w * half_b)
+    
+    new_loc_b = center_a - (normal_b_w * half_b)
+    
+    obj_b.location = new_loc_b
+    
+    # Also align orientation if necessary? 
+    # The prompt implies simple face alignment. 
+    # If the faces are parallel, we just translate.
+    # If they are not parallel, we might need to rotate B.
+    # "Align juice_spout.-X_face to filter_cone.+X_face"
+    # This usually implies the surfaces touch and normals are opposite.
+    # If normals are already opposite, translation is enough.
+    # If not, we need to rotate B so its normal_b_w aligns with -normal_a_w.
+    
+    # Check if normals are opposite
+    dot_normals = normal_a_w.dot(normal_b_w)
+    if abs(dot_normals + 1.0) > 0.1: # Not opposite
+        # Rotate B so normal_b_w becomes -normal_a_w
+        target_normal = -normal_a_w
+        align_axis_to_vector(obj_b, face_b_axis.replace('-', ''), target_normal)
+        # Re-calculate face center after rotation
+        center_b_new = get_face_center(obj_b, normal_b) # normal_b is local
+        # Wait, normal_b_w changed.
+        normal_b_w_new = (obj_b.matrix_world.to_3x3() @ normal_b).normalized()
+        new_loc_b = center_a - (normal_b_w_new * half_b)
+        obj_b.location = new_loc_b
+
+# --- Main Script ---
+
+# 1. Scene Reset & Units
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj, do_unlink=True)
+for col in bpy.data.collections:
+    bpy.data.collections.remove(col)
+
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# 2. Materials
+mat_food_safe_plastic = make_material("food_safe_plastic", (0.9, 0.9, 0.9))
+mat_metal_steel = make_material("metal_steel", (0.7, 0.7, 0.75))
+mat_rubber_grip = make_material("rubber_grip", (0.1, 0.1, 0.1))
+
+# Assign materials to objects as we create them based on context
+
+# --- SECTION 1 – Base Housing and Feet ---
+
+# Create housing
+housing = add_primitive("housing", "cube", (0.15, 0.15, 0.25), (0, 0, 0.125), (0, 0, 0))
+housing.data.materials.append(mat_food_safe_plastic)
+
+# Create feet
+feet = []
+foot_positions = [
+    ("foot_1", (0.06, 0.06, 0.005)),
+    ("foot_2", (-0.06, 0.06, 0.005)),
+    ("foot_3", (0.06, -0.06, 0.005)),
+    ("foot_4", (-0.06, -0.06, 0.005))
+]
+
+for name, loc in foot_positions:
+    foot = add_primitive(name, "cylinder", (0.02, 0.01), loc, (0, 0, 0))
+    foot.data.materials.append(mat_rubber_grip)
+    feet.append(foot)
+
+# Boolean Union for Base Plate
+base_objects = [housing] + feet
+boolean_union(base_objects, "housing")
+housing.name = "base_plate"
+base_plate = housing
+
+# --- SECTION 2 – Motor Unit and Drive Shaft ---
+
+# Create motor unit
+motor_unit = add_primitive("motor_unit", "cylinder", (0.12, 0.10), (0, 0, 0.30), (0, 0, 0))
+motor_unit.data.materials.append(mat_metal_steel)
+
+# Create drive shaft
+drive_shaft = add_primitive("drive_shaft", "cylinder", (0.01, 0.05), (0, 0, 0.375), (0, 0, 0))
+drive_shaft.data.materials.append(mat_metal_steel)
+
+# Connect motor_unit.+Z_face to drive_shaft.-Z_face
+align_faces(motor_unit, "Z", drive_shaft, "-Z")
+
+# --- SECTION 3 – Blade Assembly ---
+
+# Create hub
+hub = add_primitive("hub", "cylinder", (0.03, 0.02), (0, 0, 0.40), (0, 0, 0))
+hub.data.materials.append(mat_metal_steel)
+
+# Create blades
+blades = []
+blade_data = [
+    ("blade_1", (0.10, 0.002), (0, 0, 0.41), (0, 0, 0)),
+    ("blade_2", (0.10, 0.002), (0, 0, 0.41), (0, 0, 0)),
+    ("blade_3", (0.10, 0.002), (0, 0, 0.41), (0, 0, 0)),
+    ("blade_4", (0.10, 0.002), (0, 0, 0.41), (0, 0, 0))
+]
+
+for name, size, loc, rot in blade_data:
+    blade = add_primitive(name, "cylinder", size, loc, rot)
+    blade.data.materials.append(mat_metal_steel)
+    blades.append(blade)
+
+# Rotate blades
+# blade_2: local +X aligns +Y
+align_axis_to_vector(blades[1], "X", Vector((0, 1, 0)))
+# blade_3: local +X aligns +X
+align_axis_to_vector(blades[2], "X", Vector((1, 0, 0)))
+# blade_4: local +X aligns -Y
+align_axis_to_vector(blades[3], "X", Vector((0, -1, 0)))
+
+# Boolean Union for Blade Assembly
+blade_objects = [hub] + blades
+boolean_union(blade_objects, "hub")
+hub.name = "blade_assembly"
+blade_assembly = hub
+
+# --- SECTION 4 – Filter Cone and Juice Spout ---
+
+# Create filter cone
+filter_cone = add_primitive("filter_cone", "cone", (0.14, 0.15), (0, 0, 0.475), (0, 0, 0))
+filter_cone.data.materials.append(mat_food_safe_plastic)
+
+# Create juice spout
+juice_spout = add_primitive("juice_spout", "cylinder", (0.03, 0.05), (0.06, 0, 0.55), (0, 0, 0))
+juice_spout.data.materials.append(mat_food_safe_plastic)
+
+# Rotate juice_spout so its +Z axis aligns +X (world)
+align_axis_to_vector(juice_spout, "Z", Vector((1, 0, 0)))
+
+# Align juice_spout.-X_face to filter_cone.+X_face
+align_faces(filter_cone, "X", juice_spout, "-X")
+
+# --- SECTION 5 – Feed Tube and Pusher ---
+
+# Create feed tube
+feed_tube = add_primitive("feed_tube", "cylinder", (0.05, 0.20), (0, 0, 0.60), (0, 0, 0))
+feed_tube.data.materials.append(mat_food_safe_plastic)
+
+# Create pusher
+pusher = add_primitive("pusher", "cylinder", (0.045, 0.10), (0, 0, 0.75), (0, 0, 0))
+pusher.data.materials.append(mat_rubber_grip)
+
+# Align pusher.-Z_face to feed_tube.+Z_face
+align_faces(feed_tube, "Z", pusher, "-Z")
+
+# --- SECTION 6 – Pulp Collector and Juice Container ---
+
+# Create pulp collector
+pulp_collector = add_primitive("pulp_collector", "cube", (0.10, 0.08, 0.15), (-0.12, 0, 0.075), (0, 0, 0))
+pulp_collector.data.materials.append(mat_food_safe_plastic)
+
+# Create juice container
+juice_container = add_primitive("juice_container", "cylinder", (0.08, 0.12), (0.06, 0, 0.06), (0, 0, 0))
+juice_container.data.materials.append(mat_food_safe_plastic)
+
+# Align juice_container.+Z_face to base_plate.-Z_face
+align_faces(base_plate, "-Z", juice_container, "Z")
+
+# Final cleanup: Remove empty collections if any
+for col in bpy.data.collections:
+    if not col.objects:
+        bpy.data.collections.remove(col)
+```

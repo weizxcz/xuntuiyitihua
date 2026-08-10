@@ -1,0 +1,47 @@
+{
+  "id": "17a4f8c1-836f-48d0-8e59-7017841f91d2",
+  "name": "Bread Knife",
+  "instruction": "I need a bread knife designed for cutting loaves of bread. Begin with a long, serrated blade. The blade should have evenly spaced teeth to ensure smooth slicing. Next, create a handle that is easy to grip and extends seamlessly from the blade.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a bread knife.",
+        "The knife features a long, serrated blade.",
+        "The blade has evenly spaced teeth.",
+        "The handle extends seamlessly from the blade."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blade length is suitable for the intended use.",
+        "The handle width is comfortable for gripping."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blade is properly aligned with the handle.",
+        "The serrated teeth are positioned to facilitate slicing.",
+        "The handle is securely attached to the blade."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the blade and handle.",
+        "The teeth of the blade do not interfere with the handle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design follows the instruction for a bread knife."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

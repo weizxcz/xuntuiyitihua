@@ -1,0 +1,46 @@
+{
+  "id": "8acf38d3-b5aa-40ff-8553-2487dcef34d3",
+  "name": "Carrot",
+  "instruction": "Design a carrot with a tapered shape and leafy greens at the top.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a carrot.",
+        "The carrot has a tapered shape.",
+        "The top of the carrot features leafy greens."
+      ],
+      "Color representation": [
+        "The carrot is orange in color.",
+        "The leafy greens are green."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The leaves on the carrot are proportionate to the carrot."
+      ],
+      "Texture and surface detail": [
+        "The carrot has a smooth surface.",
+        "The leafy greens have a textured appearance."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The leafy greens are positioned correctly at the top of the carrot.",
+        "The tapering of the carrot is consistent from top to bottom."
+      ],
+      "Object distance and contact": [
+        "The leafy greens do not overlap with the carrot body.",
+        "The greens are firmly attached to the carrot."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the carrot are accurately represented.",
+        "The design follows the instruction without deviations."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

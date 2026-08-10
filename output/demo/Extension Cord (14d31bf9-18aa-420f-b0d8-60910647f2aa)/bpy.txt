@@ -1,0 +1,380 @@
+import bpy
+import math
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color, 1.0)
+    return mat
+
+def add_cylinder(radius, depth, name, location=(0,0,0), rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name, location=(0,0,0), rotation=(0,0,0)):
+    # size is total size, so half is size/2
+    s = size / 2.0
+    bpy.ops.mesh.primitive_cube_add(size=2*s, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(radius_top, radius_bottom, depth, name, location=(0,0,0), rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, name, location=(0,0,0), rotation=(0,0,0)):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_union(target_obj, cutter_obj, result_name):
+    """Performs boolean union of target and cutter, replaces target with result."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target_obj
+    target_obj.select_set(True)
+    cutter_obj.select_set(True)
+    
+    # Add Boolean Modifier to target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Rename and clean up
+    target_obj.name = result_name
+    bpy.data.objects.remove(cutter_obj)
+    
+    # Deselect all
+    for o in bpy.context.selected_objects:
+        o.select_set(False)
+    target_obj.select_set(True)
+    bpy.context.view_layer.objects.active = target_obj
+    
+    return target_obj
+
+def boolean_subtract(target_obj, cutter_obj, result_name):
+    """Performs boolean subtract of cutter from target."""
+    bpy.context.view_layer.objects.active = target_obj
+    target_obj.select_set(True)
+    cutter_obj.select_set(True)
+    
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    target_obj.name = result_name
+    bpy.data.objects.remove(cutter_obj)
+    
+    for o in bpy.context.selected_objects:
+        o.select_set(False)
+    target_obj.select_set(True)
+    bpy.context.view_layer.objects.active = target_obj
+    
+    return target_obj
+
+def align_face_to_face(obj_source, obj_target, source_axis='+Z', target_axis='-Z'):
+    """
+    Aligns a face of source object to a face of target object.
+    Assumes objects are oriented such that their local axes align with world axes initially.
+    Moves source object so its specified face touches the target's specified face.
+    """
+    # Get bounding box centers and extents
+    src_bbox = obj_source.bound_box
+    tgt_bbox = obj_target.bound_box
+    
+    # Calculate face centers in world space
+    # Helper to get face center based on axis
+    def get_face_center(bbox, axis, sign):
+        # bbox is list of 8 vectors in local space
+        # We need to transform to world space first? 
+        # Actually, simpler: calculate offset in local space, then apply world transform.
+        
+        # Find min/max along axis
+        vals = [v[axis] for v in bbox]
+        min_val = min(vals)
+        max_val = max(vals)
+        
+        # Center of the face
+        center_local = [0,0,0]
+        center_local[axis] = max_val if sign == '+' else min_val
+        
+        # Convert to world
+        return obj_source.matrix_world * Vector(center_local)
+
+    # However, since we are moving the object, we can just calculate the translation vector.
+    # Target Face Center (World)
+    tgt_face_center = obj_target.matrix_world * Vector([0,0,0]) # Placeholder, need actual face
+    
+    # Let's use a simpler approach:
+    # 1. Get the normal of the target face in world space.
+    # 2. Get the normal of the source face in world space.
+    # 3. Move source so its face center coincides with target face center.
+    
+    # Since primitives are axis aligned, we can deduce face centers from dimensions.
+    # But to be robust, let's use the bounding box in world space.
+    
+    # Target Face
+    tgt_bbox_world = [obj_target.matrix_world * v for v in tgt_bbox]
+    src_bbox_world = [obj_source.matrix_world * v for v in src_bbox]
+    
+    # Determine target face normal and center
+    # Map axis string to index
+    axis_map = {'+X': 0, '-X': 0, '+Y': 1, '-Y': 1, '+Z': 2, '-Z': 2}
+    sign_map = {'+': 1, '-': -1}
+    
+    tgt_axis_idx = axis_map[target_axis]
+    tgt_sign = sign_map[target_axis[0]]
+    
+    src_axis_idx = axis_map[source_axis]
+    src_sign = sign_map[source_axis[0]]
+    
+    # Find min/max in world space for target along axis
+    tgt_vals = [v[tgt_axis_idx] for v in tgt_bbox_world]
+    tgt_face_pos = max(tgt_vals) if tgt_sign == '+' else min(tgt_vals)
+    
+    # Find min/max in world space for source along axis
+    src_vals = [v[src_axis_idx] for v in src_bbox_world]
+    src_face_pos = max(src_vals) if src_sign == '+' else min(src_vals)
+    
+    # Calculate translation needed
+    # We want src_face_pos + translation = tgt_face_pos
+    # But we only want to move along the normal direction.
+    # Assuming axis-aligned, we move along the axis.
+    
+    # Vector from current source face to target face
+    # We need a reference point on the face to align position, not just distance.
+    # Let's assume center alignment on the other two axes.
+    
+    # Center of target face
+    tgt_face_center_world = Vector([0,0,0])
+    if tgt_axis_idx == 0: # X
+        x = tgt_face_pos
+        y_vals = [v[1] for v in tgt_bbox_world]
+        z_vals = [v[2] for v in tgt_bbox_world]
+        tgt_face_center_world = Vector([x, (min(y_vals)+max(y_vals))/2, (min(z_vals)+max(z_vals))/2])
+    elif tgt_axis_idx == 1: # Y
+        y = tgt_face_pos
+        x_vals = [v[0] for v in tgt_bbox_world]
+        z_vals = [v[2] for v in tgt_bbox_world]
+        tgt_face_center_world = Vector([(min(x_vals)+max(x_vals))/2, y, (min(z_vals)+max(z_vals))/2])
+    else: # Z
+        z = tgt_face_pos
+        x_vals = [v[0] for v in tgt_bbox_world]
+        y_vals = [v[1] for v in tgt_bbox_world]
+        tgt_face_center_world = Vector([(min(x_vals)+max(x_vals))/2, (min(y_vals)+max(y_vals))/2, z])
+        
+    # Center of source face
+    src_face_center_world = Vector([0,0,0])
+    if src_axis_idx == 0:
+        x = src_face_pos
+        y_vals = [v[1] for v in src_bbox_world]
+        z_vals = [v[2] for v in src_bbox_world]
+        src_face_center_world = Vector([x, (min(y_vals)+max(y_vals))/2, (min(z_vals)+max(z_vals))/2])
+    elif src_axis_idx == 1:
+        y = src_face_pos
+        x_vals = [v[0] for v in src_bbox_world]
+        z_vals = [v[2] for v in src_bbox_world]
+        src_face_center_world = Vector([(min(x_vals)+max(x_vals))/2, y, (min(z_vals)+max(z_vals))/2])
+    else:
+        z = src_face_pos
+        x_vals = [v[0] for v in src_bbox_world]
+        y_vals = [v[1] for v in src_bbox_world]
+        src_face_center_world = Vector([(min(x_vals)+max(x_vals))/2, (min(y_vals)+max(y_vals))/2, z])
+        
+    # Translation vector
+    translation = tgt_face_center_world - src_face_center_world
+    obj_source.location += translation
+
+def align_axis_to_vector(obj, axis='+Z', vector=Vector((0,0,1))):
+    """Rotates object so its local axis aligns with the given world vector."""
+    # Get current axis vector in world space
+    if axis == '+X': curr = Vector((1,0,0))
+    elif axis == '-X': curr = Vector((-1,0,0))
+    elif axis == '+Y': curr = Vector((0,1,0))
+    elif axis == '-Y': curr = Vector((0,-1,0))
+    elif axis == '+Z': curr = Vector((0,0,1))
+    elif axis == '-Z': curr = Vector((0,0,-1))
+    
+    # Calculate rotation
+    rot_quat = curr.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def polar_position(angle_deg, radius):
+    """Returns (x, y) for polar coordinates."""
+    angle_rad = math.radians(angle_deg)
+    x = radius * math.cos(angle_rad)
+    y = radius * math.sin(angle_rad)
+    return (x, y)
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.context.scene.unit_settings.scale_length = 1
+    
+    # Block 1: Materials
+    mat_cable_black = make_material("cable_black", (0.10, 0.10, 0.10))
+    mat_cord_white = make_material("cord_white", (0.95, 0.95, 0.95))
+    mat_outlet_white = make_material("outlet_white", (0.90, 0.90, 0.90))
+    mat_plug_black = make_material("plug_black", (0.15, 0.15, 0.15))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create cable coil helix ---
+    cable_segments = []
+    for i in range(20):
+        # Create primitive cylinder
+        # Radius 0.075, Length 0.15
+        # Name: cable_segment_i
+        # Rotate so +Z aligns +Z (world) -> Default is +Z up, so rotation (0,0,0)
+        seg = add_cylinder(0.075, 0.15, f"cable_segment_{i}", rotation=(0,0,0))
+        
+        # Position at polar(i*18°, dr=0.075)
+        # Polar coordinates usually (r, theta) -> (x, y)
+        angle = i * 18
+        x, y = polar_position(angle, 0.075)
+        seg.location = (x, y, 0)
+        
+        # Move by offset(0,0,0.15)
+        seg.location.z += 0.15
+        
+        cable_segments.append(seg)
+        
+        # Assign material
+        if seg.data.materials:
+            seg.data.materials[0] = mat_cable_black
+        else:
+            seg.data.materials.append(mat_cable_black)
+
+    # Boolean-union all cable_segment_i into cable_coil
+    if cable_segments:
+        base = cable_segments[0]
+        for seg in cable_segments[1:]:
+            base = boolean_union(base, seg, "cable_coil")
+        cable_coil = base
+    else:
+        cable_coil = None
+
+    # Rotate cable_coil so +Z aligns +Z (world) -> Already aligned, but ensure
+    if cable_coil:
+        align_axis_to_vector(cable_coil, '+Z', Vector((0,0,1)))
+
+    # --- SECTION 2 – Create power plug ---
+    # Create plug_body
+    plug_body = add_cylinder(0.02, 0.06, "plug_body", rotation=(0,0,0))
+    if plug_body.data.materials:
+        plug_body.data.materials[0] = mat_plug_black
+    else:
+        plug_body.data.materials.append(mat_plug_black)
+
+    # Create plug_base
+    plug_base = add_cube((0.04, 0.04, 0.02), "plug_base", rotation=(0,0,0))
+    if plug_base.data.materials:
+        plug_base.data.materials[0] = mat_plug_black
+    else:
+        plug_base.data.materials.append(mat_plug_black)
+
+    # Align plug_base.+Z_face to plug_body.-Z_face
+    align_face_to_face(plug_base, plug_body, source_axis='+Z', target_axis='-Z')
+    
+    # Move by offset(0,0,-0.04)
+    plug_base.location.z -= 0.04
+    
+    # Boolean-union plug_base to plug_body -> plug
+    plug = boolean_union(plug_body, plug_base, "plug")
+
+    # Align plug.-Z_face to cable_coil.+Z_face
+    if cable_coil:
+        align_face_to_face(plug, cable_coil, source_axis='-Z', target_axis='+Z')
+
+    # --- SECTION 3 – Create outlet strip housing ---
+    # Create outlet_strip
+    outlet_strip = add_cube((0.30, 0.05, 0.04), "outlet_strip", rotation=(0,0,0))
+    if outlet_strip.data.materials:
+        outlet_strip.data.materials[0] = mat_outlet_white
+    else:
+        outlet_strip.data.materials.append(mat_outlet_white)
+
+    # Align outlet_strip.-Z_face to cable_coil.-Z_face
+    if cable_coil:
+        align_face_to_face(outlet_strip, cable_coil, source_axis='-Z', target_axis='-Z')
+
+    # --- SECTION 4 – Create socket array ---
+    outlets_list = []
+    # For r in 0..0 and c in 0..3
+    for r in range(1):
+        for c in range(4):
+            # Create cuboid 0.04x0.04x0.02
+            outlet_rc = add_cube((0.04, 0.04, 0.02), f"outlet_{r}_{c}", rotation=(0,0,0))
+            if outlet_rc.data.materials:
+                outlet_rc.data.materials[0] = mat_outlet_white
+            else:
+                outlet_rc.data.materials.append(mat_outlet_white)
+            
+            # Align outlet_rc.-Z_face to outlet_strip.+Z_face
+            align_face_to_face(outlet_rc, outlet_strip, source_axis='-Z', target_axis='+Z')
+            
+            # Offset(-0.09 + c*0.06, 0, 0.02)
+            offset_x = -0.09 + c * 0.06
+            offset_y = 0
+            offset_z = 0.02
+            outlet_rc.location.x += offset_x
+            outlet_rc.location.y += offset_y
+            outlet_rc.location.z += offset_z
+            
+            outlets_list.append(outlet_rc)
+
+    # Boolean-union all outlet_r_c into outlets
+    if outlets_list:
+        base_outlet = outlets_list[0]
+        for out in outlets_list[1:]:
+            base_outlet = boolean_union(base_outlet, out, "outlets")
+        outlets = base_outlet
+    else:
+        outlets = None
+
+    # --- SECTION 5 – Create indicator light ---
+    # Create cylinder radius 0.005, length 0.005
+    indicator_light = add_cylinder(0.005, 0.005, "indicator_light", rotation=(0,0,0))
+    if indicator_light.data.materials:
+        indicator_light.data.materials[0] = mat_cord_white # Assuming white or similar, not specified, using cord_white
+    else:
+        indicator_light.data.materials.append(mat_cord_white)
+
+    # Rotate indicator_light so +Z aligns +X (world)
+    align_axis_to_vector(indicator_light, '+Z', Vector((1,0,0)))
+
+    # Align indicator_light.+X_face to outlet_strip.+X_face
+    # Note: After rotation, the object's local +Z is now world +X.
+    # The face that was +Z is now +X.
+    # So we align source +Z (which is now world +X) to target +X (world +X).
+    # Wait, the instruction says "Align indicator_light.+X_face".
+    # The object was rotated so +Z aligns +X.
+    # So its local +X is now pointing somewhere else (likely -Y or Y depending on rotation axis).
+    # Let's re-read carefully: "Rotate indicator_light so its +Z axis aligns +X (world)."
+    # Then "Align indicator_light.+X_face to outlet_strip.+X_face."
+    # This implies we align the LOCAL +X face of the indicator light to the LOCAL +X face of the outlet strip.
+    
+    align_face_to_face(indicator_light, outlet_strip, source_axis='+X', target_axis='+X')
+    
+    # Move by offset(0.15, 0, 0)
+    indicator_light.location.x += 0.15
+
+if __name__ == "__main__":
+    main()
