@@ -1,0 +1,48 @@
+{
+  "id": "faa4d2bd-7a1e-4811-a419-6f70973f343a",
+  "name": "Pet Water Fountain",
+  "instruction": "Describe a pet water fountain designed to provide continuous fresh water. The fountain should have a basin, a pump to circulate the water, and a spout where the water flows out. Include a filter to keep the water clean and a power cord for the pump.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pet water fountain",
+        "The fountain has a basin to hold water.",
+        "The fountain features a spout where water flows out.",
+        "The pump is integrated into the design."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The basin is proportionate to the pump and spout.",
+        "The spout height is appropriate for easy access by pets."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pump is positioned inside the basin.",
+        "The spout is elevated above the basin for water flow.",
+        "The filter is placed in a location that allows water to pass through."
+      ],
+      "Object distance and contact": [
+        "The spout is directly above the basin to prevent water spillage.",
+        "The pump is securely placed within the basin.",
+        "The filter is in contact with the water to ensure cleanliness."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (basin, pump, spout, filter, power cord) are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

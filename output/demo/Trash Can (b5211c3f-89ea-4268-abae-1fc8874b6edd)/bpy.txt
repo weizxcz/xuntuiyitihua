@@ -1,0 +1,425 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color=(0.5, 0.5, 0.5, 1.0)):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object's first material slot."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(radius, segments=32, name="Disc"):
+    """Add a disc (flat cylinder) mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, width_segments=32, height_segments=16, name="UVSphere"):
+    """Add a UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, segments=32, name="Cone"):
+    """Add a cone/tapered cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this generator context, 
+    # or leave as modifier. Usually geometry gen implies final mesh.
+    # We will apply it to keep the mesh static for subsequent booleans.
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(target, cutter):
+    """Perform a boolean subtract operation using the built-in modifier system."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Clean up cutter if desired, but usually we keep it or delete it. 
+    # For this script, we'll leave the cutter in scene unless specified otherwise.
+    return target
+
+def boolean_union(target, cutter):
+    """Perform a boolean union operation."""
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return target
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with a global vector."""
+    # This is a simplified helper. For strict Z->Z, it's identity.
+    # If vector is (0,0,1) and axis is 'Z', no rotation needed.
+    if axis == 'Z' and vector == (0, 0, 1):
+        return
+    # For more complex orientations, we'd calculate the rotation matrix.
+    # Given the prompt's specific "align +Z to +Z", this is mostly a placeholder for logic.
+    pass
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.bound_box = obj.bound_box
+        # bound_box is in local space, need to transform to world
+        self.world_points = [obj.matrix_world @ Vector(p) for p in self.bound_box]
+
+    def center_world(self):
+        """Return the world-space center of the object's bounding box."""
+        return average(self.world_points)
+
+    def face_center_world(self, face_type='bottom'):
+        """Return the world-space center of a specific face (bottom or top)."""
+        # Assuming Z-up orientation for primitives
+        # Find min/max Z
+        z_vals = [p.z for p in self.world_points]
+        min_z = min(z_vals)
+        max_z = max(z_vals)
+        
+        if face_type == 'bottom':
+            target_z = min_z
+        elif face_type == 'top':
+            target_z = max_z
+        else:
+            target_z = (min_z + max_z) / 2
+            
+        # Filter points close to target_z
+        close_points = [p for p in self.world_points if abs(p.z - target_z) < 0.0001]
+        if close_points:
+            return average(close_points)
+        return self.center_world()
+
+    def radial_point_world(self, angle=0):
+        """Return a point on the radial edge at a given angle (radians) from center."""
+        center = self.center_world()
+        # Approximate radius from center to a corner in XY plane
+        # This is a rough approximation for cylindrical objects
+        max_dist = 0
+        for p in self.world_points:
+            dist = math.sqrt((p.x - center.x)**2 + (p.y - center.y)**2)
+            if dist > max_dist:
+                max_dist = dist
+        
+        x = center.x + max_dist * math.cos(angle)
+        y = center.y + max_dist * math.sin(angle)
+        z = center.z
+        return Vector((x, y, z))
+
+def align_objects(source_obj, target_obj, align_center_xy=False, align_bottom_top=False):
+    """
+    Align source_obj to target_obj.
+    align_center_xy: Aligns XY centers.
+    align_bottom_top: Aligns source bottom to target top (or similar face logic).
+    """
+    src_loc = source_obj.location
+    tgt_loc = target_obj.location
+    
+    # 1. Align XY Centers
+    if align_center_xy:
+        dx = tgt_loc.x - src_loc.x
+        dy = tgt_loc.y - src_loc.y
+        src_loc.x += dx
+        src_loc.y += dy
+        
+    # 2. Align Faces (Z-axis)
+    if align_bottom_top:
+        # We need to move source so its bottom face touches target's top face
+        # Calculate current bottom and top Z of both objects
+        
+        # Helper to get world bounds
+        def get_world_bounds(obj):
+            bb = obj.bound_box
+            wm = obj.matrix_world
+            pts = [wm @ Vector(p) for p in bb]
+            zs = [p.z for p in pts]
+            return min(zs), max(zs)
+            
+        src_min_z, src_max_z = get_world_bounds(source_obj)
+        tgt_min_z, tgt_max_z = get_world_bounds(target_obj)
+        
+        # Target top face is tgt_max_z
+        # Source bottom face is src_min_z
+        # We want: src_min_z_new = tgt_max_z
+        # Current src_min_z is relative to src_loc. 
+        # Actually, since we just moved X/Y, Z is still original.
+        # The object's geometry is fixed relative to its location.
+        # So src_min_z is effectively src_loc.z + (local_min_z)
+        
+        # Let's use the Locator class for robustness
+        src_loc_obj = Locator(source_obj)
+        tgt_loc_obj = Locator(target_obj)
+        
+        src_bottom_z = src_loc_obj.face_center_world('bottom').z
+        tgt_top_z = tgt_loc_obj.face_center_world('top').z
+        
+        # The object's local bottom Z relative to its origin
+        # For a cylinder centered at 0,0,0 with height H, bottom is -H/2
+        # So local_bottom_z = -height/2
+        # src_loc.z + local_bottom_z = src_bottom_z
+        # We want: src_loc.z + local_bottom_z = tgt_top_z
+        # src_loc.z = tgt_top_z - local_bottom_z
+        
+        # Get local bounds
+        src_bb = source_obj.bound_box
+        src_local_min_z = min(p.z for p in src_bb)
+        
+        new_z = tgt_top_z - src_local_min_z
+        source_obj.location.z = new_z
+
+def create_primitive_cylinder(diameter, height, name):
+    """Create a cylinder with specific diameter and height."""
+    radius = diameter / 2.0
+    obj = add_cylinder(radius=radius, depth=height, name=name)
+    return obj
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data blocks (optional but clean)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+
+mat_plastic_grey = make_material("mat_plastic_grey", diffuse_color=(0.5, 0.5, 0.5, 1.0))
+
+# ==============================================================================
+# BLOCK 2: Stage-by-Stage Operations
+# ==============================================================================
+
+# Note: The prompt references "trash_can" as an anchor. 
+# Since it's not created in the blocks, we assume it exists or we must create a placeholder.
+# However, standard MCP logic implies if an anchor is referenced but not created, 
+# we might need to create it or assume it's the "base" of the assembly.
+# Looking at Section 1: "Align base.center to trash_can.center".
+# If trash_can doesn't exist, this will fail. 
+# To make the script self-contained and runnable, I will create a dummy "trash_can" 
+# if it doesn't exist, or assume the user has it. 
+# Given the strict "self-contained" rule, I'll create a placeholder trash_can 
+# that matches the dimensions of the final assembly roughly, or just a simple cylinder.
+# BUT, usually in these prompts, the "trash_can" IS the final object being built, 
+# and the stages build parts OF it. 
+# Let's assume "trash_can" is the ROOT object. 
+# If it doesn't exist, I'll create a dummy one to satisfy the anchor requirement.
+
+if "trash_can" not in bpy.data.objects:
+    # Create a dummy trash_can to serve as the anchor
+    # Dimensions: Diameter 0.30, Height 0.40 (approx body)
+    tc = create_primitive_cylinder(diameter=0.30, height=0.40, name="trash_can")
+    apply_material(tc, mat_plastic_grey)
+    # Make it non-renderable or just a helper? 
+    # The prompt doesn't say to delete it. It says "Align ... to trash_can".
+    # I will leave it in the scene.
+
+trash_can = bpy.data.objects["trash_can"]
+
+# --- SECTION 1 – Create base ---
+# Create primitive cylinder with diameter 0.30 m and height 0.01 m and name it base.
+base = create_primitive_cylinder(diameter=0.30, height=0.01, name="base")
+apply_material(base, mat_plastic_grey)
+
+# Rotate base so its +Z axis aligns +Z (world).
+# Default cylinder is Z-up, so this is already satisfied.
+# Explicitly ensuring orientation:
+base.rotation_euler = (0, 0, 0)
+
+# Align base.center to trash_can.center using axes XY.
+# Align base.bottom_face to trash_can.bottom_face using axis Z.
+# Then move by offset(0,0,0).
+
+# Helper to perform the alignment logic defined in Section 1
+# "Align base.center to trash_can.center using axes XY" -> X and Y centers match
+# "Align base.bottom_face to trash_can.bottom_face using axis Z" -> Bottom Z matches
+
+# Let's implement the specific alignment logic for Section 1
+src = base
+tgt = trash_can
+
+# 1. Align XY Centers
+src_loc = src.location
+tgt_loc = tgt.location
+dx = tgt_loc.x - src_loc.x
+dy = tgt_loc.y - src_loc.y
+src_loc.x += dx
+src_loc.y += dy
+
+# 2. Align Bottom Faces (Z)
+# Get world bounds
+def get_world_bounds(obj):
+    bb = obj.bound_box
+    wm = obj.matrix_world
+    pts = [wm @ Vector(p) for p in bb]
+    zs = [p.z for p in pts]
+    return min(zs), max(zs)
+
+src_min_z, src_max_z = get_world_bounds(src)
+tgt_min_z, tgt_max_z = get_world_bounds(tgt)
+
+# Align src bottom (src_min_z) to tgt bottom (tgt_min_z)
+# We want: src_min_z_new = tgt_min_z
+# src_min_z is relative to src_loc.z.
+# src_local_min_z = src_min_z - src_loc.z
+src_local_min_z = src_min_z - src_loc.z
+new_z = tgt_min_z - src_local_min_z
+src_loc.z = new_z
+
+# Offset (0,0,0) - No change
+
+# --- SECTION 2 – Create body ---
+# Create primitive cylinder with diameter 0.30 m and height 0.40 m and name it body.
+body = create_primitive_cylinder(diameter=0.30, height=0.40, name="body")
+apply_material(body, mat_plastic_grey)
+
+# Rotate body so its +Z axis aligns +Z (world).
+body.rotation_euler = (0, 0, 0)
+
+# Align body.center to trash_can.center using axes XY.
+# Align body.bottom_face to base.top_face using axis Z.
+# Then move by offset(0,0,0).
+
+src = body
+tgt_center = trash_can
+tgt_face = base
+
+# 1. Align XY Centers to trash_can
+tgt_loc = tgt_center.location
+src_loc = src.location
+dx = tgt_loc.x - src_loc.x
+dy = tgt_loc.y - src_loc.y
+src_loc.x += dx
+src_loc.y += dy
+
+# 2. Align Bottom Face of body to Top Face of base
+# Get world bounds for base (target face)
+base_min_z, base_max_z = get_world_bounds(base)
+base_top_z = base_max_z
+
+# Get world bounds for body (source)
+body_min_z, body_max_z = get_world_bounds(body)
+body_local_min_z = body_min_z - src_loc.z
+
+# We want: body_min_z_new = base_top_z
+new_z = base_top_z - body_local_min_z
+src_loc.z = new_z
+
+# Offset (0,0,0) - No change
+
+# --- SECTION 3 – Create rim ---
+# Create primitive cylinder with diameter 0.32 m and height 0.01 m and name it rim.
+rim = create_primitive_cylinder(diameter=0.32, height=0.01, name="rim")
+apply_material(rim, mat_plastic_grey)
+
+# Rotate rim so its +Z axis aligns +Z (world).
+rim.rotation_euler = (0, 0, 0)
+
+# Align rim.center to trash_can.center using axes XY.
+# Align rim.bottom_face to body.top_face using axis Z.
+# Then move by offset(0,0,0).
+
+src = rim
+tgt_center = trash_can
+tgt_face = body
+
+# 1. Align XY Centers to trash_can
+tgt_loc = tgt_center.location
+src_loc = src.location
+dx = tgt_loc.x - src_loc.x
+dy = tgt_loc.y - src_loc.y
+src_loc.x += dx
+src_loc.y += dy
+
+# 2. Align Bottom Face of rim to Top Face of body
+# Get world bounds for body (target face)
+body_min_z, body_max_z = get_world_bounds(body)
+body_top_z = body_max_z
+
+# Get world bounds for rim (source)
+rim_min_z, rim_max_z = get_world_bounds(rim)
+rim_local_min_z = rim_min_z - src_loc.z
+
+# We want: rim_min_z_new = body_top_z
+new_z = body_top_z - rim_local_min_z
+src_loc.z = new_z
+
+# Offset (0,0,0) - No change
+
+# Final cleanup: Select all objects to show the result
+bpy.ops.object.select_all(action='DESELECT')
+for obj in [base, body, rim, trash_can]:
+    obj.select_set(True)
+bpy.context.view_layer.objects.active = base
+```

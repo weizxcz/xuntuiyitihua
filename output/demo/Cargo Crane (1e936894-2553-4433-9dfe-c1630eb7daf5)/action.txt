@@ -1,0 +1,94 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material concrete_dark; diffuse_color = (0.4,0.4,0.4,1.0).
+Define material steel_blue; diffuse_color = (0.2,0.3,0.6,1.0).
+Define material steel_grey; diffuse_color = (0.5,0.5,0.5,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base_footprint  ---
+Create primitive cylinder with diameter 2.0 m and height 0.3 m and name it base_footprint.
+Rotate base_footprint so its +Z axis aligns +Z (world).
+Align base_footprint.XY_face to (0,0).
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create counterweight_block  ---
+Create primitive cube with size 1.5×1.0×0.8 m and name it counterweight_block.
+Rotate counterweight_block so its +Z axis aligns +Z (world).
+Align counterweight_block.XY_face to base_footprint.XY_face.
+Then move by offset(0,-1.2,0.4).
+
+---  SECTION 3 – Create main_pylon_base  ---
+Create primitive cylinder with diameter 0.8 m and height 0.5 m and name it main_pylon_base.
+Rotate main_pylon_base so its +Z axis aligns +Z (world).
+Align main_pylon_base.XY_face to base_footprint.XY_face.
+Then move by offset(0,0,0.4).
+
+---  SECTION 4 – Create slewing_ring  ---
+Create primitive cylinder with diameter 1.2 m and height 0.1 m and name it slewing_ring.
+Rotate slewing_ring so its +Z axis aligns +Z (world).
+Align slewing_ring.XY_face to main_pylon_base.XY_face.
+Then move by offset(0,0,0.75).
+
+---  SECTION 5 – Create pylon_tower  ---
+Create primitive cylinder with diameter 0.6 m and height 8.0 m and name it pylon_tower.
+Rotate pylon_tower so its +Z axis aligns +Z (world).
+Align pylon_tower.XY_face to main_pylon_base.XY_face.
+Then move by offset(0,0,0.8).
+
+---  SECTION 6 – Create jib_arm  ---
+Create primitive cylinder with diameter 0.4 m and height 6.0 m and name it jib_arm.
+Rotate jib_arm so its +Z axis aligns +X (world).
+Align jib_arm.XY_face to pylon_tower.XY_face.
+Then move by offset(0,0,8.3).
+
+---  SECTION 7 – Create jib_cable  ---
+Create primitive cylinder with diameter 0.05 m and height 5.0 m and name it jib_cable.
+Rotate jib_cable so its +Z axis aligns +X (world).
+Align jib_cable.XY_face to pylon_tower.XY_face.
+Then move by offset(0,0,8.3).
+
+---  SECTION 8 – Create hook_block  ---
+Create primitive cube with size 0.3×0.3×0.3 m and name it hook_block.
+Rotate hook_block so its +Z axis aligns +Z (world).
+Align hook_block.XY_face to jib_arm.XY_face.
+Then move by offset(3.0,0,0).
+
+---  SECTION 9 – Create hook_cable  ---
+Create primitive cylinder with diameter 0.02 m and height 0.5 m and name it hook_cable.
+Rotate hook_cable so its +Z axis aligns +Z (world).
+Align hook_cable.XY_face to hook_block.XY_face.
+Then move by offset(0,0,0.3).
+
+---  SECTION 10 – Create hook  ---
+Create primitive cylinder with diameter 0.1 m and height 0.2 m and name it hook.
+Rotate hook so its +Z axis aligns +Z (world).
+Align hook.XY_face to hook_block.XY_face.
+Then move by offset(0,0,-0.3).
+
+---  SECTION 11 – Assemble base_plate  ---
+Boolean-union base_footprint, counterweight_block, and central_hub to create base_plate.
+Assembly guideline satisfied.
+Stage 11 complete.
+
+---  SECTION 12 – Assemble central_hub  ---
+Boolean-union main_pylon_base, slewing_ring, and pylon_tower to create central_hub.
+Assembly guideline satisfied.
+Stage 12 complete.
+
+---  SECTION 13 – Assemble jib_assembly  ---
+Boolean-union jib_arm, jib_cable, hook_block, hook_cable, and hook to create jib_assembly.
+Assembly guideline satisfied.
+Stage 13 complete.
+
+All stages complete.

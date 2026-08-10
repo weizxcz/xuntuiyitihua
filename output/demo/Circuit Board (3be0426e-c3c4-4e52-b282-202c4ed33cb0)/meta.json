@@ -1,0 +1,45 @@
+{
+  "id": "3be0426e-c3c4-4e52-b282-202c4ed33cb0",
+  "name": "Circuit Board",
+  "instruction": "Create a 3D model of a circuit board. \n\nThe board should be rectangular with various electronic components. \n\nInclude resistors, capacitors, and integrated circuits. \n\nAdd a few LEDs for visual indication. \n\nFinally, place connectors on the edges for external connections.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a circuit board.",
+        "The circuit board is rectangular in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The electronic components are distributed across the board.",
+        "LEDs are positioned for visibility."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The components are properly positioned on the board.",
+        "There is adequate space between components to avoid overlap.",
+        "Connectors are placed on the edges for accessibility."
+      ],
+      "Object distance and contact": [
+        "All components are securely mounted on the board.",
+        "There are no gaps between the components and the board surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (resistors, capacitors, integrated circuits, LEDs, connectors) are accurately represented.",
+        "The shape of the board is correctly modeled as rectangular."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,51 @@
+-- MATERIAL LIBRARY --
+mat_black_plastic | diffuse_color=(0.10,0.10,0.10,1.00)
+mat_glass_window | diffuse_color=(0.80,0.90,0.95,0.30)
+mat_light_gray_plastic | diffuse_color=(0.75,0.75,0.75,1.00)
+mat_metal_interior | diffuse_color=(0.60,0.60,0.65,1.00)
+mat_transparent_glass | diffuse_color=(0.90,0.95,1.00,0.10)
+mat_white_plastic | diffuse_color=(0.95,0.95,0.95,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| microwave_root | Composite of outer_casing + door_assembly + control_panel + interior_assembly | assembly_order=[outer_casing], [door_assembly], [control_panel], [interior_assembly] |
+
+Layer 1 – Primary Structure (Outer Casing)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| outer_casing | Composite of main_body_shell + top_panel + back_panel | assembly_order=[main_body_shell], [top_panel], [back_panel] |
+| main_body_shell | Cuboid 0.520×0.300×0.400 m (W×H×D) | pos=(0, 0.150, 0); orientation=axis:+Z; mat=mat_light_gray_plastic; create_method=primitive |
+| top_panel | Cuboid 0.520×0.005×0.400 m | Align(XZ) top_panel.bottom_face to main_body_shell.top_face; offset(0,0,0); mat=mat_light_gray_plastic; create_method=primitive |
+| back_panel | Cuboid 0.520×0.300×0.005 m | Align(XY) back_panel.front_face to main_body_shell.back_face; offset(0,0,0); mat=mat_light_gray_plastic; create_method=primitive |
+
+Layer 2 – Interior Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| interior_assembly | Composite of cavity_inner + turntable + turntable_motor | assembly_order=[cavity_inner], [turntable], [turntable_motor] |
+| cavity_inner | Cuboid 0.480×0.280×0.360 m (Inner void) | pos=(0, 0.140, 0.010); orientation=axis:+Z; mat=mat_metal_interior; create_method=primitive |
+| turntable | Cylinder Ø0.250×0.005 m | Align(XY) turntable.center to cavity_inner.center; Align(Z) turntable.bottom_face to cavity_inner.bottom_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_transparent_glass; create_method=primitive |
+| turntable_motor | Cylinder Ø0.050×0.040 m | Align(XY) turntable_motor.center to cavity_inner.center; Align(Z) turntable_motor.bottom_face to cavity_inner.bottom_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+
+Layer 3 – Door Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_assembly | Composite of door_frame + door_window + door_gasket | assembly_order=[door_frame], [door_window], [door_gasket] |
+| door_frame | Cuboid 0.480×0.280×0.020 m (Frame structure) | Align(XY) door_frame.front_face to main_body_shell.front_face; offset(0,0,0.010); orientation=axis:+Z; mat=mat_light_gray_plastic; create_method=primitive |
+| door_window | Cuboid 0.300×0.200×0.005 m (Glass pane) | Align(XY) door_window.center to door_frame.center; Align(Z) door_window.back_face to door_frame.front_face; offset(0,0,0.005); orientation=axis:+Z; mat=mat_glass_window; create_method=primitive |
+| door_gasket | Cuboid 0.480×0.280×0.002 m (Seal) | Align(XY) door_gasket.front_face to door_frame.back_face; offset(0,0,-0.001); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+
+Layer 4 – Control Panel
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| control_panel | Composite of panel_base + keypad + buttons | assembly_order=[panel_base], [keypad], [buttons] |
+| panel_base | Cuboid 0.040×0.280×0.020 m | Align(YZ) panel_base.left_face to main_body_shell.right_face; offset(0.010,0,0); orientation=axis:+X; mat=mat_light_gray_plastic; create_method=primitive |
+| keypad | Cuboid 0.030×0.150×0.002 m | Align(YZ) keypad.left_face to panel_base.right_face; offset(0.005,0,0); orientation=axis:+X; mat=mat_black_plastic; create_method=primitive |
+| buttons | Composite of button_1 + button_2 + button_3 | assembly_order=[button_1], [button_2], [button_3] |
+| button_1 | Cylinder Ø0.010×0.002 m | Align(YZ) button_1.center to keypad.center; offset(0,0.050,0.001); orientation=axis:+X; mat=mat_white_plastic; create_method=primitive |
+| button_2 | Cylinder Ø0.010×0.002 m | Align(YZ) button_2.center to keypad.center; offset(0,0,0.001); orientation=axis:+X; mat=mat_white_plastic; create_method=primitive |
+| button_3 | Cylinder Ø0.010×0.002 m | Align(YZ) button_3.center to keypad.center; offset(0,-0.050,0.001); orientation=axis:+X; mat=mat_white_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

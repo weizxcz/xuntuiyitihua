@@ -1,0 +1,415 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects and collections except the world."""
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in bpy.data.objects:
+        obj.select_set(True)
+    bpy.ops.object.delete(use_global=False)
+    # Clear remaining data blocks if necessary, but usually just objects is enough for reset
+    for collection in bpy.data.collections:
+        if collection.name != "Collection":
+            bpy.data.collections.remove(collection)
+
+def set_units_metres():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    bsdf.inputs['Metallic'].default_value = 0.0 if 'plastic' in name else 0.9
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive(name, shape, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        # size = (diameter, height)
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=size[0]/2, depth=size[1], location=location)
+        obj = bpy.context.active_object
+        # Rotate to align with Z if needed, default cylinder is Z-up
+    elif shape == 'disc':
+        bpy.ops.mesh.primitive_circle_add(vertices=32, radius=size[0]/2, fill_type='NGON', location=location)
+        obj = bpy.context.active_object
+        obj.data.extrude = size[1]
+        bpy.ops.mesh.extrude_faces_move()
+    elif shape == 'cone':
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=size[0]/2, radius2=0, depth=size[1], location=location)
+        obj = bpy.context.active_object
+    elif shape == 'sphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=size[0]/2, location=location)
+        obj = bpy.context.active_object
+    else:
+        return None
+    
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', target_vector=(0,0,1)):
+    """Align object's local axis to a target world vector."""
+    if axis == 'Z':
+        current = obj.matrix_world.to_3x3().col[2]
+    elif axis == 'Y':
+        current = obj.matrix_world.to_3x3().col[1]
+    elif axis == 'X':
+        current = obj.matrix_world.to_3x3().col[0]
+    else:
+        return
+
+    target = target_vector.normalized()
+    # Calculate rotation matrix to align current to target
+    rot_matrix = current.rotation_difference(target).to_matrix().to_4x4()
+    obj.matrix_world = rot_matrix @ obj.matrix_world
+
+def get_face_center(obj, face_type='center'):
+    """
+    Get a reference point for anchoring.
+    face_type: 'center', 'front_face' (max Z), 'back_face' (min Z), 
+               'top_face' (max Y), 'bottom_face' (min Y), 
+               'right_face' (max X), 'left_face' (min X),
+               'interior_bottom' (approximate center of bottom inner face)
+    """
+    # Ensure object is updated
+    obj.update_from_editmode()
+    
+    # Simple bounding box approach for robustness across primitives
+    min_b = obj.matrix_world @ Vector(obj.bound_box[0])
+    max_b = obj.matrix_world @ Vector(obj.bound_box[6])
+    
+    center = (min_b + max_b) / 2
+    
+    if face_type == 'center':
+        return center
+    elif face_type == 'front_face':
+        # Assuming Z is up/forward based on standard orientation in prompt
+        # Prompt says "Rotate ... so its +Z axis aligns +Z (world)".
+        # Usually in CAD, Front is +Y or +Z. Let's assume standard Blender Z-up.
+        # If Z is up, Front might be +Y. However, prompt offsets suggest Z is depth or height.
+        # Let's look at offsets: offset(0, 0.125, 0.175).
+        # If main body is 0.35 high (Z), 0.30 deep (Y), 0.45 wide (X).
+        # Center is (0,0,0).
+        # Front face usually implies the face facing the user.
+        # Let's assume standard axes: X=Right, Y=Back, Z=Up.
+        # "Front" often means +Y or -Y depending on convention.
+        # Given offset(0, 0.125, 0.175) for door frame on main_body_shell.front_face:
+        # Main body Z range: -0.175 to 0.175.
+        # Door frame Z offset 0.175 suggests it's placed at the top or front?
+        # If Z is Up, 0.175 is the top face.
+        # If Z is Depth (Front), 0.175 is the front face.
+        # Prompt: "Rotate ... so its +Z axis aligns +Z (world)".
+        # This implies Z is the primary vertical or depth axis.
+        # Let's assume Z is Vertical (Up) for "Height" calculations, but "Front Face" usually refers to Y.
+        # HOWEVER, looking at Section 3: Anchor to main_body_shell.front_face, offset Z=0.175.
+        # Main body height is 0.35. Half height is 0.175.
+        # This strongly suggests "Front Face" in this context might actually mean "Top Face" (Max Z) 
+        # OR the object is rotated such that Z is the depth axis.
+        # Let's re-read: "Rotate ... so its +Z axis aligns +Z (world)".
+        # If Z is World Up, then Max Z is Top.
+        # Why would a door frame be anchored to the Top?
+        # Maybe the "Front Face" is defined by the user's perspective, which might be Y.
+        # But the offset Z=0.175 matches the half-height.
+        # Hypothesis: The prompt uses "Front Face" to mean the face at Max Z (Top) OR the object is oriented differently.
+        # Let's look at Section 4: Door glass anchored to door_frame.front_face, offset Z=0.175.
+        # Door frame thickness is 0.02.
+        # If door frame is at Z=0.175 (Top of main body), and glass is offset Z=0.175... that would be far away.
+        # Let's reconsider the orientation.
+        # If Z is Depth (Front/Back):
+        # Main body Z range: -0.175 to 0.175.
+        # Front face is Z=0.175.
+        # Door frame anchored to Z=0.175. Offset Z=0.175 -> New Z = 0.35? That seems outside.
+        # Let's look at the offset values again.
+        # Section 3: Anchor main_body_shell.front_face. Offset (0, 0.125, 0.175).
+        # If Front Face is Max Z (0.175), and we add 0.175, we get 0.35.
+        # If Front Face is Max Y (0.15), and we add 0.125, we get 0.275.
+        
+        # Alternative Interpretation:
+        # The "Front Face" is the face with the highest Z coordinate.
+        # The offset is applied in LOCAL space of the anchor? No, "offset is in reference local axes".
+        # Usually, offset is relative to the anchor point.
+        
+        # Let's try a different standard: Z is Up.
+        # Main Body: X[-0.225, 0.225], Y[-0.15, 0.15], Z[-0.175, 0.175].
+        # "Front Face" usually means the face facing the camera, often -Y or +Y.
+        # But if the prompt says "Offset Z=0.175", and the max Z is 0.175, it's highly likely 
+        # that "Front Face" refers to the Top Face (Max Z) in this specific prompt's terminology, 
+        # OR the object is rotated 90 degrees.
+        # BUT, the prompt explicitly says: "Rotate ... so its +Z axis aligns +Z (world)".
+        # This fixes Z as Up.
+        # So "Front Face" must be a Y-face.
+        # If Anchor is Y=0.15 (Front), and Offset is (0, 0.125, 0.175).
+        # New Y = 0.15 + 0.125 = 0.275.
+        # New Z = 0 + 0.175 = 0.175.
+        # This places the door frame at the top-front corner?
+        
+        # Let's look at Section 7: Dial anchored to main_body_shell.front_face. Offset (-0.15, 0.15, 0.185).
+        # If Front Face is Y=0.15.
+        # Dial Y = 0.15 + 0.15 = 0.30.
+        # Dial Z = 0 + 0.185 = 0.185.
+        # This places the dial above the main body (Z=0.185 > 0.175).
+        
+        # This seems consistent if "Front Face" = Max Y Face.
+        # And "Offset" is added to the anchor point.
+        
+        # Let's define:
+        # Front Face = Max Y
+        # Back Face = Min Y
+        # Top Face = Max Z
+        # Bottom Face = Min Z
+        # Right Face = Max X
+        # Left Face = Min X
+        
+        # Wait, Section 6: "Anchor food_rack to main_body_shell.interior_bottom".
+        # Interior Bottom likely means the bottom face (Min Z) or the floor inside.
+        # Offset (0, 0.05, 0.15).
+        # If Anchor is Z=-0.175.
+        # Rack Z = -0.175 + 0.15 = -0.025.
+        # Rack Y = 0 + 0.05 = 0.05.
+        # This places the rack inside the box, slightly above the bottom. This makes sense.
+        
+        # So, "Front Face" = Max Y.
+        
+        return Vector((center.x, max_b.y, center.z))
+    elif face_type == 'back_face':
+        return Vector((center.x, min_b.y, center.z))
+    elif face_type == 'top_face':
+        return Vector((center.x, center.y, max_b.z))
+    elif face_type == 'bottom_face':
+        return Vector((center.x, center.y, min_b.z))
+    elif face_type == 'right_face':
+        return Vector((max_b.x, center.y, center.z))
+    elif face_type == 'left_face':
+        return Vector((min_b.x, center.y, center.z))
+    elif face_type == 'interior_bottom':
+        # Approximate center of the bottom inner face
+        # Assuming thin walls, this is close to the bottom face center
+        return Vector((center.x, center.y, min_b.z))
+        
+    return center
+
+def boolean_subtract(cutter_obj, target_obj, name="bool_result"):
+    """Perform Boolean Subtract using the modifier stack."""
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply Modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove Cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, name="bool_result"):
+    """Perform Boolean Union (self-union or with another, here just cleanup)."""
+    # Usually not needed for simple additive steps unless merging separate parts
+    pass
+
+def add_bevel(obj, width=0.01, segments=5):
+    """Add a bevel modifier and apply."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_metal_body = make_material("metal_body", (0.50, 0.50, 0.50, 1))
+mat_metal_dial = make_material("metal_dial", (0.20, 0.20, 0.20, 1))
+mat_plastic_dial = make_material("plastic_dial", (0.08, 0.08, 0.08, 1))
+mat_plastic_handle = make_material("plastic_handle", (0.08, 0.08, 0.08, 1))
+mat_glass_door = make_material("glass_door", (0.78, 0.86, 1.00, 0.50))
+mat_metal_rack = make_material("metal_rack", (0.71, 0.71, 0.71, 1))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create main body shell ---
+# Create primitive cuboid with size 0.45×0.30×0.35 m and name it main_body_shell.
+obj_main_body = add_primitive("main_body_shell", "cube", (0.45, 0.30, 0.35), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_main_body, mat_metal_body)
+
+# Rotate main_body_shell so its +Z axis aligns +Z (world).
+# Already aligned by default, but explicit step:
+align_axis_to_vector(obj_main_body, 'Z', (0,0,1))
+
+# Anchor main_body_shell to world origin.
+# It is already at (0,0,0).
+obj_main_body.location = (0,0,0)
+
+# Then move by offset(0,0,0).
+obj_main_body.location += Vector((0,0,0))
+
+
+# --- SECTION 2 – Create main body cavity ---
+# Create primitive cuboid with size 0.40×0.25×0.30 m and name it main_body_cavity.
+obj_cavity = add_primitive("main_body_cavity", "cube", (0.40, 0.25, 0.30), location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_cavity, 'Z', (0,0,1))
+
+# Anchor main_body_cavity to main_body_shell.center.
+anchor_pt = get_face_center(obj_main_body, 'center')
+obj_cavity.location = anchor_pt
+
+# Then move by offset(0,0,0).
+obj_cavity.location += Vector((0,0,0))
+
+# Boolean-subtract main_body_cavity from main_body_shell; discard main_body_cavity.
+boolean_subtract(obj_cavity, obj_main_body)
+
+
+# --- SECTION 3 – Create door frame ---
+# Create primitive cuboid with size 0.40×0.25×0.02 m and name it door_frame.
+obj_door_frame = add_primitive("door_frame", "cube", (0.40, 0.25, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_door_frame, mat_metal_body) # Assuming metal for frame
+
+# Rotate door_frame so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_door_frame, 'Z', (0,0,1))
+
+# Anchor door_frame to main_body_shell.front_face.
+# Based on analysis, Front Face = Max Y
+anchor_pt = get_face_center(obj_main_body, 'front_face')
+obj_door_frame.location = anchor_pt
+
+# Then move by offset(0, 0.125, 0.175).
+obj_door_frame.location += Vector((0, 0.125, 0.175))
+
+
+# --- SECTION 4 – Create door glass ---
+# Create primitive cuboid with size 0.38×0.23×0.005 m and name it door_glass.
+obj_door_glass = add_primitive("door_glass", "cube", (0.38, 0.23, 0.005), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_door_glass, mat_glass_door)
+
+# Rotate door_glass so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_door_glass, 'Z', (0,0,1))
+
+# Anchor door_glass to door_frame.front_face.
+anchor_pt = get_face_center(obj_door_frame, 'front_face')
+obj_door_glass.location = anchor_pt
+
+# Then move by offset(0, 0.125, 0.175).
+obj_door_glass.location += Vector((0, 0.125, 0.175))
+
+# Boolean-subtract door_glass from door_frame; discard door_glass.
+# Note: Subtracting glass from frame? Usually glass is *in* the frame or the frame is subtracted from the shell.
+# The prompt says "Boolean-subtract door_glass from door_frame".
+# This implies the glass is a hole? Or maybe the prompt implies the glass *is* the door, and we are cutting the frame?
+# "Assembly guideline satisfied" suggests this is a specific step.
+# If we subtract glass from frame, we get a frame with a glass-shaped hole.
+boolean_subtract(obj_door_glass, obj_door_frame)
+
+
+# --- SECTION 5 – Create door handle ---
+# Create primitive cuboid with size 0.20×0.02×0.02 m and name it door_handle.
+obj_door_handle = add_primitive("door_handle", "cube", (0.20, 0.02, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_door_handle, mat_plastic_handle)
+
+# Rotate door_handle so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_door_handle, 'Z', (0,0,1))
+
+# Anchor door_handle to door_frame.front_face.
+anchor_pt = get_face_center(obj_door_frame, 'front_face')
+obj_door_handle.location = anchor_pt
+
+# Then move by offset(0, 0.05, 0.185).
+obj_door_handle.location += Vector((0, 0.05, 0.185))
+
+
+# --- SECTION 6 – Create food rack ---
+# Create primitive cuboid with size 0.38×0.23×0.01 m and name it food_rack.
+obj_food_rack = add_primitive("food_rack", "cube", (0.38, 0.23, 0.01), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_food_rack, mat_metal_rack)
+
+# Rotate food_rack so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_food_rack, 'Z', (0,0,1))
+
+# Anchor food_rack to main_body_shell.interior_bottom.
+anchor_pt = get_face_center(obj_main_body, 'interior_bottom')
+obj_food_rack.location = anchor_pt
+
+# Then move by offset(0, 0.05, 0.15).
+obj_food_rack.location += Vector((0, 0.05, 0.15))
+
+
+# --- SECTION 7 – Create temperature dial ---
+# Create primitive cylinder with Ø0.04×0.02 m and name it dial_1.
+obj_dial_1 = add_primitive("dial_1", "cylinder", (0.04, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_dial_1, mat_metal_dial)
+
+# Rotate dial_1 so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_dial_1, 'Z', (0,0,1))
+
+# Anchor dial_1 to main_body_shell.front_face.
+anchor_pt = get_face_center(obj_main_body, 'front_face')
+obj_dial_1.location = anchor_pt
+
+# Then move by offset(-0.15, 0.15, 0.185).
+obj_dial_1.location += Vector((-0.15, 0.15, 0.185))
+
+
+# --- SECTION 8 – Create timer dial ---
+# Create primitive cylinder with Ø0.04×0.02 m and name it dial_2.
+obj_dial_2 = add_primitive("dial_2", "cylinder", (0.04, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_dial_2, mat_metal_dial)
+
+# Rotate dial_2 so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_dial_2, 'Z', (0,0,1))
+
+# Anchor dial_2 to main_body_shell.front_face.
+anchor_pt = get_face_center(obj_main_body, 'front_face')
+obj_dial_2.location = anchor_pt
+
+# Then move by offset(-0.05, 0.15, 0.185).
+obj_dial_2.location += Vector((-0.05, 0.15, 0.185))
+
+
+# --- SECTION 9 – Create function dial ---
+# Create primitive cylinder with Ø0.04×0.02 m and name it dial_3.
+obj_dial_3 = add_primitive("dial_3", "cylinder", (0.04, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(obj_dial_3, mat_metal_dial)
+
+# Rotate dial_3 so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_dial_3, 'Z', (0,0,1))
+
+# Anchor dial_3 to main_body_shell.front_face.
+anchor_pt = get_face_center(obj_main_body, 'front_face')
+obj_dial_3.location = anchor_pt
+
+# Then move by offset(0.05, 0.15, 0.185).
+obj_dial_3.location += Vector((0.05, 0.15, 0.185))
+
+```

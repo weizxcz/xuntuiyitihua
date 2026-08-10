@@ -1,0 +1,105 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material mat_glass_window; diffuse_color = (0.80,0.90,0.95,0.30).
+Define material mat_light_gray_plastic; diffuse_color = (0.75,0.75,0.75,1.00).
+Define material mat_metal_interior; diffuse_color = (0.60,0.60,0.65,1.00).
+Define material mat_transparent_glass; diffuse_color = (0.90,0.95,1.00,0.10).
+Define material mat_white_plastic; diffuse_color = (0.95,0.95,0.95,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Outer Casing  ---
+Create primitive cuboid with size 0.520×0.400×0.300 m and name it main_body_shell.
+Rotate main_body_shell so its +Z axis aligns +Z (world).
+Move main_body_shell to pos=(0, 0.150, 0).
+
+Create primitive cuboid with size 0.520×0.400×0.005 m and name it top_panel.
+Rotate top_panel so its +Z axis aligns +Z (world).
+Align top_panel.bottom_face to main_body_shell.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.520×0.300×0.005 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Align back_panel.front_face to main_body_shell.back_face.
+Then move by offset(0,0,0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Interior Assembly  ---
+Create primitive cuboid with size 0.480×0.360×0.280 m and name it cavity_inner.
+Rotate cavity_inner so its +Z axis aligns +Z (world).
+Move cavity_inner to pos=(0, 0.140, 0.010).
+
+Create primitive cylinder with Ø0.250×0.005 m and name it turntable.
+Rotate turntable so its +Z axis aligns +Z (world).
+Align turntable.center to cavity_inner.center.
+Align turntable.bottom_face to cavity_inner.bottom_face.
+Then move by offset(0,0,0.005).
+
+Create primitive cylinder with Ø0.050×0.040 m and name it turntable_motor.
+Rotate turntable_motor so its +Z axis aligns +Z (world).
+Align turntable_motor.center to cavity_inner.center.
+Align turntable_motor.bottom_face to cavity_inner.bottom_face.
+Then move by offset(0,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Door Assembly  ---
+Create primitive cuboid with size 0.480×0.020×0.280 m and name it door_frame.
+Rotate door_frame so its +Z axis aligns +Z (world).
+Align door_frame.front_face to main_body_shell.front_face.
+Then move by offset(0,0,0.010).
+
+Create primitive cuboid with size 0.300×0.005×0.200 m and name it door_window.
+Rotate door_window so its +Z axis aligns +Z (world).
+Align door_window.center to door_frame.center.
+Align door_window.back_face to door_frame.front_face.
+Then move by offset(0,0,0.005).
+
+Create primitive cuboid with size 0.480×0.002×0.280 m and name it door_gasket.
+Rotate door_gasket so its +Z axis aligns +Z (world).
+Align door_gasket.front_face to door_frame.back_face.
+Then move by offset(0,0,-0.001).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Control Panel  ---
+Create primitive cuboid with size 0.040×0.020×0.280 m and name it panel_base.
+Rotate panel_base so its +Z axis aligns +X (world).
+Align panel_base.left_face to main_body_shell.right_face.
+Then move by offset(0.010,0,0).
+
+Create primitive cuboid with size 0.030×0.002×0.150 m and name it keypad.
+Rotate keypad so its +Z axis aligns +X (world).
+Align keypad.left_face to panel_base.right_face.
+Then move by offset(0.005,0,0).
+
+Create primitive cylinder with Ø0.010×0.002 m and name it button_1.
+Rotate button_1 so its +Z axis aligns +X (world).
+Align button_1.center to keypad.center.
+Then move by offset(0,0.050,0.001).
+
+Create primitive cylinder with Ø0.010×0.002 m and name it button_2.
+Rotate button_2 so its +Z axis aligns +X (world).
+Align button_2.center to keypad.center.
+Then move by offset(0,0,0.001).
+
+Create primitive cylinder with Ø0.010×0.002 m and name it button_3.
+Rotate button_3 so its +Z axis aligns +X (world).
+Align button_3.center to keypad.center.
+Then move by offset(0,-0.050,0.001).
+
+Stage 4 complete.
+
+All stages complete.

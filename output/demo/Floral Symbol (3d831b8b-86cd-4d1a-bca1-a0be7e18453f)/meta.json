@@ -1,0 +1,45 @@
+{
+  "id": "3d831b8b-86cd-4d1a-bca1-a0be7e18453f",
+  "name": "Floral Symbol",
+  "instruction": "Design a 3D model of a floral symbol with five petals. The petals should be evenly spaced and symmetrical.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the model is a floral symbol.",
+        "The floral symbol has five distinct petals.",
+        "The petals are evenly spaced around the center."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of each petal is proportionate to the overall size of the floral symbol.",
+        "The center of the flower is proportionate to the petals."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The petals are positioned correctly to create a balanced appearance.",
+        "The center of the flower is clearly defined and supports the petals."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the petals.",
+        "Each petal connects seamlessly to the center."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the floral symbol are accurately represented.",
+        "The model adheres to the requirement of having five petals."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

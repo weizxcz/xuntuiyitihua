@@ -1,0 +1,43 @@
+{
+  "id": "813fdc7c-080f-42c6-960c-5c917133c376",
+  "name": "Decorative Pattern",
+  "instruction": "Can you design a decorative pattern for a wall? It should incorporate geometric shapes and lines. The pattern should be symmetrical and visually balanced.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pattern incorporates geometric shapes such as squares, triangles, and circles.",
+        "The design includes various lines, both straight and curved."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The shapes and lines are proportionate to the pattern."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "Shapes are arranged in a structured manner, avoiding randomness.",
+        "Lines connect shapes effectively to enhance the overall design."
+      ],
+      "Object distance and contact": [
+        "The sizes of the geometric shapes are proportionate to each other.",
+        "The spacing between shapes is consistent throughout the pattern."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the request for a decorative pattern.",
+        "All specified elements such as symmetry and geometric shapes are present."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

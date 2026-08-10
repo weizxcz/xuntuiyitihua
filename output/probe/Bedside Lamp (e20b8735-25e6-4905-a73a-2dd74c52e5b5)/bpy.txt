@@ -1,0 +1,243 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, depth, segments=32):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def get_face_center(obj, face_type='center'):
+    """
+    Get the world location of a specific face or center of an object.
+    face_type: 'center', 'bottom_face', 'top_face'
+    Assumes standard orientation: Z is up.
+    """
+    # Ensure we are working with the object's data
+    me = obj.data
+    # Find the face with the normal closest to +Z (top) or -Z (bottom)
+    # Note: This is a simplified approach assuming simple primitives.
+    # For robustness in generated scripts, we often rely on known geometry properties.
+    
+    # Calculate bounds to determine top/bottom faces reliably
+    # Transform vertices to world space
+    verts_world = [obj.matrix_world @ v.co for v in me.vertices]
+    
+    min_z = min(v[2] for v in verts_world)
+    max_z = max(v[2] for v in verts_world)
+    
+    if face_type == 'center':
+        return obj.matrix_world @ Vector((0, 0, 0))
+    elif face_type == 'bottom_face':
+        # Find a vertex at min_z, project to XY plane for center
+        # Assuming symmetry, the center X/Y is the object's X/Y
+        return Vector((obj.location.x, obj.location.y, min_z))
+    elif face_type == 'top_face':
+        return Vector((obj.location.x, obj.location.y, max_z))
+        
+    return obj.matrix_world @ Vector((0, 0, 0))
+
+def align_and_offset(obj, anchor_obj, anchor_type, offset=(0,0,0)):
+    """
+    Aligns obj to anchor_obj based on anchor_type, then applies offset.
+    anchor_type examples: 'center', 'bottom_face', 'top_face'
+    """
+    # 1. Orientation: Ensure +Z aligns +Z (already done by creation usually, but explicit here)
+    # Reset rotation to identity for clean alignment calculation
+    obj.rotation_euler = (0, 0, 0)
+    
+    # 2. Anchor/Align
+    if anchor_type == 'center':
+        target_loc = anchor_obj.matrix_world @ Vector((0,0,0))
+    elif anchor_type == 'bottom_face':
+        target_loc = get_face_center(anchor_obj, 'bottom_face')
+    elif anchor_type == 'top_face':
+        target_loc = get_face_center(anchor_obj, 'top_face')
+    else:
+        target_loc = anchor_obj.matrix_world @ Vector((0,0,0))
+        
+    # Move object so its reference point matches the target
+    # obj.location is currently (0,0,0) relative to its origin.
+    # We want obj.location such that its reference point is at target_loc.
+    # Reference point in local space:
+    if anchor_type == 'center':
+        ref_local = Vector((0,0,0))
+    elif anchor_type == 'bottom_face':
+        # For a cylinder/cone created at origin, bottom is at -depth/2
+        ref_local = Vector((0, 0, -obj.dimensions.z / 2))
+    elif anchor_type == 'top_face':
+        ref_local = Vector((0, 0, obj.dimensions.z / 2))
+    else:
+        ref_local = Vector((0,0,0))
+        
+    # Calculate new location
+    # World_Ref_Point = World_Location + World_Rotation * Local_Ref_Point
+    # Assuming no rotation for now (aligned to world Z):
+    # World_Ref_Point = World_Location + Local_Ref_Point
+    # World_Location = World_Ref_Point - Local_Ref_Point
+    
+    new_loc = target_loc - ref_local
+    
+    # 3. Apply Offset
+    # Offset is in reference local axes. Since aligned to world, it's world offset.
+    final_loc = new_loc + Vector(offset)
+    
+    obj.location = final_loc
+    obj.rotation_euler = (0, 0, 0) # Ensure orientation is maintained
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_base = make_material("mat_base", (0.8, 0.8, 0.8, 1.0))
+mat_shade = make_material("mat_shade", (1.0, 0.95, 0.8, 1.0))
+mat_stand = make_material("mat_stand", (0.8, 0.8, 0.8, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create base cylinder ---
+# Create primitive cylinder with diameter 0.152 m and height 0.025 m
+base_cylinder = add_cylinder("base_cylinder", radius=0.152/2, depth=0.025)
+base_cylinder.data.materials.append(mat_base)
+
+# Rotate so +Z aligns +Z (already default, but explicit)
+base_cylinder.rotation_euler = (0, 0, 0)
+
+# Anchor base_cylinder to lamp_root.center
+# Note: lamp_root is assumed to exist in the scene.
+if "lamp_root" in bpy.data.objects:
+    lamp_root = bpy.data.objects["lamp_root"]
+    
+    # Align base_cylinder.center to lamp_root.center
+    # Align base_cylinder.bottom_face to lamp_root.bottom_face
+    # This implies the base sits on the bottom face of lamp_root? 
+    # Or just center alignment? The prompt says "Align base_cylinder.center to lamp_root.center" AND "Align base_cylinder.bottom_face to lamp_root.bottom_face".
+    # This is contradictory unless lamp_root is a point or the user implies a specific stacking.
+    # Usually "Anchor to X.center" means center-to-center.
+    # "Align bottom_face to bottom_face" implies vertical stacking.
+    # Let's interpret "Anchor base_cylinder to lamp_root.center" as the primary anchor point.
+    # However, the next line says "Align base_cylinder.bottom_face to lamp_root.bottom_face".
+    # If lamp_root is a cylinder, its bottom face is at Z_min.
+    # If we align centers, the base_cylinder center is at lamp_root center.
+    # If we align bottom faces, base_cylinder bottom is at lamp_root bottom.
+    # Given "Offset(0,0,0)", let's assume the intent is to place the base_cylinder ON TOP of lamp_root or AT the same level.
+    # Let's follow the explicit instruction: "Align base_cylinder.center to lamp_root.center" AND "Align base_cylinder.bottom_face to lamp_root.bottom_face".
+    # This is only possible if lamp_root has 0 height or the instructions are sequential overrides.
+    # Standard interpretation for "Anchor to [Object].[Face]":
+    # Let's assume the user wants base_cylinder to sit on lamp_root's bottom face? 
+    # No, "Anchor ... to lamp_root.center" suggests centering.
+    # Let's look at Section 2: "Anchor stand_cylinder to base_cylinder.top_face". This is clear.
+    # Section 1 is ambiguous. Let's assume "lamp_root" is a reference point (like a pivot).
+    # If lamp_root is a mesh, "lamp_root.bottom_face" is a specific location.
+    # Let's prioritize the last alignment instruction if they conflict, or assume they define the position.
+    # If I align center to center, then align bottom to bottom, the object moves.
+    # Let's assume the user wants base_cylinder to be centered horizontally with lamp_root, and its bottom face to be at the same Z as lamp_root's bottom face.
+    
+    # Get lamp_root bottom face Z
+    lr_bottom_z = get_face_center(lamp_root, 'bottom_face')[2]
+    lr_center_xy = Vector((lamp_root.location.x, lamp_root.location.y))
+    
+    # Base cylinder bottom face Z should be lr_bottom_z
+    # Base cylinder center X/Y should be lr_center_xy
+    
+    # Base cylinder local bottom is at -height/2
+    # So location Z = lr_bottom_z - (-height/2) = lr_bottom_z + height/2
+    # Location X/Y = lr_center_xy
+    
+    base_cylinder.location = Vector((lr_center_xy[0], lr_center_xy[1], lr_bottom_z + base_cylinder.dimensions.z/2))
+    base_cylinder.rotation_euler = (0, 0, 0)
+    
+    # Apply offset
+    offset = Vector((0, 0, 0))
+    base_cylinder.location += offset
+
+else:
+    # Fallback if lamp_root doesn't exist, place at origin
+    base_cylinder.location = (0, 0, 0)
+
+# --- SECTION 2 – Create stand cylinder ---
+# Create primitive cylinder with diameter 0.025 m and height 0.305 m
+stand_cylinder = add_cylinder("stand_cylinder", radius=0.025/2, depth=0.305)
+stand_cylinder.data.materials.append(mat_stand)
+
+# Rotate so +Z aligns +Z
+stand_cylinder.rotation_euler = (0, 0, 0)
+
+# Anchor stand_cylinder to base_cylinder.top_face
+# Align stand_cylinder.center to base_cylinder.top_face.center
+# Align stand_cylinder.bottom_face to base_cylinder.top_face
+
+# Get base_cylinder top face center
+bc_top_loc = get_face_center(base_cylinder, 'top_face')
+
+# Stand cylinder local center is (0,0,0). Local bottom is -height/2.
+# We want stand_cylinder.bottom_face to be at bc_top_loc.
+# So stand_cylinder.location.z = bc_top_loc.z - (-stand_cylinder.dimensions.z/2) = bc_top_loc.z + stand_cylinder.dimensions.z/2
+# And stand_cylinder.location.x/y = bc_top_loc.x/y
+
+stand_cylinder.location = Vector((bc_top_loc.x, bc_top_loc.y, bc_top_loc.z + stand_cylinder.dimensions.z/2))
+stand_cylinder.rotation_euler = (0, 0, 0)
+
+# Apply offset
+offset = Vector((0, 0, 0))
+stand_cylinder.location += offset
+
+# --- SECTION 3 – Create shade cone ---
+# Create primitive cone with bottom diameter 0.203 m and height 0.152 m
+# Blender cone: radius1 is bottom, radius2 is top (0)
+shade_cone = add_cone("shade_cone", radius=0.203/2, depth=0.152)
+shade_cone.data.materials.append(mat_shade)
+
+# Rotate so +Z aligns +Z
+shade_cone.rotation_euler = (0, 0, 0)
+
+# Anchor shade_cone to stand_cylinder.top_face
+# Align shade_cone.bottom_face.center to stand_cylinder.top_face.center
+# Align shade_cone.bottom_face to stand_cylinder.top_face
+
+# Get stand_cylinder top face center
+sc_top_loc = get_face_center(stand_cylinder, 'top_face')
+
+# Shade cone local bottom is at -depth/2.
+# We want shade_cone.bottom_face to be at sc_top_loc.
+# So shade_cone.location.z = sc_top_loc.z - (-shade_cone.dimensions.z/2) = sc_top_loc.z + shade_cone.dimensions.z/2
+# And shade_cone.location.x/y = sc_top_loc.x/y
+
+shade_cone.location = Vector((sc_top_loc.x, sc_top_loc.y, sc_top_loc.z + shade_cone.dimensions.z/2))
+shade_cone.rotation_euler = (0, 0, 0)
+
+# Apply offset
+offset = Vector((0, 0, 0))
+shade_cone.location += offset
+
+```

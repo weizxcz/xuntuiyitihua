@@ -1,0 +1,414 @@
+```python
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material with a specific diffuse color."""
+    if name in bpy.data.materials:
+        return bpy.data.materials[name]
+    
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    # Adjust roughness/metallic for better visual distinction if needed, 
+    # but strictly following prompt: diffuse_color is the main input.
+    # Default Principled BSDF is somewhat plastic-like. 
+    # For "metal" names, we might tweak metallic, but prompt only specifies diffuse_color.
+    # We will stick strictly to the provided color.
+    return mat
+
+def add_text_object(text, name, location=(0,0,0), size=0.1):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.data.size = size
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1.0, segments=32, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_disc(name, radius=0.5, segments=32, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (flat cylinder with 1 depth segment or just a circle extruded)."""
+    # Using cylinder with very small depth or just a circle. 
+    # Standard cylinder with depth=0 creates a mesh.
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cube(name, size=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cone(name, radius=0.5, depth=1.0, segments=32, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone primitive."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_uvsphere(name, radius=0.5, segments=32, ring_count=16, location=(0,0,0), rotation=(0,0,0)):
+    """Add an UV Sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=segments, ring_count=ring_count, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_bevel(obj_name, width=0.01, segments=1):
+    """Add a bevel modifier to an existing object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def boolean_subtract(target_name, cutter_name):
+    """Perform a boolean subtract operation."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure cutter is active for boolean setup if needed, but usually we add modifier to target
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    return mod
+
+def boolean_union(target_name, union_name):
+    """Perform a boolean union operation."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    return mod
+
+def align_axis_to_vector(obj, axis_to_align='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # This is a simplified helper. For strict axis alignment without complex quaternion math in helper:
+    # We can use bpy.ops.object.transform_apply or manual rotation.
+    # However, for script stability, we often just set rotation_euler directly if the target is standard.
+    # If generic vector alignment is needed:
+    if axis_to_align == 'Z':
+        # Align Z to vector
+        vec = Vector(vector).normalized()
+        # Simple case: if vector is (1,0,0), Z->X. Rotation (0, pi/2, 0)
+        # We'll rely on the specific instructions in Block 2 which usually map to standard axes.
+        pass
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to create invisible locator objects for anchoring."""
+    def __init__(self, name, location=(0,0,0)):
+        # Create a small cube as a locator
+        bpy.ops.mesh.primitive_cube_add(size=0.01, location=location)
+        self.obj = bpy.context.active_object
+        self.obj.name = name
+        self.obj.hide_viewport = True
+        self.obj.hide_render = True
+        # Make it a pivot point
+        self.obj.location = location
+
+    @property
+    def center_world(self):
+        return self.obj.location
+
+    def face_center_world(self, normal_vector=(0,0,1)):
+        """Align locator's Z axis to normal_vector."""
+        # This is complex to do purely with location. 
+        # Usually locators are just points. If we need orientation, we rotate the locator.
+        self.obj.rotation_euler = self._vector_to_euler(normal_vector)
+
+    def radial_point_world(self, radius, angle=0):
+        """Return a point on the radial plane."""
+        # Placeholder for radial positioning logic if needed
+        return Vector((radius * math.cos(angle), radius * math.sin(angle), 0))
+
+    def _vector_to_euler(self, vec):
+        """Convert a direction vector to Euler angles (Z-up convention)."""
+        v = vec.normalized()
+        x = math.atan2(v.y, v.z)
+        y = math.atan2(-v.x, math.sqrt(v.y**2 + v.z**2))
+        z = 0
+        return (x, y, z)
+
+def place_object(obj, anchor_loc, offset=(0,0,0)):
+    """Place object relative to an anchor location with an offset."""
+    obj.location = anchor_loc + Vector(offset)
+
+def orient_object(obj, axis='Z', target_vector=(0,0,1)):
+    """Orient object so its axis aligns with target_vector."""
+    # For standard cases provided in the prompt:
+    # +Z aligns +Z -> no rotation needed (default)
+    # +Z aligns +X -> Rotate Y by -90 degrees (or 90 depending on handedness)
+    # Blender is right-handed. 
+    # Z(0,0,1) to X(1,0,0): Rotate around Y by -90 deg (math.radians(-90))
+    if axis == 'Z':
+        if target_vector == (1,0,0): # +X
+            obj.rotation_euler = (0, math.radians(-90), 0)
+        elif target_vector == (0,1,0): # +Y
+            obj.rotation_euler = (math.radians(90), 0, 0)
+        elif target_vector == (0,0,1): # +Z
+            obj.rotation_euler = (0, 0, 0)
+        elif target_vector == (-1,0,0): # -X
+            obj.rotation_euler = (0, math.radians(90), 0)
+        elif target_vector == (0,-1,0): # -Y
+            obj.rotation_euler = (math.radians(-90), 0, 0)
+        elif target_vector == (0,0,-1): # -Z
+            obj.rotation_euler = (math.radians(180), 0, 0)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but clean)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# Create a scene root locator for anchoring
+scene_root = Locator("scene_root", location=(0,0,0))
+
+# --- Block 1: Materials ---
+
+mat_metal_grey = make_material("metal_grey", (0.4, 0.4, 0.4))
+mat_metal_yellow = make_material("metal_yellow", (0.9, 0.7, 0.1))
+mat_rubber_black = make_material("rubber_black", (0.1, 0.1, 0.1))
+mat_steel_cable = make_material("steel_cable", (0.3, 0.3, 0.3))
+
+# Assign materials to objects as we create them based on context
+def assign_material(obj, mat_name):
+    if mat_name in bpy.data.materials:
+        if len(obj.data.materials) == 0:
+            obj.data.materials.append(bpy.data.materials[mat_name])
+        else:
+            obj.data.materials[0] = bpy.data.materials[mat_name]
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create forklift body components ---
+
+# 1. Chassis
+# Size 1.2x0.6x0.1. Cube size is side length. 
+# To get specific dimensions, we scale the cube or use add_cube with size=1 and scale it.
+# add_cube(size=1) creates a 2x2x2 cube by default in Blender? No, size parameter is half-width or full width?
+# bpy.ops.mesh.primitive_cube_add(size=1.0) creates a cube of side 2.0 (from -1 to 1).
+# So to get 1.2, we need size=0.6.
+obj_chassis = add_cube("chassis", size=0.6, location=(0,0,0)) # 1.2m side
+orient_object(obj_chassis, 'Z', (0,0,1))
+place_object(obj_chassis, scene_root.center_world, (0,0,0))
+place_object(obj_chassis, scene_root.center_world, (0,0,0.1))
+assign_material(obj_chassis, "metal_grey")
+
+# 2. Cab
+# Size 0.8x0.6x0.8. Size param = 0.4
+obj_cab = add_cube("cab", size=0.4, location=(0,0,0))
+orient_object(obj_cab, 'Z', (0,0,1))
+place_object(obj_cab, scene_root.center_world, (0.2,0,0.5))
+assign_material(obj_cab, "metal_yellow")
+
+# 3. Counterweight
+# Size 0.4x0.6x0.3. Size param = 0.2 (for 0.4), but height is 0.3.
+# Cube is uniform. We need to scale it.
+obj_counterweight = add_cube("counterweight", size=0.2, location=(0,0,0))
+obj_counterweight.scale = (1.0, 1.0, 0.75) # 0.4/0.4=1, 0.6/0.4=1.5? No.
+# Let's use scale to get exact dims. Base cube 0.4 side (0.8m).
+# Target: 0.4 x 0.6 x 0.3.
+# Scale X: 0.4/0.8 = 0.5
+# Scale Y: 0.6/0.8 = 0.75
+# Scale Z: 0.3/0.8 = 0.375
+obj_counterweight.scale = (0.5, 0.75, 0.375)
+orient_object(obj_counterweight, 'Z', (0,0,1))
+place_object(obj_counterweight, scene_root.center_world, (-0.7,0,0.25))
+assign_material(obj_counterweight, "metal_grey")
+
+# --- SECTION 2 – Create forklift wheels ---
+
+# For r in 0..1 and c in 0..1
+# Cylinder Ø0.3 (Radius 0.15) x 0.1 (Depth)
+# Rotate +Z to +X
+for r in range(2):
+    for c in range(2):
+        name = f"wheel_{r}_{c}"
+        # Create cylinder
+        obj_wheel = add_cylinder(name, radius=0.15, depth=0.1, location=(0,0,0))
+        # Orient +Z to +X
+        orient_object(obj_wheel, 'Z', (1,0,0))
+        # Anchor and Offset
+        offset_x = -0.4 + c * 0.8
+        offset_y = -0.3 + r * 0.6
+        offset_z = 0.15
+        place_object(obj_wheel, scene_root.center_world, (offset_x, offset_y, offset_z))
+        assign_material(obj_wheel, "rubber_black")
+
+# --- SECTION 3 – Create forklift mast components ---
+
+# 1. Rail L
+# Size 0.05x0.05x2.0. Cube size 0.025. Scale to get 2.0 height.
+# Base 0.05 side. Target 0.05x0.05x2.0.
+# Scale X: 1, Y: 1, Z: 40.
+obj_rail_L = add_cube("rail_L", size=0.025, location=(0,0,0))
+obj_rail_L.scale = (1.0, 1.0, 40.0)
+orient_object(obj_rail_L, 'Z', (0,0,1))
+place_object(obj_rail_L, scene_root.center_world, (-0.6,0,1.1))
+assign_material(obj_rail_L, "steel_cable")
+
+# 2. Rail R
+obj_rail_R = add_cube("rail_R", size=0.025, location=(0,0,0))
+obj_rail_R.scale = (1.0, 1.0, 40.0)
+orient_object(obj_rail_R, 'Z', (0,0,1))
+place_object(obj_rail_R, scene_root.center_world, (0.6,0,1.1))
+assign_material(obj_rail_R, "steel_cable")
+
+# 3. Hydraulic
+# Cylinder Ø0.05 (Radius 0.025) x 1.5 (Depth)
+obj_hydraulic = add_cylinder("hydraulic", radius=0.025, depth=1.5, location=(0,0,0))
+orient_object(obj_hydraulic, 'Z', (0,0,1))
+place_object(obj_hydraulic, scene_root.center_world, (0,0,0.8))
+assign_material(obj_hydraulic, "steel_cable")
+
+# --- SECTION 4 – Create forklift forks components ---
+
+# 1. Carriage
+# Size 0.1x0.6x0.1. Cube size 0.05.
+# Scale X: 2, Y: 12, Z: 2.
+obj_carriage = add_cube("carriage", size=0.05, location=(0,0,0))
+obj_carriage.scale = (2.0, 12.0, 2.0)
+orient_object(obj_carriage, 'Z', (0,0,1))
+place_object(obj_carriage, scene_root.center_world, (0,0,2.1))
+assign_material(obj_carriage, "steel_cable")
+
+# 2. Fork L
+# Size 0.05x0.05x1.2. Cube size 0.025.
+# Scale X: 2, Y: 2, Z: 48.
+obj_fork_L = add_cube("fork_L", size=0.025, location=(0,0,0))
+obj_fork_L.scale = (2.0, 2.0, 48.0)
+orient_object(obj_fork_L, 'Z', (1,0,0)) # +Z to +X
+place_object(obj_fork_L, scene_root.center_world, (-0.3,0,2.1))
+assign_material(obj_fork_L, "steel_cable")
+
+# 3. Fork R
+obj_fork_R = add_cube("fork_R", size=0.025, location=(0,0,0))
+obj_fork_R.scale = (2.0, 2.0, 48.0)
+orient_object(obj_fork_R, 'Z', (1,0,0))
+place_object(obj_fork_R, scene_root.center_world, (0.3,0,2.1))
+assign_material(obj_fork_R, "steel_cable")
+
+# --- SECTION 5 – Create crane base components ---
+
+# 1. Base Counterweight
+# Size 1.0x0.6x0.3. Cube size 0.5.
+# Scale X: 2, Y: 1.2, Z: 0.6.
+obj_base_counterweight = add_cube("base_counterweight", size=0.5, location=(0,0,0))
+obj_base_counterweight.scale = (2.0, 1.2, 0.6)
+orient_object(obj_base_counterweight, 'Z', (0,0,1))
+place_object(obj_base_counterweight, scene_root.center_world, (-0.5,0,0.15))
+assign_material(obj_base_counterweight, "metal_grey")
+
+# 2. Base Cab
+# Size 0.8x0.6x0.8. Cube size 0.4.
+# Scale X: 2, Y: 1.5, Z: 2.
+obj_base_cab = add_cube("base_cab", size=0.4, location=(0,0,0))
+obj_base_cab.scale = (2.0, 1.5, 2.0)
+orient_object(obj_base_cab, 'Z', (0,0,1))
+place_object(obj_base_cab, scene_root.center_world, (0.2,0,0.5))
+assign_material(obj_base_cab, "metal_yellow")
+
+# 3. Tower
+# Cylinder Ø0.4 (Radius 0.2) x 4.0 (Depth)
+obj_tower = add_cylinder("tower", radius=0.2, depth=4.0, location=(0,0,0))
+orient_object(obj_tower, 'Z', (0,0,1))
+place_object(obj_tower, scene_root.center_world, (0,0,2.0))
+assign_material(obj_tower, "steel_cable")
+
+# --- SECTION 6 – Create crane jib components ---
+
+# 1. Jib Arm
+# Size 0.2x0.2x3.0. Cube size 0.1.
+# Scale X: 2, Y: 2, Z: 30.
+obj_jib_arm = add_cube("jib_arm", size=0.1, location=(0,0,0))
+obj_jib_arm.scale = (2.0, 2.0, 30.0)
+orient_object(obj_jib_arm, 'Z', (1,0,0)) # +Z to +X
+place_object(obj_jib_arm, scene_root.center_world, (1.5,0,4.1))
+assign_material(obj_jib_arm, "steel_cable")
+
+# 2. Counter Jib
+obj_counter_jib = add_cube("counter_jib", size=0.1, location=(0,0,0))
+obj_counter_jib.scale = (2.0, 2.0, 10.0) # 1.0m length -> Z scale 10
+orient_object(obj_counter_jib, 'Z', (1,0,0))
+place_object(obj_counter_jib, scene_root.center_world, (-0.5,0,4.1))
+assign_material(obj_counter_jib, "steel_cable")
+
+# 3. Apex
+# Cone Ø0.3 (Radius 0.15) x 0.5 (Depth)
+obj_apex = add_cone("apex", radius=0.15, depth=0.5, location=(0,0,0))
+orient_object(obj_apex, 'Z', (0,0,1))
+place_object(obj_apex, scene_root.center_world, (0,0,4.35))
+assign_material(obj_apex, "metal_grey")
+
+# --- SECTION 7 – Create crane cable and hook ---
+
+# 1. Crane Cable
+# Cylinder Ø0.02 (Radius 0.01) x 2.0 (Depth)
+obj_crane_cable = add_cylinder("crane_cable", radius=0.01, depth=2.0, location=(0,0,0))
+orient_object(obj_crane_cable, 'Z', (0,0,1))
+place_object(obj_crane_cable, scene_root.center_world, (3.0,0,3.1))
+assign_material(obj_crane_cable, "steel_cable")
+
+# 2. Hook Shank
+# Cylinder Ø0.05 (Radius 0.025) x 0.2 (Depth)
+obj_hook_shank = add_cylinder("hook_shank", radius=0.025, depth=0.2, location=(0,0,0))
+orient_object(obj_hook_shank, 'Z', (0,0,1))
+place_object(obj_hook_shank, scene_root.center_world, (3.0,0,2.0))
+assign_material(obj_hook_shank, "metal_grey")
+
+# 3. Hook Body
+# Torus Ø0.1 (Major Radius 0.05) x 0.05 (Minor Radius)
+# Rotate +Z to +X
+bpy.ops.mesh.primitive_torus_add(major_radius=0.05, minor_radius=0.025, location=(0,0,0))
+obj_hook_body = bpy.context.active_object
+obj_hook_body.name = "hook_body"
+orient_object(obj_hook_body, 'Z', (1,0,0))
+place_object(obj_hook_body, scene_root.center_world, (3.0,0,1.9))
+assign_material(obj_hook_body, "metal_grey")
+
+# Finalize: Apply transforms if necessary (optional, but good for export)
+# bpy.ops.object.select_all(action='SELECT')
+# bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+# bpy.ops.object.select_all(action='DESELECT')
+```

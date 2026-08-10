@@ -1,0 +1,235 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube object, set size, location, rotation, and material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def get_face_center(obj, face_type):
+    """
+    Get the world center of a specific face of an object.
+    face_type: 'top', 'bottom', 'front', 'back', 'left', 'right'
+    Assumes standard orientation where +Z is up, +Y is front, +X is right.
+    """
+    # Get local bounds
+    min_x, max_x = obj.dimensions[0]/2, -obj.dimensions[0]/2
+    min_y, max_y = obj.dimensions[1]/2, -obj.dimensions[1]/2
+    min_z, max_z = obj.dimensions[2]/2, -obj.dimensions[2]/2
+    
+    # Determine local coordinates for the face center
+    if face_type == 'top':
+        local_loc = (0, 0, max_z)
+    elif face_type == 'bottom':
+        local_loc = (0, 0, min_z)
+    elif face_type == 'front':
+        local_loc = (0, max_y, 0)
+    elif face_type == 'back':
+        local_loc = (0, min_y, 0)
+    elif face_type == 'right':
+        local_loc = (max_x, 0, 0)
+    elif face_type == 'left':
+        local_loc = (min_x, 0, 0)
+    else:
+        local_loc = (0, 0, 0)
+
+    # Convert to world space
+    return obj.matrix_world @ Vector(local_loc)
+
+def align_to_anchor(obj, anchor_obj, face_type=None):
+    """
+    Align object center to anchor object's center or face center.
+    If face_type is provided, align to that face's center.
+    """
+    if face_type:
+        target_loc = get_face_center(anchor_obj, face_type)
+    else:
+        target_loc = anchor_obj.location
+    
+    # Calculate offset needed to move obj's center to target_loc
+    # We don't move obj yet, we just return the target location for the caller
+    # to apply as a base for offset.
+    return target_loc
+
+def apply_offset(obj, offset_vec):
+    """Apply a local offset to the object's location."""
+    # Assuming offset is in the object's local space relative to its current orientation
+    # Since we aligned orientation first, local axes match world axes for these primitives
+    # unless rotated. The prompt says "offset is in reference local axes".
+    # However, for simple primitives aligned to world, local == world.
+    # If the object was rotated, we need to transform the offset vector by the rotation.
+    
+    # Get current world location
+    current_loc = obj.location
+    
+    # Transform local offset to world offset
+    world_offset = obj.matrix_world.to_3x3() @ offset_vec
+    
+    obj.location = current_loc + world_offset
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_fabric_black = make_material("fabric_black", (0.05, 0.05, 0.05, 1))
+mat_fabric_white = make_material("fabric_white", (0.95, 0.95, 0.95, 1))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create apron body ---
+# Create primitive cuboid with size 0.800×1.000×0.002 m and name it apron_body.
+# Rotate apron_body so its +Z axis aligns +Z (world).
+# Align apron_body.center to apron_root.center.
+# Then offset(0, 0, 0).
+
+# Note: apron_root is not explicitly created in the prompt, but referenced for alignment.
+# We assume apron_root is at (0,0,0) or we create a dummy root if needed.
+# Given "Align apron_body.center to apron_root.center", and no creation of apron_root,
+# we assume apron_root is the world origin (0,0,0) or a hidden reference.
+# Standard practice: if anchor object doesn't exist, use world origin.
+# Let's create a dummy object named 'apron_root' at origin to satisfy the anchor requirement strictly.
+
+bpy.ops.mesh.primitive_cube_add(size=0.001, location=(0, 0, 0))
+apron_root = bpy.context.active_object
+apron_root.name = "apron_root"
+apron_root.hide_viewport = True
+apron_root.hide_render = True
+
+# Create apron_body
+# Size: 0.800 (X) x 1.000 (Y) x 0.002 (Z)
+# Orientation: +Z aligns +Z (default)
+apron_body = add_cube("apron_body", (0.800, 1.000, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_black)
+
+# Align apron_body.center to apron_root.center
+# apron_root is at (0,0,0), so apron_body stays at (0,0,0)
+# Then offset(0, 0, 0)
+offset_vec = Vector((0, 0, 0))
+apply_offset(apron_body, offset_vec)
+
+# --- SECTION 2 – Create neck strap ---
+# Create primitive cuboid with size 0.020×0.600×0.002 m and name it neck_strap.
+# Rotate neck_strap so its +Z axis aligns +Z (world).
+# Align neck_strap.center to apron_body.top_face.center.
+# Then offset(0, -0.010, 0).
+
+# Create neck_strap
+neck_strap = add_cube("neck_strap", (0.020, 0.600, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_black)
+
+# Align neck_strap.center to apron_body.top_face.center
+target_loc = get_face_center(apron_body, 'top')
+neck_strap.location = target_loc
+
+# Then offset(0, -0.010, 0)
+# Offset is in local axes. Since neck_strap is aligned to world, local Y is world Y.
+offset_vec = Vector((0, -0.010, 0))
+apply_offset(neck_strap, offset_vec)
+
+# --- SECTION 3 – Create waist ties ---
+# Left Tie
+# Create primitive cuboid with size 0.050×0.800×0.002 m and name it waist_tie_L.
+# Rotate waist_tie_L so its +Z axis aligns +Z (world).
+# Align waist_tie_L.center to apron_body.left_face.center.
+# Then offset(-0.025, 0, 0).
+
+waist_tie_L = add_cube("waist_tie_L", (0.050, 0.800, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_black)
+
+# Align to left face
+target_loc = get_face_center(apron_body, 'left')
+waist_tie_L.location = target_loc
+
+# Offset
+offset_vec = Vector((-0.025, 0, 0))
+apply_offset(waist_tie_L, offset_vec)
+
+# Right Tie
+# Create primitive cuboid with size 0.050×0.800×0.002 m and name it waist_tie_R.
+# Rotate waist_tie_R so its +Z axis aligns +Z (world).
+# Align waist_tie_R.center to apron_body.right_face.center.
+# Then offset(0.025, 0, 0).
+
+waist_tie_R = add_cube("waist_tie_R", (0.050, 0.800, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_black)
+
+# Align to right face
+target_loc = get_face_center(apron_body, 'right')
+waist_tie_R.location = target_loc
+
+# Offset
+offset_vec = Vector((0.025, 0, 0))
+apply_offset(waist_tie_R, offset_vec)
+
+# --- SECTION 4 – Create pockets ---
+# Left Pocket
+# Create primitive cuboid with size 0.300×0.300×0.002 m and name it pocket_L.
+# Rotate pocket_L so its +Z axis aligns +Z (world).
+# Align pocket_L.center to apron_body.front_face.center.
+# Then offset(-0.200, 0.100, 0.001).
+
+pocket_L = add_cube("pocket_L", (0.300, 0.300, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_white)
+
+# Align to front face
+target_loc = get_face_center(apron_body, 'front')
+pocket_L.location = target_loc
+
+# Offset
+offset_vec = Vector((-0.200, 0.100, 0.001))
+apply_offset(pocket_L, offset_vec)
+
+# Right Pocket
+# Create primitive cuboid with size 0.300×0.300×0.002 m and name it pocket_R.
+# Rotate pocket_R so its +Z axis aligns +Z (world).
+# Align pocket_R.center to apron_body.front_face.center.
+# Then offset(0.200, 0.100, 0.001).
+
+pocket_R = add_cube("pocket_R", (0.300, 0.300, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_white)
+
+# Align to front face
+target_loc = get_face_center(apron_body, 'front')
+pocket_R.location = target_loc
+
+# Offset
+offset_vec = Vector((0.200, 0.100, 0.001))
+apply_offset(pocket_R, offset_vec)
+
+# Select all created objects for visibility
+bpy.ops.object.select_all(action='DESELECT')
+for obj in [apron_body, neck_strap, waist_tie_L, waist_tie_R, pocket_L, pocket_R]:
+    obj.select_set(True)
+bpy.context.view_layer.objects.active = apron_body
+```

@@ -1,0 +1,251 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(name, shape, size, location, rotation_euler, material=None):
+    """Helper to add a primitive mesh object."""
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.5, depth=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'disc':
+        bpy.ops.mesh.primitive_circle_add(vertices=32, radius=0.5, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+        # Fill it if it's not already
+        if not obj.data.polygons:
+            bpy.ops.mesh.fill()
+    elif shape == 'cone':
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.5, radius2=0, depth=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'uvsphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=0.5, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    else:
+        return None
+
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    
+    # Apply scale to make it clean for modifiers
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    
+    if material:
+        if obj.data.materials:
+            obj.data.materials[0] = material
+        else:
+            obj.data.materials.append(material)
+            
+    return obj
+
+def align_face_to_face(obj_source, obj_target, axis='Z', offset=0):
+    """
+    Aligns the +axis face of obj_source to the +axis face of obj_target.
+    Assumes objects are axis-aligned.
+    """
+    # Get world matrix of target
+    target_mat = obj_target.matrix_world
+    source_mat = obj_source.matrix_world
+    
+    # Calculate the center of the target face in world space
+    # Assuming +Z face is at max Z
+    if axis == 'Z':
+        target_face_z = target_mat[3][2] + (obj_target.dimensions[2] / 2)
+        source_face_z = source_mat[3][2] + (obj_source.dimensions[2] / 2)
+        
+        # Move source so its face matches target's face
+        delta_z = target_face_z - source_face_z + offset
+        obj_source.location.z += delta_z
+        
+    elif axis == 'Y':
+        target_face_y = target_mat[3][1] + (obj_target.dimensions[1] / 2)
+        source_face_y = source_mat[3][1] + (obj_source.dimensions[1] / 2)
+        delta_y = target_face_y - source_face_y + offset
+        obj_source.location.y += delta_y
+        
+    elif axis == 'X':
+        target_face_x = target_mat[3][0] + (obj_target.dimensions[0] / 2)
+        source_face_x = source_mat[3][0] + (obj_source.dimensions[0] / 2)
+        delta_x = target_face_x - source_face_x + offset
+        obj_source.location.x += delta_x
+
+def align_center_to_center(obj_source, obj_target):
+    """Aligns the center of obj_source to the center of obj_target."""
+    target_loc = obj_target.location
+    source_loc = obj_source.location
+    obj_source.location = target_loc
+
+def apply_offset(obj, offset_vector):
+    """Applies an offset vector to the object's location."""
+    obj.location += offset_vector
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_black_plastic = make_material("mat_black_plastic", (0.10, 0.10, 0.10, 1.00))
+mat_grey_aluminum = make_material("mat_grey_aluminum", (0.70, 0.72, 0.75, 1.00))
+mat_screen_black = make_material("mat_screen_black", (0.05, 0.05, 0.05, 1.00))
+mat_screen_glow = make_material("mat_screen_glow", (0.20, 0.40, 0.80, 0.50))
+mat_white_keycap = make_material("mat_white_keycap", (0.95, 0.95, 0.95, 1.00))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Desk Surface ---
+# Create primitive cuboid with size 1.6×0.8×0.02 m and name it desk_surface.
+# Rotate desk_surface so its +Z axis aligns +Z (world).
+# Anchor desk_surface to world origin.
+# Then move by offset(0,0,0).
+
+desk_surface = add_primitive("desk_surface", "cube", (1.6, 0.8, 0.02), (0, 0, 0), (0, 0, 0), mat_grey_aluminum)
+# Anchor to world origin (already at 0,0,0)
+apply_offset(desk_surface, (0, 0, 0))
+
+# --- SECTION 2 – Create Desktop Monitor Assembly ---
+# Create primitive cuboid with size 0.62×0.42×0.01 m and name it monitor_bezel.
+# Rotate monitor_bezel so its +Z axis aligns +Z (world).
+# Anchor monitor_bezel to world origin.
+# Then move by offset(-0.3, 0.2, 0.025).
+
+monitor_bezel = add_primitive("monitor_bezel", "cube", (0.62, 0.42, 0.01), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+apply_offset(monitor_bezel, (-0.3, 0.2, 0.025))
+
+# Create primitive cuboid with size 0.58×0.38×0.005 m and name it monitor_display.
+# Rotate monitor_display so its +Z axis aligns +Z (world).
+# Align monitor_display.+Z_face to monitor_bezel.+Z_face.
+# Then move by offset(0,0,0.005).
+
+monitor_display = add_primitive("monitor_display", "cube", (0.58, 0.38, 0.005), (0, 0, 0), (0, 0, 0), mat_screen_black)
+align_face_to_face(monitor_display, monitor_bezel, axis='Z', offset=0)
+apply_offset(monitor_display, (0, 0, 0.005))
+
+# --- SECTION 3 – Create Desktop CPU Tower ---
+# Create primitive cuboid with size 0.50×0.25×0.50 m and name it desktop_cpu.
+# Rotate desktop_cpu so its +Z axis aligns +Z (world).
+# Anchor desktop_cpu to world origin.
+# Then move by offset(-0.3, -0.2, 0.25).
+
+desktop_cpu = add_primitive("desktop_cpu", "cube", (0.50, 0.25, 0.50), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+apply_offset(desktop_cpu, (-0.3, -0.2, 0.25))
+
+# Create primitive cuboid with size 0.15×0.15×0.005 m and name it cpu_fan.
+# Rotate cpu_fan so its +Z axis aligns +Z (world).
+# Align cpu_fan.+Z_face to desktop_cpu.+Z_face.
+# Then move by offset(0,0,0.255).
+
+cpu_fan = add_primitive("cpu_fan", "cube", (0.15, 0.15, 0.005), (0, 0, 0), (0, 0, 0), mat_grey_aluminum)
+align_face_to_face(cpu_fan, desktop_cpu, axis='Z', offset=0)
+apply_offset(cpu_fan, (0, 0, 0.255))
+
+# --- SECTION 4 – Create Desktop Keyboard ---
+# Create primitive cuboid with size 0.40×0.12×0.001 m and name it keyboard_keys.
+# Rotate keyboard_keys so its +Z axis aligns +Z (world).
+# Align keyboard_keys.+Z_face to desk_surface.+Z_face.
+# Then move by offset(-0.3, 0.05, 0.001).
+
+keyboard_keys = add_primitive("keyboard_keys", "cube", (0.40, 0.12, 0.001), (0, 0, 0), (0, 0, 0), mat_white_keycap)
+align_face_to_face(keyboard_keys, desk_surface, axis='Z', offset=0)
+apply_offset(keyboard_keys, (-0.3, 0.05, 0.001))
+
+# Create primitive cuboid with size 0.45×0.15×0.002 m and name it desktop_keyboard.
+# Rotate desktop_keyboard so its +Z axis aligns +Z (world).
+# Align desktop_keyboard.+Z_face to desk_surface.+Z_face.
+# Then move by offset(-0.3, 0.05, 0.001).
+
+desktop_keyboard = add_primitive("desktop_keyboard", "cube", (0.45, 0.15, 0.002), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+align_face_to_face(desktop_keyboard, desk_surface, axis='Z', offset=0)
+apply_offset(desktop_keyboard, (-0.3, 0.05, 0.001))
+
+# --- SECTION 5 – Create Desktop Mouse ---
+# Create primitive cuboid with size 0.05×0.04×0.001 m and name it mouse_button.
+# Rotate mouse_button so its +Z axis aligns +Z (world).
+# Align mouse_button.+Z_face to desk_surface.+Z_face.
+# Then move by offset(-0.1, 0.05, 0.002).
+
+mouse_button = add_primitive("mouse_button", "cube", (0.05, 0.04, 0.001), (0, 0, 0), (0, 0, 0), mat_white_keycap)
+align_face_to_face(mouse_button, desk_surface, axis='Z', offset=0)
+apply_offset(mouse_button, (-0.1, 0.05, 0.002))
+
+# Create primitive cuboid with size 0.10×0.06×0.004 m and name it desktop_mouse.
+# Rotate desktop_mouse so its +Z axis aligns +Z (world).
+# Align desktop_mouse.+Z_face to desk_surface.+Z_face.
+# Then move by offset(-0.1, 0.05, 0.002).
+
+desktop_mouse = add_primitive("desktop_mouse", "cube", (0.10, 0.06, 0.004), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+align_face_to_face(desktop_mouse, desk_surface, axis='Z', offset=0)
+apply_offset(desktop_mouse, (-0.1, 0.05, 0.002))
+
+# --- SECTION 6 – Create Laptop Base ---
+# Create primitive cuboid with size 0.35×0.25×0.005 m and name it laptop_base.
+# Rotate laptop_base so its +Z axis aligns +Z (world).
+# Align laptop_base.+Z_face to desk_surface.+Z_face.
+# Then move by offset(0.3, 0.0, 0.0025).
+
+laptop_base = add_primitive("laptop_base", "cube", (0.35, 0.25, 0.005), (0, 0, 0), (0, 0, 0), mat_grey_aluminum)
+align_face_to_face(laptop_base, desk_surface, axis='Z', offset=0)
+apply_offset(laptop_base, (0.3, 0.0, 0.0025))
+
+# Create primitive cuboid with size 0.10×0.06×0.001 m and name it laptop_trackpad.
+# Rotate laptop_trackpad so its +Z axis aligns +Z (world).
+# Align laptop_trackpad.+Z_face to laptop_base.+Z_face.
+# Then move by offset(0,0,0.0025).
+
+laptop_trackpad = add_primitive("laptop_trackpad", "cube", (0.10, 0.06, 0.001), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+align_face_to_face(laptop_trackpad, laptop_base, axis='Z', offset=0)
+apply_offset(laptop_trackpad, (0, 0, 0.0025))
+
+# --- SECTION 7 – Create Laptop Screen & Hinge ---
+# Create primitive cuboid with size 0.02×0.02×0.02 m and name it laptop_hinge.
+# Rotate laptop_hinge so its +Z axis aligns +Z (world).
+# Align laptop_hinge.+Z_face to laptop_base.+Z_face.
+# Then move by offset(0,0,0).
+
+laptop_hinge = add_primitive("laptop_hinge", "cube", (0.02, 0.02, 0.02), (0, 0, 0), (0, 0, 0), mat_grey_aluminum)
+align_face_to_face(laptop_hinge, laptop_base, axis='Z', offset=0)
+apply_offset(laptop_hinge, (0, 0, 0))
+
+# Create primitive cuboid with size 0.35×0.22×0.005 m and name it laptop_screen.
+# Rotate laptop_screen so its +Z axis aligns +Z (world).
+# Align laptop_screen.+Z_face to laptop_hinge.+Z_face.
+# Then move by offset(0,0,0.225).
+
+laptop_screen = add_primitive("laptop_screen", "cube", (0.35, 0.22, 0.005), (0, 0, 0), (0, 0, 0), mat_screen_black)
+align_face_to_face(laptop_screen, laptop_hinge, axis='Z', offset=0)
+apply_offset(laptop_screen, (0, 0, 0.225))
+```

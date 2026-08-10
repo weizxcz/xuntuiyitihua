@@ -1,0 +1,45 @@
+-- MATERIAL LIBRARY --
+car_body_paint | diffuse_color=(0.15,0.15,0.2,1.0)
+charging_port_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+chrome_trim | diffuse_color=(0.8,0.8,0.85,1.0)
+glass | diffuse_color=(0.2,0.3,0.4,0.3)
+rubber_tire | diffuse_color=(0.05,0.05,0.05,1.0)
+steel_rim | diffuse_color=(0.6,0.6,0.65,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| car_root | Composite of all car components | assembly_order=[body_group, wheel_group, charging_group] |
+
+Layer 1 – Primary Structure (Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_shell | Composite of main cabin + hood + trunk | assembly_order=[cabin_block, hood_block, trunk_block] |
+| cabin_block | Main passenger compartment | Align(XY) cabin_block.center to car_root.center; Align(Z) cabin_block.bottom_face to car_root.bottom_face; size=1.8×0.5×1.5 (W×H×L); mat=car_body_paint; create_method=primitive |
+| hood_block | Front sloping section | Align(XY) hood_block.center to cabin_block.front_face.center; Align(Z) hood_block.bottom_face to cabin_block.top_face; offset(0,0,0.25); size=1.8×0.15×0.8 (W×H×L); mat=car_body_paint; create_method=primitive |
+| trunk_block | Rear section | Align(XY) trunk_block.center to cabin_block.back_face.center; Align(Z) trunk_block.bottom_face to cabin_block.top_face; offset(0,0,-0.25); size=1.8×0.15×0.7 (W×H×L); mat=car_body_paint; create_method=primitive |
+| windshield | Front glass panel | Align(XY) windshield.center to hood_block.front_face.center; Align(Z) windshield.bottom_face to hood_block.top_face; offset(0,0,0.05); size=1.6×0.4×0.01 (W×H×T); mat=glass; create_method=primitive |
+| rear_window | Rear glass panel | Align(XY) rear_window.center to trunk_block.back_face.center; Align(Z) rear_window.bottom_face to trunk_block.top_face; offset(0,0,-0.05); size=1.6×0.4×0.01 (W×H×T); mat=glass; create_method=primitive |
+| side_windows | Side glass panels | Align(XY) side_windows.center to cabin_block.left_face.center; Align(Z) side_windows.bottom_face to cabin_block.bottom_face; offset(0,0,0.25); size=0.01×0.3×1.2 (T×H×L); mat=glass; create_method=primitive |
+| front_grille | Decorative front grille | Align(XY) front_grille.center to hood_block.front_face.center; Align(Z) front_grille.bottom_face to hood_block.bottom_face; offset(0,0,0.01); size=1.2×0.3×0.02 (W×H×T); mat=chrome_trim; create_method=primitive |
+
+Layer 2 – Wheel Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_fl | Front Left Wheel | Align(XY) wheel_fl.center to cabin_block.left_face.center; Align(Z) wheel_fl.bottom_face to car_root.bottom_face; offset(0.7,0,-0.2); size=0.3×0.2 (D×W); mat=rubber_tire; create_method=primitive |
+| wheel_fr | Front Right Wheel | Align(XY) wheel_fr.center to cabin_block.right_face.center; Align(Z) wheel_fr.bottom_face to car_root.bottom_face; offset(-0.7,0,-0.2); size=0.3×0.2 (D×W); mat=rubber_tire; create_method=primitive |
+| wheel_rl | Rear Left Wheel | Align(XY) wheel_rl.center to cabin_block.left_face.center; Align(Z) wheel_rl.bottom_face to car_root.bottom_face; offset(0.7,0,0.2); size=0.3×0.2 (D×W); mat=rubber_tire; create_method=primitive |
+| wheel_rr | Rear Right Wheel | Align(XY) wheel_rr.center to cabin_block.right_face.center; Align(Z) wheel_rr.bottom_face to car_root.bottom_face; offset(-0.7,0,0.2); size=0.3×0.2 (D×W); mat=rubber_tire; create_method=primitive |
+| rim_fl | Front Left Rim | Align(XY) rim_fl.center to wheel_fl.center; Align(Z) rim_fl.bottom_face to wheel_fl.bottom_face; offset(0,0,0.05); size=0.25×0.15 (D×W); mat=steel_rim; create_method=primitive |
+| rim_fr | Front Right Rim | Align(XY) rim_fr.center to wheel_fr.center; Align(Z) rim_fr.bottom_face to wheel_fr.bottom_face; offset(0,0,0.05); size=0.25×0.15 (D×W); mat=steel_rim; create_method=primitive |
+| rim_rl | Rear Left Rim | Align(XY) rim_rl.center to wheel_rl.center; Align(Z) rim_rl.bottom_face to wheel_rl.bottom_face; offset(0,0,0.05); size=0.25×0.15 (D×W); mat=steel_rim; create_method=primitive |
+| rim_rr | Rear Right Rim | Align(XY) rim_rr.center to wheel_rr.center; Align(Z) rim_rr.bottom_face to wheel_rr.bottom_face; offset(0,0,0.05); size=0.25×0.15 (D×W); mat=steel_rim; create_method=primitive |
+
+Layer 3 – Charging Port
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| charging_port | Charging port housing | Align(XY) charging_port.center to cabin_block.right_face.center; Align(Z) charging_port.bottom_face to cabin_block.bottom_face; offset(0,0,0.1); size=0.1×0.1×0.05 (W×H×T); mat=charging_port_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

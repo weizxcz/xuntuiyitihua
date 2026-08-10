@@ -1,0 +1,316 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix, Euler
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for col in bpy.data.collections:
+        bpy.data.collections.remove(col)
+
+def set_units_metres():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a simple Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive_cube(name, size, location, rotation_euler, mat=None):
+    """Add a cube and apply transforms."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if mat:
+        apply_material(obj, mat)
+    return obj
+
+def add_primitive_cylinder(name, radius, depth, location, rotation_euler, mat=None):
+    """Add a cylinder and apply transforms."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if mat:
+        apply_material(obj, mat)
+    return obj
+
+def add_primitive_sphere(name, radius, location, rotation_euler, mat=None):
+    """Add a UV Sphere and apply transforms."""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=radius, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if mat:
+        apply_material(obj, mat)
+    return obj
+
+def add_primitive_torus(name, major_radius, minor_radius, location, rotation_euler, mat=None):
+    """Add a Torus and apply transforms."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if mat:
+        apply_material(obj, mat)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """
+    Rotate object so its local axis aligns with target_vector.
+    axis_to_align: 'X', 'Y', or 'Z'
+    target_vector: Vector in world space
+    """
+    # Get current world rotation
+    current_mat = obj.matrix_world
+    
+    # Define local axis vectors
+    local_axes = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    # Get the current world direction of the axis to align
+    current_dir = (current_mat @ local_axes[axis_to_align]).normalized()
+    
+    # Calculate rotation matrix to align current_dir to target_vector
+    rot_mat = current_dir.rotation_difference(target_vector).to_matrix().to_4x4()
+    
+    # Apply rotation
+    obj.matrix_world = rot_mat @ current_mat
+
+def get_face_center(obj, face_type):
+    """
+    Get the world location of a specific face center of an object.
+    face_type: '+X_face', '-X_face', '+Y_face', '-Y_face', '+Z_face', '-Z_face'
+    """
+    # Ensure object is updated
+    obj.update_from_editmode()
+    
+    # Get bounding box corners in world space
+    corners = [
+        obj.matrix_world @ Vector((-1, -1, -1)),
+        obj.matrix_world @ Vector(( 1, -1, -1)),
+        obj.matrix_world @ Vector((-1,  1, -1)),
+        obj.matrix_world @ Vector(( 1,  1, -1)),
+        obj.matrix_world @ Vector((-1, -1,  1)),
+        obj.matrix_world @ Vector(( 1, -1,  1)),
+        obj.matrix_world @ Vector((-1,  1,  1)),
+        obj.matrix_world @ Vector(( 1,  1,  1)),
+    ]
+    
+    # Scale factors based on object size (half dimensions)
+    sx, sy, sz = obj.scale
+    
+    # Map face types to corner indices or averages
+    # Note: This is a simplified approximation for primitives. 
+    # For complex shapes, mesh analysis is needed. Assuming primitives here.
+    
+    # Center of object
+    center = obj.location
+    
+    # Vectors from center to face centers
+    # +X face center is at center + (sx, 0, 0)
+    face_centers = {
+        '+X_face': center + Vector((sx, 0, 0)),
+        '-X_face': center + Vector((-sx, 0, 0)),
+        '+Y_face': center + Vector((0, sy, 0)),
+        '-Y_face': center + Vector((0, -sy, 0)),
+        '+Z_face': center + Vector((0, 0, sz)),
+        '-Z_face': center + Vector((0, 0, -sz)),
+    }
+    
+    return face_centers.get(face_type, center)
+
+def place_object(obj, anchor_obj, anchor_face, offset):
+    """
+    Anchor object to a face of another object and apply offset.
+    1. Align object's local origin to the anchor face center.
+    2. Apply offset in the anchored object's local coordinate system? 
+       The prompt says "Offset is in reference local axes". 
+       Usually, this means after anchoring, we move the object by offset relative to its own orientation.
+    """
+    # 1. Calculate target world location
+    anchor_world_loc = get_face_center(anchor_obj, anchor_face)
+    
+    # 2. Set object location to anchor point
+    obj.location = anchor_world_loc
+    
+    # 3. Apply offset
+    # The offset is given in the object's local axes after orientation.
+    # Since we set location, we just add the offset vector to the location.
+    # However, if the offset is meant to be in the anchor's local space, it would be different.
+    # Prompt: "Offset is in reference local axes." -> Usually implies the object being placed's local axes.
+    obj.location += offset
+
+def main():
+    # BLOCK 0: Scene Reset & Units
+    clear_scene()
+    set_units_metres()
+
+    # BLOCK 1: Materials
+    mat_fabric_heavy_duty = make_material("fabric_heavy_duty", (0.15, 0.15, 0.2, 1))
+    mat_fabric_rough = make_material("fabric_rough", (0.2, 0.2, 0.25, 1))
+    mat_hard_shell = make_material("hard_shell", (0.1, 0.1, 0.15, 1))
+    mat_metal_aluminum = make_material("metal_aluminum", (0.8, 0.8, 0.85, 1))
+    mat_metal_dark = make_material("metal_dark", (0.2, 0.2, 0.25, 1))
+    mat_plastic_black = make_material("plastic_black", (0.05, 0.05, 0.05, 1))
+    mat_plastic_grey = make_material("plastic_grey", (0.4, 0.4, 0.45, 1))
+    mat_rubber_black = make_material("rubber_black", (0.08, 0.08, 0.08, 1))
+
+    # ==============================================================================
+    # BLOCK 2: Geometry Generation
+    # ==============================================================================
+
+    # --- SECTION 1 – Create Hard Shell Body ---
+    # Create primitive cuboid with size 0.75×0.5×0.3 m and name it hard_shell_body.
+    # Rotate hard_shell_body so its +Z axis aligns +Z (world).
+    # Anchor hard_shell_body to world origin.
+    # Then move by offset(0,0,0).
+    
+    h_shell = add_primitive_cube("hard_shell_body", (0.75, 0.5, 0.3), (0,0,0), (0,0,0), mat_hard_shell)
+    # Align +Z to +Z (already aligned by default cube creation if not rotated, but explicit step)
+    align_axis_to_vector(h_shell, 'Z', Vector((0,0,1)))
+    # Anchor to world origin
+    h_shell.location = Vector((0,0,0))
+    # Offset
+    h_shell.location += Vector((0,0,0))
+
+    # --- SECTION 2 – Create Handle Assembly ---
+    
+    # Create primitive cuboid with size 0.2×0.02×0.1 m and name it handle_base.
+    # Rotate handle_base so its +Z axis aligns +Z (world).
+    # Anchor handle_base to hard_shell_body.+Z_face.
+    # Then move by offset(0,0,0.15).
+    
+    h_base = add_primitive_cube("handle_base", (0.2, 0.02, 0.1), (0,0,0), (0,0,0), mat_plastic_grey)
+    align_axis_to_vector(h_base, 'Z', Vector((0,0,1)))
+    place_object(h_base, h_shell, '+Z_face', Vector((0,0,0.15)))
+
+    # Create primitive cylinder with size Ø0.01×0.6 m and name it handle_poles.
+    # Rotate handle_poles so its +Z axis aligns +Y (world).
+    # Anchor handle_poles to handle_base.+Z_face.
+    # Then move by offset(0,0,0.01).
+    
+    # Cylinder default is along Z. We want +Z aligned to +Y.
+    # Radius = 0.01/2 = 0.005. Depth = 0.6.
+    h_poles = add_primitive_cylinder("handle_poles", 0.005, 0.6, (0,0,0), (0,0,0), mat_metal_aluminum)
+    align_axis_to_vector(h_poles, 'Z', Vector((0,1,0)))
+    place_object(h_poles, h_base, '+Z_face', Vector((0,0,0.01)))
+
+    # Create primitive cylinder with size Ø0.03×0.15 m and name it handle_grip.
+    # Rotate handle_grip so its +Z axis aligns +Y (world).
+    # Anchor handle_grip to handle_poles.+Y_face.
+    # Then move by offset(0,0.3,0).
+    
+    # Radius = 0.03/2 = 0.015. Depth = 0.15.
+    h_grip = add_primitive_cylinder("handle_grip", 0.015, 0.15, (0,0,0), (0,0,0), mat_rubber_black)
+    align_axis_to_vector(h_grip, 'Z', Vector((0,1,0)))
+    place_object(h_grip, h_poles, '+Y_face', Vector((0,0.3,0)))
+
+    # --- SECTION 3 – Create Wheel Assembly (Hard Shell) ---
+    
+    # Helper for wheels
+    def create_wheel(name, offset):
+        # Sphere size Ø0.025 m -> Radius 0.0125
+        w = add_primitive_sphere(name, 0.0125, (0,0,0), (0,0,0), mat_rubber_black)
+        align_axis_to_vector(w, 'Z', Vector((0,0,1)))
+        place_object(w, h_shell, '-Z_face', offset)
+        return w
+
+    wheel_FL = create_wheel("wheel_FL", Vector((-0.35, -0.25, -0.15)))
+    wheel_FR = create_wheel("wheel_FR", Vector((0.35, -0.25, -0.15)))
+    wheel_BL = create_wheel("wheel_BL", Vector((-0.35, -0.25, 0.15)))
+    wheel_BR = create_wheel("wheel_BR", Vector((0.35, -0.25, 0.15)))
+
+    # --- SECTION 4 – Create Soft Body (Duffel Bag) ---
+    
+    # Create primitive cylinder with size Ø0.3×0.6 m and name it soft_body.
+    # Rotate soft_body so its +Z axis aligns +X (world).
+    # Anchor soft_body to world origin.
+    # Then move by offset(0,0,0).
+    
+    # Radius = 0.15. Depth = 0.6.
+    s_body = add_primitive_cylinder("soft_body", 0.15, 0.6, (0,0,0), (0,0,0), mat_fabric_heavy_duty)
+    align_axis_to_vector(s_body, 'Z', Vector((1,0,0)))
+    s_body.location = Vector((0,0,0))
+    s_body.location += Vector((0,0,0))
+
+    # --- SECTION 5 – Create Strap Assembly ---
+    
+    # Create primitive torus with size Ø0.02×0.4 m and name it strap_left.
+    # Rotate strap_left so its +Z axis aligns +Y (world).
+    # Anchor strap_left to soft_body.-X_face.
+    # Then move by offset(-0.15,0,0).
+    
+    # Torus: Major Radius = 0.4/2 = 0.2? Or is Ø0.02 the tube and 0.4 the major diameter?
+    # "size Ø0.02×0.4 m" usually implies Tube Diameter × Major Diameter.
+    # Let's assume Major Radius = 0.2, Minor Radius = 0.01.
+    s_left = add_primitive_torus("strap_left", 0.2, 0.01, (0,0,0), (0,0,0), mat_plastic_black)
+    align_axis_to_vector(s_left, 'Z', Vector((0,1,0)))
+    place_object(s_left, s_body, '-X_face', Vector((-0.15, 0, 0)))
+
+    # Create primitive torus with size Ø0.02×0.4 m and name it strap_right.
+    # Rotate strap_right so its +Z axis aligns +Y (world).
+    # Anchor strap_right to soft_body.+X_face.
+    # Then move by offset(0.15,0,0).
+    
+    s_right = add_primitive_torus("strap_right", 0.2, 0.01, (0,0,0), (0,0,0), mat_plastic_black)
+    align_axis_to_vector(s_right, 'Z', Vector((0,1,0)))
+    place_object(s_right, s_body, '+X_face', Vector((0.15, 0, 0)))
+
+    # --- SECTION 6 – Create Soft Wheel Assembly ---
+    
+    # Create primitive cylinder with size Ø0.02×0.05 m and name it wheel_soft_L.
+    # Rotate wheel_soft_L so its +Z axis aligns +Z (world).
+    # Anchor wheel_soft_L to soft_body.-Y_face.
+    # Then move by offset(-0.25,-0.15,0).
+    
+    # Radius = 0.01. Depth = 0.05.
+    ws_L = add_primitive_cylinder("wheel_soft_L", 0.01, 0.05, (0,0,0), (0,0,0), mat_rubber_black)
+    align_axis_to_vector(ws_L, 'Z', Vector((0,0,1)))
+    place_object(ws_L, s_body, '-Y_face', Vector((-0.25, -0.15, 0)))
+
+    # Create primitive cylinder with size Ø0.02×0.05 m and name it wheel_soft_R.
+    # Rotate wheel_soft_R so its +Z axis aligns +Z (world).
+    # Anchor wheel_soft_R to soft_body.-Y_face.
+    # Then move by offset(0.25,-0.15,0).
+    
+    ws_R = add_primitive_cylinder("wheel_soft_R", 0.01, 0.05, (0,0,0), (0,0,0), mat_rubber_black)
+    align_axis_to_vector(ws_R, 'Z', Vector((0,0,1)))
+    place_object(ws_R, s_body, '-Y_face', Vector((0.25, -0.15, 0)))
+
+    print("All stages complete.")
+
+if __name__ == "__main__":
+    main()
+```

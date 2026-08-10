@@ -1,0 +1,51 @@
+{
+  "id": "17f1ff24-6b54-4cc1-85d5-e7b37e6cb395",
+  "name": "Teapot",
+  "instruction": "Could you make a 3D model of a teapot? It should have a spout, a handle, and a lid.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a teapot.",
+        "The teapot has a distinct spout.",
+        "The teapot features a handle.",
+        "The teapot includes a lid."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The spout is proportionate to the body of the teapot.",
+        "The handle is appropriately sized for gripping.",
+        "The lid is proportionate to the teapot's opening."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The spout is positioned correctly for pouring.",
+        "The handle is placed for comfortable gripping.",
+        "The lid sits securely on top of the teapot.",
+        "The overall structure maintains balance."
+      ],
+      "Object distance and contact": [
+        "The spout does not overlap with the body of the teapot.",
+        "The handle is attached without gaps.",
+        "The lid fits snugly without leaving a gap."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The teapot includes all requested components: spout, handle, and lid.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

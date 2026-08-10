@@ -1,0 +1,1 @@
+Develop a 3D model of a medical bed. It should have adjustable head and foot sections, side rails for safety, and a simple control panel for adjusting the bed's position. The mattress should be flat and uniform.

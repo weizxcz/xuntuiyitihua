@@ -1,0 +1,137 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, metallic=0.0, roughness=0.5):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Metallic'].default_value = metallic
+    bsdf.inputs['Roughness'].default_value = roughness
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned to Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Ensure Z-up
+    return obj
+
+def add_torus(name, major_radius, minor_radius, segments=32, major_segments=64):
+    """Add a torus aligned to Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=major_segments, minor_segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Ensure Z-up
+    return obj
+
+def align_center_to_target(source_obj, target_obj):
+    """Align the center of source_obj to the center of target_obj."""
+    # Calculate offset
+    offset = target_obj.location - source_obj.location
+    source_obj.location += offset
+
+def rotate_obj_z(obj, angle_deg):
+    """Rotate object around Z axis by degrees."""
+    obj.rotation_euler.z = math.radians(angle_deg)
+
+def boolean_union(objects_to_union):
+    """Perform boolean union on a list of objects. The first object remains, others are subtracted/merged into it."""
+    if not objects_to_union:
+        return None
+    
+    # Select the base object (first one)
+    base_obj = objects_to_union[0]
+    bpy.context.view_layer.objects.active = base_obj
+    
+    # Add Boolean modifier to base object for each other object
+    for other_obj in objects_to_union[1:]:
+        mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other_obj
+        
+    # Apply the modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove the helper objects
+    for other_obj in objects_to_union[1:]:
+        bpy.data.objects.remove(other_obj, do_unlink=True)
+        
+    return base_obj
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, but delete usually handles it.
+    # Ensure we are in a clean state.
+    bpy.context.view_layer.update()
+
+# --- BLOCK 0: Scene Reset & Units ---
+clear_scene()
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- BLOCK 1: Materials ---
+mat_metal_silver = make_material("metal_silver", (0.76, 0.76, 0.76, 1.0), metallic=0.8, roughness=0.2)
+
+# --- BLOCK 2: Geometry Generation ---
+
+# SECTION 1 – Create outer ring
+# Outer Diameter 0.200 m -> Major Radius = 0.100 m
+# Tube Radius 0.005 m -> Minor Radius = 0.005 m
+outer_ring = add_torus("outer_ring", major_radius=0.100, minor_radius=0.005)
+# Align outer_ring.center to peace_symbol.center (peace_symbol doesn't exist yet, so we use a placeholder or just center at 0,0,0)
+# Since peace_symbol is the result of the union, and no explicit anchor for peace_symbol is given other than implicit center,
+# we assume the scene origin (0,0,0) is the reference for "peace_symbol.center" initially.
+# Align to (0,0,0) effectively means ensuring it's at origin.
+align_center_to_target(outer_ring, bpy.context.scene.objects.get("peace_symbol", bpy.context.scene.cursor)) 
+# If peace_symbol doesn't exist, we just ensure outer_ring is at 0,0,0.
+if outer_ring.location != Vector((0,0,0)):
+    outer_ring.location = Vector((0,0,0))
+
+# SECTION 2 – Create vertical stem
+# Diameter 0.010 m -> Radius 0.005 m
+# Height 0.100 m
+vertical_stem = add_cylinder("vertical_stem", radius=0.005, depth=0.100)
+# Align vertical_stem.center to outer_ring.center
+align_center_to_target(vertical_stem, outer_ring)
+
+# SECTION 3 – Create left diagonal
+# Diameter 0.010 m -> Radius 0.005 m
+# Length 0.0707 m
+left_diagonal = add_cylinder("left_diagonal", radius=0.005, depth=0.0707)
+# Align left_diagonal.center to outer_ring.center
+align_center_to_target(left_diagonal, outer_ring)
+# Rotate left_diagonal by axis:Z, 45°
+rotate_obj_z(left_diagonal, 45)
+
+# SECTION 4 – Create right diagonal
+# Diameter 0.010 m -> Radius 0.005 m
+# Length 0.0707 m
+right_diagonal = add_cylinder("right_diagonal", radius=0.005, depth=0.0707)
+# Align right_diagonal.center to outer_ring.center
+align_center_to_target(right_diagonal, outer_ring)
+# Rotate right_diagonal by axis:Z, -45°
+rotate_obj_z(right_diagonal, -45)
+
+# SECTION 5 – Assemble peace symbol
+# Boolean-union outer_ring, vertical_stem, left_diagonal, and right_diagonal
+assembly_objects = [outer_ring, vertical_stem, left_diagonal, right_diagonal]
+peace_symbol = boolean_union(assembly_objects)
+
+# Assign material to the final object
+if peace_symbol:
+    if peace_symbol.data.materials:
+        peace_symbol.data.materials[0] = mat_metal_silver
+    else:
+        peace_symbol.data.materials.append(mat_metal_silver)
+```

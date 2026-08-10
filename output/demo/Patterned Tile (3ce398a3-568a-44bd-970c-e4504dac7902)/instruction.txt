@@ -1,0 +1,5 @@
+Design a 3D model of a patterned tile. 
+
+1. The tile should be square, 12 inches by 12 inches.
+2. Include a repeating floral pattern.
+3. Ensure the pattern is raised slightly from the surface of the tile.

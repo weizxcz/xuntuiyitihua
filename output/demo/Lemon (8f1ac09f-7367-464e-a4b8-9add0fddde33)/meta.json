@@ -1,0 +1,49 @@
+{
+  "id": "8f1ac09f-7367-464e-a4b8-9add0fddde33",
+  "name": "Lemon",
+  "instruction": "Please create a 3D model of a lemon. The lemon should be oval-shaped with a slightly textured surface. Add a small stem at one end and a few leaves attached to it. Ensure the lemon has a natural appearance, with subtle variations in shape and size to give it a realistic look. Place it on a flat surface.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a lemon.",
+        "The lemon is oval-shaped.",
+        "The shape has subtle variations to enhance realism."
+      ],
+      "Color representation": [
+        "The lemon has a natural yellow color.",
+        "The stem is brown.",
+        "The leaves are green."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The stem is proportionate to lemon."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The lemon is positioned correctly on a flat surface.",
+        "The stem is attached to one end of the lemon.",
+        "The leaves are appropriately placed on the stem."
+      ],
+      "Object distance and contact": [
+        "The lemon is in direct contact with the flat surface.",
+        "The stem does not overlap with the lemon.",
+        "The leaves are securely attached to the stem."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The lemon has a natural appearance with variations in shape and size.",
+        "The model includes a stem and leaves as instructed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

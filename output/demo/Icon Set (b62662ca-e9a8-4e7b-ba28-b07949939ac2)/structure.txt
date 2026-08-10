@@ -1,0 +1,38 @@
+-- MATERIAL LIBRARY --
+calc_body | diffuse_color=(200,200,200,255)
+calc_screen | diffuse_color=(50,60,70,255)
+notepad_cover | diffuse_color=(30,30,30,255)
+notepad_paper | diffuse_color=(240,240,240,255)
+pen_barrel | diffuse_color=(255,215,0,255)
+pen_cap | diffuse_color=(255,215,0,255)
+pen_nib | diffuse_color=(192,192,192,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite assembly of three office tool icons | assembly_order=[calculator_group], [notepad_group], [pen_group] |
+
+Layer 1 – Primary Structure: Calculator
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| calculator_group | Composite of calculator_body + calculator_screen | assembly_order=[calculator_body], [calculator_screen] |
+| calculator_body | Rectangular prism 0.120×0.060×0.015 m (W×H×T) | pos=(0.15, 0, 0); orientation=axis:+Z; mat=calc_body; create_method=primitive |
+| calculator_screen | Rectangular prism 0.080×0.030×0.002 m (W×H×T) | Align(XY) calculator_screen.bottom_face to calculator_body.top_face; offset(0, 0, 0.0075); orientation=axis:+Z; mat=calc_screen; create_method=primitive |
+
+Layer 2 – Primary Structure: Notepad
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| notepad_group | Composite of notepad_cover + notepad_paper | assembly_order=[notepad_cover], [notepad_paper] |
+| notepad_cover | Rectangular prism 0.100×0.140×0.005 m (W×H×T) | pos=(-0.15, 0, 0); orientation=axis:+Z; mat=notepad_cover; create_method=primitive |
+| notepad_paper | Rectangular prism 0.095×0.135×0.004 m (W×H×T) | Align(XY) notepad_paper.bottom_face to notepad_cover.top_face; offset(0, 0, 0.0005); orientation=axis:+Z; mat=notepad_paper; create_method=primitive |
+
+Layer 3 – Primary Structure: Pen
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pen_group | Composite of pen_barrel + pen_cap + pen_nib | assembly_order=[pen_barrel], [pen_cap], [pen_nib] |
+| pen_barrel | Cylinder Ø0.010×0.100 m (D×H) | pos=(0, 0.20, 0); orientation=axis:+Z; mat=pen_barrel; create_method=primitive |
+| pen_cap | Cylinder Ø0.010×0.020 m (D×H) | Align(Z) pen_cap.bottom_face to pen_barrel.top_face; offset(0, 0, 0.010); orientation=axis:+Z; mat=pen_cap; create_method=primitive |
+| pen_nib | Cone Ø0.004×0.010 m (Base D×H) | Align(Z) pen_nib.bottom_face to pen_barrel.bottom_face; offset(0, 0, -0.005); orientation=axis:-Z; mat=pen_nib; create_method=primitive |
+# ----------  END_GRAPH  ----------

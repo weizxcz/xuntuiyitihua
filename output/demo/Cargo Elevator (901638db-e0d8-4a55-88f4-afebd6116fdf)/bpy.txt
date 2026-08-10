@@ -1,0 +1,603 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix, Euler
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects to start from a clean scene."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure we have a default cube or empty if needed, but usually clean is fine
+    # Re-select active object if any remains (none in clean scene)
+    bpy.context.view_layer.objects.active = None
+
+def set_units_meters():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    # Set roughness/metallic defaults if needed, but prompt only specifies diffuse
+    return mat
+
+def add_primitive(name, shape, size=None, radius=None, height=None, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive object and return it."""
+    bpy.ops.object.select_all(action='DESELECT')
+    obj = None
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=size[0], location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[1], size[2], size[3]) # X, Y, Z
+    elif shape == 'cylinder':
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location)
+        obj = bpy.context.active_object
+    elif shape == 'disc':
+        bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='NGON', location=location)
+        obj = bpy.context.active_object
+        obj.data.name = name + "_mesh"
+        obj.name = name
+    elif shape == 'cone':
+        bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=height, location=location)
+        obj = bpy.context.active_object
+    elif shape == 'sphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+        obj = bpy.context.active_object
+    
+    if obj:
+        obj.name = name
+        obj.rotation_euler = rotation
+        # Ensure it's in the correct layer/group
+        bpy.context.view_layer.objects.active = obj
+        return obj
+    return None
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Align an object's local axis to a target world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.copy()
+    
+    # Define basis vectors
+    if axis_to_align == 'X':
+        basis = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        basis = Vector((0, 1, 0))
+    elif axis_to_align == 'Z':
+        basis = Vector((0, 0, 1))
+    else:
+        return
+
+    # Calculate rotation matrix to align basis to target
+    # We need to align basis to target_vector
+    rot_mat = basis.rotation_difference(target_vector).to_matrix().to_4x4()
+    
+    # Convert to Euler and apply
+    # Note: This is a simplified alignment. For complex cases, quaternions are better.
+    # Here we assume simple axis alignment.
+    new_rot = rot_mat.to_euler()
+    obj.rotation_euler = new_rot
+
+def get_face_normal(obj, face_type):
+    """
+    Returns the world direction vector for a specific face of an object.
+    face_type: 'XY_face' (Top/Bottom), 'XZ_face' (Front/Back), 'YZ_face' (Left/Right)
+    Note: This assumes the object is axis-aligned or we are defining faces relative to local space transformed to world.
+    For simplicity in this script, we assume standard orientations where:
+    - XY_face normal is Z
+    - XZ_face normal is Y
+    - YZ_face normal is X
+    """
+    # Since we explicitly rotate objects to align axes, we can infer normals based on local axes in world space
+    # However, 'face' usually implies the geometric face.
+    # Let's use the object's matrix to transform local face normals to world space.
+    
+    # Local normals
+    if face_type == 'XY_face':
+        # Top face normal is +Z, Bottom is -Z. Usually 'align to face' implies the plane normal.
+        # Let's assume we want the normal of the face.
+        local_normal = Vector((0, 0, 1)) 
+    elif face_type == 'XZ_face':
+        local_normal = Vector((0, 1, 0))
+    elif face_type == 'YZ_face':
+        local_normal = Vector((1, 0, 0))
+    else:
+        return Vector((0,0,0))
+        
+    # Transform to world space
+    world_normal = local_normal @ obj.matrix_world.to_3x3()
+    return world_normal.normalized()
+
+def get_face_center(obj, face_type):
+    """Get the world location of the center of a specific face."""
+    # Get local center of the face
+    # For a cube/cylinder/cone, the face center is at the edge of the bounding box in local space
+    # We need to know the dimensions.
+    # This is tricky for generic objects. 
+    # Alternative: Use the object's center and offset by half-dimensions.
+    
+    # Let's approximate by getting the bounding box or using known primitives.
+    # Since we create primitives, we can store their dimensions or calculate them.
+    # For robustness, let's use the object's matrix_world and local extents.
+    
+    # Local extents
+    if obj.type == 'MESH':
+        # Get bounding box
+        bbox = [obj.matrix_world @ v for v in obj.bound_box]
+        # Find min/max for each axis
+        mins = [min(v[i] for v in bbox) for i in range(3)]
+        maxs = [max(v[i] for v in bbox) for i in range(3)]
+        
+        # Define face centers in world space
+        if face_type == 'XY_face':
+            # Top face (max Z)
+            return Vector([(mins[0]+maxs[0])/2, (mins[1]+maxs[1])/2, maxs[2]])
+        elif face_type == 'XZ_face':
+            # Front face (max Y)
+            return Vector([(mins[0]+maxs[0])/2, maxs[1], (mins[2]+maxs[2])/2])
+        elif face_type == 'YZ_face':
+            # Right face (max X)
+            return Vector([maxs[0], (mins[1]+maxs[1])/2, (mins[2]+maxs[2])/2])
+            
+    return obj.matrix_world.to_translation()
+
+def get_object_center(obj):
+    """Get the world center of an object."""
+    return obj.matrix_world.to_translation()
+
+def align_face_to_face(obj_source, source_face, obj_target, target_face):
+    """
+    Aligns the source object's face to the target object's face.
+    This involves:
+    1. Rotating source so its face normal matches target face normal.
+    2. Positioning source so its face center matches target face center.
+    """
+    # 1. Rotation
+    # Get normals
+    # Note: 'align to face' usually means the planes are parallel and normals are aligned.
+    # We need to determine if we want +normal or -normal. 
+    # Standard convention: Align the face's outward normal.
+    
+    # Get target normal
+    target_normal = get_face_normal(obj_target, target_face)
+    
+    # Get source normal (local)
+    if source_face == 'XY_face':
+        src_local = Vector((0,0,1))
+    elif source_face == 'XZ_face':
+        src_local = Vector((0,1,0))
+    elif source_face == 'YZ_face':
+        src_local = Vector((1,0,0))
+    else:
+        src_local = Vector((0,0,1))
+        
+    # We want to rotate src_local to align with target_normal
+    # But we must preserve other axes if possible.
+    # Simple approach: Align Z to target_normal, then adjust X/Y.
+    
+    # Let's use a simpler method: 
+    # Align the object's local Z to the target normal if source is XY_face (normal Z)
+    # Align local Y to target normal if source is XZ_face (normal Y)
+    # Align local X to target normal if source is YZ_face (normal X)
+    
+    rot_quat = src_local.rotation_difference(target_normal)
+    
+    # Apply rotation relative to current orientation? 
+    # The prompt says "Rotate ... so its +Z axis aligns +Z". 
+    # Then "Align ... face to ... face".
+    # This implies we set a base rotation first, then adjust for alignment.
+    
+    # Let's apply the rotation difference to the current rotation
+    current_rot_quat = obj_source.rotation_euler.to_quaternion()
+    new_rot_quat = rot_quat * current_rot_quat
+    obj_source.rotation_euler = new_rot_quat.to_euler()
+    
+    # 2. Positioning
+    # Move source so its face center matches target face center
+    target_center = get_face_center(obj_target, target_face)
+    source_center = get_face_center(obj_source, source_face)
+    
+    # Calculate offset
+    offset = target_center - source_center
+    obj_source.location += offset
+
+def align_to_center(obj_source, obj_target):
+    """Align center of source to center of target."""
+    target_center = get_object_center(obj_target)
+    source_center = get_object_center(obj_source)
+    obj_source.location += (target_center - source_center)
+
+def apply_offset(obj, offset_xyz):
+    """Apply an offset to the object's location in world space."""
+    obj.location += Vector(offset_xyz)
+
+def assign_material(obj, mat_name):
+    """Assign a material to an object."""
+    if mat_name in bpy.data.materials:
+        mat = bpy.data.materials[mat_name]
+        if obj.data.materials:
+            obj.data.materials[0] = mat
+        else:
+            obj.data.materials.append(mat)
+
+# ==============================================================================
+# MAIN SCRIPT
+# ==============================================================================
+
+def main():
+    # Block 0: Scene Reset & Units
+    clear_scene()
+    set_units_meters()
+
+    # Block 1: Materials
+    mat_concrete = make_material("mat_concrete", (0.7, 0.7, 0.7, 1.0))
+    mat_steel_dark = make_material("mat_steel_dark", (0.2, 0.2, 0.2, 1.0))
+    mat_steel_light = make_material("mat_steel_light", (0.8, 0.8, 0.8, 1.0))
+    mat_steel_railing = make_material("mat_steel_railing", (0.6, 0.6, 0.6, 1.0))
+    mat_copper = make_material("mat_copper", (0.9, 0.5, 0.2, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create platform base ---
+    # Create primitive cuboid with size 2.44×0.10×3.05 m and name it platform_base.
+    platform_base = add_primitive("platform_base", "cube", size=(2.44, 0.10, 3.05), location=(0,0,0), rotation=(0,0,0))
+    assign_material(platform_base, "mat_concrete")
+    
+    # Rotate platform_base so its +Z axis aligns +Z (world).
+    # Already aligned by default, but explicit step:
+    platform_base.rotation_euler = (0, 0, 0)
+    
+    # Align platform_base.XY_face to elevator_root.XY_face.
+    # Note: elevator_root does not exist yet. 
+    # The prompt says "Align platform_base.XY_face to elevator_root.XY_face".
+    # Since elevator_root is not created, this might be a reference to a global origin or a missing step.
+    # However, looking at the context, "elevator_root" is likely the global origin (0,0,0) or a placeholder.
+    # If elevator_root doesn't exist, we can't align to it. 
+    # Let's assume "elevator_root" is a conceptual anchor at (0,0,0) with standard orientation.
+    # Or, perhaps it's a typo and should be aligned to world origin.
+    # Given "Align ... to ...", if the target doesn't exist, we skip or assume world origin.
+    # Let's assume world origin (0,0,0) with standard orientation.
+    # Since platform_base is already at (0,0,0) and aligned, this step effectively does nothing if we assume world origin.
+    # If elevator_root is meant to be created later, this is an error in the prompt sequence.
+    # I will assume it means "Align to World Origin XY Face".
+    # Since it's already at 0,0,0 and aligned, no change needed.
+    
+    # Then move by offset(0,0,-1.5).
+    apply_offset(platform_base, (0, 0, -1.5))
+
+    # --- SECTION 2 – Create guide rails ---
+    
+    # guide_rail_L
+    guide_rail_L = add_primitive("guide_rail_L", "cylinder", radius=0.025, height=4.0, location=(0,0,0), rotation=(0,0,0))
+    assign_material(guide_rail_L, "mat_steel_dark")
+    guide_rail_L.rotation_euler = (0, 0, 0) # +Z aligns +Z
+    
+    # Align guide_rail_L.XZ_face to platform_base.left_face.
+    # Left face of platform_base is -X face (YZ plane at min X).
+    # Wait, "XZ_face" usually means the face in the XZ plane, which has a normal along Y.
+    # But "left_face" of a box is typically the face with normal -X.
+    # Let's re-read: "Align guide_rail_L.XZ_face to platform_base.left_face".
+    # This is ambiguous. Does it mean align the *face* of the rail to the *face* of the base?
+    # If rail is a cylinder, it doesn't have an "XZ_face".
+    # However, the prompt says "Align guide_rail_L.XZ_face".
+    # This implies we treat the cylinder as having a face.
+    # Maybe it means align the *side* of the cylinder?
+    # Or maybe it means align the *center* of the rail to the *face* of the base?
+    # "Align A.B to C.D" usually means Face A aligns with Face C.
+    # If A is a cylinder, it has no flat faces.
+    # Let's assume "XZ_face" refers to the side of the cylinder that lies in the XZ plane? No, that's not a face.
+    # Let's assume the prompt implies: Align the *position* of the rail to the *face* of the base.
+    # And "XZ_face" is a typo for "center" or "side"?
+    # Or, perhaps the rail is treated as a box for alignment purposes?
+    # Let's look at the next step: "Align guide_rail_R.XZ_face to platform_base.right_face".
+    # Left and Right faces of the base are at X = -1.22 and X = 1.22.
+    # If we align the rail's "XZ_face" (which might mean its side facing X?) to the base's left face...
+    # Let's assume the intention is to place the rail *on* the face.
+    # Cylinder center should be at the face center? Or the cylinder surface touching the face?
+    # "Align ... face to ... face" usually means the two faces are coplanar.
+    # If the rail is a cylinder, it has no flat face.
+    # Hypothesis: The prompt treats the cylinder as having a "face" defined by its bounding box or a specific side.
+    # Or, more likely, "XZ_face" is a mistake and it means "center" or "side".
+    # Given "left_face" of platform_base is at X = -1.22.
+    # If we align the rail's "left" side to the base's "left" face...
+    # Let's assume we want the rail to be *outside* the platform, attached to the face.
+    # Center of left face: (-1.22, 0, 0) [assuming base center is 0,0,0 before offset]
+    # Wait, platform_base was moved by (0,0,-1.5). So its center is (0,0,-1.5).
+    # Left face center: (-1.22, 0, -1.5).
+    # If we align the rail's "XZ_face" (let's assume this means the face with normal -X, i.e., the left side of the rail's bounding box) to the base's left face...
+    # Then the rail's left side is at X = -1.22.
+    # Rail radius is 0.025. So rail center X = -1.22 + 0.025 = -1.195.
+    # But the prompt says "Align ... face to ... face".
+    # If we align the *center* of the rail to the *face* of the base, the rail would be half inside.
+    # Let's assume "Align A.face to B.face" means the faces are coincident.
+    # For a cylinder, let's assume we align its *axis* to be parallel to the face normal? No, it's already Z.
+    # Let's assume we align the *center* of the rail to the *center* of the face.
+    # This is the most common interpretation for "align to face" when the object is a pillar/rail.
+    # So, Rail Center = Face Center.
+    
+    # Let's implement: Align Rail Center to Platform Base Face Center.
+    
+    # guide_rail_L
+    # Align to platform_base.left_face
+    # Left face is at min X.
+    # Center of left face:
+    # Platform base size: 2.44 (X), 0.10 (Y), 3.05 (Z).
+    # Center: (0, 0, -1.5).
+    # Left face X: -1.22. Y: 0. Z: -1.5.
+    # Center of left face: (-1.22, 0, -1.5).
+    
+    # Align guide_rail_L center to (-1.22, 0, -1.5)
+    # But wait, the prompt says "Align guide_rail_L.XZ_face".
+    # If we interpret "XZ_face" as the face in the XZ plane (normal Y), that doesn't make sense for "left".
+    # Left face is YZ plane (normal X).
+    # Maybe "XZ_face" means the face *of the rail* that is in the XZ plane?
+    # A cylinder doesn't have such a face.
+    # Let's assume it's a typo for "center" or "side".
+    # I will align the rail's center to the platform base's face center.
+    
+    # Helper to get face center
+    def get_face_center_world(obj, face):
+        # face: 'left', 'right', 'front', 'back', 'top', 'bottom'
+        # 'left' = -X, 'right' = +X, 'front' = +Y, 'back' = -Y, 'top' = +Z, 'bottom' = -Z
+        # Note: The prompt uses 'XY_face', 'XZ_face', 'YZ_face'.
+        # XY_face normal is Z. XZ_face normal is Y. YZ_face normal is X.
+        # 'left_face' of platform_base is the face with normal -X. This is a YZ_face.
+        # 'right_face' is +X (YZ_face).
+        # 'front_face' is +Y (XZ_face).
+        # 'back_face' is -Y (XZ_face).
+        
+        # So "Align guide_rail_L.XZ_face to platform_base.left_face" is contradictory if taken literally as face types.
+        # Left face is YZ. Rail XZ face?
+        # Maybe it means: Align the rail's *position* such that its *side* (defined by XZ projection?) touches the left face?
+        # Let's stick to: Align Rail Center to Platform Face Center.
+        
+        if face == 'left':
+            # Min X
+            mins = [v[0] for v in [obj.matrix_world @ v for v in obj.bound_box]]
+            maxs = [v[0] for v in [obj.matrix_world @ v for v in obj.bound_box]]
+            # Actually, let's just use the known dimensions and center
+            # This is getting complex. Let's use the helper get_face_center defined earlier.
+            # But that helper assumed standard names.
+            # Let's map:
+            # left -> YZ_face (normal -X)
+            # right -> YZ_face (normal +X)
+            # front -> XZ_face (normal +Y)
+            # back -> XZ_face (normal -Y)
+            # top -> XY_face (normal +Z)
+            # bottom -> XY_face (normal -Z)
+            
+            if face == 'left':
+                return get_face_center(obj, 'YZ_face') # This returns max X. We want min X.
+            # Let's fix get_face_center to handle min/max
+            pass
+
+    # Redefine get_face_center to be more robust
+    def get_face_center_world(obj, face_name):
+        # face_name: 'left', 'right', 'front', 'back', 'top', 'bottom'
+        bbox = [obj.matrix_world @ v for v in obj.bound_box]
+        mins = [min(v[i] for v in bbox) for i in range(3)]
+        maxs = [max(v[i] for v in bbox) for i in range(3)]
+        
+        cx = (mins[0] + maxs[0]) / 2
+        cy = (mins[1] + maxs[1]) / 2
+        cz = (mins[2] + maxs[2]) / 2
+        
+        if face_name == 'left':
+            return Vector((mins[0], cy, cz))
+        elif face_name == 'right':
+            return Vector((maxs[0], cy, cz))
+        elif face_name == 'front':
+            return Vector((cx, maxs[1], cz))
+        elif face_name == 'back':
+            return Vector((cx, mins[1], cz))
+        elif face_name == 'top':
+            return Vector((cx, cy, maxs[2]))
+        elif face_name == 'bottom':
+            return Vector((cx, cy, mins[2]))
+        return obj.matrix_world.to_translation()
+
+    # Re-do Section 2 with this helper
+    
+    # guide_rail_L
+    # Align to platform_base.left_face
+    target_loc = get_face_center_world(platform_base, 'left')
+    # Align rail center to target_loc
+    guide_rail_L.location = target_loc
+    
+    # Then move by offset(0,0,1.95)
+    apply_offset(guide_rail_L, (0, 0, 1.95))
+    
+    # guide_rail_R
+    guide_rail_R = add_primitive("guide_rail_R", "cylinder", radius=0.025, height=4.0, location=(0,0,0), rotation=(0,0,0))
+    assign_material(guide_rail_R, "mat_steel_dark")
+    guide_rail_R.rotation_euler = (0, 0, 0)
+    
+    target_loc = get_face_center_world(platform_base, 'right')
+    guide_rail_R.location = target_loc
+    apply_offset(guide_rail_R, (0, 0, 1.95))
+    
+    # guide_rail_F
+    guide_rail_F = add_primitive("guide_rail_F", "cylinder", radius=0.025, height=4.0, location=(0,0,0), rotation=(0,0,0))
+    assign_material(guide_rail_F, "mat_steel_dark")
+    guide_rail_F.rotation_euler = (0, 0, 0)
+    
+    target_loc = get_face_center_world(platform_base, 'front')
+    guide_rail_F.location = target_loc
+    apply_offset(guide_rail_F, (0, 0, 1.95))
+    
+    # guide_rail_B
+    guide_rail_B = add_primitive("guide_rail_B", "cylinder", radius=0.025, height=4.0, location=(0,0,0), rotation=(0,0,0))
+    assign_material(guide_rail_B, "mat_steel_dark")
+    guide_rail_B.rotation_euler = (0, 0, 0)
+    
+    target_loc = get_face_center_world(platform_base, 'back')
+    guide_rail_B.location = target_loc
+    apply_offset(guide_rail_B, (0, 0, 1.95))
+
+    # --- SECTION 3 – Create railing system ---
+    
+    # railing_L
+    # Create primitive cylinder with radius 0.02 m and height 2.44 m and name it railing_L.
+    railing_L = add_primitive("railing_L", "cylinder", radius=0.02, height=2.44, location=(0,0,0), rotation=(0,0,0))
+    assign_material(railing_L, "mat_steel_railing")
+    
+    # Rotate railing_L so its +Z axis aligns +X (world).
+    # Align Z to X.
+    # Current Z is (0,0,1). Target X is (1,0,0).
+    # Rotation: -90 deg around Y.
+    railing_L.rotation_euler = (0, math.radians(-90), 0)
+    
+    # Align railing_L.XZ_face to guide_rail_L.center.
+    # "XZ_face" of a cylinder? Again, ambiguous.
+    # "Align ... to ... center".
+    # This likely means: Align the railing's *position* to the guide rail's *center*.
+    # Or align the railing's *face* to the guide rail's *center*?
+    # If it's a railing, it's likely a vertical post.
+    # But we rotated it so Z aligns X. So it's horizontal.
+    # Height is 2.44. So it extends along X.
+    # "Align railing_L.XZ_face to guide_rail_L.center".
+    # If railing is along X, its "XZ_face" might be the side facing Y?
+    # Let's assume we align the railing's *center* to the guide rail's *center*.
+    
+    target_loc = get_object_center(guide_rail_L)
+    railing_L.location = target_loc
+    
+    # Then move by offset(0,0,0.5)
+    apply_offset(railing_L, (0, 0, 0.5))
+    
+    # railing_R
+    railing_R = add_primitive("railing_R", "cylinder", radius=0.02, height=3.05, location=(0,0,0), rotation=(0,0,0))
+    assign_material(railing_R, "mat_steel_railing")
+    
+    # Rotate railing_R so its +Z axis aligns +Y (world).
+    # Align Z to Y.
+    # Rotation: 90 deg around X.
+    railing_R.rotation_euler = (math.radians(90), 0, 0)
+    
+    # Align railing_R.XZ_face to guide_rail_R.center.
+    target_loc = get_object_center(guide_rail_R)
+    railing_R.location = target_loc
+    
+    # Then move by offset(0,0,0.5)
+    apply_offset(railing_R, (0, 0, 0.5))
+    
+    # railing_F
+    railing_F = add_primitive("railing_F", "cylinder", radius=0.02, height=2.44, location=(0,0,0), rotation=(0,0,0))
+    assign_material(railing_F, "mat_steel_railing")
+    
+    # Rotate railing_F so its +Z axis aligns +X (world).
+    railing_F.rotation_euler = (0, math.radians(-90), 0)
+    
+    # Align railing_F.YZ_face to guide_rail_F.center.
+    target_loc = get_object_center(guide_rail_F)
+    railing_F.location = target_loc
+    
+    # Then move by offset(0,0,0.5)
+    apply_offset(railing_F, (0, 0, 0.5))
+    
+    # railing_B
+    railing_B = add_primitive("railing_B", "cylinder", radius=0.02, height=2.44, location=(0,0,0), rotation=(0,0,0))
+    assign_material(railing_B, "mat_steel_railing")
+    
+    # Rotate railing_B so its +Z axis aligns +X (world).
+    railing_B.rotation_euler = (0, math.radians(-90), 0)
+    
+    # Align railing_B.YZ_face to guide_rail_B.center.
+    target_loc = get_object_center(guide_rail_B)
+    railing_B.location = target_loc
+    
+    # Then move by offset(0,0,0.5)
+    apply_offset(railing_B, (0, 0, 0.5))
+
+    # --- SECTION 4 – Create gate and control system ---
+    
+    # gate_panel
+    gate_panel = add_primitive("gate_panel", "cube", size=(2.44, 0.05, 2.0), location=(0,0,0), rotation=(0,0,0))
+    assign_material(gate_panel, "mat_steel_dark")
+    gate_panel.rotation_euler = (0, 0, 0)
+    
+    # Align gate_panel.XZ_face to railing_B.center.
+    # Railing_B center is at guide_rail_B center + (0,0,0.5).
+    target_loc = get_object_center(railing_B)
+    gate_panel.location = target_loc
+    
+    # Then move by offset(0,0,1.0)
+    apply_offset(gate_panel, (0, 0, 1.0))
+    
+    # gate_hinge
+    gate_hinge = add_primitive("gate_hinge", "cylinder", radius=0.05, height=0.1, location=(0,0,0), rotation=(0,0,0))
+    assign_material(gate_hinge, "mat_steel_dark")
+    
+    # Rotate gate_hinge so its +Z axis aligns +X (world).
+    gate_hinge.rotation_euler = (0, math.radians(-90), 0)
+    
+    # Align gate_hinge.XZ_face to gate_panel.left_face.
+    # Left face of gate_panel is -X face.
+    target_loc = get_face_center_world(gate_panel, 'left')
+    gate_hinge.location = target_loc
+    
+    # Then move by offset(-0.025,0,0)
+    apply_offset(gate_hinge, (-0.025, 0, 0))
+    
+    # control_panel
+    control_panel = add_primitive("control_panel", "cube", size=(0.1, 0.4, 0.3), location=(0,0,0), rotation=(0,0,0))
+    assign_material(control_panel, "mat_steel_light")
+    control_panel.rotation_euler = (0, 0, 0)
+    
+    # Align control_panel.YZ_face to gate_panel.right_face.
+    # Right face of gate_panel is +X face.
+    target_loc = get_face_center_world(gate_panel, 'right')
+    control_panel.location = target_loc
+    
+    # Then move by offset(0.15,0,1.2)
+    apply_offset(control_panel, (0.15, 0, 1.2))
+    
+    # btn_up
+    btn_up = add_primitive("btn_up", "cylinder", radius=0.02, height=0.01, location=(0,0,0), rotation=(0,0,0))
+    assign_material(btn_up, "mat_copper")
+    btn_up.rotation_euler = (0, 0, 0)
+    
+    # Align btn_up.YZ_face to control_panel.front_face.
+    # Front face of control_panel is +Y face.
+    target_loc = get_face_center_world(control_panel, 'front')
+    btn_up.location = target_loc
+    
+    # Then move by offset(0,0.1,0.05)
+    apply_offset(btn_up, (0, 0.1, 0.05))
+    
+    # btn_down
+    btn_down = add_primitive("btn_down", "cylinder", radius=0.02, height=0.01, location=(0,0,0), rotation=(0,0,0))
+    assign_material(btn_down, "mat_copper")
+    btn_down.rotation_euler = (0, 0, 0)
+    
+    # Align btn_down.YZ_face to control_panel.front_face.
+    target_loc = get_face_center_world(control_panel, 'front')
+    btn_down.location = target_loc
+    
+    # Then move by offset(0,-0.1,0.05)
+    apply_offset(btn_down, (0, -0.1, 0.05))
+    
+    # btn_emergency
+    btn_emergency = add_primitive("btn_emergency", "cylinder", radius=0.03, height=0.01, location=(0,0,0), rotation=(0,0,0))
+    assign_material(btn_emergency, "mat_copper")
+    btn_emergency.rotation_euler = (0, 0, 0)
+    
+    # Align btn_emergency.YZ_face to control_panel.front_face.
+    target_loc = get_face_center_world(control_panel, 'front')
+    btn_emergency.location = target_loc
+    
+    # Then move by offset(0,-0.15,0.05)
+    apply_offset(btn_emergency, (0, -0.15, 0.05))
+
+    # --- SECTION 5 – Create pulley system ---
+    
+    # pulley_beam
+    pulley_beam = add_primitive("pulley_beam", "cube", size=(2.5, 0.2, 0.2), location=(0,0,0), rotation=(0,0,

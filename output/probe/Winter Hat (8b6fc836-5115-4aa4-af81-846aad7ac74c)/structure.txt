@@ -1,0 +1,29 @@
+-- MATERIAL LIBRARY --
+fabric_main | diffuse_color=(0.85,0.15,0.15,1.0)
+fur_pom | diffuse_color=(0.95,0.95,0.90,1.0)
+fur_trim | diffuse_color=(0.95,0.95,0.90,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hat_root | Composite of hat_body + pom_pom + ear_flaps | assembly_order=[hat_body], [ear_flaps], [pom_pom] |
+
+Layer 1 – Primary Structure (Hat Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hat_body | Cylinder Ø0.220×0.200 m (Radius R=0.110 m, Height H=0.200 m) | pos=(0,0,0); orientation=axis:+Z; mat=fabric_main; create_method=primitive |
+
+Layer 2 – Ear Flaps
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| flap_L | Cylinder Ø0.080×0.150 m (Radius R=0.040 m, Length L=0.150 m) | Align(XY) flap_L.center to hat_body.side_at(180°); offset(0,0,-0.050); orientation=axis:+Y; mat=fabric_main; create_method=primitive |
+| flap_R | Cylinder Ø0.080×0.150 m (Radius R=0.040 m, Length L=0.150 m) | Align(XY) flap_R.center to hat_body.side_at(0°); offset(0,0,-0.050); orientation=axis:+Y; mat=fabric_main; create_method=primitive |
+
+Layer 3 – Decorative Elements (Pom-Pom & Trim)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pom_pom | Sphere Ø0.100 m (Radius R=0.050 m) | Align(Z) pom_pom.bottom to hat_body.top; offset(0,0,0.020); orientation=axis:+Z; mat=fur_pom; create_method=primitive |
+| trim_ring | Torus R=0.110 m, r=0.015 m | Align(Z) trim_ring.center to hat_body.top; offset(0,0,0.001); orientation=axis:+Z; mat=fur_trim; create_method=primitive |
+# ----------  END_GRAPH  ----------

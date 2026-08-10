@@ -1,0 +1,376 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned to Z axis by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone aligned to Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=16):
+    """Add a UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    # axis: 0=X, 1=Y, 2=Z
+    # vector: target world direction
+    if axis == 0:
+        local_axis = Vector((1, 0, 0))
+    elif axis == 1:
+        local_axis = Vector((0, 1, 0))
+    else:
+        local_axis = Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_type='center'):
+    """
+    Get the world location of a specific face or center of an object.
+    face_type: 'center', 'top_face', 'bottom_face', 'left_face', 'right_face', 'front_face', 'back_face'
+    Assumes object is axis-aligned or we approximate based on bounding box.
+    """
+    # Get bounding box corners in world space
+    corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+    
+    # Find min/max for X, Y, Z
+    xs = [c.x for c in corners]
+    ys = [c.y for c in corners]
+    zs = [c.z for c in corners]
+    
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    min_z, max_z = min(zs), max(zs)
+    
+    if face_type == 'center':
+        return Vector([(min_x+max_x)/2, (min_y+max_y)/2, (min_z+max_z)/2])
+    elif face_type == 'top_face':
+        # Assuming +Z is up
+        return Vector([(min_x+max_x)/2, (min_y+max_y)/2, max_z])
+    elif face_type == 'bottom_face':
+        return Vector([(min_x+max_x)/2, (min_y+max_y)/2, min_z])
+    elif face_type == 'left_face':
+        # Assuming -X is left
+        return Vector([min_x, (min_y+max_y)/2, (min_z+max_z)/2])
+    elif face_type == 'right_face':
+        return Vector([max_x, (min_y+max_y)/2, (min_z+max_z)/2])
+    elif face_type == 'front_face':
+        # Assuming +Y is front
+        return Vector([(min_x+max_x)/2, max_y, (min_z+max_z)/2])
+    elif face_type == 'back_face':
+        return Vector([(min_x+max_x)/2, min_y, (min_z+max_z)/2])
+    else:
+        return Vector([(min_x+max_x)/2, (min_y+max_y)/2, (min_z+max_z)/2])
+
+def boolean_subtract(cutter, target):
+    """Perform boolean subtract using BMesh."""
+    # Ensure target is active for modifier addition if needed, but we'll do manual BMesh for reliability
+    # Create a copy of target for the result
+    result_mesh = target.data.copy()
+    result_obj = bpy.data.objects.new(target.name + "_result", result_mesh)
+    bpy.context.collection.objects.link(result_obj)
+    
+    # We will use the built-in boolean modifier for simplicity and robustness in script
+    # Add modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    
+    return target
+
+def boolean_union(obj1, obj2):
+    """Perform boolean union."""
+    # Add modifier to obj1
+    mod = obj1.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = obj2
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = obj1
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete obj2
+    bpy.data.objects.remove(obj2, do_unlink=True)
+    
+    return obj1
+
+def offset_object(obj, offset_vector):
+    """Apply offset to object location."""
+    obj.location += offset_vector
+
+def align_center_to_center(obj_a, obj_b):
+    """Align center of obj_a to center of obj_b."""
+    center_a = get_face_center(obj_a, 'center')
+    center_b = get_face_center(obj_b, 'center')
+    obj_a.location += (center_b - center_a)
+
+def align_face_to_face(obj_a, face_a, obj_b, face_b):
+    """Align face of obj_a to face of obj_b."""
+    # This is a simplified alignment: move obj_a so its face center matches obj_b's face center
+    # Note: This assumes we just want to place it there, rotation is handled separately
+    
+    # Get world centers of the faces
+    # We need to calculate the face center in local space, then transform to world, 
+    # OR calculate world face center directly.
+    
+    # Let's calculate the offset required to move obj_a's face to obj_b's face
+    # Face center in world space for obj_a
+    # We need to know the local offset of the face from the object center
+    
+    # Helper to get local face center
+    def get_local_face_center(obj, face_type):
+        # Bounding box is in local space
+        corners = obj.bound_box
+        xs = [c.x for c in corners]
+        ys = [c.y for c in corners]
+        zs = [c.z for c in corners]
+        
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        min_z, max_z = min(zs), max(zs)
+        
+        if face_type == 'center':
+            return Vector([(min_x+max_x)/2, (min_y+max_y)/2, (min_z+max_z)/2])
+        elif face_type == 'top_face':
+            return Vector([(min_x+max_x)/2, (min_y+max_y)/2, max_z])
+        elif face_type == 'bottom_face':
+            return Vector([(min_x+max_x)/2, (min_y+max_y)/2, min_z])
+        elif face_type == 'left_face':
+            return Vector([min_x, (min_y+max_y)/2, (min_z+max_z)/2])
+        elif face_type == 'right_face':
+            return Vector([max_x, (min_y+max_y)/2, (min_z+max_z)/2])
+        elif face_type == 'front_face':
+            return Vector([(min_x+max_x)/2, max_y, (min_z+max_z)/2])
+        elif face_type == 'back_face':
+            return Vector([(min_x+max_x)/2, min_y, (min_z+max_z)/2])
+        return Vector()
+
+    local_face_a = get_local_face_center(obj_a, face_a)
+    local_face_b = get_local_face_center(obj_b, face_b)
+    
+    # Transform local face centers to world space
+    world_face_a = obj_a.matrix_world @ local_face_a
+    world_face_b = obj_b.matrix_world @ local_face_b
+    
+    # Calculate delta
+    delta = world_face_b - world_face_a
+    
+    # Apply delta to object location
+    obj_a.location += delta
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_body_wood = make_material("body_wood", (0.65, 0.35, 0.15, 1.0))
+    mat_bridge_wood = make_material("bridge_wood", (0.15, 0.10, 0.05, 1.0))
+    mat_neck_wood = make_material("neck_wood", (0.75, 0.55, 0.30, 1.0))
+    mat_nut_ivory = make_material("nut_ivory", (0.95, 0.95, 0.90, 1.0))
+    mat_peg_wood = make_material("peg_wood", (0.10, 0.10, 0.10, 1.0))
+    mat_string_steel = make_material("string_steel", (0.80, 0.80, 0.85, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create Body Shell ---
+    body_shell = add_cylinder("body_shell", radius=0.15, depth=0.12)
+    apply_material(body_shell, mat_body_wood)
+    
+    # Rotate so +Z aligns +Z (world) - already default
+    align_axis_to_vector(body_shell, 2, Vector((0, 0, 1)))
+    
+    # Align body_shell.center to guitar_root.center
+    # Since guitar_root doesn't exist, we assume it's at (0,0,0) or we just place body_shell at origin first
+    # The prompt says "Align body_shell.center to guitar_root.center". 
+    # If guitar_root is not defined, we treat it as origin (0,0,0).
+    # However, usually "guitar_root" implies a base object. If not present, we assume (0,0,0).
+    # Let's assume guitar_root is at (0,0,0).
+    guitar_root_center = Vector((0, 0, 0))
+    body_shell_center = get_face_center(body_shell, 'center')
+    body_shell.location += (guitar_root_center - body_shell_center)
+    
+    # Move by offset(0,0,-0.06)
+    offset_object(body_shell, Vector((0, 0, -0.06)))
+
+    # --- SECTION 2 – Create Soundhole Cutter ---
+    soundhole_cutter = add_cylinder("soundhole_cutter", radius=0.025, depth=0.13)
+    align_axis_to_vector(soundhole_cutter, 2, Vector((0, 0, 1)))
+    
+    # Align soundhole_cutter.center to body_shell.center
+    align_center_to_center(soundhole_cutter, body_shell)
+    
+    # Move by offset(0,0,0)
+    offset_object(soundhole_cutter, Vector((0, 0, 0)))
+    
+    # Boolean-subtract soundhole_cutter from body_shell; discard soundhole_cutter
+    boolean_subtract(soundhole_cutter, body_shell)
+
+    # --- SECTION 3 – Create Bridge Block ---
+    bridge_block = add_cube("bridge_block", size=0.08) # size is total width, so half is 0.04
+    # Adjust size to match 0.08x0.02x0.01
+    # add_cube size parameter is the total length of the side. 
+    # So we need to scale it or create with specific dimensions.
+    # Let's recreate with correct dimensions using scale or specific add params if available.
+    # primitive_cube_add size is the length of the edge.
+    # We want 0.08 x 0.02 x 0.01.
+    # Let's create a cube of size 1 and scale it, or create with size=0.08 and scale Y/Z.
+    # Actually, let's just create a cube and scale it.
+    bridge_block = bpy.context.active_object
+    bridge_block.scale = (0.08, 0.02, 0.01)
+    apply_material(bridge_block, mat_bridge_wood)
+    
+    # Rotate so +Z aligns +Z (world)
+    align_axis_to_vector(bridge_block, 2, Vector((0, 0, 1)))
+    
+    # Align bridge_block.center to body_shell.bottom_face
+    # This phrasing is tricky. "Align center to bottom_face" usually means place the center of the new object 
+    # at the location of the bottom face of the target.
+    align_face_to_face(bridge_block, 'center', body_shell, 'bottom_face')
+    
+    # Move by offset(0,0,0.06)
+    offset_object(bridge_block, Vector((0, 0, 0.06)))
+
+    # --- SECTION 4 – Create Neck Body ---
+    neck_body = add_cube("neck_body", size=0.05)
+    neck_body.scale = (0.05, 0.70, 0.04)
+    apply_material(neck_body, mat_neck_wood)
+    
+    # Rotate so +Z aligns +Y (world)
+    align_axis_to_vector(neck_body, 2, Vector((0, 1, 0)))
+    
+    # Align neck_body.center to body_shell.top_face
+    align_face_to_face(neck_body, 'center', body_shell, 'top_face')
+    
+    # Move by offset(0,0,0.06)
+    # Note: After rotation, local Z is world Y. So offset(0,0,0.06) moves it along local Z (world Y).
+    offset_object(neck_body, Vector((0, 0, 0.06)))
+
+    # --- SECTION 5 – Create Headstock ---
+    headstock = add_cube("headstock", size=0.06)
+    headstock.scale = (0.06, 0.10, 0.03)
+    apply_material(headstock, mat_neck_wood)
+    
+    # Rotate so +Z aligns +Y (world)
+    align_axis_to_vector(headstock, 2, Vector((0, 1, 0)))
+    
+    # Align headstock.center to neck_body.top_face
+    align_face_to_face(headstock, 'center', neck_body, 'top_face')
+    
+    # Move by offset(0,0,0.35)
+    offset_object(headstock, Vector((0, 0, 0.35)))
+
+    # --- SECTION 6 – Create Nut Block ---
+    nut_block = add_cube("nut_block", size=0.05)
+    nut_block.scale = (0.05, 0.005, 0.005)
+    apply_material(nut_block, mat_nut_ivory)
+    
+    # Rotate so +Z aligns +Y (world)
+    align_axis_to_vector(nut_block, 2, Vector((0, 1, 0)))
+    
+    # Align nut_block.center to neck_body.top_face
+    align_face_to_face(nut_block, 'center', neck_body, 'top_face')
+    
+    # Move by offset(0,0,0.35)
+    offset_object(nut_block, Vector((0, 0, 0.35)))
+
+    # --- SECTION 7 – Create Tuning Pegs ---
+    for r in range(2): # 0...1
+        for c in range(3): # 0...2
+            peg_name = f"tuning_pegs_{r}_{c}"
+            tuning_peg = add_cylinder(peg_name, radius=0.005, depth=0.03)
+            apply_material(tuning_peg, mat_peg_wood)
+            
+            # Rotate so +Z aligns +X (world)
+            align_axis_to_vector(tuning_peg, 2, Vector((1, 0, 0)))
+            
+            # Align tuning_pegs_r_c.center to headstock.left_face
+            align_face_to_face(tuning_peg, 'center', headstock, 'left_face')
+            
+            # Move by offset(0,0,0.025 + c*0.015 + r*0.01)
+            # Local Z is now World X. So offset is along World X.
+            offset_val = 0.025 + c * 0.015 + r * 0.01
+            offset_object(tuning_peg, Vector((0, 0, offset_val)))
+
+    # --- SECTION 8 – Create Strings ---
+    for c in range(6): # 0...5
+        string_name = f"strings_{c}"
+        strings_c = add_cylinder(string_name, radius=0.00025, depth=0.75)
+        apply_material(strings_c, mat_string_steel)
+        
+        # Rotate so +Z aligns +Y (world)
+        align_axis_to_vector(strings_c, 2, Vector((0, 1, 0)))
+        
+        # Align strings_c.center to nut_block.center
+        align_center_to_center(strings_c, nut_block)
+        
+        # Move by offset(-0.02 + c*0.008, 0, 0)
+        # Local Z is World Y. Offset is in local axes.
+        # Offset X is -0.02 + c*0.008. Offset Y is 0. Offset Z is 0.
+        # Since object is rotated, local X is World -Z? No.
+        # Original: +Z aligns +Y.
+        # Rotation: 90 deg around X axis?
+        # Let's check: Local Z (0,0,1) -> World Y (0,1,0).
+        # Local X (1,0,0) -> World X (1,0,0).
+        # Local Y (0,1,0) -> World -Z (0,-1,0).
+        # So offset(-0.02 + c*0.008, 0, 0) in local space means moving along Local X, which is World X.
+        offset_x = -0.02 + c * 0.008
+        offset_object(strings_c, Vector((offset_x, 0, 0)))
+
+    print("All stages complete.")
+
+if __name__ == "__main__":
+    main()
+```

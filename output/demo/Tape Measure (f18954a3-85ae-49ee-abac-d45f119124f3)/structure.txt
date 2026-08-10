@@ -1,0 +1,36 @@
+-- MATERIAL LIBRARY --
+mat_housing_blue | diffuse_color=(0.1, 0.2, 0.6, 1.0)
+mat_housing_grey | diffuse_color=(0.4, 0.4, 0.4, 1.0)
+mat_blade_steel | diffuse_color=(0.7, 0.7, 0.8, 1.0)
+mat_lock_brass | diffuse_color=(0.8, 0.6, 0.2, 1.0)
+mat_hook_steel | diffuse_color=(0.6, 0.6, 0.7, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| tape_measure_root | Composite assembly of the tape measure housing, blade, and locking mechanism | assembly_order=[housing_group, blade_group, lock_group]; mat=- |
+
+Layer 1 – Primary Structure (Housing)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| housing_main | Main outer shell of the tape measure, rectangular with rounded corners | size=0.100×0.080×0.025 m; mat=mat_housing_blue; create_method=primitive(cuboid with fillets); pos=(0, 0, 0); orientation=axis:+Z |
+| housing_inner_core | Internal structural core that holds the spring and blade spool | size=0.090×0.070×0.020 m; mat=mat_housing_grey; create_method=primitive(cuboid); pos=(0, 0, 0.002); orientation=axis:+Z; assembly_order=[housing_group] |
+| housing_top_plate | Top cover plate with branding area and belt clip slot | size=0.100×0.080×0.002 m; mat=mat_housing_blue; create_method=primitive(cuboid); pos=(0, 0, 0.0135); orientation=axis:+Z; assembly_order=[housing_group] |
+| belt_clip | Metal belt clip attached to the back of the housing | size=0.060×0.010×0.005 m; mat=mat_housing_grey; create_method=primitive(cuboid); pos=(0, -0.040, 0.010); orientation=axis:+Z; assembly_order=[housing_group] |
+
+Layer 2 – Blade & Spool Mechanism
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| spool_core | Central drum around which the tape blade winds | size=0.040×0.040×0.015 m; mat=mat_housing_grey; create_method=primitive(cylinder); pos=(0, 0, 0); orientation=axis:+Z; assembly_order=[blade_group] |
+| tape_blade | Flexible steel tape extending from the spool | size=0.030×0.003×0.001 m (initially wound); mat=mat_blade_steel; create_method=primitive(cylinder representing wound blade); pos=(0, 0, 0); orientation=axis:+Z; assembly_order=[blade_group] |
+| blade_tip_hook | Metal hook at the end of the tape blade for gripping | size=0.005×0.003×0.002 m; mat=mat_hook_steel; create_method=primitive(cuboid with bend); pos=(0.015, 0, 0); orientation=axis:+X; assembly_order=[blade_group] |
+
+Layer 3 – Locking & Control
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| lock_button | Slider button to lock/unlock the tape blade | size=0.015×0.010×0.005 m; mat=mat_lock_brass; create_method=primitive(cuboid); pos=(0.040, 0, 0.010); orientation=axis:+X; assembly_order=[lock_group] |
+| spring_mechanism | Internal spring providing retraction force | size=0.038×0.038×0.010 m; mat=mat_housing_grey; create_method=primitive(torus); pos=(0, 0, 0); orientation=axis:+Z; assembly_order=[blade_group] |
+
+# ----------  END_GRAPH  ----------

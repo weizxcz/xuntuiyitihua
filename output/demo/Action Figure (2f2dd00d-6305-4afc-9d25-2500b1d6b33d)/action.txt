@@ -1,0 +1,202 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_body; diffuse_color = (0.2, 0.2, 0.2, 1.0).
+Define material mat_joint; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+Define material mat_sword_blade; diffuse_color = (0.8, 0.8, 0.9, 1.0).
+Define material mat_sword_hilt; diffuse_color = (0.6, 0.4, 0.1, 1.0).
+Define material mat_shield_body; diffuse_color = (0.7, 0.1, 0.1, 1.0).
+Define material mat_shield_trim; diffuse_color = (0.8, 0.8, 0.2, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Torso Group  ---
+Create primitive cuboid with size 0.15×0.20×0.05 m and name it chest_plate.
+Rotate chest_plate so its +Z axis aligns +Z (world).
+Move chest_plate to pos=(0, 0, 0.25).
+
+Create primitive cylinder with Ø0.04×0.10 m and name it spine_segment.
+Rotate spine_segment so its +Z axis aligns +Z (world).
+Move spine_segment to pos=(0, 0, 0.15).
+
+Create primitive cuboid with size 0.12×0.15×0.04 m and name it pelvis_plate.
+Rotate pelvis_plate so its +Z axis aligns +Z (world).
+Move pelvis_plate to pos=(0, 0, 0.05).
+
+Boolean-union chest_plate, spine_segment, and pelvis_plate; keep the result and name it torso.
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Head Group  ---
+Create primitive sphere with Ø0.12 m and name it skull_base.
+Rotate skull_base so its +Z axis aligns +Z (world).
+Move skull_base to pos=(0, 0, 0.38).
+
+Create primitive cuboid with size 0.08×0.06×0.04 m and name it jaw_plate.
+Rotate jaw_plate so its +Z axis aligns +Z (world).
+Move jaw_plate to pos=(0, 0, 0.32).
+
+Boolean-union skull_base and jaw_plate; keep the result and name it head.
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Left Arm Group  ---
+Create primitive sphere with Ø0.06 m and name it shoulder_joint_L.
+Rotate shoulder_joint_L so its +Z axis aligns +Z (world).
+Move shoulder_joint_L to pos=(-0.10, 0, 0.35).
+
+Create primitive cylinder with Ø0.04×0.15 m and name it upper_arm_L.
+Rotate upper_arm_L so its +Z axis aligns +Y (world).
+Move upper_arm_L to pos=(-0.10, 0, 0.25).
+
+Create primitive sphere with Ø0.05 m and name it elbow_joint_L.
+Rotate elbow_joint_L so its +Z axis aligns +Z (world).
+Move elbow_joint_L to pos=(-0.10, 0, 0.15).
+
+Create primitive cylinder with Ø0.035×0.12 m and name it forearm_L.
+Rotate forearm_L so its +Z axis aligns +Y (world).
+Move forearm_L to pos=(-0.10, 0, 0.08).
+
+Create primitive sphere with Ø0.04 m and name it wrist_joint_L.
+Rotate wrist_joint_L so its +Z axis aligns +Z (world).
+Move wrist_joint_L to pos=(-0.10, 0, 0.02).
+
+Create primitive cuboid with size 0.03×0.04×0.02 m and name it hand_L.
+Rotate hand_L so its +Z axis aligns +Z (world).
+Move hand_L to pos=(-0.10, 0, -0.01).
+
+Boolean-union shoulder_joint_L, upper_arm_L, elbow_joint_L, forearm_L, wrist_joint_L, and hand_L; keep the result and name it arm_L.
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Right Arm Group  ---
+Create primitive sphere with Ø0.06 m and name it shoulder_joint_R.
+Rotate shoulder_joint_R so its +Z axis aligns +Z (world).
+Move shoulder_joint_R to pos=(0.10, 0, 0.35).
+
+Create primitive cylinder with Ø0.04×0.15 m and name it upper_arm_R.
+Rotate upper_arm_R so its +Z axis aligns +Y (world).
+Move upper_arm_R to pos=(0.10, 0, 0.25).
+
+Create primitive sphere with Ø0.05 m and name it elbow_joint_R.
+Rotate elbow_joint_R so its +Z axis aligns +Z (world).
+Move elbow_joint_R to pos=(0.10, 0, 0.15).
+
+Create primitive cylinder with Ø0.035×0.12 m and name it forearm_R.
+Rotate forearm_R so its +Z axis aligns +Y (world).
+Move forearm_R to pos=(0.10, 0, 0.08).
+
+Create primitive sphere with Ø0.04 m and name it wrist_joint_R.
+Rotate wrist_joint_R so its +Z axis aligns +Z (world).
+Move wrist_joint_R to pos=(0.10, 0, 0.02).
+
+Create primitive cuboid with size 0.03×0.04×0.02 m and name it hand_R.
+Rotate hand_R so its +Z axis aligns +Z (world).
+Move hand_R to pos=(0.10, 0, -0.01).
+
+Boolean-union shoulder_joint_R, upper_arm_R, elbow_joint_R, forearm_R, wrist_joint_R, and hand_R; keep the result and name it arm_R.
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Left Leg Group  ---
+Create primitive sphere with Ø0.07 m and name it hip_joint_L.
+Rotate hip_joint_L so its +Z axis aligns +Z (world).
+Move hip_joint_L to pos=(-0.06, 0, 0.02).
+
+Create primitive cylinder with Ø0.05×0.20 m and name it thigh_L.
+Rotate thigh_L so its +Z axis aligns +Y (world).
+Move thigh_L to pos=(-0.06, 0, -0.10).
+
+Create primitive sphere with Ø0.06 m and name it knee_joint_L.
+Rotate knee_joint_L so its +Z axis aligns +Z (world).
+Move knee_joint_L to pos=(-0.06, 0, -0.20).
+
+Create primitive cylinder with Ø0.04×0.20 m and name it shin_L.
+Rotate shin_L so its +Z axis aligns +Y (world).
+Move shin_L to pos=(-0.06, 0, -0.30).
+
+Create primitive sphere with Ø0.05 m and name it ankle_joint_L.
+Rotate ankle_joint_L so its +Z axis aligns +Z (world).
+Move ankle_joint_L to pos=(-0.06, 0, -0.40).
+
+Create primitive cuboid with size 0.04×0.10×0.03 m and name it foot_L.
+Rotate foot_L so its +Z axis aligns +Z (world).
+Move foot_L to pos=(-0.06, 0, -0.45).
+
+Boolean-union hip_joint_L, thigh_L, knee_joint_L, shin_L, ankle_joint_L, and foot_L; keep the result and name it leg_L.
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Right Leg Group  ---
+Create primitive sphere with Ø0.07 m and name it hip_joint_R.
+Rotate hip_joint_R so its +Z axis aligns +Z (world).
+Move hip_joint_R to pos=(0.06, 0, 0.02).
+
+Create primitive cylinder with Ø0.05×0.20 m and name it thigh_R.
+Rotate thigh_R so its +Z axis aligns +Y (world).
+Move thigh_R to pos=(0.06, 0, -0.10).
+
+Create primitive sphere with Ø0.06 m and name it knee_joint_R.
+Rotate knee_joint_R so its +Z axis aligns +Z (world).
+Move knee_joint_R to pos=(0.06, 0, -0.20).
+
+Create primitive cylinder with Ø0.04×0.20 m and name it shin_R.
+Rotate shin_R so its +Z axis aligns +Y (world).
+Move shin_R to pos=(0.06, 0, -0.30).
+
+Create primitive sphere with Ø0.05 m and name it ankle_joint_R.
+Rotate ankle_joint_R so its +Z axis aligns +Z (world).
+Move ankle_joint_R to pos=(0.06, 0, -0.40).
+
+Create primitive cuboid with size 0.04×0.10×0.03 m and name it foot_R.
+Rotate foot_R so its +Z axis aligns +Z (world).
+Move foot_R to pos=(0.06, 0, -0.45).
+
+Boolean-union hip_joint_R, thigh_R, knee_joint_R, shin_R, ankle_joint_R, and foot_R; keep the result and name it leg_R.
+
+Stage 6 complete.
+
+---  SECTION 7 – Create Sword Accessory  ---
+Create primitive cuboid with size 0.01×0.25×0.005 m and name it blade.
+Rotate blade so its +Z axis aligns +Z (world).
+Move blade to pos=(-0.10, 0.05, 0.05).
+
+Create primitive cuboid with size 0.02×0.05×0.01 m and name it hilt.
+Rotate hilt so its +Z axis aligns +Z (world).
+Move hilt to pos=(-0.10, 0.05, -0.05).
+
+Create primitive sphere with Ø0.02 m and name it pommel.
+Rotate pommel so its +Z axis aligns +Z (world).
+Move pommel to pos=(-0.10, 0.05, -0.08).
+
+Boolean-union blade, hilt, and pommel; keep the result and name it sword.
+
+Stage 7 complete.
+
+---  SECTION 8 – Create Shield Accessory  ---
+Create primitive cylinder with Ø0.15×0.02 m and name it shield_body.
+Rotate shield_body so its +Z axis aligns +Y (world).
+Move shield_body to pos=(0.10, 0.05, 0.05).
+
+Create primitive torus with Ø0.15×0.01 m and name it shield_trim.
+Rotate shield_trim so its +Z axis aligns +Y (world).
+Move shield_trim to pos=(0.10, 0.05, 0.05).
+
+Boolean-union shield_body and shield_trim; keep the result and name it shield.
+
+Stage 8 complete.
+
+---  SECTION 9 – Assemble Root Composite  ---
+Boolean-union torso, head, arm_L, arm_R, leg_L, leg_R, sword, and shield; keep the result and name it root.
+
+Assembly guideline satisfied.
+All stages complete.

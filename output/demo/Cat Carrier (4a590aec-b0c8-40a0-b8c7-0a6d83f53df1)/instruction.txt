@@ -1,0 +1,1 @@
+Design a 3D model of a cat carrier. The carrier should be rectangular with a handle on top. It should have a front door with bars and a latch to keep it closed. The sides should have ventilation holes. The top should be detachable for easy cleaning.

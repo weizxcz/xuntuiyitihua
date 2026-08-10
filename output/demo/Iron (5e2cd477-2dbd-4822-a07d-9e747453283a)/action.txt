@@ -1,0 +1,100 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material cord_black; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material metal_silver; diffuse_color = (0.8,0.8,0.85,1.0).
+Define material plastic_blue; diffuse_color = (0.2,0.4,0.8,1.0).
+Define material plastic_grey; diffuse_color = (0.5,0.5,0.5,1.0).
+Define material plastic_translucent; diffuse_color = (0.9,0.9,0.95,0.3).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Soleplate Base  ---
+Create primitive cuboid with size 0.25×0.10×0.005 m and name it soleplate_base.
+Rotate soleplate_base so its +Z axis aligns +Z (world).
+Move soleplate_base to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Steam Holes (Drilling Pattern)  ---
+Create cylinder with diameter 0.002 m and length 0.01 m and name it hole_cutter.
+Rotate hole_cutter so its +Z axis aligns +Z (world).
+Move hole_cutter to pos=(0,0,0).
+
+For r in 0…2 and c in 0…4:
+  Create cylinder with diameter 0.002 m and length 0.01 m and name it hole_cutter_r_c.
+  Rotate hole_cutter_r_c so its +Z axis aligns +Z (world).
+  Anchor hole_cutter_r_c to soleplate_base.+Z_face.
+  Then move by offset(-0.08 + c·0.04, -0.04 + r·0.02, 0).
+  Boolean-subtract hole_cutter_r_c from soleplate_base; discard hole_cutter_r_c.
+Stage 2 complete.
+
+---  SECTION 3 – Create Main Body  ---
+Create primitive cuboid with size 0.25×0.10×0.08 m and name it body_main.
+Rotate body_main so its +Z axis aligns +Z (world).
+Move body_main to pos=(0,0,0.0425).
+Stage 3 complete.
+
+---  SECTION 4 – Create Handle  ---
+Create primitive cuboid with size 0.04×0.06×0.12 m and name it handle_grip.
+Rotate handle_grip so its +Z axis aligns +Z (world).
+Move handle_grip to pos=(0,0,0.12).
+Stage 4 complete.
+
+---  SECTION 5 – Create Water Tank  ---
+Create primitive cuboid with size 0.08×0.04×0.15 m and name it tank_body.
+Rotate tank_body so its +Z axis aligns +Z (world).
+Move tank_body to pos=(-0.12,0,0.08).
+
+Create primitive cylinder with diameter 0.02 m and height 0.01 m and name it tank_cap.
+Rotate tank_cap so its +Z axis aligns +Z (world).
+Move tank_cap to pos=(-0.12,0,0.16).
+Stage 5 complete.
+
+---  SECTION 6 – Create Controls  ---
+Create primitive cylinder with diameter 0.03 m and height 0.01 m and name it dial_temp.
+Rotate dial_temp so its +Z axis aligns +Y (world).
+Move dial_temp to pos=(0.05,0.06,0.10).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it btn_steam.
+Rotate btn_steam so its +Z axis aligns +Y (world).
+Move btn_steam to pos=(0.08,0.06,0.10).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it btn_spray.
+Rotate btn_spray so its +Z axis aligns +Y (world).
+Move btn_spray to pos=(0.11,0.06,0.10).
+Stage 6 complete.
+
+---  SECTION 7 – Create Cord  ---
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it cord_start.
+Rotate cord_start so its +Z axis aligns +Z (world).
+Move cord_start to pos=(0,0.05,-0.005).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it cord_end.
+Rotate cord_end so its +Z axis aligns +Z (world).
+Move cord_end to pos=(0,0.15,-0.05).
+Stage 7 complete.
+
+---  SECTION 8 – Final Assembly  ---
+Align body_main.+Z_face to soleplate_base.+Z_face.
+Align body_main.-Z_face to soleplate_base.+Z_face.
+Align handle_grip.+Z_face to body_main.+Z_face.
+Align tank_body.+Z_face to body_main.-X_face.
+Align tank_cap.+Z_face to tank_body.+Z_face.
+Align dial_temp.+Z_face to body_main.+Y_face.
+Align btn_steam.+Z_face to body_main.+Y_face.
+Align btn_spray.+Z_face to body_main.+Y_face.
+Align cord_start.+Z_face to soleplate_base.-Z_face.
+Align cord_end.+Z_face to cord_start.+Z_face.
+Connect cord_start.-Z_face + cord_end.-Z_face.
+Stage 8 complete.
+
+All stages complete.

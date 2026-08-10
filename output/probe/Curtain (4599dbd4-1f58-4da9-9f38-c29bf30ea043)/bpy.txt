@@ -1,0 +1,138 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, name, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder oriented along Z by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(size, name, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube centered at location."""
+    # size is total width/height/depth
+    half = size / 2.0
+    bpy.ops.mesh.primitive_cube_add(size=half, location=location) # size arg in 3.2+ is half-width
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_plane(size_x, size_y, name, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a plane."""
+    bpy.ops.mesh.primitive_plane_add(size=size_x, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale Y to match size_y (size arg is half-width)
+    obj.scale = (1.0, size_y / size_x, 1.0)
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='Z', target_vector=(0,0,1)):
+    """Rotate object so its local axis aligns with target vector."""
+    # Normalize target
+    v = Vector(target_vector).normalized()
+    
+    # Define source axis
+    if axis_to_align == 'X':
+        src = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        src = Vector((0, 1, 0))
+    else: # Z
+        src = Vector((0, 0, 1))
+        
+    # Calculate rotation
+    rot_quat = src.rotation_difference(v)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def set_material(obj, mat):
+    if mat:
+        obj.data.materials.append(mat)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Clear existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.length_unit = 'METRES'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_fabric_curtain = make_material("fabric_curtain", (0.85, 0.85, 0.90, 1.0))
+mat_metal_rod = make_material("metal_rod", (0.70, 0.70, 0.75, 1.0))
+mat_wood_trim = make_material("wood_trim", (0.60, 0.40, 0.20, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Rod Assembly ---
+
+# Create rod_main: Ø0.025 (radius 0.0125) x 2.0 m
+# Orient +Z to +X
+rod_main = add_cylinder(radius=0.0125, depth=2.0, name="rod_main", location=(0,0,0), rotation=(0,0,0), material=mat_metal_rod)
+align_axis_to_vector(rod_main, axis_to_align='Z', target_vector=(1,0,0))
+rod_main.location = (0, 0, 2.5)
+
+# Create rod_bracket_L: 0.05x0.05x0.1 cuboid
+# Orient +Z to +Z (no rotation needed if default)
+rod_bracket_L = add_cube(size=0.05, name="rod_bracket_L", location=(-1.0, 0, 2.5), rotation=(0,0,0), material=mat_metal_rod)
+# Note: The prompt says size 0.05x0.05x0.1. add_cube(size=0.05) creates a 0.05x0.05x0.05 cube.
+# To get 0.05x0.05x0.1, we scale it.
+rod_bracket_L.scale = (1.0, 1.0, 2.0) # Z is doubled to 0.1
+
+# Create rod_bracket_R: 0.05x0.05x0.1 cuboid
+rod_bracket_R = add_cube(size=0.05, name="rod_bracket_R", location=(1.0, 0, 2.5), rotation=(0,0,0), material=mat_metal_rod)
+rod_bracket_R.scale = (1.0, 1.0, 2.0)
+
+# --- SECTION 2 – Create Fabric Panels ---
+
+# Create fabric_left: 0.9x2.4 plane
+# Orient +Z to +Z
+fabric_left = add_plane(size_x=0.9, size_y=2.4, name="fabric_left", location=(-0.5, 0.05, 1.3), rotation=(0,0,0), material=mat_fabric_curtain)
+
+# Create fabric_right: 0.9x2.4 plane
+fabric_right = add_plane(size_x=0.9, size_y=2.4, name="fabric_right", location=(0.5, 0.05, 1.3), rotation=(0,0,0), material=mat_fabric_curtain)
+
+# --- SECTION 3 – Create Trim & Hardware ---
+
+# Create trim_top_L: 0.9x0.05x0.05 cuboid
+# Orient +Z to +Z
+trim_top_L = add_cube(size=0.05, name="trim_top_L", location=(-0.5, 0, 2.52), rotation=(0,0,0), material=mat_wood_trim)
+# Size 0.9x0.05x0.05. Default cube is 0.05^3.
+# X needs to be 0.9/0.05 = 18x
+# Y needs to be 0.05/0.05 = 1x
+# Z needs to be 0.05/0.05 = 1x
+trim_top_L.scale = (18.0, 1.0, 1.0)
+
+# Create trim_top_R: 0.9x0.05x0.05 cuboid
+trim_top_R = add_cube(size=0.05, name="trim_top_R", location=(0.5, 0, 2.52), rotation=(0,0,0), material=mat_wood_trim)
+trim_top_R.scale = (18.0, 1.0, 1.0)
+
+# Create hem_bottom_L: 0.9x0.05x0.05 cuboid
+hem_bottom_L = add_cube(size=0.05, name="hem_bottom_L", location=(-0.5, 0, 0.12), rotation=(0,0,0), material=mat_wood_trim)
+hem_bottom_L.scale = (18.0, 1.0, 1.0)
+
+# Create hem_bottom_R: 0.9x0.05x0.05 cuboid
+hem_bottom_R = add_cube(size=0.05, name="hem_bottom_R", location=(0.5, 0, 0.12), rotation=(0,0,0), material=mat_wood_trim)
+hem_bottom_R.scale = (18.0, 1.0, 1.0)

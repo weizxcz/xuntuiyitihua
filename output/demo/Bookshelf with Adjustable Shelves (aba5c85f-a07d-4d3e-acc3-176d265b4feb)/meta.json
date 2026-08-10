@@ -1,0 +1,46 @@
+{
+  "id": "aba5c85f-a07d-4d3e-acc3-176d265b4feb",
+  "name": "Bookshelf with Adjustable Shelves",
+  "instruction": "Design a bookshelf with adjustable shelves. The bookshelf should be 6 feet tall and 3 feet wide. Include five shelves that can be repositioned at different heights. Ensure the sides are straight and the top and bottom are flat.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a bookshelf.",
+        "The bookshelf has straight sides.",
+        "The top of the bookshelf is flat.",
+        "The bottom of the bookshelf is flat."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The height of the bookshelf is 6 feet.",
+        "The width of the bookshelf is 3 feet."
+      ],
+      "Proportion": [
+        "The shelves are proportionate to the bookshelf."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The shelves are evenly spaced when positioned.",
+        "The height of the bookshelf allows for sufficient vertical space between shelves."
+      ],
+      "Object distance and contact": [
+        "The straight sides contribute to the overall stability of the bookshelf.",
+        "The flat top and bottom provide a stable base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes five adjustable shelves as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

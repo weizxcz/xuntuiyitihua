@@ -1,0 +1,45 @@
+-- MATERIAL LIBRARY --
+fabric_waterproof | diffuse_color=(0.1,0.15,0.2,1.0)
+zipper_metal | diffuse_color=(0.6,0.6,0.6,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| raincoat_root | Composite of torso, hood, sleeves, and accessories | assembly_order=[torso_group, hood_group, sleeve_group, accessory_group] |
+
+Layer 1 – Primary Structure (Torso)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| torso_shell | Composite of front_panel + back_panel + side_panels | assembly_order=[front_panel, back_panel, left_side, right_side] |
+| front_panel | Flat rectangular sheet approx 0.60×0.90×0.002 m (W×H×T) | pos=(0, 0.30, 0); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| back_panel | Flat rectangular sheet approx 0.60×0.90×0.002 m (W×H×T) | pos=(0, -0.30, 0); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| left_side | Flat rectangular sheet approx 0.15×0.90×0.002 m (W×H×T) | pos=(-0.375, 0, 0); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| right_side | Flat rectangular sheet approx 0.15×0.90×0.002 m (W×H×T) | pos=(0.375, 0, 0); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| torso_union | Composite union of front_panel + back_panel + left_side + right_side | assembly_order=[front_panel, back_panel, left_side, right_side]; create_method=boolean_union |
+
+Layer 2 – Hood Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hood_crown | Dome-like structure approx 0.30×0.25×0.20 m (W×H×D) | Align(Z) hood_crown.bottom_face to torso_union.top_face; pos=(0, 0.45, 0); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(sphere) |
+| hood_brims | Two curved flaps approx 0.10×0.05×0.02 m (W×H×T) | Align(Z) hood_brims.bottom_face to hood_crown.front_face; pos=(0, 0.55, 0); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| hood_union | Composite union of hood_crown + hood_brims | assembly_order=[hood_crown, hood_brims]; create_method=boolean_union |
+
+Layer 3 – Sleeve Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| left_sleeve | Cylindrical tube approx 0.15×0.60×0.002 m (Ø×L×T) | Align(XY) left_sleeve.top_face to torso_union.left_face; pos=(-0.30, 0.15, 0); orientation=axis:+Y; mat=fabric_waterproof; create_method=primitive(cylinder) |
+| right_sleeve | Cylindrical tube approx 0.15×0.60×0.002 m (Ø×L×T) | Align(XY) right_sleeve.top_face to torso_union.right_face; pos=(0.30, 0.15, 0); orientation=axis:+Y; mat=fabric_waterproof; create_method=primitive(cylinder) |
+| sleeve_union | Composite union of left_sleeve + right_sleeve | assembly_order=[left_sleeve, right_sleeve]; create_method=boolean_union |
+
+Layer 4 – Accessories (Zipper & Pockets)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| zipper_track | Thin rectangular strip approx 0.02×0.80×0.001 m (W×H×T) | Align(Z) zipper_track.bottom_face to front_panel.top_face; pos=(0, 0.30, 0.001); orientation=axis:+Z; mat=zipper_metal; create_method=primitive(cube) |
+| zipper_pull | Small tab approx 0.01×0.02×0.005 m (W×H×T) | Align(Z) zipper_pull.bottom_face to zipper_track.top_face; pos=(0, 0.70, 0.001); orientation=axis:+Z; mat=zipper_metal; create_method=primitive(cube) |
+| left_pocket | Small rectangular pouch approx 0.15×0.20×0.002 m (W×H×T) | Align(Z) left_pocket.back_face to front_panel.front_face; pos=(-0.20, 0.10, 0.001); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| right_pocket | Small rectangular pouch approx 0.15×0.20×0.002 m (W×H×T) | Align(Z) right_pocket.back_face to front_panel.front_face; pos=(0.20, 0.10, 0.001); orientation=axis:+Z; mat=fabric_waterproof; create_method=primitive(cube) |
+| accessory_union | Composite union of zipper_track + zipper_pull + left_pocket + right_pocket | assembly_order=[zipper_track, zipper_pull, left_pocket, right_pocket]; create_method=boolean_union |
+
+# ----------  END_GRAPH  ----------

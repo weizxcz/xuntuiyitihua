@@ -1,0 +1,266 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with given diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Specular IOR Level'].default_value = 0.5
+    bsdf.inputs['Roughness'].default_value = 0.1
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Align +Z to world +Z
+    return obj
+
+def add_disc(radius, depth, segments=32, name="Disc"):
+    """Add a flat cylinder (disc) aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cube(size_x, size_y, size_z, name="Cube"):
+    """Add a cube aligned to Z axis."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size_x/2, size_y/2, size_z/2)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, segments=32, name="Cone"):
+    """Add a cone aligned to Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_uvsphere(radius, width_seg=16, height_seg=16, name="UVSphere"):
+    """Add a UV sphere aligned to Z axis."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using cutter on target."""
+    # Ensure target has a boolean modifier
+    bool_mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    bool_mod.operation = 'DIFFERENCE'
+    bool_mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Perform boolean union using union_obj on target."""
+    bool_mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    bool_mod.operation = 'UNION'
+    bool_mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+    
+    # Remove union_obj
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Align object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    else:
+        return
+
+    # Calculate rotation to align local_axis to vector
+    rot_quat = local_axis.rotation_difference(vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to create invisible locator objects for alignment."""
+    def __init__(self, name="Locator"):
+        self.name = name
+        # Create an empty object as a locator
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0))
+        self.obj = bpy.context.active_object
+        self.obj.name = name
+        self.obj.empty_display_size = 0.01
+
+    def center_world(self, obj):
+        """Set locator position to object's world center."""
+        self.obj.location = obj.location
+
+    def face_center_world(self, obj, face_axis='Z'):
+        """Set locator position to the center of a specific face of the object."""
+        # Get object's world matrix
+        mat = obj.matrix_world
+        # Get dimensions
+        dim = obj.dimensions
+        # Calculate offset based on face axis
+        if face_axis == 'Z':
+            offset = Vector((0, 0, dim[2]/2))
+        elif face_axis == '-Z':
+            offset = Vector((0, 0, -dim[2]/2))
+        elif face_axis == 'Y':
+            offset = Vector((0, dim[1]/2, 0))
+        elif face_axis == '-Y':
+            offset = Vector((0, -dim[1]/2, 0))
+        elif face_axis == 'X':
+            offset = Vector((dim[0]/2, 0, 0))
+        elif face_axis == '-X':
+            offset = Vector((-dim[0]/2, 0, 0))
+        else:
+            offset = Vector((0, 0, 0))
+        
+        # Transform offset to world space
+        world_offset = mat.to_3x3() @ offset
+        self.obj.location = obj.location + world_offset
+
+    def radial_point_world(self, obj, axis='Z', angle=0):
+        """Set locator position to a radial point on the object's circumference."""
+        # This is a simplified version; assumes cylindrical symmetry around Z
+        if axis == 'Z':
+            r = obj.dimensions[0] / 2
+            x = r * math.cos(angle)
+            y = r * math.sin(angle)
+            z = 0
+            self.obj.location = (obj.location[0] + x, obj.location[1] + y, obj.location[2] + z)
+        else:
+            # Fallback to center
+            self.center_world(obj)
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_glass_clear = make_material("glass_clear", (0.9, 0.95, 1.0, 0.2))
+mat_metal_steel = make_material("metal_steel", (0.7, 0.7, 0.75, 1.0))
+mat_specimen_green = make_material("specimen_green", (0.1, 0.6, 0.1, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create slide base ---
+# Create primitive cuboid with size 0.076×0.026×0.001 m and name it slide_base.
+slide_base = add_cube(0.076, 0.026, 0.001, "slide_base")
+slide_base.data.materials.append(mat_metal_steel)
+
+# Rotate slide_base so its +Z axis aligns +Z (world).
+# add_cube already creates aligned to Z, so no rotation needed.
+align_axis_to_vector(slide_base, 'Z', Vector((0, 0, 1)))
+
+# Anchor slide_base to world origin.
+slide_base.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+slide_base.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create specimen layer ---
+# Create primitive cuboid with size 0.015×0.015×0.0001 m and name it specimen_patch.
+specimen_patch = add_cube(0.015, 0.015, 0.0001, "specimen_patch")
+specimen_patch.data.materials.append(mat_specimen_green)
+
+# Rotate specimen_patch so its +Z axis aligns +Z (world).
+align_axis_to_vector(specimen_patch, 'Z', Vector((0, 0, 1)))
+
+# Align specimen_patch.+Z_face to slide_base.+Z_face.
+# Create locators for alignment
+loc_slide_z = Locator("loc_slide_z")
+loc_spec_z = Locator("loc_spec_z")
+
+# Get the top face center of slide_base
+loc_slide_z.face_center_world(slide_base, 'Z')
+loc_spec_z.face_center_world(specimen_patch, 'Z')
+
+# Move specimen_patch so its top face is at slide_base's top face
+# Current specimen_patch location is (0,0,0). Its top face is at z = 0.0001/2 = 0.00005
+# slide_base top face is at z = 0.001/2 = 0.0005
+# We want specimen_patch top face to be at slide_base top face.
+# So specimen_patch center should be at slide_base_top_z - specimen_patch_height/2
+slide_base_top_z = slide_base.location[2] + slide_base.dimensions[2]/2
+specimen_patch.location = Vector((0, 0, slide_base_top_z - specimen_patch.dimensions[2]/2))
+
+# Then move by offset(0,0,0.0005).
+specimen_patch.location += Vector((0, 0, 0.0005))
+
+# --- SECTION 3 – Create cover slip ---
+# Create primitive cuboid with size 0.022×0.022×0.00017 m and name it cover_slip.
+cover_slip = add_cube(0.022, 0.022, 0.00017, "cover_slip")
+cover_slip.data.materials.append(mat_glass_clear)
+
+# Rotate cover_slip so its +Z axis aligns +Z (world).
+align_axis_to_vector(cover_slip, 'Z', Vector((0, 0, 1)))
+
+# Align cover_slip.+Z_face to specimen_patch.+Z_face.
+specimen_patch_top_z = specimen_patch.location[2] + specimen_patch.dimensions[2]/2
+cover_slip.location = Vector((0, 0, specimen_patch_top_z - cover_slip.dimensions[2]/2))
+
+# Then move by offset(0,0,0.00058).
+cover_slip.location += Vector((0, 0, 0.00058))
+
+# All stages complete.
+```

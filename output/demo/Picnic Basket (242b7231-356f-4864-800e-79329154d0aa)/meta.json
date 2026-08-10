@@ -1,0 +1,51 @@
+{
+  "id": "242b7231-356f-4864-800e-79329154d0aa",
+  "name": "Picnic Basket",
+  "instruction": "Create a picnic basket with a hinged lid and a handle. Inside, include compartments for plates, cutlery, and food storage. The basket should be rectangular, with a length of 18 inches, a width of 12 inches, and a height of 10 inches. Add straps to secure the items inside and ensure the lid closes securely.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a picnic basket.",
+        "The basket is rectangular in shape.",
+        "The basket features a hinged lid.",
+        "The basket has a handle."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The length of the basket is 18 inches.",
+        "The width of the basket is 12 inches.",
+        "The height of the basket is 10 inches."
+      ],
+      "Proportion": [
+        "The dimensions of the basket are proportionate to its rectangular shape.",
+        "The handle is proportionate to the size of the basket."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is positioned at the top center for balanced carrying.",
+        "The hinged lid is correctly aligned with the top of the basket.",
+        "The compartments inside are arranged to maximize space usage."
+      ],
+      "Object distance and contact": [
+        "The lid closes securely without gaps.",
+        "The handle does not interfere with the opening of the lid.",
+        "The compartments are designed to fit snugly within the basket."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The basket includes compartments for plates, cutlery, and food storage.",
+        "Straps are included to secure items inside the basket."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

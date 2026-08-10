@@ -1,0 +1,24 @@
+-- MATERIAL LIBRARY --
+mat_card_stock | diffuse_color=(255,255,255,1)
+mat_ink_black | diffuse_color=(0,0,0,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| business_card_base | Composite of card_stock + text_elements | assembly_order=[card_stock, text_elements] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| card_stock | Rectangular card stock 0.085m × 0.055m × 0.0008m (standard US business card size) | pos=(0,0,0); orientation=axis:+Z; mat=mat_card_stock; create_method=primitive(cube); constraint=size=(0.085, 0.055, 0.0008) |
+
+Layer 2 – Text Elements (Simulated as thin raised/engraved planes for structural graph purposes)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| name_text | Name text block 0.04m × 0.005m × 0.0001m | Align(Z) name_text.bottom_face to card_stock.top_face; offset(0, 0.015, 0); orientation=axis:+Z; mat=mat_ink_black; create_method=primitive(cube); constraint=size=(0.04, 0.005, 0.0001) |
+| title_text | Job Title text block 0.03m × 0.003m × 0.0001m | Align(Z) title_text.bottom_face to card_stock.top_face; offset(0, 0.005, 0); orientation=axis:+Z; mat=mat_ink_black; create_method=primitive(cube); constraint=size=(0.03, 0.003, 0.0001) |
+| phone_text | Phone Number text block 0.03m × 0.003m × 0.0001m | Align(Z) phone_text.bottom_face to card_stock.top_face; offset(0, -0.005, 0); orientation=axis:+Z; mat=mat_ink_black; create_method=primitive(cube); constraint=size=(0.03, 0.003, 0.0001) |
+| email_text | Email Address text block 0.035m × 0.003m × 0.0001m | Align(Z) email_text.bottom_face to card_stock.top_face; offset(0, -0.015, 0); orientation=axis:+Z; mat=mat_ink_black; create_method=primitive(cube); constraint=size=(0.035, 0.003, 0.0001) |
+# ----------  END_GRAPH  ----------

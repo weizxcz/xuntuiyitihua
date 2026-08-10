@@ -1,0 +1,31 @@
+-- MATERIAL LIBRARY --
+copper_wire | diffuse_color=(0.87,0.27,0.09,1.0)
+electrical_insulation | diffuse_color=(0.1,0.1,0.1,1.0)
+magnet_neodymium | diffuse_color=(0.2,0.2,0.25,1.0)
+steel_core | diffuse_color=(0.4,0.4,0.45,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| generator_assembly | Composite of stator_assembly + rotor_assembly + housing | Align(XY) rotor_assembly.center to stator_assembly.center; Align(Z) rotor_assembly.bottom_face to stator_assembly.bottom_face; offset(0,0,0.005); mat=-; create_method=union; assembly_order=[housing, stator_assembly, rotor_assembly] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| housing | Composite of housing_cylinder + mounting_flange | Align(Z) mounting_flange.top_face to housing_cylinder.bottom_face; offset(0,0,-0.002); mat=steel_core; create_method=union; assembly_order=[housing_cylinder, mounting_flange] |
+| housing_cylinder | Cylinder Ø0.200×0.150 m (Outer Diameter, Height) | pos=(0,0,0); orientation=axis:+Z; mat=steel_core; create_method=primitive |
+| mounting_flange | Cylinder Ø0.220×0.010 m | Align(XY) mounting_flange.center to housing_cylinder.center; Align(Z) mounting_flange.top_face to housing_cylinder.bottom_face; offset(0,0,-0.005); mat=steel_core; create_method=primitive |
+| stator_assembly | Composite of stator_core + stator_windings | Align(XY) stator_windings.center to stator_core.center; Align(Z) stator_windings.bottom_face to stator_core.bottom_face; offset(0,0,0.001); mat=-; create_method=union; assembly_order=[stator_core, stator_windings] |
+| stator_core | Torus (Outer R=0.090, Inner R=0.070, Tube R=0.015) | pos=(0,0,0); orientation=axis:+Z; mat=steel_core; create_method=primitive |
+| stator_windings | Composite of 4 coil_groups | Align(XY) coil_group_0.center to stator_core.center; Align(Z) coil_group_0.bottom_face to stator_core.bottom_face; pattern=polar(count:4, radius:0.080, start_angle:0°, angle_step:90°); mat=-; create_method=union; assembly_order=[coil_group_0] |
+| coil_group_0 | Composite of coil_former + copper_coil | Align(XY) copper_coil.center to coil_former.center; Align(Z) copper_coil.bottom_face to coil_former.bottom_face; offset(0,0,0.001); mat=-; create_method=union |
+| coil_former | Cylinder Ø0.030×0.040 m | pos=(0.080, 0, 0); orientation=axis:+Z; mat=electrical_insulation; create_method=primitive |
+| copper_coil | Cylinder Ø0.020×0.035 m | Align(XY) copper_coil.center to coil_former.center; Align(Z) copper_coil.bottom_face to coil_former.bottom_face; offset(0,0,0.002); mat=copper_wire; create_method=primitive |
+| rotor_assembly | Composite of rotor_shaft + rotor_core + magnets | Align(XY) rotor_core.center to rotor_shaft.center; Align(Z) rotor_core.bottom_face to rotor_shaft.top_face; offset(0,0,0.001); Align(XY) magnets.center to rotor_core.center; Align(Z) magnets.bottom_face to rotor_core.top_face; offset(0,0,0.001); mat=-; create_method=union; assembly_order=[rotor_shaft, rotor_core, magnets] |
+| rotor_shaft | Cylinder Ø0.020×0.160 m | pos=(0,0,0); orientation=axis:+Z; mat=steel_core; create_method=primitive |
+| rotor_core | Cylinder Ø0.060×0.040 m | Align(XY) rotor_core.center to rotor_shaft.center; Align(Z) rotor_core.bottom_face to rotor_shaft.top_face; offset(0,0,0.001); mat=steel_core; create_method=primitive |
+| magnets | Composite of 4 magnet_blocks | Align(XY) magnet_block_0.center to rotor_core.center; Align(Z) magnet_block_0.bottom_face to rotor_core.top_face; pattern=polar(count:4, radius:0.030, start_angle:0°, angle_step:90°); mat=magnet_neodymium; create_method=union; assembly_order=[magnet_block_0] |
+| magnet_block_0 | Cube 0.015×0.015×0.010 m | pos=(0.030, 0, 0.020); orientation=axis:+Z; mat=magnet_neodymium; create_method=primitive |
+# ----------  END_GRAPH  ----------

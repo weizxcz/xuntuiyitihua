@@ -1,0 +1,78 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood; diffuse_color = (0.55,0.35,0.15,1.0).
+Define material mat_metal_bracket; diffuse_color = (0.2,0.2,0.2,1.0).
+Define material mat_metal_rail; diffuse_color = (0.8,0.8,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Left Mounting Bracket  ---
+Create primitive cuboid with size 0.020×0.150×0.005 m and name it bracket_L.
+Rotate bracket_L so its +Z axis aligns +Z (world).
+Move bracket_L to pos=(-0.150, 0.075, -0.025).
+Create primitive cylinder with diameter 0.006 m and length 0.010 m and name it drill_bit_L.
+Rotate drill_bit_L so its +Z axis aligns +Z (world).
+Move drill_bit_L to pos=(-0.150, 0.025, -0.025).
+Boolean-subtract drill_bit_L from bracket_L; discard drill_bit_L.
+Stage 1 complete.
+
+---  SECTION 2 – Create Right Mounting Bracket  ---
+Create primitive cuboid with size 0.020×0.150×0.005 m and name it bracket_R.
+Rotate bracket_R so its +Z axis aligns +Z (world).
+Move bracket_R to pos=(0.150, 0.075, -0.025).
+Create primitive cylinder with diameter 0.006 m and length 0.010 m and name it drill_bit_R.
+Rotate drill_bit_R so its +Z axis aligns +Z (world).
+Move drill_bit_R to pos=(0.150, 0.025, -0.025).
+Boolean-subtract drill_bit_R from bracket_R; discard drill_bit_R.
+Stage 2 complete.
+
+---  SECTION 3 – Create Bottom Shelf Tier  ---
+Create primitive cuboid with size 0.300×0.100×0.015 m and name it tier_1.
+Rotate tier_1 so its +Z axis aligns +Z (world).
+Move tier_1 to pos=(0, 0.025, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create Middle Shelf Tier  ---
+Create primitive cuboid with size 0.300×0.100×0.015 m and name it tier_2.
+Rotate tier_2 so its +Z axis aligns +Z (world).
+Move tier_2 to pos=(0, 0.125, 0).
+Stage 4 complete.
+
+---  SECTION 5 – Create Top Shelf Tier  ---
+Create primitive cuboid with size 0.300×0.100×0.015 m and name it tier_3.
+Rotate tier_3 so its +Z axis aligns +Z (world).
+Move tier_3 to pos=(0, 0.225, 0).
+Stage 5 complete.
+
+---  SECTION 6 – Create Bottom Safety Rail  ---
+Create primitive cuboid with size 0.300×0.004×0.004 m and name it rail_1.
+Rotate rail_1 so its +Z axis aligns +Z (world).
+Move rail_1 to pos=(0, 0.025, 0.048).
+Stage 6 complete.
+
+---  SECTION 7 – Create Middle Safety Rail  ---
+Create primitive cuboid with size 0.300×0.004×0.004 m and name it rail_2.
+Rotate rail_2 so its +Z axis aligns +Z (world).
+Move rail_2 to pos=(0, 0.125, 0.048).
+Stage 7 complete.
+
+---  SECTION 8 – Create Top Safety Rail  ---
+Create primitive cuboid with size 0.300×0.004×0.004 m and name it rail_3.
+Rotate rail_3 so its +Z axis aligns +Z (world).
+Move rail_3 to pos=(0, 0.225, 0.048).
+Stage 8 complete.
+
+---  SECTION 9 – Assemble Spice Rack  ---
+Boolean-union bracket_L, bracket_R, tier_1, tier_2, tier_3, rail_1, rail_2, rail_3 to form spice_rack_root.
+Assembly guideline satisfied.
+All stages complete.

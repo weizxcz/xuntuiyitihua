@@ -1,0 +1,44 @@
+{
+  "id": "371f0eb2-05ff-4d38-b630-02b412185a88",
+  "name": "Fruit Bowl",
+  "instruction": "Create a 3D model of a fruit bowl.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a fruit bowl.",
+        "The bowl has a rounded shape.",
+        "The bowl has a wide opening and a slightly narrower base."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the bowl is proportional to its width."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bowl is correctly oriented with the opening facing upwards.",
+        "The base of the bowl provides stability."
+      ],
+      "Object distance and contact": [
+        "The bowl should not overlap with any surrounding objects.",
+        "The bowl should have enough space around it for easy access."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The model accurately represents a fruit bowl as requested.",
+        "All specified attributes are appropriately considered."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,545 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.8
+    return mat
+
+def assign_material(obj, mat):
+    """Assign a material to an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive(name, shape, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive cube, cylinder, or sphere and return the object."""
+    bpy.ops.object.select_all(action='DESELECT')
+    obj = None
+    if shape == 'cube':
+        w, h, d = size
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+        obj.scale = (w/2, h/2, d/2)
+    elif shape == 'cylinder':
+        radius, height = size
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif shape == 'sphere':
+        radius = size
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif shape == 'cone':
+        radius, height = size
+        bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=height, location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    
+    if obj:
+        obj.rotation_euler = rotation
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # This is a simplified alignment. For strict axis alignment to world Z, 
+    # we just ensure rotation is identity if vector is (0,0,1).
+    # For general vectors, we'd need quaternion math. 
+    # Given the prompt mostly asks for Z align Z, we handle that specifically.
+    if axis == 'Z' and vector == (0,0,1):
+        obj.rotation_euler = (0, 0, 0)
+    elif axis == 'Y' and vector == (0,1,0):
+        obj.rotation_euler = (-math.pi/2, 0, 0)
+    elif axis == 'X' and vector == (1,0,0):
+        obj.rotation_euler = (0, 0, math.pi/2)
+    # Add more cases as needed. Defaulting to identity for Z align Z.
+
+def get_world_center(obj):
+    """Get the world location of the object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_type):
+    """
+    Approximate the world center of a specific face based on object dimensions and rotation.
+    Assumes object is axis-aligned or has simple rotations.
+    face_type: 'top', 'bottom', 'front', 'back', 'left', 'right', 'center'
+    """
+    loc = obj.matrix_world.to_translation()
+    rot = obj.rotation_euler
+    # Get half dimensions
+    dims = obj.dimensions
+    hx, hy, hz = dims[0]/2, dims[1]/2, dims[2]/2
+    
+    # Apply rotation to the offset vector
+    # Note: This is a simplification. For complex rotations, matrix multiplication is better.
+    # We will use the object's matrix to transform local offsets.
+    
+    local_offset = Vector((0,0,0))
+    
+    if face_type == 'center':
+        local_offset = Vector((0,0,0))
+    elif face_type == 'top':
+        local_offset = Vector((0,0,hz))
+    elif face_type == 'bottom':
+        local_offset = Vector((0,0,-hz))
+    elif face_type == 'front':
+        local_offset = Vector((0,hy,0))
+    elif face_type == 'back':
+        local_offset = Vector((0,-hy,0))
+    elif face_type == 'right':
+        local_offset = Vector((hx,0,0))
+    elif face_type == 'left':
+        local_offset = Vector((-hx,0,0))
+        
+    # Transform local offset to world space
+    world_offset = obj.matrix_world.to_3x3() @ local_offset
+    return loc + world_offset
+
+def align_object_to_face(target_obj, anchor_obj, target_face, anchor_face):
+    """
+    Align target_obj so its target_face is parallel and adjacent to anchor_obj's anchor_face.
+    Moves target_obj so the faces touch.
+    """
+    # Calculate the position of the anchor face on the anchor object
+    anchor_pos = get_face_center(anchor_obj, anchor_face)
+    
+    # Calculate the normal direction of the anchor face in world space
+    # We approximate this by looking at the offset from center to face
+    anchor_center = get_world_center(anchor_obj)
+    normal_vec = (anchor_pos - anchor_center).normalized()
+    
+    # The target face should be pushed out along this normal
+    # But we need to know which face of the target is touching.
+    # Let's assume the target's 'anchor_face' side is the one touching.
+    # We need to move the target so its 'anchor_face' is at 'anchor_pos'.
+    
+    target_center = get_world_center(target_obj)
+    target_face_pos = get_face_center(target_obj, anchor_face)
+    
+    # Vector from target's face to anchor's face
+    move_vec = anchor_pos - target_face_pos
+    
+    target_obj.location += move_vec
+    
+    # Orientation: Align target's normal of the touching face to the anchor's normal
+    # Target face normal in local space
+    local_normal = Vector((0,0,0))
+    if anchor_face == 'top': local_normal = (0,0,1)
+    elif anchor_face == 'bottom': local_normal = (0,0,-1)
+    elif anchor_face == 'front': local_normal = (0,1,0)
+    elif anchor_face == 'back': local_normal = (0,-1,0)
+    elif anchor_face == 'right': local_normal = (1,0,0)
+    elif anchor_face == 'left': local_normal = (-1,0,0)
+    
+    # We want target's local_normal to align with normal_vec (or -normal_vec depending on side)
+    # If we are placing ON TOP, target bottom touches anchor top.
+    # Anchor top normal is +Z. Target bottom normal is -Z.
+    # So we want target's -Z to align with Anchor's +Z.
+    
+    # Simplified approach for this script:
+    # The prompt implies simple stacking/alignment where axes remain aligned.
+    # We will primarily rely on the explicit "Align ... to ..." instructions which usually mean
+    # "Make sure the faces are coplanar/parallel".
+    # Since we are moving the object to touch, and assuming initial rotation is correct (Z align Z),
+    # we just need to position it.
+    
+    # If the anchor face is 'top', we want the target's 'bottom' to be at the anchor's 'top'.
+    # If the anchor face is 'front', we want the target's 'back' to be at the anchor's 'front'.
+    
+    # Let's refine the move vector based on the specific face interaction
+    # We already moved target_face_pos to anchor_pos.
+    # This effectively places the target such that its 'anchor_face' is at the anchor's 'anchor_face'.
+    # This is usually what is desired for "Anchor X to Y.face".
+    
+    return target_obj
+
+def apply_offset(obj, offset):
+    """Apply an offset to the object's location in local space (converted to world if needed)."""
+    # The prompt says "Offset is in reference local axes".
+    # However, for simple stacking, world offsets are often easier.
+    # Let's interpret "local axes" as the object's current orientation.
+    # Since we align axes first, local Z is often world Z.
+    
+    # Convert local offset to world offset
+    rot_matrix = obj.matrix_world.to_3x3()
+    world_offset = rot_matrix @ Vector(offset)
+    
+    obj.location += world_offset
+
+def boolean_union(base_obj, cutter_obj):
+    """Perform a boolean union using the modifier stack."""
+    # Add Boolean Modifier to base
+    mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_subtract(base_obj, cutter_obj):
+    """Perform a boolean subtract using the modifier stack."""
+    # Add Boolean Modifier to base
+    mod = base_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def bevel_object(obj, width=0.01, segments=2):
+    """Add a bevel modifier and apply it."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# MAIN SCRIPT
+# ==============================================================================
+
+def main():
+    # Block 0: Scene Reset & Units
+    clear_scene()
+    set_units()
+
+    # Block 1: Materials
+    mat_fabric_main = make_material("fabric_main", (0.15, 0.15, 0.20, 1.0))
+    mat_fabric_lining = make_material("fabric_lining", (0.85, 0.85, 0.90, 1.0))
+    mat_zipper_metal = make_material("zipper_metal", (0.60, 0.60, 0.65, 1.0))
+    mat_zipper_pull = make_material("zipper_pull", (0.20, 0.20, 0.20, 1.0))
+    mat_button_plastic = make_material("button_plastic", (0.10, 0.10, 0.10, 1.0))
+    mat_drawstring_cord = make_material("drawstring_cord", (0.10, 0.10, 0.10, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create Shell Body (Front & Back Panels) ---
+    
+    # Create shell_body_front
+    shell_body_front = add_primitive("shell_body_front", "cube", (0.3, 0.6, 0.002), rotation=(0,0,0))
+    assign_material(shell_body_front, mat_fabric_main)
+    
+    # Anchor to world origin (already at 0,0,0 by default add_primitive)
+    shell_body_front.location = (0,0,0)
+    
+    # Create shell_body_back
+    shell_body_back = add_primitive("shell_body_back", "cube", (0.3, 0.6, 0.002), rotation=(0,0,0))
+    assign_material(shell_body_back, mat_fabric_main)
+    
+    # Anchor shell_body_back to shell_body_front.bottom_face
+    # shell_body_front bottom is at z = -0.001
+    # shell_body_back bottom should be at z = -0.001
+    # shell_body_back center should be at z = -0.001 - 0.001 = -0.002
+    # But wait, "Align shell_body_back.XY_face to shell_body_front.XY_face"
+    # This usually means they are parallel.
+    # "Anchor ... to ... bottom_face" implies touching.
+    # Let's place it directly below.
+    shell_body_back.location = (0, 0, -0.002) # 0.002 height, so bottom is at -0.002? No.
+    # Front center is 0. Front bottom is -0.001.
+    # Back bottom touches Front bottom? Or Back top touches Front bottom?
+    # "Anchor shell_body_back to shell_body_front.bottom_face"
+    # Usually means the back object is placed relative to that face.
+    # If I anchor a box to the bottom face of another, I usually place it below.
+    # Let's assume standard stacking: Back is below Front.
+    # Front bottom Z = -0.001.
+    # Back bottom Z = -0.001 - 0.002 = -0.002.
+    # Back center Z = -0.001.
+    # Wait, if Back is below Front, Back Top touches Front Bottom.
+    # Back Top Z = -0.001. Back Center Z = -0.001 + 0.001 = 0.
+    # This would mean they overlap or touch at center?
+    # Let's look at the offset: "Move by offset(0,0.01,0)".
+    # This suggests a Y offset.
+    # Let's re-read: "Anchor shell_body_back to shell_body_front.bottom_face."
+    # Maybe it means the back panel is the "bottom" layer?
+    # Let's place shell_body_back at Z = -0.002 (center) so its top is at -0.001 (touching front bottom).
+    shell_body_back.location = (0, 0, -0.002)
+    
+    # Apply offset
+    apply_offset(shell_body_back, (0, 0.01, 0))
+    
+    # Create shell_body_union
+    shell_body_union = add_primitive("shell_body_union", "cube", (0.6, 1.2, 0.02), rotation=(0,0,0))
+    assign_material(shell_body_union, mat_fabric_main)
+    shell_body_union.location = (0,0,0)
+    
+    # Boolean-union shell_body_front and shell_body_back into shell_body_union
+    # Note: The prompt says "Boolean-union shell_body_front and shell_body_back into shell_body_union".
+    # This phrasing is ambiguous. Does it mean Union(Front, Back) -> Union?
+    # Or Union(Union, Front) then Union(Union, Back)?
+    # Given "discard shell_body_front and shell_body_back", they are likely cutters or inputs.
+    # But they are "cuboids".
+    # Let's assume shell_body_union is the base, and we union the panels into it?
+    # Or we union the two panels together to make a new object, then rename?
+    # "Rename shell_body_union to shell_body."
+    # Let's treat shell_body_union as the base container.
+    # We will boolean union Front and Back into Union.
+    
+    # First, union Front into Union
+    boolean_union(shell_body_union, shell_body_front)
+    
+    # Then, union Back into Union
+    boolean_union(shell_body_union, shell_body_back)
+    
+    # Rename
+    shell_body_union.name = "shell_body"
+    shell_body = shell_body_union
+
+    # --- SECTION 2 – Create Shell Hood ---
+    
+    # Create shell_hood
+    shell_hood = add_primitive("shell_hood", "cube", (0.4, 0.3, 0.2), rotation=(0,0,0))
+    assign_material(shell_hood, mat_fabric_main)
+    
+    # Anchor shell_hood to shell_body.top_face
+    # shell_body dims: 0.6, 1.2, 0.02. Top face Z = 0.01.
+    # shell_hood height 0.2. Bottom should be at 0.01.
+    # shell_hood center Z = 0.01 + 0.1 = 0.11.
+    shell_hood.location = (0, 0, 0.11)
+    
+    # Align shell_hood.XY_face to shell_body.top_face (Already aligned by rotation)
+    
+    # Move by offset(0,0,0)
+    
+    # Create hood_cutter
+    hood_cutter = add_primitive("hood_cutter", "cube", (0.4, 0.3, 0.1), rotation=(0,0,0))
+    hood_cutter.name = "hood_cutter"
+    
+    # Anchor hood_cutter to shell_hood.top_face
+    # shell_hood top Z = 0.11 + 0.1 = 0.21.
+    # hood_cutter height 0.1. Bottom should be at 0.21.
+    # hood_cutter center Z = 0.21 + 0.05 = 0.26.
+    hood_cutter.location = (0, 0, 0.26)
+    
+    # Move by offset(0,0,0.05)
+    apply_offset(hood_cutter, (0, 0, 0.05))
+    # New Z = 0.26 + 0.05 = 0.31
+    
+    # Boolean-subtract hood_cutter from shell_hood
+    boolean_subtract(shell_hood, hood_cutter)
+
+    # --- SECTION 3 – Create Shell Cuffs ---
+    
+    # Create shell_cuff_left
+    shell_cuff_left = add_primitive("shell_cuff_left", "cube", (0.15, 0.1, 0.05), rotation=(0,0,0))
+    assign_material(shell_cuff_left, mat_fabric_main)
+    
+    # Anchor shell_cuff_left to shell_body.left_side
+    # shell_body left side X = -0.3.
+    # shell_cuff_left width 0.15. Right side should be at -0.3.
+    # shell_cuff_left center X = -0.3 - 0.075 = -0.375.
+    shell_cuff_left.location = (-0.375, 0, 0)
+    
+    # Align shell_cuff_left.XY_face to shell_body.left_side (Already aligned)
+    
+    # Move by offset(0,0.5,0)
+    apply_offset(shell_cuff_left, (0, 0.5, 0))
+    
+    # Create shell_cuff_right
+    shell_cuff_right = add_primitive("shell_cuff_right", "cube", (0.15, 0.1, 0.05), rotation=(0,0,0))
+    assign_material(shell_cuff_right, mat_fabric_main)
+    
+    # Anchor shell_cuff_right to shell_body.right_side
+    # shell_body right side X = 0.3.
+    # shell_cuff_right width 0.15. Left side should be at 0.3.
+    # shell_cuff_right center X = 0.3 + 0.075 = 0.375.
+    shell_cuff_right.location = (0.375, 0, 0)
+    
+    # Align shell_cuff_right.XY_face to shell_body.right_side
+    
+    # Move by offset(0,0.5,0)
+    apply_offset(shell_cuff_right, (0, 0.5, 0))
+
+    # --- SECTION 4 – Create Waist Drawstring ---
+    
+    # Create shell_drawstring
+    # Cylinder Ø0.005 m (radius 0.0025) and height 0.6 m
+    shell_drawstring = add_primitive("shell_drawstring", "cylinder", (0.0025, 0.6), rotation=(0,0,0))
+    assign_material(shell_drawstring, mat_drawstring_cord)
+    
+    # Anchor shell_drawstring to shell_body.center
+    # shell_body center is (0,0,0).
+    shell_drawstring.location = (0, 0, 0)
+    
+    # Align shell_drawstring.Z_face to shell_body.center (Already aligned)
+    
+    # Move by offset(0,0,0.01)
+    apply_offset(shell_drawstring, (0, 0, 0.01))
+
+    # --- SECTION 5 – Create Lining Body ---
+    
+    # Create lining_body
+    lining_body = add_primitive("lining_body", "cube", (0.58, 1.18, 0.005), rotation=(0,0,0))
+    assign_material(lining_body, mat_fabric_lining)
+    
+    # Anchor lining_body to shell_body.center
+    lining_body.location = (0, 0, 0)
+    
+    # Align lining_body.XY_face to shell_body.center
+    
+    # Move by offset(0,0,-0.001)
+    apply_offset(lining_body, (0, 0, -0.001))
+
+    # --- SECTION 6 – Create Main Zipper ---
+    
+    # Create zipper_main
+    zipper_main = add_primitive("zipper_main", "cube", (0.01, 1.0, 0.005), rotation=(0,0,0))
+    assign_material(zipper_main, mat_zipper_metal)
+    
+    # Anchor zipper_main to shell_body.center
+    zipper_main.location = (0, 0, 0)
+    
+    # Align zipper_main.XY_face to shell_body.center
+    
+    # Move by offset(0,0,0.015)
+    apply_offset(zipper_main, (0, 0, 0.015))
+
+    # --- SECTION 7 – Create Zipper Pull ---
+    
+    # Create zipper_pull
+    zipper_pull = add_primitive("zipper_pull", "cube", (0.02, 0.01, 0.005), rotation=(0,0,0))
+    assign_material(zipper_pull, mat_zipper_pull)
+    
+    # Anchor zipper_pull to zipper_main.top
+    # zipper_main dims: 0.01, 1.0, 0.005. Center Z = 0.015. Top Z = 0.015 + 0.0025 = 0.0175.
+    # zipper_pull height 0.005. Bottom should be at 0.0175.
+    # zipper_pull center Z = 0.0175 + 0.0025 = 0.02.
+    zipper_pull.location = (0, 0, 0.02)
+    
+    # Align zipper_pull.XY_face to zipper_main.top
+    
+    # Move by offset(0,0,0.005)
+    apply_offset(zipper_pull, (0, 0, 0.005))
+
+    # --- SECTION 8 – Create Flap Protector ---
+    
+    # Create flap_protect
+    flap_protect = add_primitive("flap_protect", "cube", (0.1, 0.8, 0.003), rotation=(0,0,0))
+    assign_material(flap_protect, mat_fabric_main)
+    
+    # Anchor flap_protect to shell_body.center
+    flap_protect.location = (0, 0, 0)
+    
+    # Align flap_protect.XY_face to shell_body.center
+    
+    # Move by offset(0,0,0.02)
+    apply_offset(flap_protect, (0, 0, 0.02))
+
+    # --- SECTION 9 – Create Button on Flap ---
+    
+    # Create button_flap
+    button_flap = add_primitive("button_flap", "cube", (0.01, 0.01, 0.005), rotation=(0,0,0))
+    assign_material(button_flap, mat_button_plastic)
+    
+    # Anchor button_flap to flap_protect.bottom
+    # flap_protect dims: 0.1, 0.8, 0.003. Center Z = 0.02. Bottom Z = 0.02 - 0.0015 = 0.0185.
+    # button_flap height 0.005. Top should be at 0.0185.
+    # button_flap center Z = 0.0185 - 0.0025 = 0.016.
+    button_flap.location = (0, 0, 0.016)
+    
+    # Align button_flap.XY_face to flap_protect.bottom
+    
+    # Move by offset(0,0,0.005)
+    apply_offset(button_flap, (0, 0, 0.005))
+
+    # --- SECTION 10 – Create Left Chest Pocket ---
+    
+    # Create pocket_left
+    pocket_left = add_primitive("pocket_left", "cube", (0.15, 0.15, 0.005), rotation=(0,0,0))
+    assign_material(pocket_left, mat_fabric_main)
+    
+    # Anchor pocket_left to shell_body.front
+    # shell_body front Y = 0.6.
+    # pocket_left depth 0.15. Back should be at 0.6.
+    # pocket_left center Y = 0.6 + 0.075 = 0.675.
+    pocket_left.location = (0, 0.675, 0)
+    
+    # Align pocket_left.XY_face to shell_body.front
+    
+    # Move by offset(0.1,0.2,0.01)
+    apply_offset(pocket_left, (0.1, 0.2, 0.01))
+
+    # --- SECTION 11 – Create Right Chest Pocket ---
+    
+    # Create pocket_right
+    pocket_right = add_primitive("pocket_right", "cube", (0.15, 0.15, 0.005), rotation=(0,0,0))
+    assign_material(pocket_right, mat_fabric_main)
+    
+    # Anchor pocket_right to shell_body.front
+    pocket_right.location = (0, 0.675, 0)
+    
+    # Align pocket_right.XY_face to shell_body.front
+    
+    # Move by offset(-0.1,0.2,0.01)
+    apply_offset(pocket_right, (-0.1, 0.2, 0.01))
+
+    # --- SECTION 12 – Create Left Lower Pocket ---
+    
+    # Create pocket_lower_left
+    pocket_lower_left = add_primitive("pocket_lower_left", "cube", (0.2, 0.15, 0.005), rotation=(0,0,0))
+    assign_material(pocket_lower_left, mat_fabric_main)
+    
+    # Anchor pocket_lower_left to shell_body.front
+    pocket_lower_left.location = (0, 0.675, 0)
+    
+    # Align pocket_lower_left.XY_face to shell_body.front
+    
+    # Move by offset(0.15,-0.2,0.01)
+    apply_offset(pocket_lower_left, (0.15, -0.2, 0.01))
+
+    # --- SECTION 13 – Create Right Lower Pocket ---
+    
+    # Create pocket_lower_right
+    pocket_lower_right = add_primitive("pocket_lower_right", "cube", (0.2, 0.15, 0.005), rotation=(0,0,0))
+    assign_material(pocket_lower_right, mat_fabric_main)
+    
+    # Anchor pocket_lower_right to shell_body.front
+    pocket_lower_right.location = (0, 0.675, 0)
+    
+    # Align pocket_lower_right.XY_face to shell_body.front
+    
+    # Move by offset(-0.15,-0.2,0.01)
+    apply_offset(pocket_lower_right, (-0.15, -0.2, 0.01))
+
+if __name__ == "__main__":
+    main()
+```

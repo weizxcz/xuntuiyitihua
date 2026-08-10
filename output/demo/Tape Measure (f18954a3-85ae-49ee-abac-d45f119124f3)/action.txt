@@ -1,0 +1,85 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_housing_blue; diffuse_color = (0.1, 0.2, 0.6, 1.0).
+Define material mat_housing_grey; diffuse_color = (0.4, 0.4, 0.4, 1.0).
+Define material mat_blade_steel; diffuse_color = (0.7, 0.7, 0.8, 1.0).
+Define material mat_lock_brass; diffuse_color = (0.8, 0.6, 0.2, 1.0).
+Define material mat_hook_steel; diffuse_color = (0.6, 0.6, 0.7, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main housing shell  ---
+Create primitive cuboid with size 0.100×0.080×0.025 m and name it housing_main.
+Rotate housing_main so its +Z axis aligns +Z (world).
+Anchor housing_main to world origin.
+Then move by offset(0, 0, 0).
+Apply fillets to all vertical edges of housing_main with radius 0.005 m, segments 4.
+
+---  SECTION 2 – Create inner structural core  ---
+Create primitive cuboid with size 0.090×0.070×0.020 m and name it housing_inner_core.
+Rotate housing_inner_core so its +Z axis aligns +Z (world).
+Anchor housing_inner_core to housing_main.bottom_face.
+Align housing_inner_core.XY_face to housing_main.XY_face.
+Then move by offset(0, 0, 0.002).
+
+---  SECTION 3 – Create top cover plate  ---
+Create primitive cuboid with size 0.100×0.080×0.002 m and name it housing_top_plate.
+Rotate housing_top_plate so its +Z axis aligns +Z (world).
+Anchor housing_top_plate to housing_main.top_face.
+Align housing_top_plate.XY_face to housing_main.XY_face.
+Then move by offset(0, 0, 0.0135).
+
+---  SECTION 4 – Create belt clip  ---
+Create primitive cuboid with size 0.060×0.010×0.005 m and name it belt_clip.
+Rotate belt_clip so its +Z axis aligns +Z (world).
+Anchor belt_clip to housing_main.back_face.
+Align belt_clip.XY_face to housing_main.XY_face.
+Then move by offset(0, -0.040, 0.010).
+
+---  SECTION 5 – Create spool core  ---
+Create primitive cylinder with diameter 0.040 m and height 0.015 m and name it spool_core.
+Rotate spool_core so its +Z axis aligns +Z (world).
+Anchor spool_core to housing_inner_core.bottom_face.
+Align spool_core.XY_face to housing_inner_core.XY_face.
+Then move by offset(0, 0, 0).
+
+---  SECTION 6 – Create wound tape blade representation  ---
+Create primitive cylinder with diameter 0.030 m and height 0.001 m and name it tape_blade.
+Rotate tape_blade so its +Z axis aligns +Z (world).
+Anchor tape_blade to spool_core.top_face.
+Align tape_blade.XY_face to spool_core.XY_face.
+Then move by offset(0, 0, 0).
+
+---  SECTION 7 – Create blade tip hook  ---
+Create primitive cuboid with size 0.005×0.003×0.002 m and name it blade_tip_hook.
+Rotate blade_tip_hook so its +Z axis aligns +X (world).
+Anchor blade_tip_hook to tape_blade.right_edge.
+Align blade_tip_hook.XZ_face to tape_blade.XZ_face.
+Then move by offset(0.015, 0, 0).
+
+---  SECTION 8 – Create lock button  ---
+Create primitive cuboid with size 0.015×0.010×0.005 m and name it lock_button.
+Rotate lock_button so its +Z axis aligns +X (world).
+Anchor lock_button to housing_main.right_face.
+Align lock_button.XZ_face to housing_main.XZ_face.
+Then move by offset(0.040, 0, 0.010).
+
+---  SECTION 9 – Create spring mechanism  ---
+Create primitive torus with major radius 0.019 m and minor radius 0.005 m and name it spring_mechanism.
+Rotate spring_mechanism so its +Z axis aligns +Z (world).
+Anchor spring_mechanism to spool_core.top_face.
+Align spring_mechanism.XY_face to spool_core.XY_face.
+Then move by offset(0, 0, 0).
+
+Stage 9 complete.
+All stages complete.

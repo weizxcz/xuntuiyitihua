@@ -1,0 +1,1 @@
+Create a desktop monitor. It should have a 24-inch screen with a thin bezel. 

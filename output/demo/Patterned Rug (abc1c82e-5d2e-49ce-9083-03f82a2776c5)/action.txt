@@ -1,0 +1,81 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_geometric_blue; diffuse_color = (0.1,0.2,0.8,1.0).
+Define material mat_geometric_white; diffuse_color = (0.9,0.9,0.9,1.0).
+Define material mat_floral_blue; diffuse_color = (0.1,0.2,0.8,1.0).
+Define material mat_floral_green; diffuse_color = (0.1,0.5,0.1,1.0).
+Define material mat_floral_red; diffuse_color = (0.8,0.1,0.1,1.0).
+Define material mat_floral_white; diffuse_color = (0.9,0.9,0.9,1.0).
+Define material mat_rug_base; diffuse_color = (0.8,0.7,0.6,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Rug Base  ---
+Create primitive cuboid with size 2.0×3.0×0.02 m and name it rug_base.
+Rotate rug_base so its +Z axis aligns +Z (world).
+Align rug_base.bottom_face to (0,0,0).
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Geometric Pattern Grid  ---
+Create Empty helper (cube display) and name it geo_pattern_union.
+Rotate geo_pattern_union so its axis aligns +Z (world).
+Move geo_pattern_union to (0,0,0).
+
+For r in 0…5 and c in 0…3:
+  Create primitive cuboid with size 0.5×0.5×0.002 m and name it geo_tile_A_r_c.
+  Rotate geo_tile_A_r_c so its +Z axis aligns +Z (world).
+  Align geo_tile_A_r_c.bottom_face to rug_base.top_face.
+  Then offset(0.25 + c·0.5, 0.75 - r·0.5, 0.01).
+
+For r in 0…5 and c in 0…3:
+  Create primitive cuboid with size 0.5×0.5×0.002 m and name it geo_tile_B_r_c.
+  Rotate geo_tile_B_r_c so its +Z axis aligns +Z (world).
+  Align geo_tile_B_r_c.bottom_face to rug_base.top_face.
+  Then offset(0.75 + c·0.5, 0.75 - r·0.5, 0.01).
+
+Boolean-union geo_tile_A_r_c and geo_tile_B_r_c into geo_pattern_union.
+Stage 2 complete.
+
+---  SECTION 3 – Create Floral Pattern Motif  ---
+Create Empty helper (cube display) and name it floral_pattern_union.
+Rotate floral_pattern_union so its axis aligns +Z (world).
+Move floral_pattern_union to (0,0,0).
+
+Create primitive cylinder with Ø0.2×0.003 m and name it floral_center.
+Rotate floral_center so its +Z axis aligns +Z (world).
+Align floral_center.bottom_face to rug_base.top_face.
+Then move by offset(0,0,0.01).
+
+For i in 0…5:
+  Create primitive cuboid with size 0.1×0.05×0.002 m and name it petal_prism_i.
+  Rotate petal_prism_i so its +Z axis aligns +Z (world).
+  Align petal_prism_i.bottom_face to rug_base.top_face.
+  Then position at polar(i·60°; dr=0.1).
+
+For i in 0…3:
+  Create primitive cuboid with size 0.15×0.04×0.002 m and name it leaf_prism_i.
+  Rotate leaf_prism_i so its +Z axis aligns +Z (world).
+  Align leaf_prism_i.bottom_face to rug_base.top_face.
+  Then position at polar(i·90° + 45°; dr=0.12).
+
+Boolean-union floral_center, petal_prism_i, and leaf_prism_i into floral_pattern_union.
+Stage 3 complete.
+
+---  SECTION 4 – Final Assembly  ---
+Boolean-union rug_base and geo_pattern_union into rug_root.
+Boolean-union rug_root and floral_pattern_union into rug_root.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

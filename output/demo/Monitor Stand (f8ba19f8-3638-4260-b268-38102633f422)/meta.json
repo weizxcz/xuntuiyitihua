@@ -1,0 +1,47 @@
+{
+  "id": "f8ba19f8-3638-4260-b268-38102633f422",
+  "name": "Monitor Stand",
+  "instruction": "Can you design a monitor stand? It should be simple, with a flat surface to hold the monitor and a sturdy base.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a monitor stand.",
+        "The stand features a flat surface designed to hold a monitor.",
+        "The base is designed to be sturdy."
+      ],
+      "Color representation": [
+        "The color of the monitor stand is neutral to blend with various environments."
+      ],
+      "Size": [
+        "The flat surface is adequately sized to accommodate standard monitor dimensions.",
+        "The base is proportionate to the surface to ensure stability."
+      ],
+      "Proportion": [
+        "The height of the stand is appropriate for ergonomic viewing.",
+        "The width of the base is sufficient to prevent tipping."
+      ],
+      "Texture and surface detail": [
+        "The flat surface may have a smooth finish to prevent scratches.",
+        "The base may have a non-slip texture for added stability."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The flat surface is positioned above the base for optimal monitor placement.",
+        "The base supports the flat surface without any overhang."
+      ],
+      "Object distance and contact": [
+        "The flat surface is securely attached to the base.",
+        "There is no gap between the flat surface and the base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design adheres to the requirement for simplicity.",
+        "All specified attributes are accurately represented."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

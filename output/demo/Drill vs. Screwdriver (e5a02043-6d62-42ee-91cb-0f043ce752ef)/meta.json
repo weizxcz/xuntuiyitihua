@@ -1,0 +1,50 @@
+{
+  "id": "e5a02043-6d62-42ee-91cb-0f043ce752ef",
+  "name": "Drill vs. Screwdriver",
+  "instruction": "Create a 3D model comparing a drill and a screwdriver. The drill should have a chuck for holding drill bits and a trigger for operation. The screwdriver should have a handle and a shaft with a flat or Phillips head. Position them side by side.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The drill has a cylindrical body with a chuck at the front.",
+        "The drill features a trigger located on the handle.",
+        "The screwdriver has a straight handle.",
+        "The screwdriver's shaft is long and straight.",
+        "The screwdriver head is either flat or Phillips."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The drill's body is larger than the screwdriver's handle.",
+        "The proportions between the drill and screwdriver are visually balanced."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The drill and screwdriver are positioned side by side.",
+        "The drill's chuck is oriented forward, while the screwdriver's head is facing upward.",
+        "Both objects are stable and do not overlap."
+      ],
+      "Object distance and contact": [
+        "There is a clear space between the drill and screwdriver.",
+        "The drill's trigger is accessible without obstruction from the screwdriver.",
+        "The screwdriver's head is clearly visible without interference from the drill."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the drill and screwdriver are accurately modeled as per the description.",
+        "The drill includes a chuck and trigger as specified.",
+        "The screwdriver includes a handle and a shaft with the correct head type."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

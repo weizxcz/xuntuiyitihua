@@ -1,0 +1,239 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.8,0.8,0.85,1.0).
+Define material mat_plastic_black; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_plastic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Assembly  ---
+Create primitive cube with size 0.8×0.5×0.02 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Move base_plate to pos=(0,0,0).
+
+Create primitive cube with size 0.8×0.04×0.03 m and name it base_frame_rail_x1.
+Rotate base_frame_rail_x1 so its +Z axis aligns +Z (world).
+Move base_frame_rail_x1 to pos=(0, -0.23, 0.015).
+
+Create primitive cube with size 0.8×0.04×0.03 m and name it base_frame_rail_x2.
+Rotate base_frame_rail_x2 so its +Z axis aligns +Z (world).
+Move base_frame_rail_x2 to pos=(0, 0.23, 0.015).
+
+Create primitive cube with size 0.04×0.5×0.03 m and name it base_frame_rail_y1.
+Rotate base_frame_rail_y1 so its +Z axis aligns +Z (world).
+Move base_frame_rail_y1 to pos=(-0.38, 0, 0.015).
+
+Create primitive cube with size 0.04×0.5×0.03 m and name it base_frame_rail_y2.
+Rotate base_frame_rail_y2 so its +Z axis aligns +Z (world).
+Move base_frame_rail_y2 to pos=(0.38, 0, 0.015).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Side Panels with Ventilation  ---
+Create primitive cube with size 0.02×0.5×0.45 m and name it side_panel_left.
+Rotate side_panel_left so its +Z axis aligns +Z (world).
+Move side_panel_left to pos=(-0.4, 0, 0.235).
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_left_1.
+Rotate slot_cut_left_1 so its +Z axis aligns +Z (world).
+Move slot_cut_left_1 to pos=(-0.4, -0.16, 0.235).
+Boolean-subtract slot_cut_left_1 from side_panel_left; discard slot_cut_left_1.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_left_2.
+Rotate slot_cut_left_2 so its +Z axis aligns +Z (world).
+Move slot_cut_left_2 to pos=(-0.4, -0.08, 0.235).
+Boolean-subtract slot_cut_left_2 from side_panel_left; discard slot_cut_left_2.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_left_3.
+Rotate slot_cut_left_3 so its +Z axis aligns +Z (world).
+Move slot_cut_left_3 to pos=(-0.4, 0.0, 0.235).
+Boolean-subtract slot_cut_left_3 from side_panel_left; discard slot_cut_left_3.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_left_4.
+Rotate slot_cut_left_4 so its +Z axis aligns +Z (world).
+Move slot_cut_left_4 to pos=(-0.4, 0.08, 0.235).
+Boolean-subtract slot_cut_left_4 from side_panel_left; discard slot_cut_left_4.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_left_5.
+Rotate slot_cut_left_5 so its +Z axis aligns +Z (world).
+Move slot_cut_left_5 to pos=(-0.4, 0.16, 0.235).
+Boolean-subtract slot_cut_left_5 from side_panel_left; discard slot_cut_left_5.
+
+Create primitive cube with size 0.02×0.5×0.45 m and name it side_panel_right.
+Rotate side_panel_right so its +Z axis aligns +Z (world).
+Move side_panel_right to pos=(0.4, 0, 0.235).
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_right_1.
+Rotate slot_cut_right_1 so its +Z axis aligns +Z (world).
+Move slot_cut_right_1 to pos=(0.4, -0.16, 0.235).
+Boolean-subtract slot_cut_right_1 from side_panel_right; discard slot_cut_right_1.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_right_2.
+Rotate slot_cut_right_2 so its +Z axis aligns +Z (world).
+Move slot_cut_right_2 to pos=(0.4, -0.08, 0.235).
+Boolean-subtract slot_cut_right_2 from side_panel_right; discard slot_cut_right_2.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_right_3.
+Rotate slot_cut_right_3 so its +Z axis aligns +Z (world).
+Move slot_cut_right_3 to pos=(0.4, 0.0, 0.235).
+Boolean-subtract slot_cut_right_3 from side_panel_right; discard slot_cut_right_3.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_right_4.
+Rotate slot_cut_right_4 so its +Z axis aligns +Z (world).
+Move slot_cut_right_4 to pos=(0.4, 0.08, 0.235).
+Boolean-subtract slot_cut_right_4 from side_panel_right; discard slot_cut_right_4.
+Create primitive cube with size 0.05×0.02×0.02 m and name it slot_cut_right_5.
+Rotate slot_cut_right_5 so its +Z axis aligns +Z (world).
+Move slot_cut_right_5 to pos=(0.4, 0.16, 0.235).
+Boolean-subtract slot_cut_right_5 from side_panel_right; discard slot_cut_right_5.
+
+Create primitive cube with size 0.02×0.8×0.45 m and name it side_panel_back.
+Rotate side_panel_back so its +Z axis aligns +Z (world).
+Move side_panel_back to pos=(0, 0.24, 0.235).
+
+Create primitive cube with size 0.02×0.8×0.45 m and name it side_panel_front.
+Rotate side_panel_front so its +Z axis aligns +Z (world).
+Move side_panel_front to pos=(0, -0.24, 0.235).
+Create primitive cube with size 0.6×0.35×0.02 m and name it door_cut_front.
+Rotate door_cut_front so its +Z axis aligns +Z (world).
+Move door_cut_front to pos=(0, -0.24, 0.175).
+Boolean-subtract door_cut_front from side_panel_front; discard door_cut_front.
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Top Assembly  ---
+Create primitive cube with size 0.8×0.5×0.02 m and name it top_panel.
+Rotate top_panel so its +Z axis aligns +Z (world).
+Move top_panel to pos=(0, 0, 0.46).
+
+Create primitive cube with size 0.8×0.04×0.03 m and name it top_frame_rail_x1.
+Rotate top_frame_rail_x1 so its +Z axis aligns +Z (world).
+Move top_frame_rail_x1 to pos=(0, -0.23, 0.445).
+
+Create primitive cube with size 0.8×0.04×0.03 m and name it top_frame_rail_x2.
+Rotate top_frame_rail_x2 so its +Z axis aligns +Z (world).
+Move top_frame_rail_x2 to pos=(0, 0.23, 0.445).
+
+Create primitive cube with size 0.04×0.5×0.03 m and name it top_frame_rail_y1.
+Rotate top_frame_rail_y1 so its +Z axis aligns +Z (world).
+Move top_frame_rail_y1 to pos=(-0.38, 0, 0.445).
+
+Create primitive cube with size 0.04×0.5×0.03 m and name it top_frame_rail_y2.
+Rotate top_frame_rail_y2 so its +Z axis aligns +Z (world).
+Move top_frame_rail_y2 to pos=(0.38, 0, 0.445).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Door Assembly  ---
+Create primitive cube with size 0.02×0.6×0.35 m and name it door_panel.
+Rotate door_panel so its +Z axis aligns +Z (world).
+Move door_panel to pos=(0, -0.24, 0.175).
+
+Create primitive cube with size 0.02×0.6×0.03 m and name it door_frame_top.
+Rotate door_frame_top so its +Z axis aligns +Z (world).
+Move door_frame_top to pos=(0, -0.24, 0.34).
+
+Create primitive cube with size 0.02×0.6×0.03 m and name it door_frame_bottom.
+Rotate door_frame_bottom so its +Z axis aligns +Z (world).
+Move door_frame_bottom to pos=(0, -0.24, 0.01).
+
+Create primitive cube with size 0.02×0.03×0.35 m and name it door_frame_left.
+Rotate door_frame_left so its +Z axis aligns +Z (world).
+Move door_frame_left to pos=(-0.285, -0.24, 0.175).
+
+Create primitive cube with size 0.02×0.03×0.35 m and name it door_frame_right.
+Rotate door_frame_right so its +Z axis aligns +Z (world).
+Move door_frame_right to pos=(0.285, -0.24, 0.175).
+
+Create primitive cube with size 0.02×0.1×0.02 m and name it door_handle.
+Rotate door_handle so its +Z axis aligns +Z (world).
+Move door_handle to pos=(0.2, -0.25, 0.2).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Hardware & Fasteners  ---
+Create primitive cylinder with size 0.01×0.02×0.03 m and name it hinge_left_top.
+Rotate hinge_left_top so its +Z axis aligns +X (world).
+Move hinge_left_top to pos=(-0.285, -0.24, 0.34).
+
+Create primitive cylinder with size 0.01×0.02×0.03 m and name it hinge_left_bottom.
+Rotate hinge_left_bottom so its +Z axis aligns +X (world).
+Move hinge_left_bottom to pos=(-0.285, -0.24, 0.01).
+
+Create primitive cylinder with size 0.01×0.02×0.03 m and name it hinge_right_top.
+Rotate hinge_right_top so its +Z axis aligns +X (world).
+Move hinge_right_top to pos=(0.285, -0.24, 0.34).
+
+Create primitive cylinder with size 0.01×0.02×0.03 m and name it hinge_right_bottom.
+Rotate hinge_right_bottom so its +Z axis aligns +X (world).
+Move hinge_right_bottom to pos=(0.285, -0.24, 0.01).
+
+Create primitive cube with size 0.03×0.05×0.02 m and name it latch_mechanism.
+Rotate latch_mechanism so its +Z axis aligns +Z (world).
+Move latch_mechanism to pos=(0.2, -0.25, 0.2).
+Create primitive cube with size 0.01×0.01×0.02 m and name it latch_slot_cut.
+Rotate latch_slot_cut so its +Z axis aligns +Z (world).
+Move latch_slot_cut to pos=(0.2, -0.25, 0.2).
+Boolean-subtract latch_slot_cut from latch_mechanism; discard latch_slot_cut.
+
+Create primitive cylinder with size 0.05×0.05×0.01 m and name it foot_pad_fl.
+Rotate foot_pad_fl so its +Z axis aligns +Z (world).
+Move foot_pad_fl to pos=(-0.38, -0.23, 0.005).
+
+Create primitive cylinder with size 0.05×0.05×0.01 m and name it foot_pad_fr.
+Rotate foot_pad_fr so its +Z axis aligns +Z (world).
+Move foot_pad_fr to pos=(0.38, -0.23, 0.005).
+
+Create primitive cylinder with size 0.05×0.05×0.01 m and name it foot_pad_bl.
+Rotate foot_pad_bl so its +Z axis aligns +Z (world).
+Move foot_pad_bl to pos=(-0.38, 0.23, 0.005).
+
+Create primitive cylinder with size 0.05×0.05×0.01 m and name it foot_pad_br.
+Rotate foot_pad_br so its +Z axis aligns +Z (world).
+Move foot_pad_br to pos=(0.38, 0.23, 0.005).
+
+Stage 5 complete.
+
+---  SECTION 6 – Final Assembly & Validation  ---
+Align base_plate.Z_face to base_frame_rail_x1.Z_face.
+Align base_plate.Z_face to base_frame_rail_x2.Z_face.
+Align base_plate.Z_face to base_frame_rail_y1.Z_face.
+Align base_plate.Z_face to base_frame_rail_y2.Z_face.
+Align side_panel_left.X_face to base_frame_rail_y1.X_face.
+Align side_panel_left.Z_face to base_plate.Z_face.
+Align side_panel_right.X_face to base_frame_rail_y2.X_face.
+Align side_panel_right.Z_face to base_plate.Z_face.
+Align side_panel_back.Y_face to base_frame_rail_x2.Y_face.
+Align side_panel_back.Z_face to base_plate.Z_face.
+Align side_panel_front.Y_face to base_frame_rail_x1.Y_face.
+Align side_panel_front.Z_face to base_plate.Z_face.
+Align top_panel.Z_face to top_frame_rail_x1.Z_face.
+Align top_panel.Z_face to top_frame_rail_x2.Z_face.
+Align top_panel.Z_face to top_frame_rail_y1.Z_face.
+Align top_panel.Z_face to top_frame_rail_y2.Z_face.
+Align top_panel.Z_face to side_panel_left.Z_face.
+Align top_panel.Z_face to side_panel_right.Z_face.
+Align top_panel.Z_face to side_panel_back.Z_face.
+Align top_panel.Z_face to side_panel_front.Z_face.
+Align door_panel.Y_face to side_panel_front.Y_face.
+Align door_panel.Z_face to door_frame_top.Z_face.
+Align door_panel.Z_face to door_frame_bottom.Z_face.
+Align door_panel.X_face to door_frame_left.X_face.
+Align door_panel.X_face to door_frame_right.X_face.
+Align hinge_left_top.Y_face to side_panel_front.Y_face.
+Align hinge_left_top.X_face to door_frame_left.X_face.
+Align hinge_left_bottom.Y_face to side_panel_front.Y_face.
+Align hinge_left_bottom.X_face to door_frame_left.X_face.
+Align hinge_right_top.Y_face to side_panel_front.Y_face.
+Align hinge_right_top.X_face to door_frame_right.X_face.
+Align hinge_right_bottom.Y_face to side_panel_front.Y_face.
+Align hinge_right_bottom.X_face to door_frame_right.X_face.
+Align latch_mechanism.Y_face to door_handle.Y_face.
+Align foot_pad_fl.Z_face to base_plate.Z_face.
+Align foot_pad_fr.Z_face to base_plate.Z_face.
+Align foot_pad_bl.Z_face to base_plate.Z_face.
+Align foot_pad_br.Z_face to base_plate.Z_face.
+
+Assembly guideline satisfied.
+All stages complete.

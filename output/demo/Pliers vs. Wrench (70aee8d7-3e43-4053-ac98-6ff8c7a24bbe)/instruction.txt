@@ -1,0 +1,1 @@
+Create a 3D model comparing pliers and a wrench. The pliers should have a pair of jaws and a pivot point, while the wrench should have an adjustable open-end. Place both tools side by side to highlight their differences.

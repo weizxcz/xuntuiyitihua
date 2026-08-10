@@ -1,0 +1,62 @@
+-- MATERIAL LIBRARY --
+fabric_beige | diffuse_color=(0.96,0.93,0.88,1.0)
+fabric_cushion_blue | diffuse_color=(0.2,0.4,0.6,1.0)
+wood_frame_oak | diffuse_color=(0.6,0.4,0.2,1.0)
+wood_legs_dark | diffuse_color=(0.2,0.15,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sofa_root | Composite of all sofa modules and cushions | assembly_order=[base_modules], [cushions]; mat=wood_frame_oak; create_method=boolean_union |
+
+Layer 1 – Primary Structure (Base Modules)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_module_A | Standard 2-seater sofa base | Align(XY) base_module_A.center to sofa_root.center; orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=1.6m×0.9m×0.4m (W×D×H); assembly_order=[base_modules] |
+| base_module_B | Corner module base | Align(XY) base_module_B.center to sofa_root.center; orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.9m×0.9m×0.4m (W×D×H); assembly_order=[base_modules] |
+| base_module_C | Chaise lounge base | Align(XY) base_module_C.center to sofa_root.center; orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=1.6m×1.4m×0.4m (W×D×H); assembly_order=[base_modules] |
+| base_module_D | Armless connector module | Align(XY) base_module_D.center to sofa_root.center; orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.6m×0.9m×0.4m (W×D×H); assembly_order=[base_modules] |
+
+Layer 2 – Secondary Structure (Legs & Arms)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| leg_A_fl | Front-left leg for module A | Align(XY) leg_A_fl.center to base_module_A.left_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_A_fr | Front-right leg for module A | Align(XY) leg_A_fr.center to base_module_A.right_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_A_bl | Back-left leg for module A | Align(XY) leg_A_bl.center to base_module_A.left_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_A_br | Back-right leg for module A | Align(XY) leg_A_br.center to base_module_A.right_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_B_fl | Front-left leg for module B | Align(XY) leg_B_fl.center to base_module_B.left_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_B_fr | Front-right leg for module B | Align(XY) leg_B_fr.center to base_module_B.right_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_B_bl | Back-left leg for module B | Align(XY) leg_B_bl.center to base_module_B.left_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_B_br | Back-right leg for module B | Align(XY) leg_B_br.center to base_module_B.right_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_C_fl | Front-left leg for module C | Align(XY) leg_C_fl.center to base_module_C.left_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_C_fr | Front-right leg for module C | Align(XY) leg_C_fr.center to base_module_C.right_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_C_bl | Back-left leg for module C | Align(XY) leg_C_bl.center to base_module_C.left_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| leg_C_br | Back-right leg for module C | Align(XY) leg_C_br.center to base_module_C.right_face; offset(0,0,-0.15); orientation=axis:+Z; mat=wood_legs_dark; create_method=cylinder; size=Ø0.05×0.15m; assembly_order=[legs] |
+| arm_A_L | Left armrest for module A | Align(XY) arm_A_L.center to base_module_A.left_face; offset(0,0,0.1); orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.1m×0.9m×0.5m (W×D×H); assembly_order=[arms] |
+| arm_A_R | Right armrest for module A | Align(XY) arm_A_R.center to base_module_A.right_face; offset(0,0,0.1); orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.1m×0.9m×0.5m (W×D×H); assembly_order=[arms] |
+| arm_B_L | Left armrest for module B | Align(XY) arm_B_L.center to base_module_B.left_face; offset(0,0,0.1); orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.1m×0.9m×0.5m (W×D×H); assembly_order=[arms] |
+| arm_B_R | Right armrest for module B | Align(XY) arm_B_R.center to base_module_B.right_face; offset(0,0,0.1); orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.1m×0.9m×0.5m (W×D×H); assembly_order=[arms] |
+| arm_C_L | Left armrest for module C | Align(XY) arm_C_L.center to base_module_C.left_face; offset(0,0,0.1); orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.1m×1.4m×0.5m (W×D×H); assembly_order=[arms] |
+| arm_C_R | Right armrest for module C | Align(XY) arm_C_R.center to base_module_C.right_face; offset(0,0,0.1); orientation=axis:+Z; mat=wood_frame_oak; create_method=primitive; size=0.1m×1.4m×0.5m (W×D×H); assembly_order=[arms] |
+
+Layer 3 – Upholstery & Cushions
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cushion_seat_A | Seat cushion for module A | Align(XY) cushion_seat_A.center to base_module_A.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; size=1.5m×0.8m×0.15m (W×D×H); assembly_order=[cushions] |
+| cushion_seat_B | Seat cushion for module B | Align(XY) cushion_seat_B.center to base_module_B.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; size=0.8m×0.8m×0.15m (W×D×H); assembly_order=[cushions] |
+| cushion_seat_C | Seat cushion for module C | Align(XY) cushion_seat_C.center to base_module_C.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; size=1.5m×1.3m×0.15m (W×D×H); assembly_order=[cushions] |
+| cushion_back_A | Back cushion for module A | Align(XY) cushion_back_A.center to base_module_A.back_face; offset(0,0,0.1); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; size=1.5m×0.15m×0.4m (W×D×H); assembly_order=[cushions] |
+| cushion_back_B | Back cushion for module B | Align(XY) cushion_back_B.center to base_module_B.back_face; offset(0,0,0.1); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; size=0.8m×0.15m×0.4m (W×D×H); assembly_order=[cushions] |
+| cushion_back_C | Back cushion for module C | Align(XY) cushion_back_C.center to base_module_C.back_face; offset(0,0,0.1); orientation=axis:+Z; mat=fabric_beige; create_method=primitive; size=1.5m×0.15m×0.4m (W×D×H); assembly_order=[cushions] |
+| cushion_throw_1 | Throw cushion 1 | Align(XY) cushion_throw_1.center to cushion_seat_A.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=fabric_cushion_blue; create_method=primitive; size=0.4m×0.4m×0.1m (W×D×H); assembly_order=[cushions] |
+| cushion_throw_2 | Throw cushion 2 | Align(XY) cushion_throw_2.center to cushion_seat_B.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=fabric_cushion_blue; create_method=primitive; size=0.4m×0.4m×0.1m (W×D×H); assembly_order=[cushions] |
+
+Layer 4 – Configuration Examples
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| config_traditional | Traditional 3-seater sofa | assembly_order=[base_module_A, base_module_D, base_module_A]; offset(0,0,0); mat=wood_frame_oak; create_method=boolean_union |
+| config_sectional | L-shaped sectional | assembly_order=[base_module_A, base_module_B]; offset(0,0,0); mat=wood_frame_oak; create_method=boolean_union |
+| config_chaise | Chaise lounge | assembly_order=[base_module_C]; offset(0,0,0); mat=wood_frame_oak; create_method=boolean_union |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,1 @@
+Design a 3D model of a computer monitor. It should have a slim bezel and a stand that allows for height adjustment. Include ports on the back for connectivity and buttons on the front or side for power and settings adjustments. The screen should be flat and rectangular.

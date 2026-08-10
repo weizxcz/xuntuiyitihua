@@ -1,0 +1,47 @@
+{
+  "id": "1a7c5025-6b43-4ef3-b67b-2488396517a8",
+  "name": "Plant Pot",
+  "instruction": "Let's create a 3D model of a plant pot. The pot should be cylindrical with a slightly wider top than bottom. Include a drainage hole at the base.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a plant pot.",
+        "The pot has a cylindrical shape.",
+        "The top of the pot is slightly wider than the bottom."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportions of the pot should maintain a visually appealing ratio.",
+        "The height of the pot should be appropriate relative to its diameter."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pot maintains a consistent cylindrical shape in three dimensions.",
+        "The drainage hole is positioned at the base of the pot.",
+        "The wider top allows for easy access to the plant."
+      ],
+      "Object distance and contact": [
+        "The drainage hole does not interfere with the pot's structural integrity.",
+        "There is a clear distinction between the pot's body and the drainage hole."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the pot are accurately represented.",
+        "The cylindrical shape with a wider top than bottom is correctly modeled.",
+        "The inclusion of a drainage hole at the base is executed as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

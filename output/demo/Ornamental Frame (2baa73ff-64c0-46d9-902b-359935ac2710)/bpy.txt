@@ -1,0 +1,372 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, degrees
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure collections are clean
+    for col in bpy.data.collections:
+        bpy.data.collections.remove(col)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(name, shape, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.5, depth=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2) # Treat X/Y as diameter
+    elif shape == 'disc':
+        bpy.ops.mesh.primitive_circle_add(vertices=32, radius=0.5, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, 1)
+    elif shape == 'cone':
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.5, radius2=0, depth=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2])
+    elif shape == 'uvsphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=0.5, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    
+    obj.name = name
+    obj.rotation_euler = (rotation[0], rotation[1], rotation[2])
+    return obj
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def align_face_to_face(obj_target, obj_source, target_face_axis, source_face_axis, offset=0):
+    """
+    Aligns a face of obj_source to a face of obj_target.
+    target_face_axis: 'X', 'Y', or 'Z' (positive direction of target face normal)
+    source_face_axis: 'X', 'Y', or 'Z' (positive direction of source face normal)
+    offset: additional distance along the normal after alignment.
+    """
+    # Get world bounds
+    def get_face_center(obj, axis):
+        # Transform vertices to world space
+        verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        
+        # Find min/max along axis
+        if axis == 'X':
+            idx = 0
+        elif axis == 'Y':
+            idx = 1
+        elif axis == 'Z':
+            idx = 2
+        else:
+            return Vector((0,0,0))
+            
+        vals = [v[idx] for v in verts_world]
+        min_val = min(vals)
+        max_val = max(vals)
+        
+        # Determine which face corresponds to the axis direction
+        # If axis is positive (e.g. 'X'), we want the face with max X
+        # If axis is negative (e.g. '-X'), we want the face with min X
+        if axis.startswith('-'):
+            center_val = min_val
+        else:
+            center_val = max_val
+            
+        # Calculate center of that face
+        face_verts = [v for v in verts_world if abs(v[idx] - center_val) < 1e-4]
+        if not face_verts:
+            return Vector((0,0,0))
+            
+        center = Vector((0,0,0))
+        for v in face_verts:
+            center += v
+        center /= len(face_verts)
+        return center
+
+    target_center = get_face_center(obj_target, target_face_axis)
+    source_center = get_face_center(obj_source, source_face_axis)
+    
+    # Calculate translation needed to align centers
+    # We want source_face to touch target_face.
+    # If aligning +Z of source to +Z of target:
+    # target_top = target_center + (target_half_height * Z)
+    # source_top = source_center + (source_half_height * Z)
+    # We want source_top == target_top
+    
+    # Simplified approach: Move source so its face center matches target face center
+    # Then apply offset
+    
+    # Get half extents in world space (approximate for axis-aligned)
+    def get_half_extents(obj):
+        # Use bound box
+        bb = obj.bound_box
+        # bb is in local space, need to transform to world? 
+        # Actually, for simple cubes aligned to axes, local half extents are sufficient if we handle rotation.
+        # But since we align faces, let's just use the distance from center to face.
+        
+        # Get world matrix
+        wm = obj.matrix_world
+        
+        # Find min/max in world space
+        verts_world = [wm @ v.co for v in obj.data.vertices]
+        
+        mins = [min(v[i] for v in verts_world) for i in range(3)]
+        maxs = [max(v[i] for v in verts_world) for i in range(3)]
+        
+        center = obj.matrix_world.to_translation()
+        half_extents = [maxs[i] - center[i] for i in range(3)]
+        return half_extents
+
+    target_he = get_half_extents(obj_target)
+    source_he = get_half_extents(obj_source)
+    
+    # Determine target position for the face
+    # If target_face_axis is 'Z', target face is at target_center.z + target_he[2]
+    # If target_face_axis is '-Z', target face is at target_center.z - target_he[2]
+    
+    def get_face_pos(center, he, axis):
+        pos = center.copy()
+        if axis == 'X': pos[0] += he[0]
+        elif axis == '-X': pos[0] -= he[0]
+        elif axis == 'Y': pos[1] += he[1]
+        elif axis == '-Y': pos[1] -= he[1]
+        elif axis == 'Z': pos[2] += he[2]
+        elif axis == '-Z': pos[2] -= he[2]
+        return pos
+
+    target_face_pos = get_face_pos(target_center, target_he, target_face_axis)
+    
+    # Determine source face position relative to source center
+    # We want to move source so its source_face_pos aligns with target_face_pos
+    # current_source_face_pos = source_center + offset_from_source_center_to_face
+    
+    # Let's just move the source object directly
+    # Current source center
+    src_center = obj_source.matrix_world.to_translation()
+    
+    # Where is the source face currently?
+    src_face_pos = get_face_pos(src_center, source_he, source_face_axis)
+    
+    # Vector to move source face to target face
+    move_vec = target_face_pos - src_face_pos
+    
+    # Apply move
+    obj_source.location += move_vec
+    
+    # Apply offset along the normal of the target face
+    # Normal direction
+    normal = Vector((0,0,0))
+    if target_face_axis == 'X': normal = Vector((1,0,0))
+    elif target_face_axis == '-X': normal = Vector((-1,0,0))
+    elif target_face_axis == 'Y': normal = Vector((0,1,0))
+    elif target_face_axis == '-Y': normal = Vector((0,-1,0))
+    elif target_face_axis == 'Z': normal = Vector((0,0,1))
+    elif target_face_axis == '-Z': normal = Vector((0,0,-1))
+    
+    obj_source.location += normal * offset
+
+def align_center_to_avg(obj_target, points_world):
+    """Align object center to average of points."""
+    avg = Vector((0,0,0))
+    for p in points_world:
+        avg += p
+    avg /= len(points_world)
+    
+    current_center = obj_target.matrix_world.to_translation()
+    obj_target.location += (avg - current_center)
+
+def get_corner_points(obj, face_axis, corner_type):
+    """
+    Get world coordinates of corners on a specific face.
+    face_axis: 'X', '-X', 'Y', '-Y', 'Z', '-Z'
+    corner_type: 'top_left', 'top_right', 'bottom_left', 'bottom_right'
+    Note: This assumes the object is axis-aligned.
+    """
+    wm = obj.matrix_world
+    verts_world = [wm @ v.co for v in obj.data.vertices]
+    
+    # Filter vertices on the face
+    if face_axis == 'X':
+        idx, val, sign = 0, max(v[0] for v in verts_world), 1
+    elif face_axis == '-X':
+        idx, val, sign = 0, min(v[0] for v in verts_world), -1
+    elif face_axis == 'Y':
+        idx, val, sign = 1, max(v[1] for v in verts_world), 1
+    elif face_axis == '-Y':
+        idx, val, sign = 1, min(v[1] for v in verts_world), -1
+    elif face_axis == 'Z':
+        idx, val, sign = 2, max(v[2] for v in verts_world), 1
+    elif face_axis == '-Z':
+        idx, val, sign = 2, min(v[2] for v in verts_world), -1
+    else:
+        return []
+        
+    face_verts = [v for v in verts_world if abs(v[idx] - val) < 1e-4]
+    
+    if not face_verts:
+        return []
+        
+    # Sort to find corners
+    # Project to 2D plane perpendicular to face_axis
+    # If face is Z, project to XY. If face is X, project to YZ.
+    if face_axis in ['Z', '-Z']:
+        # Sort by Y (up/down) then X (left/right)
+        # Top is max Y, Bottom is min Y
+        # Right is max X, Left is min X
+        top_verts = [v for v in face_verts if abs(v[1] - max(v[1] for v in face_verts)) < 1e-4]
+        bottom_verts = [v for v in face_verts if abs(v[1] - min(v[1] for v in face_verts)) < 1e-4]
+        
+        if corner_type == 'top_left':
+            return [min(top_verts, key=lambda v: v[0])]
+        elif corner_type == 'top_right':
+            return [max(top_verts, key=lambda v: v[0])]
+        elif corner_type == 'bottom_left':
+            return [min(bottom_verts, key=lambda v: v[0])]
+        elif corner_type == 'bottom_right':
+            return [max(bottom_verts, key=lambda v: v[0])]
+            
+    elif face_axis in ['Y', '-Y']:
+        # Face is YZ plane. X is horizontal, Z is vertical.
+        # Top is max Z, Bottom is min Z
+        # Right is max X, Left is min X
+        top_verts = [v for v in face_verts if abs(v[2] - max(v[2] for v in face_verts)) < 1e-4]
+        bottom_verts = [v for v in face_verts if abs(v[2] - min(v[2] for v in face_verts)) < 1e-4]
+        
+        if corner_type == 'top_left':
+            return [min(top_verts, key=lambda v: v[0])]
+        elif corner_type == 'top_right':
+            return [max(top_verts, key=lambda v: v[0])]
+        elif corner_type == 'bottom_left':
+            return [min(bottom_verts, key=lambda v: v[0])]
+        elif corner_type == 'bottom_right':
+            return [max(bottom_verts, key=lambda v: v[0])]
+            
+    elif face_axis in ['X', '-X']:
+        # Face is XZ plane? No, if face is X, normal is X. Plane is YZ.
+        # Wait, if face is X (normal +X), the face lies in YZ plane.
+        # Vertical is Z, Horizontal is Y.
+        # Top is max Z, Bottom is min Z
+        # Right is max Y, Left is min Y
+        top_verts = [v for v in face_verts if abs(v[2] - max(v[2] for v in face_verts)) < 1e-4]
+        bottom_verts = [v for v in face_verts if abs(v[2] - min(v[2] for v in face_verts)) < 1e-4]
+        
+        if corner_type == 'top_left':
+            return [min(top_verts, key=lambda v: v[1])]
+        elif corner_type == 'top_right':
+            return [max(top_verts, key=lambda v: v[1])]
+        elif corner_type == 'bottom_left':
+            return [min(bottom_verts, key=lambda v: v[1])]
+        elif corner_type == 'bottom_right':
+            return [max(bottom_verts, key=lambda v: v[1])]
+            
+    return []
+
+# ==============================================================================
+# SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# MATERIALS
+# ==============================================================================
+mat_baroque_gold = make_material("mat_baroque_gold", (0.76, 0.64, 0.12, 1.0))
+mat_frame_base = make_material("mat_frame_base", (0.15, 0.15, 0.15, 1.0))
+
+# ==============================================================================
+# GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create frame_base ---
+frame_base = add_primitive("frame_base", "cube", (0.600, 0.800, 0.040), location=(0,0,0), rotation=(0,0,0))
+apply_material(frame_base, mat_frame_base)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+
+# --- SECTION 2 – Create top_crown ---
+top_crown = add_primitive("top_crown", "cube", (0.600, 0.050, 0.020), location=(0,0,0), rotation=(0,0,0))
+apply_material(top_crown, mat_frame_base)
+# Align top_crown.bottom_face to frame_base.top_face
+# frame_base.top_face is +Z face. top_crown.bottom_face is -Z face.
+align_face_to_face(frame_base, top_crown, 'Z', '-Z', offset=0.020)
+# Offset (0,0,0.020) applied in align_face_to_face
+
+# --- SECTION 3 – Create bottom_crown ---
+bottom_crown = add_primitive("bottom_crown", "cube", (0.600, 0.050, 0.020), location=(0,0,0), rotation=(0,0,0))
+apply_material(bottom_crown, mat_frame_base)
+# Align bottom_crown.top_face to frame_base.bottom_face
+# frame_base.bottom_face is -Z face. bottom_crown.top_face is +Z face.
+align_face_to_face(frame_base, bottom_crown, '-Z', 'Z', offset=0.020)
+# Offset (0,0,0.020) applied in align_face_to_face
+
+# --- SECTION 4 – Create left_vine ---
+left_vine = add_primitive("left_vine", "cube", (0.050, 0.800, 0.020), location=(0,0,0), rotation=(0,0,0))
+apply_material(left_vine, mat_frame_base)
+# Align left_vine.right_face to frame_base.left_face
+# frame_base.left_face is -X face. left_vine.right_face is +X face.
+align_face_to_face(frame_base, left_vine, '-X', 'X', offset=0.020)
+# Offset (0.020,0,0) applied in align_face_to_face
+
+# --- SECTION 5 – Create right_vine ---
+right_vine = add_primitive("right_vine", "cube", (0.050, 0.800, 0.020), location=(0,0,0), rotation=(0,0,0))
+apply_material(right_vine, mat_frame_base)
+# Align right_vine.left_face to frame_base.right_face
+# frame_base.right_face is +X face. right_vine.left_face is -X face.
+align_face_to_face(frame_base, right_vine, 'X', '-X', offset=-0.020)
+# Offset (-0.020,0,0) applied in align_face_to_face
+
+# --- SECTION 6 – Create corner_ornaments ---
+corner_ornaments = add_primitive("corner_ornaments", "cube", (0.080, 0.080, 0.030), location=(0,0,0), rotation=(0,0,0))
+apply_material(corner_ornaments, mat_baroque_gold)
+
+# Get corners of frame_base.top_face (+Z)
+# top_left, top_right, bottom_left, bottom_right
+# Note: "top" usually means higher Z, but here we are on the top face (+Z).
+# So "top" and "bottom" refer to Y axis on that face? Or Z axis?
+# The object is aligned to world. Top face is Z+.
+# Corners are defined by X and Y.
+# Top-Left: Max Y, Min X
+# Top-Right: Max Y, Max X
+# Bottom-Left: Min Y, Min X
+# Bottom-Right: Min Y, Max X
+
+tl = get_corner_points(frame_base, 'Z', 'top_left')[0]
+tr = get_corner_points(frame_base, 'Z', 'top_right')[0]
+bl = get_corner_points(frame_base, 'Z', 'bottom_left')[0]
+br = get_corner_points(frame_base, 'Z', 'bottom_right')[0]
+
+avg_center = (tl + tr + bl + br) / 4.0
+
+# Align corner_ornaments.center to avg_center
+align_center_to_avg(corner_ornaments, [avg_center])
+
+# Offset (0,0,0.015)
+corner_ornaments.location += Vector((0, 0, 0.015))
+
+```

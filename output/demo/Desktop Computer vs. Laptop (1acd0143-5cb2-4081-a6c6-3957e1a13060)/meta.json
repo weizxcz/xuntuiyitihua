@@ -1,0 +1,51 @@
+{
+  "id": "1acd0143-5cb2-4081-a6c6-3957e1a13060",
+  "name": "Desktop Computer vs. Laptop",
+  "instruction": "Hey there, could you create a 3D comparison between a desktop computer and a laptop? \n\nFor the desktop computer, include a monitor, CPU tower, keyboard, and mouse. The monitor should be separate from the CPU tower. \n\nFor the laptop, make it open with the screen and keyboard visible. Both should be placed on a flat surface, like a desk. \n\nMake sure the desktop computer appears larger and bulkier compared to the laptop.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The desktop computer includes a monitor, CPU tower, keyboard, and mouse.",
+        "The monitor is separate from the CPU tower.",
+        "The laptop is depicted as an open device with a visible screen and keyboard."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The monitor and CPU tower are proportionate to each other.",
+        "The keyboard and mouse are appropriately sized for the desktop setup.",
+        "The laptop's screen and keyboard are proportionate to its body."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The monitor is positioned above the CPU tower.",
+        "The keyboard is placed in front of the CPU tower.",
+        "The mouse is situated next to the keyboard.",
+        "The laptop is flat on the desk with the screen raised."
+      ],
+      "Object distance and contact": [
+        "The monitor does not overlap with the CPU tower.",
+        "The keyboard is directly in front of the CPU tower.",
+        "The mouse is within reach of the keyboard.",
+        "The laptop is placed on the desk without any gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components for the desktop computer are included.",
+        "The laptop is accurately represented as open with visible screen and keyboard.",
+        "The size difference between the desktop and laptop is clearly depicted."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,1 @@
+Design a tambourine with a circular frame and multiple jingles.

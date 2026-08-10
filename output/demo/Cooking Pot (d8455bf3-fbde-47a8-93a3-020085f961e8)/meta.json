@@ -1,0 +1,48 @@
+{
+  "id": "d8455bf3-fbde-47a8-93a3-020085f961e8",
+  "name": "Cooking Pot",
+  "instruction": "Create a cooking pot with a lid and two handles on the sides.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cooking pot.",
+        "The pot has a round body.",
+        "The lid is circular and fits securely on top of the pot.",
+        "The pot features two handles on the sides."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The lid is proportionate to the size of the pot.",
+        "The handles are appropriately sized for easy gripping."
+      ],
+      "Texture and surface detail": [
+        "No Teture and surface detail."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handles are positioned symmetrically on either side of the pot.",
+        "The lid sits securely on top of the pot without any gaps.",
+        "The pot's base is stable and supports the weight of the pot and lid."
+      ],
+      "Object distance and contact": [
+        "The handles do not interfere with the lid's placement.",
+        "There is no gap between the lid and the pot.",
+        "The handles are securely attached to the pot."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the cooking pot are accurately represented.",
+        "The design includes a lid and two handles as instructed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

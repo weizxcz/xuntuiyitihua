@@ -1,0 +1,48 @@
+{
+  "id": "8acc6785-535c-475f-a4f9-3cf598bf9a6f",
+  "name": "Desktop Monitor",
+  "instruction": "Create a desktop monitor. It should have a 24-inch screen with a thin bezel. ",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a desktop monitor.",
+        "The monitor has a rectangular screen.",
+        "The bezel surrounding the screen is thin."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The screen size is accurately represented as 24 inches.",
+        "The overall dimensions of the monitor are proportionate to the screen size."
+      ],
+      "Proportion": [
+        "The screen is proportionate to the thin bezel.",
+        "The monitor's base is stable and supports the screen adequately."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The monitor stands upright on its base.",
+        "The screen is positioned correctly within the bezel.",
+        "The base provides adequate support without tilting."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the screen and the bezel.",
+        "The monitor's base is in contact with the surface it rests on."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The specified screen size of 24 inches is accurately represented.",
+        "The thin bezel is correctly depicted around the screen.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

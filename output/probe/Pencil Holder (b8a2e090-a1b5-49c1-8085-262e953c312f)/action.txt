@@ -1,0 +1,68 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_acrylic; diffuse_color = (0.9, 0.9, 0.95, 0.3).
+Define material mat_inner_wall; diffuse_color = (0.8, 0.8, 0.85, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base plate  ---
+Create primitive cylinder with radius 0.0508 m and height 0.005 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Align base_plate.XY_face to root.XY_face.
+Align base_plate.bottom_face to root.bottom_face.
+Then move by offset(0, 0, 0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create cylindrical wall  ---
+Create primitive cylinder with radius 0.0508 m and height 0.1524 m and name it cylindrical_wall.
+Rotate cylindrical_wall so its +Z axis aligns +Z (world).
+Align cylindrical_wall.XY_face to base_plate.XY_face.
+Align cylindrical_wall.bottom_face to base_plate.top_face.
+Then move by offset(0, 0, 0).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create radial dividers  ---
+Create primitive cuboid with size 0.002×0.1524×0.1016 m and name it divider_1.
+Rotate divider_1 so its +Z axis aligns +Z (world).
+Align divider_1.XY_face to root.XY_face.
+Align divider_1.bottom_face to base_plate.top_face.
+Then move by offset(0, 0, 0).
+Rotate divider_1 so its local +Z axis achieves orientation=axis:+Z (already aligned, no change needed for axis, but apply rotation command if needed for orientation definition).
+Rotation: Rotate divider_1 about its local Z axis by 0°.
+Assembly guideline satisfied.
+
+Create primitive cuboid with size 0.002×0.1524×0.1016 m and name it divider_2.
+Rotate divider_2 so its +Z axis aligns +Z (world).
+Align divider_2.XY_face to root.XY_face.
+Align divider_2.bottom_face to base_plate.top_face.
+Then move by offset(0, 0, 0).
+Rotation: Rotate divider_2 about its local Z axis by 120°.
+Assembly guideline satisfied.
+
+Create primitive cuboid with size 0.002×0.1524×0.1016 m and name it divider_3.
+Rotate divider_3 so its +Z axis aligns +Z (world).
+Align divider_3.XY_face to root.XY_face.
+Align divider_3.bottom_face to base_plate.top_face.
+Then move by offset(0, 0, 0).
+Rotation: Rotate divider_3 about its local Z axis by 240°.
+Assembly guideline satisfied.
+
+Boolean-subtract divider_1 from cylindrical_wall; discard divider_1.
+Boolean-subtract divider_2 from cylindrical_wall; discard divider_2.
+Boolean-subtract divider_3 from cylindrical_wall; discard divider_3.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

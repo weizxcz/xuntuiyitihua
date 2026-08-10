@@ -1,0 +1,387 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, roughness=0.5, metallic=0.0):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    return mat
+
+def add_cube(name, size=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1.0, location=(0,0,0), rotation=(0,0,0), cap_ends=True):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation, end_fill_type='TRIFAN' if cap_ends else 'NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top=0.0, radius_bottom=1.0, depth=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_text_object(name, text="Text", size=1.0, location=(0,0,0), rotation=(0,0,0)):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.data.size = size
+    return obj
+
+def add_bevel(obj, width=0.01, segments=5, limit_method='ANGLE'):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = limit_method
+    return mod
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    target = vector.normalized()
+    if local_axis.normalized().dot(target) > 0.9999:
+        return # Already aligned
+    
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of Vector objects."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to create invisible locator objects for alignment."""
+    def __init__(self, name, location=(0,0,0)):
+        self.name = name
+        # Create a small cube as a locator
+        bpy.ops.mesh.primitive_cube_add(size=0.001, location=location)
+        self.obj = bpy.context.active_object
+        self.obj.name = name
+        self.obj.hide_viewport = True
+        self.obj.hide_render = True
+        self.obj.empty_display_size = 0.01
+        self.obj.empty_display_type = 'PLAIN_AXES'
+        # Actually, let's use a mesh cube for precise face center calculation if needed, 
+        # but for simple center alignment, an Empty is better. 
+        # However, the prompt asks for "Empty helper (cube display)". 
+        # Let's stick to a small cube mesh for "cube display" locator if we need face centers, 
+        # or just an Empty. The prompt says "Create Empty helper (cube display)". 
+        # This likely means an Empty object that looks like a cube or is used as a cube anchor.
+        # Let's revert to a small cube mesh for precise face/center logic if needed, 
+        # but standard practice is Empty. Let's use a small cube mesh named as locator.
+        bpy.ops.object.select_all(action='DESELECT')
+        self.obj.select_set(True)
+        bpy.context.view_layer.objects.active = self.obj
+        # Convert to empty? No, keep as mesh for face center logic if "cube display" implies mesh.
+        # But "Empty helper" usually means Empty. Let's create an Empty.
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=location)
+        new_empty = bpy.context.active_object
+        new_empty.name = name
+        new_empty.empty_display_size = 0.01
+        # Delete the cube we just made
+        bpy.ops.object.delete()
+        self.obj = new_empty
+
+    def center_world(self):
+        return self.obj.location
+
+    def face_center_world(self, face_index):
+        # For an Empty, this is just the center. 
+        # If it were a mesh, we'd calculate it.
+        return self.obj.location
+
+    def radial_point_world(self, angle, radius):
+        return self.obj.location + Vector((math.cos(angle)*radius, math.sin(angle)*radius, 0))
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using modifier stack."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target is active
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(objects_to_union, result_name):
+    """Perform boolean union on a list of objects."""
+    if not objects_to_union:
+        return
+    
+    # Select all
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+    
+    bpy.context.view_layer.objects.active = objects_to_union[0]
+    
+    # Join them first
+    bpy.ops.object.join()
+    joined_obj = bpy.context.active_object
+    joined_obj.name = result_name
+    
+    return joined_obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_fabric_blue = make_material(
+    name="fabric_blue",
+    diffuse_color=(0.1, 0.2, 0.4, 1.0)
+)
+
+# --- Block 2: Stage-by-Stage Operations ---
+
+# --- SECTION 1 – Create main scarf body ---
+
+# Create primitive cuboid with size 0.25×1.8×0.002 m and name it scarf_main.
+# Note: Blender cube is centered. Size is total width.
+# We want dimensions X=0.25, Y=1.8, Z=0.002.
+# Default cube is 2x2x2. We scale it.
+scarf_main = add_cube(name="scarf_main", size=1.0, location=(0,0,0), rotation=(0,0,0))
+scarf_main.scale = (0.25/2, 1.8/2, 0.002/2) # Size is diameter/width, so divide by 2 for radius-like scaling if using size param, but add_cube uses size as full width. 
+# Actually, add_cube(size=1.0) creates a cube of width 1.0.
+# So to get 0.25x1.8x0.002, we scale by (0.25, 1.8, 0.002).
+scarf_main.scale = (0.25, 1.8, 0.002)
+
+# Rotate scarf_main so its +Z axis aligns +Z (world).
+# Default cube Z is already up.
+align_axis_to_vector(scarf_main, 'Z', (0,0,1))
+
+# Anchor scarf_main to world origin.
+scarf_main.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+scarf_main.location += Vector((0, 0, 0))
+
+# Apply material
+if scarf_main.data.materials:
+    scarf_main.data.materials[0] = mat_fabric_blue
+else:
+    scarf_main.data.materials.append(mat_fabric_blue)
+
+# --- SECTION 2 – Create left fringe cluster ---
+
+# Create Empty helper (cube display) and name it fringe_L.
+fringe_L = Locator(name="fringe_L", location=(0,0,0))
+
+# Rotate fringe_L so its axis aligns +Z (world).
+align_axis_to_vector(fringe_L.obj, 'Z', (0,0,1))
+
+# Move fringe_L to (0,0,0).
+fringe_L.obj.location = (0, 0, 0)
+
+# Scale fringe_L to match overall size (AUTO → 0.002 m inferred height).
+# This likely means scaling the locator to represent the Z-thickness of the scarf.
+fringe_L.obj.scale = (0.25, 1.8, 0.002)
+
+# Align fringe_L.+Z_face to scarf_main.+Z_face.
+# Since both are aligned to Z, and centered, this is trivial.
+# But let's ensure Z-up alignment.
+align_axis_to_vector(fringe_L.obj, 'Z', (0,0,1))
+
+# Align fringe_L to scarf_main.left_face.center.
+# scarf_main is at (0,0,0) with size 0.25x1.8x0.002.
+# Left face (assuming -X is left) center is at (-0.25/2, 0, 0).
+scarf_left_face_center = Vector((-0.25/2, 0, 0))
+fringe_L.obj.location = scarf_left_face_center
+
+# Then move by offset(0,0,0).
+fringe_L.obj.location += Vector((0, 0, 0))
+
+# For i in 0…19:
+for i in range(20):
+    # Create primitive cylinder with radius 0.001 m and length 0.15 m and name it fringe_L_thread_i.
+    # Cylinder default axis is Z.
+    thread = add_cylinder(
+        name=f"fringe_L_thread_{i}",
+        radius=0.001,
+        depth=0.15,
+        location=(0,0,0),
+        rotation=(0,0,0)
+    )
+    
+    # Rotate fringe_L_thread_i so its +Z axis aligns +Z (world).
+    align_axis_to_vector(thread, 'Z', (0,0,1))
+    
+    # Anchor fringe_L_thread_i to fringe_L.
+    # "Anchor" usually means parent or align position. 
+    # Given the offset step follows, "Anchor" likely means setting the base position to the anchor's location.
+    thread.location = fringe_L.obj.location
+    
+    # Then offset(dx=-0.12 + i*0.0127, dy=0, dz=0).
+    offset_x = -0.12 + i * 0.0127
+    thread.location += Vector((offset_x, 0, 0))
+    
+    # Apply material
+    if thread.data.materials:
+        thread.data.materials[0] = mat_fabric_blue
+    else:
+        thread.data.materials.append(mat_fabric_blue)
+
+# --- SECTION 3 – Create right fringe cluster ---
+
+# Create Empty helper (cube display) and name it fringe_R.
+fringe_R = Locator(name="fringe_R", location=(0,0,0))
+
+# Rotate fringe_R so its axis aligns +Z (world).
+align_axis_to_vector(fringe_R.obj, 'Z', (0,0,1))
+
+# Move fringe_R to (0,0,0).
+fringe_R.obj.location = (0, 0, 0)
+
+# Scale fringe_R to match overall size (AUTO → 0.002 m inferred height).
+fringe_R.obj.scale = (0.25, 1.8, 0.002)
+
+# Align fringe_R.+Z_face to scarf_main.+Z_face.
+align_axis_to_vector(fringe_R.obj, 'Z', (0,0,1))
+
+# Align fringe_R to scarf_main.right_face.center.
+# Right face (assuming +X is right) center is at (0.25/2, 0, 0).
+scarf_right_face_center = Vector((0.25/2, 0, 0))
+fringe_R.obj.location = scarf_right_face_center
+
+# Then move by offset(0,0,0).
+fringe_R.obj.location += Vector((0, 0, 0))
+
+# For i in 0…19:
+for i in range(20):
+    # Create primitive cylinder with radius 0.001 m and length 0.15 m and name it fringe_R_thread_i.
+    thread = add_cylinder(
+        name=f"fringe_R_thread_{i}",
+        radius=0.001,
+        depth=0.15,
+        location=(0,0,0),
+        rotation=(0,0,0)
+    )
+    
+    # Rotate fringe_R_thread_i so its +Z axis aligns +Z (world).
+    align_axis_to_vector(thread, 'Z', (0,0,1))
+    
+    # Anchor fringe_R_thread_i to fringe_R.
+    thread.location = fringe_R.obj.location
+    
+    # Then offset(dx=-0.12 + i*0.0127, dy=0, dz=0).
+    offset_x = -0.12 + i * 0.0127
+    thread.location += Vector((offset_x, 0, 0))
+    
+    # Apply material
+    if thread.data.materials:
+        thread.data.materials[0] = mat_fabric_blue
+    else:
+        thread.data.materials.append(mat_fabric_blue)
+
+# --- SECTION 4 – Assemble final scarf body ---
+
+# Boolean-union scarf_main, fringe_L, and fringe_R to create scarf_body.
+# Note: fringe_L and fringe_R are Locators (Empty objects). 
+# Empties cannot be part of a boolean union mesh operation directly.
+# The prompt says "Boolean-union scarf_main, fringe_L, and fringe_R".
+# This implies fringe_L and fringe_R might be intended as mesh objects, or the threads are the main geometry.
+# However, the threads are separate objects.
+# Usually, "fringe cluster" implies the group of threads.
+# If fringe_L/R are just locators, they have no mesh.
+# Let's assume the "fringe cluster" refers to the threads anchored to them.
+# But the instruction says "Boolean-union scarf_main, fringe_L, and fringe_R".
+# If fringe_L/R are empties, this will fail or do nothing.
+# Let's re-read: "Create Empty helper... name it fringe_L".
+# Then "Align fringe_L...".
+# Then "For i... Create... fringe_L_thread_i".
+# Then "Boolean-union scarf_main, fringe_L, and fringe_R".
+# This is ambiguous. If fringe_L is an Empty, it has no volume.
+# Perhaps the "fringe cluster" is meant to be a mesh group?
+# Or maybe the prompt implies that the threads should be joined/unioned with the main body.
+# Let's assume the user wants the threads and the main body unioned.
+# The empties are just helpers.
+# I will collect all thread objects and the main body for the union.
+
+# Collect all objects to union
+objects_to_union = [scarf_main]
+for i in range(20):
+    objects_to_union.append(bpy.data.objects[f"fringe_L_thread_{i}"])
+    objects_to_union.append(bpy.data.objects[f"fringe_R_thread_{i}"])
+
+# Perform boolean union
+# Since we have many objects, we can join them first, then apply a boolean if needed, 
+# but joining meshes with same material is effectively a union if they don't intersect badly.
+# However, to be safe and follow "Boolean-union", we can use the boolean modifier chain or join.
+# Joining is cleaner for non-intersecting or slightly overlapping meshes of same material.
+# Let's join them.
+
+bpy.ops.object.select_all(action='DESELECT')
+for obj in objects_to_union:
+    obj.select_set(True)
+bpy.context.view_layer.objects.active = objects_to_union[0]
+
+bpy.ops.object.join()
+scarf_body = bpy.context.active_object
+scarf_body.name = "scarf_body"
+
+# Apply material
+if scarf_body.data.materials:
+    scarf_body.data.materials[0] = mat_fabric_blue
+else:
+    scarf_body.data.materials.append(mat_fabric_blue)
+
+# Align scarf_body.center to world origin.
+scarf_body.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+scarf_body.location += Vector((0, 0, 0))

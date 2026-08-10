@@ -1,0 +1,48 @@
+{
+  "id": "3a19dbd6-66de-4c41-a745-ac6b306f80a0",
+  "name": "Syringe Pump",
+  "instruction": "Could you design a 3D model of a syringe pump? It should have a base unit with a digital display and a holder for a syringe.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a syringe pump.",
+        "The base unit is rectangular.",
+        "The holder for the syringe is integrated into the base unit."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The digital display is appropriately sized for readability.",
+        "The holder is proportionate to the base unit."
+      ],
+      "Texture and surface detail": [
+        "The base unit has a smooth surface for easy cleaning.",
+        "The digital display may have a glass or plastic finish."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The digital display is positioned on the front of the base unit.",
+        "The holder is securely attached to the base unit.",
+        "The overall structure is stable and balanced."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the digital display and the holder.",
+        "The holder is positioned at a height that allows easy access to the syringe.",
+        "The base unit provides adequate support for the holder."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (base unit, digital display, holder) are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

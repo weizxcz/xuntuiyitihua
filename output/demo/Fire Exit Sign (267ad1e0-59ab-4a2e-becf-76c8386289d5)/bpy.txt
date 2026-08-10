@@ -1,0 +1,235 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, emissive_strength=0.0):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Emission Strength'].default_value = emissive_strength
+    return mat
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_text_object(name, text, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.data.size = size
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    if axis == 'Z':
+        # Align Z to vector
+        z_vec = obj.matrix_world.to_3x3().col[2]
+        if z_vec.length < 1e-5: z_vec = Vector((0,0,1))
+        target = vector.normalized()
+        rot_quat = z_vec.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+    elif axis == 'X':
+        x_vec = obj.matrix_world.to_3x3().col[0]
+        if x_vec.length < 1e-5: x_vec = Vector((1,0,0))
+        target = vector.normalized()
+        rot_quat = x_vec.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+    elif axis == 'Y':
+        y_vec = obj.matrix_world.to_3x3().col[1]
+        if y_vec.length < 1e-5: y_vec = Vector((0,1,0))
+        target = vector.normalized()
+        rot_quat = y_vec.rotation_difference(target)
+        obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Apply boolean subtract modifier."""
+    # Ensure target is active for modifier application if needed, 
+    # but usually we add modifier to target.
+    bpy.context.view_layer.objects.active = target_obj
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, other_obj):
+    """Apply boolean union modifier."""
+    bpy.context.view_layer.objects.active = target_obj
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+
+def add_bevel(obj, width=0.01, segments=5):
+    """Add bevel modifier."""
+    bpy.context.view_layer.objects.active = obj
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this script context
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        return self.obj.location
+
+    def face_center_world(self):
+        # Assuming "face center" implies the center of the object's geometry
+        return self.obj.location
+
+    def radial_point_world(self, index=0):
+        # Placeholder for radial point logic if needed for cylinders/spheres
+        # For cubes, this is ambiguous, returning center
+        return self.obj.location
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Set units to metres
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_green_diffuse = make_material("mat_green_diffuse", (0, 1, 0, 1))
+    mat_green_emissive = make_material("mat_green_emissive", (0, 1, 0, 0.8), emissive_strength=1.0)
+    mat_white_diffuse = make_material("mat_white_diffuse", (1, 1, 1, 1))
+    mat_white_emissive = make_material("mat_white_emissive", (1, 1, 1, 0.9), emissive_strength=1.0)
+
+    # Create a dummy root object to anchor to
+    bpy.ops.mesh.primitive_cube_add(size=0.001, location=(0,0,0))
+    root = bpy.context.active_object
+    root.name = "root"
+    root.hide_viewport = True
+    root.hide_render = True
+
+    # --- SECTION 1 – Create sign_panel ---
+    sign_panel = add_cube("sign_panel", (0.600, 0.300, 0.005), location=(0,0,0), rotation=(0,0,0))
+    # Rotate so +Z aligns +Z (already default, but explicit step)
+    align_axis_to_vector(sign_panel, 'Z', (0,0,1))
+    
+    # Anchor to root.center
+    root_loc = root.location
+    sign_panel.location = root_loc
+    
+    # Offset (0,0,0)
+    sign_panel.location += Vector((0, 0, 0))
+    
+    # Assign material (defaulting to green diffuse for panel unless specified otherwise, 
+    # but instructions didn't specify material assignment, so we leave default or assign one. 
+    # Let's assign mat_green_diffuse as it's a "sign panel")
+    if sign_panel.data.materials:
+        sign_panel.data.materials[0] = mat_green_diffuse
+    else:
+        sign_panel.data.materials.append(mat_green_diffuse)
+
+    # --- SECTION 2 – Create text_layer ---
+    
+    # text_fire
+    text_fire = add_cube("text_fire", (0.200, 0.050, 0.002), location=(0,0,0), rotation=(0,0,0))
+    align_axis_to_vector(text_fire, 'Z', (0,0,1))
+    
+    # Anchor to root.center
+    text_fire.location = root.location
+    
+    # Offset (0, 0.060, 0)
+    text_fire.location += Vector((0, 0.060, 0))
+    
+    # Assign material (white emissive for text)
+    if text_fire.data.materials:
+        text_fire.data.materials[0] = mat_white_emissive
+    else:
+        text_fire.data.materials.append(mat_white_emissive)
+
+    # text_exit
+    text_exit = add_cube("text_exit", (0.200, 0.050, 0.002), location=(0,0,0), rotation=(0,0,0))
+    align_axis_to_vector(text_exit, 'Z', (0,0,1))
+    
+    # Anchor to root.center
+    text_exit.location = root.location
+    
+    # Offset (0, -0.060, 0)
+    text_exit.location += Vector((0, -0.060, 0))
+    
+    # Assign material
+    if text_exit.data.materials:
+        text_exit.data.materials[0] = mat_white_emissive
+    else:
+        text_exit.data.materials.append(mat_white_emissive)
+
+    # --- SECTION 3 – Create symbol_layer ---
+    
+    # running_figure
+    running_figure = add_cube("running_figure", (0.100, 0.150, 0.002), location=(0,0,0), rotation=(0,0,0))
+    align_axis_to_vector(running_figure, 'Z', (0,0,1))
+    
+    # Anchor to root.center
+    running_figure.location = root.location
+    
+    # Offset (0.150, 0, 0)
+    running_figure.location += Vector((0.150, 0, 0))
+    
+    # Assign material (green emissive for symbol)
+    if running_figure.data.materials:
+        running_figure.data.materials[0] = mat_green_emissive
+    else:
+        running_figure.data.materials.append(mat_green_emissive)
+
+    # arrow
+    arrow = add_cube("arrow", (0.100, 0.050, 0.002), location=(0,0,0), rotation=(0,0,0))
+    align_axis_to_vector(arrow, 'Z', (0,0,1))
+    
+    # Anchor to root.center
+    arrow.location = root.location
+    
+    # Offset (-0.150, 0, 0)
+    arrow.location += Vector((-0.150, 0, 0))
+    
+    # Assign material
+    if arrow.data.materials:
+        arrow.data.materials[0] = mat_green_emissive
+    else:
+        arrow.data.materials.append(mat_green_emissive)
+
+    # Cleanup root
+    bpy.data.objects.remove(root, do_unlink=True)
+
+if __name__ == "__main__":
+    main()

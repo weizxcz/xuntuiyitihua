@@ -1,0 +1,47 @@
+{
+  "id": "320078f1-bfc2-4f8e-b806-7e624a35905a",
+  "name": "Power Distribution Unit",
+  "instruction": "Design a power distribution unit (PDU). Start with a rectangular housing that can be mounted in a server rack. Include multiple power outlets along the front panel. Add a digital display to show the current load and voltage. Ensure the PDU has circuit breakers for protection. Include mounting brackets and ensure the design is practical for data center use.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a power distribution unit (PDU).",
+        "The housing of the PDU is rectangular.",
+        "The front panel features multiple power outlets."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The front panel is proportionate to the overall size of the housing.",
+        "The digital display is appropriately sized for visibility."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The power outlets are evenly spaced along the front panel.",
+        "The digital display is positioned clearly for easy reading.",
+        "The circuit breakers are accessible and appropriately placed."
+      ],
+      "Object distance and contact": [
+        "The outlets do not overlap with the digital display.",
+        "There is adequate space between the outlets for easy access.",
+        "The mounting brackets are securely attached to the housing."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components such as outlets, display, and circuit breakers are included.",
+        "The design adheres to practical considerations for data center use."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

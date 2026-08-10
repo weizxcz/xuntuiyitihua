@@ -1,0 +1,1 @@
+Design a decorative wall panel with a geometric pattern. Ensure the pattern is symmetrical and covers the entire surface of the panel.

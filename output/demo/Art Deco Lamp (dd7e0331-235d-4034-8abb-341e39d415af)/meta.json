@@ -1,0 +1,46 @@
+{
+  "id": "dd7e0331-235d-4034-8abb-341e39d415af",
+  "name": "Art Deco Lamp",
+  "instruction": "Create an Art Deco lamp. The base should be geometric with a tapered design, and the lampshade should have a stepped pattern.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The lamp has a geometric base.",
+        "The base features a tapered design.",
+        "The lampshade has a stepped pattern."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The base is proportionate to the lamp."
+      ],
+      "Texture and surface detail": [
+        "The base could be made of metal or glass.",
+        "The lampshade may be made of fabric or glass."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The base is stable and proportionate to the lampshade.",
+        "The lampshade is properly positioned above the base.",
+        "The stepped pattern of the lampshade is clearly defined."
+      ],
+      "Object distance and contact": [
+        "The lampshade does not overlap with the base.",
+        "There is a clear connection between the base and the lampshade."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the lamp are accurately represented.",
+        "The tapered design of the base and the stepped pattern of the lampshade are correctly implemented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

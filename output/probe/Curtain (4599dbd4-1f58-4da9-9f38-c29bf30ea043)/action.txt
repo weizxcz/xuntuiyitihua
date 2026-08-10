@@ -1,0 +1,64 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_curtain; diffuse_color = (0.85, 0.85, 0.90, 1.0).
+Define material metal_rod; diffuse_color = (0.70, 0.70, 0.75, 1.0).
+Define material wood_trim; diffuse_color = (0.60, 0.40, 0.20, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Rod Assembly  ---
+Create primitive cylinder with Ø0.025×2.0 m and name it rod_main.
+Rotate rod_main so its +Z axis aligns +X (world).
+Move rod_main to pos=(0, 0, 2.5).
+
+Create primitive cuboid with size 0.05×0.05×0.1 m and name it rod_bracket_L.
+Rotate rod_bracket_L so its +Z axis aligns +Z (world).
+Move rod_bracket_L to pos=(-1.0, 0, 2.5).
+
+Create primitive cuboid with size 0.05×0.05×0.1 m and name it rod_bracket_R.
+Rotate rod_bracket_R so its +Z axis aligns +Z (world).
+Move rod_bracket_R to pos=(1.0, 0, 2.5).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Fabric Panels  ---
+Create primitive plane with size 0.9×2.4 m and name it fabric_left.
+Rotate fabric_left so its +Z axis aligns +Z (world).
+Move fabric_left to pos=(-0.5, 0.05, 1.3).
+
+Create primitive plane with size 0.9×2.4 m and name it fabric_right.
+Rotate fabric_right so its +Z axis aligns +Z (world).
+Move fabric_right to pos=(0.5, 0.05, 1.3).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Trim & Hardware  ---
+Create primitive cuboid with size 0.9×0.05×0.05 m and name it trim_top_L.
+Rotate trim_top_L so its +Z axis aligns +Z (world).
+Move trim_top_L to pos=(-0.5, 0, 2.52).
+
+Create primitive cuboid with size 0.9×0.05×0.05 m and name it trim_top_R.
+Rotate trim_top_R so its +Z axis aligns +Z (world).
+Move trim_top_R to pos=(0.5, 0, 2.52).
+
+Create primitive cuboid with size 0.9×0.05×0.05 m and name it hem_bottom_L.
+Rotate hem_bottom_L so its +Z axis aligns +Z (world).
+Move hem_bottom_L to pos=(-0.5, 0, 0.12).
+
+Create primitive cuboid with size 0.9×0.05×0.05 m and name it hem_bottom_R.
+Rotate hem_bottom_R so its +Z axis aligns +Z (world).
+Move hem_bottom_R to pos=(0.5, 0, 0.12).
+
+Stage 3 complete.
+
+All stages complete.

@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+body_wood | diffuse_color=(0.65, 0.35, 0.15, 1.0)
+bridge_wood | diffuse_color=(0.15, 0.08, 0.02, 1.0)
+fretboard_wood | diffuse_color=(0.10, 0.05, 0.02, 1.0)
+metal_string | diffuse_color=(0.80, 0.80, 0.85, 1.0)
+metal_tuning | diffuse_color=(0.90, 0.85, 0.60, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| neck_body_union | Composite union of neck_assembly + body_assembly | (1) execute 'neck_assembly': Align(XYZ) neck_assembly.bottom to body_assembly.top; (2) execute 'body_assembly': orientation=axis:+Z; mat=body_wood; create_method=boolean_subtract; constraint=body_shape_params { width=0.28m, height=0.45m, waist=0.18m, cutaway_depth=0.08m, thickness=0.05m, contour_radius=0.02m }; |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+| body_assembly | Main guitar body (hollowed) | Align(XYZ) body_assembly.center to (0,0,0); orientation=axis:+Z; mat=body_wood; create_method=boolean_subtract; constraint=body_shape_params { width=0.28m, height=0.45m, waist=0.18m, cutaway_depth=0.08m, thickness=0.05m, contour_radius=0.02m }; |
+| neck_assembly | Neck and headstock | Align(XYZ) neck_assembly.bottom to body_assembly.top; orientation=axis:+Z; mat=neck_wood; create_method=extrude_from_sketch; constraint=neck_profile_params { length=0.65m, width=0.045m, thickness=0.025m, headstock_angle=15deg, headstock_length=0.12m }; |
+
+Layer 2 – Neck Details
+| ID | Description | Key attributes / placement |
+| fretboard | Fretboard on neck | Align(XYZ) fretboard.bottom to neck_assembly.top; orientation=axis:+Z; mat=fretboard_wood; create_method=boolean_subtract; constraint=fretboard_params { length=0.60m, width=0.040m, thickness=0.005m, fret_count=22 }; |
+| headstock | Headstock at top of neck | Align(XYZ) headstock.bottom to neck_assembly.top; orientation=axis:+Z; mat=neck_wood; create_method=extrude_from_sketch; constraint=headstock_params { length=0.12m, width=0.050m, thickness=0.020m, angle=15deg }; |
+
+Layer 3 – Hardware & Strings
+| ID | Description | Key attributes / placement |
+| bridge | Bridge on body | Align(XYZ) bridge.bottom to body_assembly.top; orientation=axis:+Z; mat=bridge_wood; create_method=cylinder; constraint=bridge_params { diameter=0.015m, height=0.010m, position=(0.15m, -0.10m) }; |
+| tuning_pegs | Tuning pegs on headstock | Align(XYZ) tuning_pegs.bottom to headstock.top; orientation=axis:+Z; mat=metal_tuning; create_method=cylinder; constraint=tuning_params { count=6, radius=0.005m, height=0.020m, positions=[(0.02m, 0.05m), (-0.02m, 0.05m), (0.02m, 0.03m), (-0.02m, 0.03m), (0.02m, 0.01m), (-0.02m, 0.01m)] }; |
+| strings | Six guitar strings | Align(XYZ) strings.bottom to bridge.top; orientation=axis:+Z; mat=metal_string; create_method=cylinder; constraint=string_params { count=6, diameter=0.0005m, length=0.70m, positions=[(0.015m, -0.10m), (0.010m, -0.10m), (0.005m, -0.10m), (-0.005m, -0.10m), (-0.010m, -0.10m), (-0.015m, -0.10m)] }; |
+
+# ----------  END_GRAPH  ----------

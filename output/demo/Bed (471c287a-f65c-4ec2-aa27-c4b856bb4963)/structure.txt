@@ -1,0 +1,48 @@
+-- MATERIAL LIBRARY --
+fabric_blue | diffuse_color=(0.1,0.2,0.5,1.0)
+fabric_white | diffuse_color=(0.95,0.95,0.95,1.0)
+metal_silver | diffuse_color=(0.7,0.7,0.7,1.0)
+wood_dark | diffuse_color=(0.2,0.1,0.05,1.0)
+wood_light | diffuse_color=(0.6,0.4,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bed_frame | Composite of bed\_frame\_base + bed\_frame\_headboard + bed\_frame\_footboard + bed\_frame\_slats + bed\_frame\_legs + bed\_frame\_side\_rails | A. Composite of bed\_frame\_base + bed\_frame\_headboard + bed\_frame\_footboard + bed\_frame\_slats + bed\_frame\_legs + bed\_frame\_side\_rails; mat=wood\_dark; assembly\_order=[legs], [base+rails], [headboard+footboard], [slats] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bed\_frame\_legs | Composite of 4 legs | A. Composite of leg\_LF + leg\_RF + leg\_LB + leg\_RB; mat=wood\_dark; assembly\_order=[leg\_LF, leg\_RF, leg\_LB, leg\_RB] |
+| leg\_LF | Cylinder Ø0.05×0.35 m | cylinder Ø0.05×0.35; pos=(-0.95, -1.95, 0.175); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| leg\_RF | Cylinder Ø0.05×0.35 m | cylinder Ø0.05×0.35; pos=(0.95, -1.95, 0.175); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| leg\_LB | Cylinder Ø0.05×0.35 m | cylinder Ø0.05×0.35; pos=(-0.95, 1.95, 0.175); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| leg\_RB | Cylinder Ø0.05×0.35 m | cylinder Ø0.05×0.35; pos=(0.95, 1.95, 0.175); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| bed\_frame\_base | Composite of side\_rails + headboard + footboard | A. Composite of side\_rail\_L + side\_rail\_R + headboard + footboard; mat=wood\_dark; assembly\_order=[side\_rail\_L, side\_rail\_R, headboard, footboard] |
+| side\_rail\_L | Box 0.05×3.9×0.05 m | box 0.05×3.9×0.05; pos=(-0.975, 0, 0.35); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| side\_rail\_R | Box 0.05×3.9×0.05 m | box 0.05×3.9×0.05; pos=(0.975, 0, 0.35); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| headboard | Box 2.0×0.1×1.2 m | box 2.0×0.1×1.2; pos=(0, 1.95, 0.6); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| footboard | Box 2.0×0.1×0.6 m | box 2.0×0.1×0.6; pos=(0, -1.95, 0.3); orientation=axis:+Z; mat=wood\_dark; create\_method=primitive |
+| bed\_frame\_slats | Composite of 10 slats | A. Composite of slat\_1 + slat\_2 + slat\_3 + slat\_4 + slat\_5 + slat\_6 + slat\_7 + slat\_8 + slat\_9 + slat\_10; mat=wood\_light; assembly\_order=[slat\_1...slat\_10] |
+| slat\_1 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -1.8, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_2 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -1.6, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_3 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -1.4, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_4 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -1.2, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_5 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -1.0, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_6 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -0.8, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_7 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -0.6, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_8 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -0.4, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_9 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, -0.2, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+| slat\_10 | Box 1.9×0.05×0.02 m | box 1.9×0.05×0.02; pos=(0, 0.0, 0.36); orientation=axis:+Z; mat=wood\_light; create\_method=primitive |
+
+Layer 2 – Mattress & Bedding
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| mattress | Box 2.0×1.9×0.25 m | box 2.0×1.9×0.25; pos=(0, 0, 0.485); orientation=axis:+Z; mat=fabric\_white; create\_method=primitive |
+| pillow\_L | Box 0.6×0.4×0.1 m | box 0.6×0.4×0.1; pos=(-0.5, 1.7, 0.66); orientation=axis:+Z; mat=fabric\_blue; create\_method=primitive |
+| pillow\_R | Box 0.6×0.4×0.1 m | box 0.6×0.4×0.1; pos=(0.5, 1.7, 0.66); orientation=axis:+Z; mat=fabric\_blue; create\_method=primitive |
+| blanket | Box 2.0×1.5×0.05 m | box 2.0×1.5×0.05; pos=(0, -0.25, 0.635); orientation=axis:+Z; mat=fabric\_blue; create\_method=primitive |
+
+# ----------  END_GRAPH  ----------

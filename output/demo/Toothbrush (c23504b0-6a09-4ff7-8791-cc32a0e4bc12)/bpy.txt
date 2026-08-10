@@ -1,0 +1,234 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder oriented along Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Ensure Z-up
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    # size is (x, y, z)
+    x, y, z = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (x/2, y/2, z/2)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Align object's local axis to a world vector."""
+    # For simplicity in this script, we assume standard orientations or explicit rotations.
+    # The prompt asks for specific rotations. We will apply them directly.
+    pass
+
+def get_world_center(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_world_bottom_face_center(obj):
+    """Get the world location of the bottom face center of an object."""
+    # Assuming object is axis-aligned or we use bounding box
+    # For a cube/cylinder oriented along Z, bottom is min Z
+    bbox = obj.bound_box
+    # Transform bbox corners to world
+    corners = [Vector((v[0], v[1], v[2])) for v in bbox]
+    world_corners = [obj.matrix_world @ c for c in corners]
+    min_z = min(c[2] for c in world_corners)
+    # Find the corner with min_z and average X,Y for center of face
+    relevant_corners = [c for c in world_corners if abs(c[2] - min_z) < 1e-5]
+    avg_x = sum(c[0] for c in relevant_corners) / len(relevant_corners)
+    avg_y = sum(c[1] for c in relevant_corners) / len(relevant_corners)
+    return Vector((avg_x, avg_y, min_z))
+
+def get_world_top_face_center(obj):
+    """Get the world location of the top face center of an object."""
+    bbox = obj.bound_box
+    corners = [Vector((v[0], v[1], v[2])) for v in bbox]
+    world_corners = [obj.matrix_world @ c for c in corners]
+    max_z = max(c[2] for c in world_corners)
+    relevant_corners = [c for c in world_corners if abs(c[2] - max_z) < 1e-5]
+    avg_x = sum(c[0] for c in relevant_corners) / len(relevant_corners)
+    avg_y = sum(c[1] for c in relevant_corners) / len(relevant_corners)
+    return Vector((avg_x, avg_y, max_z))
+
+def align_to_face(obj, target_obj, face_type='top'):
+    """Align obj's bottom face to target_obj's specified face."""
+    if face_type == 'top':
+        target_loc = get_world_top_face_center(target_obj)
+    elif face_type == 'bottom':
+        target_loc = get_world_bottom_face_center(target_obj)
+    else:
+        target_loc = get_world_center(target_obj)
+    
+    # Calculate offset needed to move obj's bottom face to target_loc
+    obj_bottom = get_world_bottom_face_center(obj)
+    offset = target_loc - obj_bottom
+    obj.location += offset
+
+def align_center_to_face(obj, target_obj, face_type='top'):
+    """Align obj's center to target_obj's specified face."""
+    if face_type == 'top':
+        target_loc = get_world_top_face_center(target_obj)
+    elif face_type == 'bottom':
+        target_loc = get_world_bottom_face_center(target_obj)
+    else:
+        target_loc = get_world_center(target_obj)
+        
+    obj_center = get_world_center(obj)
+    offset = target_loc - obj_center
+    obj.location += offset
+
+def align_centers(obj1, obj2):
+    """Align obj1 center to obj2 center."""
+    c2 = get_world_center(obj2)
+    c1 = get_world_center(obj1)
+    obj1.location += (c2 - c1)
+
+def apply_offset(obj, offset_vec):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vec
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using cutter on target."""
+    cutter = bpy.data.objects.get(cutter_name)
+    target = bpy.data.objects.get(target_name)
+    if not cutter or not target:
+        return
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    
+    # Apply Modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_union(obj_name):
+    """Perform boolean union on object (merge with existing geometry if needed, 
+    but here we assume simple union with a helper or just keeping it separate if not merging).
+    Since the prompt doesn't specify merging with a specific parent, we'll skip complex union 
+    unless explicitly asked to merge into a single mesh. 
+    For this script, we will assume 'union' implies keeping them separate unless 'merge' is specified.
+    However, standard boolean_union usually merges two objects. 
+    Given the complexity and lack of a specific 'base' to union into for all objects, 
+    we will skip explicit boolean_union operator calls unless it's a specific step.
+    The prompt says 'union / boolean-union -> boolean_union'. 
+    I will implement a helper that unions an object into a target if provided, 
+    but for now, no explicit union steps are in the input blocks.
+    """
+    pass
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Remove collections if necessary, but delete objects is usually enough for reset
+    # Set units to metres
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_brush_head = make_material("mat_brush_head", (0.1, 0.4, 0.9, 1.0))
+    mat_brush_head_grip = make_material("mat_brush_head_grip", (0.9, 0.9, 0.9, 1.0))
+    mat_bristle = make_material("mat_bristle", (0.95, 0.95, 0.95, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create handle group ---
+    
+    # Create handle_main
+    handle_main = add_cube("handle_main", (0.020, 0.015, 0.180))
+    handle_main.rotation_euler = (0, 0, 0) # +Z aligns +Z
+    handle_main.location = (0, 0, 0) # Anchor to world origin
+    apply_offset(handle_main, (0, 0, 0))
+    
+    # Create handle_grip
+    handle_grip = add_cube("handle_grip", (0.018, 0.013, 0.100))
+    handle_grip.rotation_euler = (0, 0, 0) # +Z aligns +Z
+    
+    # Align handle_grip.center to handle_main.center
+    align_centers(handle_grip, handle_main)
+    
+    # Align handle_grip.bottom_face to handle_main.bottom_face
+    align_to_face(handle_grip, handle_main, 'bottom')
+    
+    # Move by offset(0,0,0.040)
+    apply_offset(handle_grip, (0, 0, 0.040))
+
+    # --- SECTION 2 – Create head assembly ---
+
+    # Create head_main
+    head_main = add_cube("head_main", (0.025, 0.008, 0.045))
+    head_main.rotation_euler = (0, 0, 0) # +Z aligns +Z
+    
+    # Align head_main.center to handle_main.top_face
+    align_center_to_face(head_main, handle_main, 'top')
+    
+    # Align head_main.bottom_face to handle_main.top_face
+    align_to_face(head_main, handle_main, 'top')
+    
+    # Move by offset(0,0,0.004)
+    apply_offset(head_main, (0, 0, 0.004))
+
+    # Create head_neck
+    head_neck = add_cube("head_neck", (0.015, 0.006, 0.020))
+    head_neck.rotation_euler = (0, 0, 0) # +Z aligns +Z
+    
+    # Align head_neck.center to handle_main.top_face
+    align_center_to_face(head_neck, handle_main, 'top')
+    
+    # Align head_neck.bottom_face to handle_main.top_face
+    align_to_face(head_neck, handle_main, 'top')
+    
+    # Move by offset(0,0,0.090)
+    apply_offset(head_neck, (0, 0, 0.090))
+
+    # --- SECTION 3 – Create bristle grid ---
+
+    # For r in 0…5 and c in 0…4
+    for r in range(6): # 0 to 5
+        for c in range(5): # 0 to 4
+            # Create primitive cylinder
+            # Diameter 0.0015 m -> Radius 0.00075 m
+            # Height 0.012 m
+            bristle_name = f"bristle_template_{r}_{c}"
+            bristle = add_cylinder(bristle_name, radius=0.00075, depth=0.012, segments=16)
+            bristle.rotation_euler = (0, 0, 0) # +Z aligns +Z
+            
+            # Align bristle.center to head_main.top_face
+            align_center_to_face(bristle, head_main, 'top')
+            
+            # Align bristle.bottom_face to head_main.top_face
+            align_to_face(bristle, head_main, 'top')
+            
+            # Offset(-0.008 + c*0.004, -0.010 + r*0.004, 0.004)
+            offset_x = -0.008 + c * 0.004
+            offset_y = -0.010 + r * 0.004
+            offset_z = 0.004
+            apply_offset(bristle, (offset_x, offset_y, offset_z))
+
+if __name__ == "__main__":
+    main()
+```

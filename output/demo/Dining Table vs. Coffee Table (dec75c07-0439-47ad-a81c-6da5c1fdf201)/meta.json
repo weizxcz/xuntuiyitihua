@@ -1,0 +1,46 @@
+{
+  "id": "dec75c07-0439-47ad-a81c-6da5c1fdf201",
+  "name": "Dining Table vs. Coffee Table",
+  "instruction": "Design a 3D model comparing a dining table and a coffee table. The dining table should be rectangular with four legs and enough space for six chairs. The coffee table should be lower and smaller, with a rectangular shape and four legs. Position them side by side.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The dining table is rectangular.",
+        "The coffee table is also rectangular.",
+        "Both tables have four legs."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The dimensions of the dining table are proportionate for six chairs.",
+        "The coffee table is proportionate to its intended use as a coffee table."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The dining table is positioned side by side with the coffee table.",
+        "The legs of both tables are appropriately placed for stability.",
+        "The height difference between the dining table and coffee table is clear."
+      ],
+      "Object distance and contact": [
+        "There is adequate space between the two tables.",
+        "The legs of the dining table do not interfere with the legs of the coffee table."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both tables are accurately represented according to the instructions.",
+        "The positioning of the tables side by side is correctly executed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,159 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_torus(major_radius, minor_radius, segments=32, name="Torus"):
+    """Add a torus aligned to Z axis."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=segments, minor_segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def boolean_union(objects_to_union, keep_object_name):
+    """
+    Perform boolean union on a list of objects.
+    Keeps the object with keep_object_name as the final result.
+    """
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+    # Apply Boolean Modifier to the first object in the list (or the keep object if present)
+    # Strategy: Use the keep_object as the target for the boolean modifier if it's in the list.
+    # If not, use the first one.
+    
+    target_obj = None
+    if keep_object_name in [o.name for o in objects_to_union]:
+        target_obj = next(o for o in objects_to_union if o.name == keep_object_name)
+    else:
+        target_obj = objects_to_union[0]
+    
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    
+    # We need to iterate through the other objects and add them as modifiers or use a single modifier with multiple objects?
+    # Blender's boolean modifier only supports one object at a time.
+    # So we must chain them or apply them sequentially.
+    # Easier approach: Join them first? No, that loses topology control.
+    # Better approach: Apply boolean sequentially.
+    
+    # Let's collect all other objects to subtract/union
+    other_objs = [o for o in objects_to_union if o != target_obj]
+    
+    # Apply booleans one by one
+    for other_obj in other_objs:
+        # Add modifier to target
+        mod = target_obj.modifiers.new(name=f"Bool_{other_obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other_obj
+        
+        # Apply modifier immediately to keep scene clean
+        bpy.context.view_layer.objects.active = target_obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove the other object
+        bpy.data.objects.remove(other_obj)
+        
+    # Clean up any remaining modifiers on target
+    for mod in list(target_obj.modifiers):
+        if mod.type == 'BOOLEAN':
+            target_obj.modifiers.remove(mod)
+            
+    return target_obj
+
+def align_z_to_world(obj):
+    """Ensure object is aligned to world Z axis (no rotation needed if created that way, but explicit for safety)."""
+    obj.rotation_euler = (0, 0, 0)
+
+def anchor_to_origin(obj):
+    """Move object so its origin is at world (0,0,0)."""
+    obj.location = (0, 0, 0)
+
+def offset_object(obj, dx, dy, dz):
+    """Move object by offset vector."""
+    obj.location = (obj.location[0] + dx, obj.location[1] + dy, obj.location[2] + dz)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create vase_base ---
+vase_base = add_cylinder(radius=0.110, depth=0.020, name="vase_base")
+align_z_to_world(vase_base)
+anchor_to_origin(vase_base)
+offset_object(vase_base, 0, 0, 0.010)
+apply_material(vase_base, mat_ceramic_white)
+
+# --- SECTION 2 – Create vase_body ---
+vase_body = add_cylinder(radius=0.100, depth=0.300, name="vase_body")
+align_z_to_world(vase_body)
+anchor_to_origin(vase_body)
+offset_object(vase_body, 0, 0, 0.150)
+apply_material(vase_body, mat_ceramic_white)
+
+# --- SECTION 3 – Create vase_rim ---
+vase_rim = add_torus(major_radius=0.070, minor_radius=0.0025, name="vase_rim")
+align_z_to_world(vase_rim)
+anchor_to_origin(vase_rim)
+offset_object(vase_rim, 0, 0, 0.300)
+apply_material(vase_rim, mat_ceramic_white)
+
+# --- SECTION 4 – Assemble Vase ---
+# Boolean-union vase_body, vase_base, and vase_rim; keep vase_body.
+assembled_vase = boolean_union([vase_body, vase_base, vase_rim], "vase_body")
+
+# Rename vase_body to vase
+if assembled_vase:
+    assembled_vase.name = "vase"
+    # Ensure material is still applied
+    apply_material(assembled_vase, mat_ceramic_white)
+```

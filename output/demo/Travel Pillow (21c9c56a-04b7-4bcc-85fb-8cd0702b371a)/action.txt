@@ -1,0 +1,60 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_cover; diffuse_color = (0.94, 0.94, 0.94, 1).
+Define material memory_foam; diffuse_color = (0.78, 0.78, 0.78, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create foam core structure  ---
+Create primitive cylinder with radius 0.04 m and height 0.25 m and name it left_arm.
+Rotate left_arm so its +Z axis aligns +Z (world).
+Anchor left_arm to travel_pillow.center.
+Align left_arm.center to travel_pillow.center with axes XY.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with radius 0.04 m and height 0.25 m and name it right_arm.
+Rotate right_arm so its +Z axis aligns +Z (world).
+Anchor right_arm to travel_pillow.center.
+Align right_arm.center to travel_pillow.center with axes XY.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with radius 0.04 m and height 0.15 m and name it back_connector.
+Rotate back_connector so its +Z axis aligns +Z (world).
+Anchor back_connector to travel_pillow.center.
+Align back_connector.center to travel_pillow.center with axes XY.
+Then move by offset(0, 0, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create fabric cover structure  ---
+Create primitive cylinder with radius 0.045 m and height 0.25 m and name it left_sleeve.
+Rotate left_sleeve so its +Z axis aligns +Z (world).
+Anchor left_sleeve to left_arm.center.
+Align left_sleeve.center to left_arm.center with axes XY.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with radius 0.045 m and height 0.25 m and name it right_sleeve.
+Rotate right_sleeve so its +Z axis aligns +Z (world).
+Anchor right_sleeve to right_arm.center.
+Align right_sleeve.center to right_arm.center with axes XY.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with radius 0.045 m and height 0.15 m and name it back_sleeve.
+Rotate back_sleeve so its +Z axis aligns +Z (world).
+Anchor back_sleeve to back_connector.center.
+Align back_sleeve.center to back_connector.center with axes XY.
+Then move by offset(0, 0, 0).
+
+Stage 2 complete.
+
+All stages complete.

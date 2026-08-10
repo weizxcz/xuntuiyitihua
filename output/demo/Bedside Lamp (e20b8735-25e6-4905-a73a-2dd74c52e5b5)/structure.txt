@@ -1,0 +1,15 @@
+-- MATERIAL LIBRARY --
+mat_base | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_shade | diffuse_color=(1.0,0.95,0.8,0.9)
+mat_stand | diffuse_color=(0.8,0.8,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lamp_base | Circular base Ø0.152×0.025 m (Diameter 6 inches, Thickness 1 inch) | pos=(0,0,0); orientation=axis:+Z; mat=mat_base; create_method=primitive |
+| lamp_stand | Vertical stand Ø0.025×0.305 m (Diameter 1 inch, Height 12 inches) | Align(XY) lamp_stand.bottom_face to lamp_base.top_face; offset(0,0,0.0125); orientation=axis:+Z; mat=mat_stand; create_method=primitive |
+| lamp_shade | Conical shade Ø0.200×0.150 m (Top Diameter 8 inches, Bottom Diameter 12 inches, Height 6 inches) | Align(XY) lamp_shade.bottom_face to lamp_stand.top_face; offset(0,0,0.0125); orientation=axis:+Z; mat=mat_shade; create_method=primitive |
+| lamp_assembly | Composite union of lamp_base + lamp_stand + lamp_shade | assembly_order=[lamp_base], [lamp_stand], [lamp_shade] |
+# ----------  END_GRAPH  ----------

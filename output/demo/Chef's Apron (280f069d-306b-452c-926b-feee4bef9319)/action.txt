@@ -1,0 +1,62 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_black; diffuse_color = (0.05, 0.05, 0.05, 1).
+Define material fabric_white; diffuse_color = (0.95, 0.95, 0.95, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create apron body  ---
+Create primitive cuboid with size 0.800×1.000×0.002 m and name it apron_body.
+Rotate apron_body so its +Z axis aligns +Z (world).
+Align apron_body.center to apron_root.center.
+Then offset(0, 0, 0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create neck strap  ---
+Create primitive cuboid with size 0.020×0.600×0.002 m and name it neck_strap.
+Rotate neck_strap so its +Z axis aligns +Z (world).
+Align neck_strap.center to apron_body.top_face.center.
+Then offset(0, -0.010, 0).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create waist ties  ---
+Create primitive cuboid with size 0.050×0.800×0.002 m and name it waist_tie_L.
+Rotate waist_tie_L so its +Z axis aligns +Z (world).
+Align waist_tie_L.center to apron_body.left_face.center.
+Then offset(-0.025, 0, 0).
+Assembly guideline satisfied.
+
+Create primitive cuboid with size 0.050×0.800×0.002 m and name it waist_tie_R.
+Rotate waist_tie_R so its +Z axis aligns +Z (world).
+Align waist_tie_R.center to apron_body.right_face.center.
+Then offset(0.025, 0, 0).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create pockets  ---
+Create primitive cuboid with size 0.300×0.300×0.002 m and name it pocket_L.
+Rotate pocket_L so its +Z axis aligns +Z (world).
+Align pocket_L.center to apron_body.front_face.center.
+Then offset(-0.200, 0.100, 0.001).
+Assembly guideline satisfied.
+
+Create primitive cuboid with size 0.300×0.300×0.002 m and name it pocket_R.
+Rotate pocket_R so its +Z axis aligns +Z (world).
+Align pocket_R.center to apron_body.front_face.center.
+Then offset(0.200, 0.100, 0.001).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

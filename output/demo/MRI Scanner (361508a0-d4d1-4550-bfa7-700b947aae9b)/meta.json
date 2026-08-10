@@ -1,0 +1,51 @@
+{
+  "id": "361508a0-d4d1-4550-bfa7-700b947aae9b",
+  "name": "MRI Scanner",
+  "instruction": "Design an MRI scanner. Start with a large cylindrical tunnel where the patient lies down. Add a sliding table that moves in and out of the tunnel. Include a control panel with various buttons and screens on the side. Add a few cables connecting the scanner to the control panel. Finally, ensure there is an emergency stop button on the control panel.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an MRI scanner.",
+        "The scanner features a large cylindrical tunnel.",
+        "The sliding table is integrated into the design.",
+        "The control panel is positioned on the side of the scanner.",
+        "The cables are visible connecting the scanner to the control panel."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The dimensions of the tunnel are proportionate to the sliding table.",
+        "The control panel is appropriately sized relative to the scanner."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical tunnel is positioned horizontally.",
+        "The sliding table is correctly aligned to move in and out of the tunnel.",
+        "The control panel is mounted at a reachable height on the side.",
+        "The cables are arranged to avoid interference with the sliding table."
+      ],
+      "Object distance and contact": [
+        "The sliding table fits snugly within the tunnel without obstruction.",
+        "There is sufficient space between the control panel and the scanner for operation.",
+        "The cables do not create a tripping hazard around the scanner."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "The design includes a large cylindrical tunnel, sliding table, control panel, cables, and an emergency stop button.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

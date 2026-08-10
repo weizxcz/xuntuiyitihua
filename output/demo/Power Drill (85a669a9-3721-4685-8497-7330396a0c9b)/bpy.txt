@@ -1,0 +1,289 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_Data"
+    return obj
+
+def add_cube(name, size):
+    # size is (x, y, z)
+    half_x, half_y, half_z = size[0]/2, size[1]/2, size[2]/2
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + "_Data"
+    obj.scale = (half_x, half_y, half_z)
+    return obj
+
+def add_text_object(name, text_string, size=0.1):
+    bpy.ops.object.text_add(location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text_string
+    obj.data.size = size
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    if axis == 'X':
+        src = Vector((1, 0, 0))
+    elif axis == 'Y':
+        src = Vector((0, 1, 0))
+    elif axis == 'Z':
+        src = Vector((0, 0, 1))
+    else:
+        return
+
+    target = vector.normalized()
+    if src.dot(target) < -0.999:
+        rot = Matrix.Rotation(math.pi, 4, src.cross(target) if src.cross(target).length > 0 else Vector((0,1,0)))
+    else:
+        rot = Matrix.Rotation(src.angle(target), 4, src.cross(target))
+    
+    obj.rotation_euler = rot.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        return self.obj.location
+
+    def face_center_world(self, face_index):
+        # Calculate center of a specific face in world space
+        bm = bmesh.new()
+        bm.from_mesh(self.obj.data)
+        bm.transform(self.obj.matrix_world)
+        face = bm.faces[face_index]
+        center = average([v.co for v in face.verts])
+        bm.free()
+        return center
+
+    def radial_point_world(self, angle_deg, radius=None):
+        # Get a point on the radial edge at a specific angle
+        # Assumes object is at origin or we transform later. 
+        # Simplified: returns local radial point, caller must transform.
+        if radius is None:
+            # Estimate radius from bounding box
+            radius = self.obj.dimensions[0] / 2
+        rad = math.radians(angle_deg)
+        return Vector((math.cos(rad) * radius, math.sin(rad) * radius, 0))
+
+def boolean_subtract(cutter_name, target_name):
+    cutter = bpy.data.objects[cutter_name]
+    target = bpy.data.objects[target_name]
+    
+    # Ensure cutter is active for modifier addition if needed, but we add to target
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="Boolean_Subtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter)
+
+def boolean_union(union_name, target_name):
+    union_obj = bpy.data.objects[union_name]
+    target = bpy.data.objects[target_name]
+    
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="Boolean_Union", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj)
+
+def add_bevel(obj_name, width=0.005, segments=4):
+    obj = bpy.data.objects[obj_name]
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.bevel(angle=math.radians(45), offset=width, segments=segments, vertex_only=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_body = make_material("mat_body", (0.1, 0.1, 0.1, 1.0))
+mat_chuck = make_material("mat_chuck", (0.8, 0.8, 0.8, 1.0))
+mat_trigger = make_material("mat_trigger", (0.2, 0.2, 0.2, 1.0))
+mat_switch = make_material("mat_switch", (0.9, 0.9, 0.9, 1.0))
+mat_battery = make_material("mat_battery", (0.1, 0.1, 0.1, 1.0))
+mat_battery_cap = make_material("mat_battery_cap", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create main body (Root) ---
+main_body = add_cube("main_body", (0.25, 0.05, 0.02))
+main_body.data.materials.append(mat_body)
+
+# Rotate main_body so its +Z axis aligns +Z (world) - already default, but explicit
+align_axis_to_vector(main_body, 'Z', Vector((0, 0, 1)))
+
+# Anchor main_body to world origin
+main_body.location = (0, 0, 0)
+
+# Move by offset(0,0,0)
+main_body.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create trigger ---
+trigger = add_cylinder("trigger", 0.01, 0.04) # Radius 0.01 (Ø0.02), Depth 0.04
+trigger.data.materials.append(mat_trigger)
+
+# Rotate trigger so its +Z axis aligns +Z (world)
+align_axis_to_vector(trigger, 'Z', Vector((0, 0, 1)))
+
+# Align trigger.center to main_body.trigger_slot.center
+# Note: 'trigger_slot' does not exist in the scene yet. 
+# The prompt implies logical anchors. Since 'trigger_slot' is not a created object,
+# we must interpret "main_body.trigger_slot.center" as a logical position on main_body.
+# However, without explicit coordinates for these "slots", and given the instruction 
+# "If only anchor object ID is given, use center-to-center anchoring", 
+# but here specific faces are mentioned.
+# Since 'trigger_slot' is not an object, I will assume the prompt implies 
+# relative positioning based on the main_body's geometry or that these are 
+# placeholder names for positions. 
+# Given the strict rule "If explicit anchor feature is given, use it exactly", 
+# but the feature doesn't exist, I will default to center-to-center of main_body 
+# if the slot is ambiguous, OR assume the slot is at a specific relative location.
+# Looking at Stage 2: "Align trigger.center to main_body.trigger_slot.center".
+# Since main_body.trigger_slot is not an object, I will treat this as an error in 
+# the prompt's generative logic unless I create dummy locators. 
+# However, standard practice in these scripts when "slot" objects don't exist 
+# is to assume they are relative to the parent. 
+# Let's assume "trigger_slot" is at the center of main_body for now, 
+# or perhaps the prompt implies I should have created them. 
+# Since I didn't, I will align to main_body.center.
+loc_main = Locator(main_body)
+trigger.location = loc_main.center_world()
+
+# Align trigger.bottom_face to main_body.trigger_slot.bottom_face
+# Assuming trigger_slot.bottom_face is main_body's bottom face (Z=0 relative to body)
+# Trigger is a cylinder. Bottom face is at Z = -depth/2 in local space.
+# We need to position it so its bottom face is at the same Z level as main_body's bottom.
+# Main body bottom Z is -0.01.
+# Trigger bottom Z should be -0.01.
+# Trigger center Z is currently 0.
+# Trigger depth is 0.04. Half depth is 0.02.
+# So trigger center Z should be -0.01 + 0.02 = 0.01.
+trigger.location.z = main_body.location.z - (main_body.dimensions[2]/2) + (trigger.dimensions[2]/2)
+
+# Move by offset(0,0,0)
+trigger.location += Vector((0, 0, 0))
+
+# --- SECTION 3 – Create fwd_rev_switch ---
+fwd_rev_switch = add_cube("fwd_rev_switch", (0.02, 0.01, 0.01))
+fwd_rev_switch.data.materials.append(mat_switch)
+
+# Rotate fwd_rev_switch so its +Z axis aligns +Z (world)
+align_axis_to_vector(fwd_rev_switch, 'Z', Vector((0, 0, 1)))
+
+# Align fwd_rev_switch.center to main_body.switch_slot.center
+# Again, switch_slot doesn't exist. Default to main_body center.
+fwd_rev_switch.location = loc_main.center_world()
+
+# Align fwd_rev_switch.bottom_face to main_body.switch_slot.bottom_face
+# Same logic as trigger: align bottom faces.
+fwd_rev_switch.location.z = main_body.location.z - (main_body.dimensions[2]/2) + (fwd_rev_switch.dimensions[2]/2)
+
+# Move by offset(0,0,0)
+fwd_rev_switch.location += Vector((0, 0, 0))
+
+# --- SECTION 4 – Create chuck ---
+chuck = add_cylinder("chuck", 0.015, 0.05) # Radius 0.015 (Ø0.03), Depth 0.05
+chuck.data.materials.append(mat_chuck)
+
+# Rotate chuck so its +Z axis aligns +Z (world)
+align_axis_to_vector(chuck, 'Z', Vector((0, 0, 1)))
+
+# Align chuck.center to main_body.chuck_mount.center
+# Default to main_body center
+chuck.location = loc_main.center_world()
+
+# Align chuck.bottom_face to main_body.chuck_mount.top_face
+# Main body top face Z is +0.01.
+# Chuck bottom face Z should be +0.01.
+# Chuck center Z = 0.01 + (0.05/2) = 0.035.
+chuck.location.z = main_body.location.z + (main_body.dimensions[2]/2) + (chuck.dimensions[2]/2)
+
+# Move by offset(0,0,0)
+chuck.location += Vector((0, 0, 0))
+
+# --- SECTION 5 – Create battery_compartment ---
+battery_compartment = add_cylinder("battery_compartment", 0.02, 0.10) # Radius 0.02 (Ø0.04), Depth 0.10
+battery_compartment.data.materials.append(mat_battery)
+
+# Rotate battery_compartment so its +Z axis aligns +Z (world)
+align_axis_to_vector(battery_compartment, 'Z', Vector((0, 0, 1)))
+
+# Align battery_compartment.center to main_body.battery_mount.center
+# Default to main_body center
+battery_compartment.location = loc_main.center_world()
+
+# Align battery_compartment.top_face to main_body.battery_mount.bottom_face
+# Main body bottom face Z is -0.01.
+# Battery Compartment top face Z should be -0.01.
+# Battery Compartment center Z = -0.01 - (0.10/2) = -0.06.
+battery_compartment.location.z = main_body.location.z - (main_body.dimensions[2]/2) - (battery_compartment.dimensions[2]/2)
+
+# Move by offset(0,0,0)
+battery_compartment.location += Vector((0, 0, 0))
+
+# --- SECTION 6 – Create battery_cap ---
+battery_cap = add_cylinder("battery_cap", 0.02, 0.01) # Radius 0.02 (Ø0.04), Depth 0.01
+battery_cap.data.materials.append(mat_battery_cap)
+
+# Rotate battery_cap so its +Z axis aligns +Z (world)
+align_axis_to_vector(battery_cap, 'Z', Vector((0, 0, 1)))
+
+# Align battery_cap.center to battery_compartment.center
+battery_cap.location = Locator(battery_compartment).center_world()
+
+# Align battery_cap.bottom_face to battery_compartment.top_face
+# Battery Compartment top face Z is -0.01.
+# Battery Cap bottom face Z should be -0.01.
+# Battery Cap center Z = -0.01 + (0.01/2) = -0.005.
+battery_cap.location.z = battery_compartment.location.z + (battery_compartment.dimensions[2]/2) - (battery_cap.dimensions[2]/2)
+
+# Move by offset(0,0,0)
+battery_cap.location += Vector((0, 0, 0))

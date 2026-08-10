@@ -1,0 +1,1 @@
+Design a 3D model of a grand piano. The body should be large and curved, with a lid that can be opened. Add a keyboard with black and white keys. Include three pedals at the bottom.

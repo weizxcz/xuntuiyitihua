@@ -1,0 +1,125 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_main; diffuse_color = (0.8, 0.8, 0.8, 1.0).
+Define material elastic_band; diffuse_color = (0.2, 0.2, 0.2, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Left Glove Base Components  ---
+Create primitive cylinder with diameter 0.15 m and height 0.005 m and name it palm_L.
+Rotate palm_L so its +Z axis aligns +Z (world).
+Align palm_L.center to (0,0,0).
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.14 m and height 0.005 m and name it back_L.
+Rotate back_L so its +Z axis aligns +Z (world).
+Align back_L.center to palm_L.center.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.03 m and height 0.08 m and name it thumb_L.
+Rotate thumb_L so its +Z axis aligns -X (world).
+Align thumb_L.center to palm_L.left_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.025 m and height 0.08 m and name it index_L.
+Rotate index_L so its +Z axis aligns +Y (world).
+Align index_L.center to palm_L.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.025 m and height 0.09 m and name it middle_L.
+Rotate middle_L so its +Z axis aligns +Y (world).
+Align middle_L.center to palm_L.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.024 m and height 0.085 m and name it ring_L.
+Rotate ring_L so its +Z axis aligns +Y (world).
+Align ring_L.center to palm_L.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.022 m and height 0.07 m and name it pinky_L.
+Rotate pinky_L so its +Z axis aligns +Y (world).
+Align pinky_L.center to palm_L.top_face.
+Then move by offset(0,0,0).
+
+Create primitive torus with major radius 0.08 m and minor radius 0.01 m and name it cuff_L.
+Rotate cuff_L so its +Z axis aligns +Z (world).
+Align cuff_L.center to palm_L.bottom_face.
+Then move by offset(0,0,0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Right Glove Base Components  ---
+Create primitive cylinder with diameter 0.15 m and height 0.005 m and name it palm_R.
+Rotate palm_R so its +Z axis aligns +Z (world).
+Align palm_R.center to (0.3,0,0).
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.14 m and height 0.005 m and name it back_R.
+Rotate back_R so its +Z axis aligns +Z (world).
+Align back_R.center to palm_R.center.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.03 m and height 0.08 m and name it thumb_R.
+Rotate thumb_R so its +Z axis aligns +X (world).
+Align thumb_R.center to palm_R.right_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.025 m and height 0.08 m and name it index_R.
+Rotate index_R so its +Z axis aligns +Y (world).
+Align index_R.center to palm_R.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.025 m and height 0.09 m and name it middle_R.
+Rotate middle_R so its +Z axis aligns +Y (world).
+Align middle_R.center to palm_R.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.024 m and height 0.085 m and name it ring_R.
+Rotate ring_R so its +Z axis aligns +Y (world).
+Align ring_R.center to palm_R.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.022 m and height 0.07 m and name it pinky_R.
+Rotate pinky_R so its +Z axis aligns +Y (world).
+Align pinky_R.center to palm_R.top_face.
+Then move by offset(0,0,0).
+
+Create primitive torus with major radius 0.08 m and minor radius 0.01 m and name it cuff_R.
+Rotate cuff_R so its +Z axis aligns +Z (world).
+Align cuff_R.center to palm_R.bottom_face.
+Then move by offset(0,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Assemble Left Glove  ---
+Boolean-union palm_L, back_L, thumb_L, index_L, middle_L, ring_L, pinky_L, cuff_L and name it glove_L_assembled.
+Align glove_L_assembled.center to (0,0,0).
+Then move by offset(0,0,0).
+
+Stage 3 complete.
+
+---  SECTION 4 – Assemble Right Glove  ---
+Boolean-union palm_R, back_R, thumb_R, index_R, middle_R, ring_R, pinky_R, cuff_R and name it glove_R_assembled.
+Align glove_R_assembled.center to (0.3,0,0).
+Then move by offset(0,0,0).
+
+Stage 4 complete.
+
+---  SECTION 5 – Final Pair Assembly  ---
+Boolean-union glove_L_assembled, glove_R_assembled and name it gloves_pair.
+Align gloves_pair.center to Avg(glove_L_assembled.center, glove_R_assembled.center).
+Then move by offset(0,0,0).
+
+Stage 5 complete.
+
+All stages complete.

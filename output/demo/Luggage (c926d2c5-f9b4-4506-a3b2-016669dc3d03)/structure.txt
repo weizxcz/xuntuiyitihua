@@ -1,0 +1,59 @@
+-- MATERIAL LIBRARY --
+fabric_heavy_duty | diffuse_color=(0.15,0.15,0.2,1)
+fabric_rough | diffuse_color=(0.2,0.2,0.25,1)
+hard_shell | diffuse_color=(0.1,0.1,0.15,1)
+metal_aluminum | diffuse_color=(0.8,0.8,0.85,1)
+metal_dark | diffuse_color=(0.2,0.2,0.25,1)
+plastic_black | diffuse_color=(0.05,0.05,0.05,1)
+plastic_grey | diffuse_color=(0.4,0.4,0.45,1)
+rubber_black | diffuse_color=(0.08,0.08,0.08,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| luggage_hard | Composite of hard-shell suitcase with telescoping handle and wheels | assembly_order=[hard_shell_body, handle_assembly, wheel_assembly] |
+| luggage_soft | Composite of duffel bag with shoulder strap and wheels | assembly_order=[soft_body, strap_assembly, wheel_assembly_soft] |
+
+Layer 1 – Primary Structure (Hard Shell Luggage)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hard_shell_body | Rectangular box 0.75×0.5×0.3 m (W×H×D) | pos=(0,0,0); mat=hard_shell; create_method=primitive(cube); size=(0.75,0.5,0.3) |
+| handle_assembly | Telescoping handle extending from top | assembly_order=[handle_base, handle_poles, handle_grip] |
+| wheel_assembly | Four caster wheels at bottom corners | assembly_order=[wheel_FL, wheel_FR, wheel_BL, wheel_BR] |
+
+Layer 2 – Handle Assembly Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_base | Mounting bracket on top of shell | pos=(0,0.25,0.15); mat=plastic_black; create_method=primitive(cube); size=(0.2,0.02,0.1) |
+| handle_poles | Two telescoping metal tubes | pos=(0,0.25,0.16); mat=metal_aluminum; create_method=primitive(cylinder); size=(0.01,0.6,0.01); orientation=axis:+Y |
+| handle_grip | Ergonomic grip at top of poles | pos=(0,0.55,0.16); mat=plastic_grey; create_method=primitive(cylinder); size=(0.03,0.15,0.03); orientation=axis:+Y |
+
+Layer 3 – Wheel Assembly Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_FL | Front-left caster wheel | pos=(-0.35,-0.25,-0.15); mat=rubber_black; create_method=primitive(sphere); size=(0.025); orientation=axis:+Z |
+| wheel_FR | Front-right caster wheel | pos=(0.35,-0.25,-0.15); mat=rubber_black; create_method=primitive(sphere); size=(0.025); orientation=axis:+Z |
+| wheel_BL | Back-left caster wheel | pos=(-0.35,-0.25,0.15); mat=rubber_black; create_method=primitive(sphere); size=(0.025); orientation=axis:+Z |
+| wheel_BR | Back-right caster wheel | pos=(0.35,-0.25,0.15); mat=rubber_black; create_method=primitive(sphere); size=(0.025); orientation=axis:+Z |
+
+Layer 4 – Soft Body (Duffel Bag)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| soft_body | Cylindrical bag 0.6×0.3 m (L×D) | pos=(0,0,0); mat=fabric_rough; create_method=primitive(cylinder); size=(0.3,0.6,0.3); orientation=axis:+X |
+| strap_assembly | Shoulder strap attached to sides | assembly_order=[strap_left, strap_right] |
+| wheel_assembly_soft | Two fixed wheels at bottom | assembly_order=[wheel_soft_L, wheel_soft_R] |
+
+Layer 5 – Strap Assembly Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| strap_left | Left shoulder strap loop | pos=(-0.15,0,0); mat=fabric_heavy_duty; create_method=primitive(torus); size=(0.02,0.4); orientation=axis:+Y |
+| strap_right | Right shoulder strap loop | pos=(0.15,0,0); mat=fabric_heavy_duty; create_method=primitive(torus); size=(0.02,0.4); orientation=axis:+Y |
+
+Layer 6 – Soft Wheel Assembly Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_soft_L | Left fixed wheel | pos=(-0.25,-0.15,0); mat=rubber_black; create_method=primitive(cylinder); size=(0.02,0.05,0.02); orientation=axis:+Z |
+| wheel_soft_R | Right fixed wheel | pos=(0.25,-0.15,0); mat=rubber_black; create_method=primitive(cylinder); size=(0.02,0.05,0.02); orientation=axis:+Z |
+# ----------  END_GRAPH  ----------

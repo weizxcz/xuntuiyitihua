@@ -1,0 +1,50 @@
+{
+  "id": "d0a50786-b19c-4a7d-82b4-fc1f05bc0ee8",
+  "name": "Handbag",
+  "instruction": "Imagine a handbag with a top handle and a detachable shoulder strap. The bag should have a front flap with a clasp for closure. Could you design this?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a handbag.",
+        "The handbag has a top handle.",
+        "There is a detachable shoulder strap.",
+        "The bag features a front flap.",
+        "The flap has a clasp for closure."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The top handle is proportionate to the bag size.",
+        "The shoulder strap length is adjustable.",
+        "The front flap covers the opening of the bag."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The top handle is positioned at the top center of the bag.",
+        "The shoulder strap attaches to the bag securely.",
+        "The front flap overlaps the bag opening for secure closure."
+      ],
+      "Object distance and contact": [
+        "The top handle does not interfere with the flap closure.",
+        "The shoulder strap connects to the bag without gaps.",
+        "The clasp on the flap engages smoothly for closure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

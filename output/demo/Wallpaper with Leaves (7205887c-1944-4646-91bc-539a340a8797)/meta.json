@@ -1,0 +1,43 @@
+{
+  "id": "7205887c-1944-4646-91bc-539a340a8797",
+  "name": "Wallpaper with Leaves",
+  "instruction": "Create a wallpaper pattern featuring leaves. The leaves should be arranged in a random yet balanced manner, with varying sizes and orientations. Ensure the pattern is seamless so it can cover a large surface without any noticeable breaks.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pattern featuring leaves."
+      ],
+      "Color representation": [
+        "The color of the leaves can be green or yellow."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The leaves are proportionate to the wallpaper."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The leaves are distributed evenly across the surface.",
+        "The varying sizes create visual interest without overcrowding.",
+        "The orientations of the leaves add dynamic movement to the pattern."
+      ],
+      "Object distance and contact": [
+        "The edges of the pattern align seamlessly.",
+        "There are no visible gaps or breaks in the pattern."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the pattern are accurately represented.",
+        "The balance in the arrangement of leaves meets the instruction."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

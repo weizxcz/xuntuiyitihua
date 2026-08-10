@@ -1,0 +1,1 @@
+Design a 3D model of a patterned wallpaper. Start with a rectangular sheet. Add a repeating geometric pattern across the surface. Ensure the pattern is evenly spaced and consistent throughout. The wallpaper should look ready to be applied to a wall.

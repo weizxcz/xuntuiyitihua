@@ -1,0 +1,52 @@
+{
+  "id": "1d8c6153-abe2-47b1-a824-3ea90868f821",
+  "name": "Harp",
+  "instruction": "Let's create a 3D model of a harp. It should have a tall, triangular frame with a curved top. Strings should run vertically from the top to the base. Include tuning pegs at the top and pedals at the bottom for note changes.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a harp.",
+        "The frame of the harp is tall and triangular.",
+        "The top of the frame is curved.",
+        "The strings run vertically from the top to the base."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the frame should be significantly greater than its width.",
+        "The spacing of the strings should be uniform and proportional to the frame."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The triangular frame is positioned upright for stability.",
+        "The strings are evenly spaced and taut from the top to the base.",
+        "The tuning pegs are located at the top of the frame, accessible for tuning.",
+        "The pedals are positioned at the bottom of the frame, allowing for foot access."
+      ],
+      "Object distance and contact": [
+        "The strings do not overlap with the frame.",
+        "There is no gap between the strings and the frame.",
+        "The tuning pegs are securely attached to the frame.",
+        "The pedals are firmly connected to the base of the harp."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The triangular frame and curved top are correctly modeled.",
+        "The vertical strings are included as instructed.",
+        "Tuning pegs and pedals are appropriately placed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

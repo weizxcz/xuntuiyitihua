@@ -1,0 +1,50 @@
+{
+  "id": "01ecf1ad-ab83-4b03-9bfc-6f3f101b4179",
+  "name": "Table Fan",
+  "instruction": "Can you design a table fan with three blades and a simple control panel?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a table fan.",
+        "The fan has three blades.",
+        "The base of the fan is circular.",
+        "The control panel is rectangular and located at the front."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blades are evenly spaced around the center hub.",
+        "The control panel is proportionate to the fan's overall size."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blades are positioned correctly for optimal airflow.",
+        "The control panel is easily accessible from the front.",
+        "The base provides stability to the fan structure.",
+        "The fan blades do not interfere with the control panel."
+      ],
+      "Object distance and contact": [
+        "The blades are securely attached to the hub.",
+        "There is no gap between the blades and the hub.",
+        "The control panel is fixed to the base without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the table fan are accurately represented.",
+        "The design includes three blades as requested.",
+        "The control panel is simple as per the instruction."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

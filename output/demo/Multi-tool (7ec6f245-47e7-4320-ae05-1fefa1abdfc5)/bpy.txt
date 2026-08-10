@@ -1,0 +1,636 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, degrees
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive_mesh(mesh_func, name, location, rotation_euler, scale=(1,1,1)):
+    """Add a primitive mesh object, set name, location, rotation, and scale."""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.scale = scale
+    return obj
+
+def add_cylinder(name, radius, height, location, rotation_euler=(0,0,0), scale=(1,1,1)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=height, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.scale = scale
+    return obj
+
+def add_cube(name, size, location, rotation_euler=(0,0,0), scale=(1,1,1)):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.scale = scale
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, height, location, rotation_euler=(0,0,0), scale=(1,1,1)):
+    """Add a cone primitive."""
+    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=radius_top, radius2=radius_bottom, depth=height, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.scale = scale
+    return obj
+
+def add_uvsphere(name, radius, location, rotation_euler=(0,0,0), scale=(1,1,1)):
+    """Add a UV sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.scale = scale
+    return obj
+
+def apply_transform(obj):
+    """Apply location, rotation, and scale to an object."""
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+def get_world_center(obj):
+    """Get the world space center of an object's bounding box."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    center = bm.calc_center_bounds()
+    bm.free()
+    return center
+
+def align_to_vector(obj, vector):
+    """Align object's local Z axis to a world vector."""
+    vec = vector.normalized()
+    # Current Z axis
+    current_z = Vector((0, 0, 1))
+    # Calculate rotation
+    rot_quat = current_z.rotation_difference(vec)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_union(obj_target, obj_source):
+    """Perform boolean union using modifier stack."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = obj_target
+    
+    # Add Boolean Modifier to Target
+    mod = obj_target.modifiers.new(name="BoolUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = obj_source
+    
+    # Apply Modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove source object if desired, or keep it. Usually keep for debugging or remove.
+    # Here we keep it but it's merged.
+    return obj_target
+
+def boolean_subtract(obj_target, obj_source):
+    """Perform boolean subtract using modifier stack."""
+    bpy.context.view_layer.objects.active = obj_target
+    
+    mod = obj_target.modifiers.new(name="BoolSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = obj_source
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return obj_target
+
+def create_extruded_shape(name, profile_func, location, rotation_euler=(0,0,0), scale=(1,1,1)):
+    """
+    Generic function to create an extruded shape from a 2D profile.
+    profile_func: a function that takes a bmesh and modifies it to create the 2D shape in XY plane.
+    """
+    # Create a plane to start with
+    bpy.ops.mesh.primitive_plane_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    
+    # Enter Edit Mode
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.delete(type='VERT')
+    
+    # Create new mesh data block for clean slate
+    new_mesh = bpy.data.meshes.new(name + "_mesh")
+    obj.data = new_mesh
+    
+    bm = bmesh.new()
+    
+    # Generate 2D profile in XY plane (Z=0)
+    profile_func(bm)
+    
+    # Extrude along Z to give thickness
+    # We need to determine the thickness from the profile or assume it's part of the profile definition?
+    # The prompt says "extruded shape with ... thickness". 
+    # Let's assume the profile defines the XY cross section, and we extrude along Z by the thickness amount.
+    # However, the profile_func usually defines the shape. 
+    # To simplify, let's assume the profile_func creates a closed loop in XY.
+    # Then we extrude it along Z.
+    
+    # Select all faces/verts
+    bmesh.ops.select_all(bm, action='SELECT')
+    
+    # Extrude region along Z
+    # Note: bmesh.ops.extrude_discrete_faces or similar. 
+    # Simpler: Extrude the whole mesh along Z axis.
+    bmesh.ops.extrude_discrete_faces(bm, faces=bm.faces)
+    
+    # Move the new face along Z
+    # This is complex in BMesh without knowing face orientation.
+    # Alternative: Use BMesh to create a box-like structure if profile is simple, 
+    # or use a more robust extrusion.
+    
+    # Let's use a simpler approach for "extruded shape":
+    # 1. Create the 2D profile in XY.
+    # 2. Use BMesh to extrude along Z by 'thickness'.
+    
+    # Re-doing the logic for clarity:
+    bm.clear()
+    profile_func(bm)
+    
+    # Ensure all faces are selected
+    bmesh.ops.select_all(bm, action='SELECT')
+    
+    # Extrude along Z
+    # We need to know the thickness. Let's pass it as an argument or define it in profile_func?
+    # The prompt gives dimensions. Let's assume the profile_func creates the XY shape.
+    # We will extrude it by a small amount in Z to make it a 3D object.
+    # But wait, the prompt says "thickness". 
+    # Let's assume the profile is the cross-section.
+    
+    # To make this generic, let's assume the profile_func creates a shape in XY.
+    # We will extrude it along Z by 1 unit, then scale Z to match thickness?
+    # No, let's just extrude by the thickness value.
+    # Since I don't have the thickness in this generic function signature easily, 
+    # I will modify the specific calls to handle the extrusion logic directly or use a helper.
+    
+    # For this script, I will implement specific extrusion logic for each tool part 
+    # rather than a fully generic one, to ensure accuracy.
+    
+    bm.to_mesh(obj.data)
+    bm.free()
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Apply scale
+    obj.scale = scale
+    
+    return obj
+
+def create_knife_blade_profile(bm):
+    """Create a leaf profile for knife blade in XY plane."""
+    # Leaf profile: roughly elliptical or leaf-shaped.
+    # Length 0.08, Width 0.02.
+    # Let's create a simple leaf shape using bezier curves or vertices.
+    # Vertices:
+    # Tip at (0.04, 0)
+    # Base at (-0.04, 0)
+    # Top edge: curve to (0, 0.01)
+    # Bottom edge: curve to (0, -0.01)
+    
+    # Using a simple polygon for approximation
+    verts = [
+        (0.04, 0, 0),    # Tip
+        (0.02, 0.01, 0), # Top mid
+        (-0.04, 0.01, 0),# Top base
+        (-0.04, -0.01, 0),# Bottom base
+        (0.02, -0.01, 0),# Bottom mid
+    ]
+    
+    for v in verts:
+        bm.verts.new(v)
+    
+    bm.verts.ensure_lookup_table()
+    bm.faces.new(bm.verts)
+    
+    # Smooth it out? For now, simple polygon.
+    # To make it more "leaf-like", we can add more vertices or use curves.
+    # Given the constraints, a simple polygon is acceptable for a low-poly model.
+    pass
+
+def create_scissor_blade_profile(bm):
+    """Create a curved blade profile for scissors in XY plane."""
+    # Length 0.06, Width 0.01
+    # Curved profile.
+    verts = [
+        (0.03, 0, 0),    # Tip
+        (0.015, 0.005, 0), # Top mid
+        (-0.03, 0.005, 0), # Top base
+        (-0.03, -0.005, 0),# Bottom base
+        (0.015, -0.005, 0),# Bottom mid
+    ]
+    for v in verts:
+        bm.verts.new(v)
+    bm.verts.ensure_lookup_table()
+    bm.faces.new(bm.verts)
+    pass
+
+def create_opener_body_profile(bm):
+    """Create L-shape profile for opener body in XY plane."""
+    # L-shape: Length 0.05, Width 0.015, Thickness 0.002
+    # Let's assume the L-shape is in XY, and we extrude along Z.
+    # L-shape vertices:
+    # (0, 0), (0.05, 0), (0.05, 0.005), (0.01, 0.005), (0.01, 0.015), (0, 0.015)
+    verts = [
+        (0, 0, 0),
+        (0.05, 0, 0),
+        (0.05, 0.005, 0),
+        (0.01, 0.005, 0),
+        (0.01, 0.015, 0),
+        (0, 0.015, 0),
+    ]
+    for v in verts:
+        bm.verts.new(v)
+    bm.verts.ensure_lookup_table()
+    bm.faces.new(bm.verts)
+    pass
+
+def create_saw_blade_profile(bm):
+    """Create rectangular blade with teeth profile for saw in XY plane."""
+    # Rectangular with teeth. Simplified as a rectangle with slight notches or just a rectangle.
+    # Length 0.07, Width 0.01
+    verts = [
+        (0.035, 0.005, 0),
+        (-0.035, 0.005, 0),
+        (-0.035, -0.005, 0),
+        (0.035, -0.005, 0),
+    ]
+    for v in verts:
+        bm.verts.new(v)
+    bm.verts.ensure_lookup_table()
+    bm.faces.new(bm.verts)
+    pass
+
+def create_saw_handle_profile(bm):
+    """Create ergonomic grip profile for saw handle in XY plane."""
+    # Length 0.03, Width 0.02
+    # Simplified as a rounded rectangle or just a rectangle.
+    verts = [
+        (0.015, 0.01, 0),
+        (-0.015, 0.01, 0),
+        (-0.015, -0.01, 0),
+        (0.015, -0.01, 0),
+    ]
+    for v in verts:
+        bm.verts.new(v)
+    bm.verts.ensure_lookup_table()
+    bm.faces.new(bm.verts)
+    pass
+
+def extrude_along_z(obj, thickness):
+    """Extrude an object's mesh along Z axis by a given thickness."""
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    
+    # Extrude region
+    bmesh.from_edit_mesh(obj.data)
+    bm = bmesh.from_edit_mesh(obj.data)
+    
+    # Select all faces
+    bmesh.ops.select_all(bm, action='SELECT')
+    
+    # Extrude along Z
+    # We need to move the new geometry along Z
+    # bmesh.ops.extrude_discrete_faces creates new faces at the same location
+    # We need to move them.
+    
+    # Simpler: Use BMesh to create a box from the existing face
+    # But let's use the standard extrude operator
+    bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0, 0, thickness)})
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    apply_transform(obj)
+
+def create_extruded_object(name, profile_func, location, rotation_euler, scale, thickness):
+    """Create an object from a 2D profile and extrude it along Z."""
+    # Create a temporary mesh
+    bpy.ops.mesh.primitive_plane_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    
+    # Clear default geometry
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.delete(type='VERT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Create new mesh
+    new_mesh = bpy.data.meshes.new(name + "_mesh")
+    obj.data = new_mesh
+    
+    bm = bmesh.new()
+    profile_func(bm)
+    
+    # Extrude along Z
+    bmesh.ops.select_all(bm, action='SELECT')
+    bmesh.ops.extrude_discrete_faces(bm, faces=bm.faces)
+    
+    # Move the new faces along Z
+    # Find the new faces (they are the last ones added)
+    # Actually, bmesh.ops.extrude_discrete_faces returns a dict with 'faces'
+    # But we can just select all and move by half thickness up and half down?
+    # Or move the new ones by thickness.
+    
+    # Let's just move all vertices by thickness in Z? No, that scales.
+    # Let's move the new faces.
+    
+    # Simpler approach: 
+    # 1. Create profile in XY.
+    # 2. Extrude by thickness/2 in +Z and thickness/2 in -Z.
+    
+    # Re-do:
+    bm.clear()
+    profile_func(bm)
+    
+    # Extrude half up
+    bmesh.ops.select_all(bm, action='SELECT')
+    result = bmesh.ops.extrude_discrete_faces(bm, faces=bm.faces)
+    new_faces = result['faces']
+    
+    # Move new faces by thickness/2
+    for f in new_faces:
+        for v in f.verts:
+            v.co.z += thickness / 2
+            
+    # Extrude half down (from original)
+    # Wait, the original faces are still there.
+    # Let's select original faces and extrude down.
+    bmesh.ops.select_all(bm, action='DESELECT')
+    for f in bm.faces:
+        if f not in new_faces:
+            f.select_set(True)
+            
+    result2 = bmesh.ops.extrude_discrete_faces(bm, faces=[f for f in bm.faces if f.select])
+    new_faces2 = result2['faces']
+    
+    for f in new_faces2:
+        for v in f.verts:
+            v.co.z -= thickness / 2
+            
+    bm.to_mesh(obj.data)
+    bm.free()
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    apply_transform(obj)
+    
+    return obj
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj, do_unlink=True)
+for col in bpy.data.collections:
+    bpy.data.collections.remove(col)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_blade_steel = make_material("mat_blade_steel", (0.7, 0.7, 0.8, 1.0))
+mat_handle_g10 = make_material("mat_handle_g10", (0.1, 0.1, 0.1, 1.0))
+mat_saw_steel = make_material("mat_saw_steel", (0.6, 0.6, 0.7, 1.0))
+mat_scissor_steel = make_material("mat_scissor_steel", (0.75, 0.75, 0.85, 1.0))
+mat_tool_steel = make_material("mat_tool_steel", (0.65, 0.65, 0.75, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Handle Group ---
+
+# handle_scale_L
+obj_handle_scale_L = add_cylinder("handle_scale_L", 0.0125, 0.120, (0,0,0), (0,0,0))
+obj_handle_scale_L.location = (-0.0125, 0, 0)
+obj_handle_scale_L.data.materials.append(mat_handle_g10)
+
+# handle_scale_R
+obj_handle_scale_R = add_cylinder("handle_scale_R", 0.0125, 0.120, (0,0,0), (0,0,0))
+obj_handle_scale_R.location = (0.0125, 0, 0)
+obj_handle_scale_R.data.materials.append(mat_handle_g10)
+
+# handle_liner_L
+obj_handle_liner_L = add_cylinder("handle_liner_L", 0.012, 0.118, (0,0,0), (0,0,0))
+obj_handle_liner_L.location = (-0.0125, 0, 0)
+obj_handle_liner_L.data.materials.append(mat_handle_g10)
+
+# handle_liner_R
+obj_handle_liner_R = add_cylinder("handle_liner_R", 0.012, 0.118, (0,0,0), (0,0,0))
+obj_handle_liner_R.location = (0.0125, 0, 0)
+obj_handle_liner_R.data.materials.append(mat_handle_g10)
+
+# pivot_pin
+obj_pivot_pin = add_cylinder("pivot_pin", 0.0025, 0.125, (0,0,0), (0,0,0))
+obj_pivot_pin.location = (0,0,0)
+obj_pivot_pin.data.materials.append(mat_tool_steel)
+
+# Boolean Unions
+# Union handle_liner_L with handle_scale_L
+boolean_union(obj_handle_scale_L, obj_handle_liner_L)
+# Union handle_liner_R with handle_scale_R
+boolean_union(obj_handle_scale_R, obj_handle_liner_R)
+# Union handle_scale_L with handle_scale_R
+boolean_union(obj_handle_scale_L, obj_handle_scale_R)
+# Union pivot_pin with handle_scale_L
+boolean_union(obj_handle_scale_L, obj_pivot_pin)
+
+# Align handle_main (which is now obj_handle_scale_L) center to (0,0,0)
+# The current center is roughly (-0.0125 + 0.0125)/2 = 0? 
+# handle_scale_L is at -0.0125, handle_scale_R is at 0.0125.
+# Their combined center is 0.
+# So no translation needed for center, but let's ensure it.
+obj_handle_scale_L.location = (0,0,0)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Tool Knife ---
+
+# knife_tang
+obj_knife_tang = add_cylinder("knife_tang", 0.002, 0.03, (0,0,0), (0,0,0))
+obj_knife_tang.location = (0.01, 0, 0)
+obj_knife_tang.data.materials.append(mat_tool_steel)
+
+# knife_blade
+# Create extruded shape
+obj_knife_blade = create_extruded_object("knife_blade", create_knife_blade_profile, (0,0,0), (0,0,0), (1,1,1), 0.002)
+obj_knife_blade.location = (0.04, 0, 0)
+obj_knife_blade.data.materials.append(mat_blade_steel)
+
+# Boolean Union
+boolean_union(obj_knife_tang, obj_knife_blade)
+
+# Align tool_knife (obj_knife_tang) bottom face to handle_scale_R top face
+# handle_scale_R is at (0.0125, 0, 0) with height 0.120. Top face Z = 0.06.
+# knife_tang is at (0.01, 0, 0) with height 0.03. Center Z=0. Bottom Z = -0.015.
+# We want knife_tang.bottom_face Z = handle_scale_R.top_face Z = 0.06.
+# Current knife_tang bottom Z = -0.015.
+# Offset needed: 0.06 - (-0.015) = 0.075 in Z.
+# Then offset(0.0125, 0, 0.005).
+# Total Z offset: 0.075 + 0.005 = 0.08.
+# Total X offset: 0.0125.
+
+# Let's do it step by step as requested.
+# Align(Z) tool_knife.bottom_face to handle_scale_R.top_face
+# Calculate current bottom Z of knife_tang
+current_bottom_z = obj_knife_tang.location.z - 0.015 # Half height
+target_top_z = obj_handle_scale_R.location.z + 0.06 # Half height
+offset_z_align = target_top_z - current_bottom_z
+obj_knife_tang.location.z += offset_z_align
+
+# Then offset(0.0125, 0, 0.005)
+obj_knife_tang.location.x += 0.0125
+obj_knife_tang.location.z += 0.005
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Tool Scissors ---
+
+# scissor_blade_A
+obj_scissor_blade_A = create_extruded_object("scissor_blade_A", create_scissor_blade_profile, (0,0,0), (0,0,0), (1,1,1), 0.0015)
+obj_scissor_blade_A.location = (-0.03, 0.01, 0)
+obj_scissor_blade_A.data.materials.append(mat_scissor_steel)
+
+# scissor_blade_B
+obj_scissor_blade_B = create_extruded_object("scissor_blade_B", create_scissor_blade_profile, (0,0,0), (0,0,0), (1,1,1), 0.0015)
+obj_scissor_blade_B.location = (-0.03, -0.01, 0)
+obj_scissor_blade_B.data.materials.append(mat_scissor_steel)
+
+# scissor_pivot
+obj_scissor_pivot = add_cylinder("scissor_pivot", 0.0015, 0.02, (0,0,0), (0,0,0))
+obj_scissor_pivot.location = (-0.03, 0, 0)
+obj_scissor_pivot.data.materials.append(mat_tool_steel)
+
+# Boolean Unions
+boolean_union(obj_scissor_blade_A, obj_scissor_pivot)
+boolean_union(obj_scissor_blade_B, obj_scissor_pivot)
+
+# Align tool_scissors (obj_scissor_blade_A) bottom face to handle_scale_L top face
+# handle_scale_L is at (-0.0125, 0, 0) with height 0.120. Top face Z = 0.06.
+# scissor_blade_A is at (-0.03, 0.01, 0) with thickness 0.0015. Center Z=0. Bottom Z = -0.00075.
+# We want scissor_blade_A.bottom_face Z = handle_scale_L.top_face Z = 0.06.
+# Current scissor_blade_A bottom Z = -0.00075.
+# Offset needed: 0.06 - (-0.00075) = 0.06075 in Z.
+# Then offset(-0.0125, 0, 0.005).
+# Total Z offset: 0.06075 + 0.005 = 0.06575.
+# Total X offset: -0.0125.
+
+# Align(Z)
+current_bottom_z_A = obj_scissor_blade_A.location.z - 0.00075
+target_top_z_L = obj_handle_scale_L.location.z + 0.06
+offset_z_align_A = target_top_z_L - current_bottom_z_A
+obj_scissor_blade_A.location.z += offset_z_align_A
+
+# Then offset(-0.0125, 0, 0.005)
+obj_scissor_blade_A.location.x += -0.0125
+obj_scissor_blade_A.location.z += 0.005
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Tool Opener ---
+
+# opener_body
+obj_opener_body = create_extruded_object("opener_body", create_opener_body_profile, (0,0,0), (0,0,0), (1,1,1), 0.002)
+obj_opener_body.location = (0.025, 0, 0)
+obj_opener_body.data.materials.append(mat_tool_steel)
+
+# opener_hook
+obj_opener_hook = add_cylinder("opener_hook", 0.0025, 0.01, (0,0,0), (0,0,0))
+obj_opener_hook.location = (0.05, 0, 0)
+obj_opener_hook.data.materials.append(mat_tool_steel)
+
+# Boolean Union
+boolean_union(obj_opener_body, obj_opener_hook)
+
+# Align tool_opener (obj_opener_body) bottom face to handle_scale_R top face
+# handle_scale_R is at (0.0125, 0, 0) with height 0.120. Top face Z = 0.06.
+# opener_body is at (0.025, 0, 0) with thickness 0.002. Center Z=0. Bottom Z = -0.001.
+# We want opener_body.bottom_face Z = handle_scale_R.top_face Z = 0.06.
+# Current opener_body bottom Z = -0.001.
+# Offset needed: 0.06 - (-0.001) = 0.061 in Z.
+# Then offset(0.0125, 0, 0.005).
+# Total Z offset: 0.061 + 0.005 = 0.066.
+# Total X offset: 0.0125.
+
+# Align(Z)
+current_bottom_z_opener = obj_opener_body.location.z - 0.001
+target_top_z_R = obj_handle_scale_R.location.z + 0.06
+offset_z_align_opener = target_top_z_R - current_bottom_z_opener
+obj_opener_body.location.z += offset_z_align_opener
+
+# Then offset(0.0125, 0, 0.005)
+obj_opener_body.location.x += 0.0125
+obj_opener_body.location.z += 0.005
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Tool Saw ---
+
+# saw_blade
+obj_saw_blade = create_extruded_object("saw_blade", create_saw_blade_profile, (0,0,0), (0,0,0), (1,1,1), 0.001)
+obj_saw_blade.location = (-0.035, 0, 0)
+obj_saw_blade.data.materials.append(mat_saw_steel)
+
+# saw_handle
+obj_saw_handle = create_extruded_object("saw_handle", create_saw_handle_profile, (0,0,0), (0,0,0), (1,1,1), 0.002)
+obj_saw_handle.location = (-0.015, 0, 0)
+obj_saw_handle.data.materials.append(mat_handle_g10)
+
+# Boolean Union
+boolean_union(obj_saw_blade, obj_saw_handle)
+
+# Align tool_saw (obj_saw_blade) bottom face to handle_scale_L top face
+# handle_scale_L is at (-0.0125, 0, 0) with height 0.120. Top face Z = 0.06.
+# saw_blade is at (-0.035, 0, 0) with thickness 0.001. Center Z=0. Bottom Z = -0.0005.
+# We want saw_blade.bottom_face Z = handle_scale_L.top_face Z = 0.06.
+# Current saw_blade bottom Z = -0.0005.
+# Offset needed: 0.06 - (-0.0005) = 0.0605 in Z.
+# Then offset(-0.0125, 0, 0.005).
+# Total Z offset: 0.0605 + 0.005 = 0.0655.
+# Total X offset: -0.0125.
+
+# Align(Z)
+current_bottom_z_saw = obj_saw_blade.location.z - 0.0005
+target_top_z_L_saw = obj_handle_scale_L.location.z + 0.06
+offset_z_align_saw = target_top_z_L_saw - current_bottom_z_saw
+obj_saw_blade.location.z += offset_z_align_saw
+
+# Then offset(-0.0125, 0, 0.005)
+obj_saw_blade.location.x += -0.0125
+obj_saw_blade.location.z += 0.005
+
+# Stage 5 complete.
+
+# All stages complete.
+```

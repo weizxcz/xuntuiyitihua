@@ -1,0 +1,49 @@
+{
+  "id": "2451447b-b9b0-4402-af72-19943319fcb8",
+  "name": "Travel Case",
+  "instruction": "Start with a rectangular box with rounded corners. Add a handle on top and two latches on the front. Include a hinge along the back edge to allow the case to open. Inside, create a simple compartmentalized layout with a few dividers.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a rectangular box.",
+        "The box has rounded corners.",
+        "The handle is positioned on top of the box.",
+        "The front of the box features two latches.",
+        "A hinge is located along the back edge."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hinge is proportionate to the travel case."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is correctly placed for ergonomic use.",
+        "The latches are positioned for easy access.",
+        "The hinge is aligned with the back edge for proper opening.",
+        "The dividers are evenly spaced within the compartment."
+      ],
+      "Object distance and contact": [
+        "The handle does not interfere with the latches.",
+        "The latches do not obstruct the opening of the box.",
+        "The dividers do not extend beyond the interior walls."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "The design adheres to the instruction details without omission."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

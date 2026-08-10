@@ -1,0 +1,90 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_beige; diffuse_color = (0.96, 0.92, 0.86, 1.0).
+Define material fabric_cushion; diffuse_color = (0.90, 0.85, 0.80, 1.0).
+Define material metal_silver; diffuse_color = (0.70, 0.72, 0.75, 1.0).
+Define material wood_dark; diffuse_color = (0.25, 0.18, 0.12, 1.0).
+Define material wood_light; diffuse_color = (0.65, 0.55, 0.45, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create wooden slat base  ---
+Create primitive cuboid with size 2.032×0.762×0.05 m and name it wooden_slat_base.
+Rotate wooden_slat_base so its +Z axis aligns +Z (world).
+Move wooden_slat_base to pos=(0, 0, 0.025).
+Stage 1 complete.
+
+---  SECTION 2 – Create metal legs  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with radius 0.02 m and height 0.4 m and name it metal_legs_r_c.
+  Rotate metal_legs_r_c so its +Z axis aligns +Z (world).
+  Align metal_legs_r_c.+Z_face to wooden_slat_base.bottom_face.
+  Then offset(-0.9 + c*1.8, -0.3 + r*0.6, -0.4).
+Stage 2 complete.
+
+---  SECTION 3 – Create storage compartment  ---
+Create primitive cuboid with size 1.8×0.7×0.2 m and name it storage_box.
+Rotate storage_box so its +Z axis aligns +Z (world).
+Move storage_box to pos=(0, 0, 0.05).
+
+Create primitive cuboid with size 1.82×0.72×0.02 m and name it storage_lid.
+Rotate storage_lid so its +Z axis aligns +Z (world).
+Align storage_lid.bottom_face to storage_box.top_face.
+Then offset(0, 0, 0.01).
+Stage 3 complete.
+
+---  SECTION 4 – Create seat cushion  ---
+Create primitive cuboid with size 2.032×0.762×0.15 m and name it seat_cushion.
+Rotate seat_cushion so its +Z axis aligns +Z (world).
+Align seat_cushion.bottom_face to wooden_slat_base.top_face.
+Then offset(0, 0, 0.075).
+Stage 4 complete.
+
+---  SECTION 5 – Create hinge mechanism  ---
+Create primitive cuboid with size 2.0×0.05×0.05 m and name it hinge_base.
+Rotate hinge_base so its +Z axis aligns +Z (world).
+Align hinge_base.bottom_face to wooden_slat_base.top_face.
+Then offset(0, -0.35, 0.075).
+
+Create primitive cylinder with radius 0.01 m and height 0.1 m and name it hinge_arm.
+Rotate hinge_arm so its +Z axis aligns +Y (world).
+Align hinge_arm.center to hinge_base.center.
+Then offset(0, 0.05, 0).
+Stage 5 complete.
+
+---  SECTION 6 – Create backrest frame and cushion  ---
+Create primitive cuboid with size 2.032×0.8×0.1 m and name it backrest_frame.
+Rotate backrest_frame so its +Z axis aligns +Z (world).
+Align backrest_frame.bottom_face to hinge_arm.top_face.
+Then offset(0, 0, 0.05).
+
+Create primitive cuboid with size 2.032×0.75×0.1 m and name it backrest_cushion.
+Rotate backrest_cushion so its +Z axis aligns +Z (world).
+Align backrest_cushion.bottom_face to backrest_frame.top_face.
+Then offset(0, 0, 0.05).
+Stage 6 complete.
+
+---  SECTION 7 – Create armrests  ---
+For r in 0…0 and c in 0…1:
+  Create primitive cuboid with size 0.1×0.762×0.4 m and name it armrest_base_r_c.
+  Rotate armrest_base_r_c so its +Z axis aligns +Z (world).
+  Align armrest_base_r_c.bottom_face to wooden_slat_base.top_face.
+  Then offset(-1.016 + c*2.032, 0, 0.2).
+
+  Create primitive cuboid with size 0.1×0.75×0.1 m and name it armrest_cushion_r_c.
+  Rotate armrest_cushion_r_c so its +Z axis aligns +Z (world).
+  Align armrest_cushion_r_c.bottom_face to armrest_base_r_c.top_face.
+  Then offset(0, 0, 0.05).
+Stage 7 complete.
+
+All stages complete.

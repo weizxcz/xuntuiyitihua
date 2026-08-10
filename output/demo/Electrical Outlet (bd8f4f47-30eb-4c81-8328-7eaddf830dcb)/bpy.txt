@@ -1,0 +1,273 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(type, name, size, location, rotation_euler):
+    if type == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=size[0], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif type == 'cylinder':
+        bpy.ops.mesh.primitive_cylinder_add(radius=size[0], depth=size[1], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif type == 'cone':
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=size[0], radius2=0, depth=size[1], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif type == 'uvsphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+    elif type == 'disc':
+        bpy.ops.mesh.primitive_circle_add(vertices=32, radius=size[0], location=location)
+        obj = bpy.context.active_object
+        obj.name = name
+        obj.data.name = name + "_data"
+        # Extrude slightly to make it a mesh if needed, or keep as circle. 
+        # For boolean/cutters, a flat cylinder is safer. Let's make a thin cylinder.
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":(0,0,size[1])})
+        bpy.ops.object.mode_set(mode='OBJECT')
+        obj.data.name = name + "_data"
+        
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Aligns a specific axis of an object to a target vector."""
+    # Get current rotation
+    rot = obj.rotation_euler
+    # This is a simplified approach. For robust alignment, we use quaternions.
+    # We want obj.axis to point to target_vector.
+    
+    # Define basis vectors
+    if axis_to_align == 'X':
+        src = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        src = Vector((0, 1, 0))
+    elif axis_to_align == 'Z':
+        src = Vector((0, 0, 1))
+    else:
+        return
+
+    target = target_vector.normalized()
+    
+    # Calculate rotation quaternion
+    quat = src.rotation_difference(target)
+    
+    # Apply rotation
+    obj.rotation_euler = quat.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        return self.obj.location
+    
+    def face_center_world(self):
+        # Assuming "face center" implies the center of the object's bounding box or mesh center
+        # For standard primitives, location is center.
+        return self.obj.location
+    
+    def radial_point_world(self, index=0, radius=1.0):
+        # Placeholder for radial positioning if needed
+        return self.obj.location
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Performs a boolean subtraction using the modifier stack."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Performs a boolean union using the modifier stack."""
+    bpy.context.view_layer.objects.active = target_obj
+    
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_plastic_white = make_material("plastic_white", (0.94, 0.94, 0.94, 1))
+mat_metal_copper = make_material("metal_copper", (0.78, 0.39, 0.20, 1))
+mat_metal_steel = make_material("metal_steel", (0.59, 0.59, 0.63, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Root Assembly Anchor ---
+root = bpy.data.objects.new("root", None)
+root.empty_display_type = 'CUBE'
+bpy.context.collection.objects.link(root)
+root.location = (0, 0, 0)
+root.rotation_euler = (0, 0, 0) # +Z aligns +Z by default
+
+# --- SECTION 2 – Create Face Plate Structure ---
+
+# Create face_plate
+face_plate = add_primitive('cube', 'face_plate', (0.100, 0.150, 0.004), (0, 0, 0), (0, 0, 0))
+# Rotate so +Z aligns +Z (already aligned)
+# Anchor to root.center
+face_plate.location = root.location
+# Offset (0,0,0)
+face_plate.location += Vector((0, 0, 0))
+face_plate.data.materials.append(mat_plastic_white)
+
+# Create base_plate
+base_plate = add_primitive('cube', 'base_plate', (0.090, 0.140, 0.002), (0, 0, 0), (0, 0, 0))
+# Rotate so +Z aligns +Z
+# Anchor to face_plate.center
+base_plate.location = face_plate.location
+# Align base_plate.Z to face_plate.Z (already aligned by anchor)
+# Offset (0,0,-0.002)
+base_plate.location += Vector((0, 0, -0.002))
+base_plate.data.materials.append(mat_plastic_white)
+
+# Boolean-union base_plate from face_plate
+boolean_union(base_plate, face_plate)
+
+# --- SECTION 3 – Create Face Plate Holes (Boolean Subtractions) ---
+
+# Helper to create cutter, position, and subtract
+def create_and_subtract_cutter(name, type, radius, height, rot_axis, rot_target, anchor_obj, offset, discard=True):
+    # Create cutter
+    if type == 'cylinder':
+        cutter = add_primitive('cylinder', name + '_cutter', (radius, height), (0, 0, 0), (0, 0, 0))
+    else:
+        return None
+    
+    # Rotate cutter
+    if rot_axis == 'Z' and rot_target == 'Y':
+        align_axis_to_vector(cutter, 'Z', Vector((0, 1, 0)))
+    elif rot_axis == 'Z' and rot_target == 'Z':
+        align_axis_to_vector(cutter, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor to anchor_obj.center
+    cutter.location = anchor_obj.location
+    
+    # Apply offset
+    cutter.location += offset
+    
+    # Boolean subtract
+    boolean_subtract(cutter, anchor_obj)
+    
+    return cutter
+
+# slot_L_cut
+slot_L_cut = create_and_subtract_cutter('slot_L', 'cylinder', 0.002, 0.040, 'Z', 'Y', face_plate, Vector((-0.015, 0.010, 0)))
+
+# slot_R_cut
+slot_R_cut = create_and_subtract_cutter('slot_R', 'cylinder', 0.002, 0.040, 'Z', 'Y', face_plate, Vector((0.015, 0.010, 0)))
+
+# hole_G_cut
+hole_G_cut = create_and_subtract_cutter('hole_G', 'cylinder', 0.004, 0.004, 'Z', 'Z', face_plate, Vector((0, -0.020, 0)))
+
+# --- SECTION 4 – Create Internal Contacts ---
+
+# Helper to create contact
+def create_contact(name, type, size, rot_axis, rot_target, anchor_obj, offset, material):
+    if type == 'cube':
+        obj = add_primitive('cube', name, size, (0, 0, 0), (0, 0, 0))
+    elif type == 'cylinder':
+        obj = add_primitive('cylinder', name, (size[0], size[1]), (0, 0, 0), (0, 0, 0))
+    
+    # Rotate
+    if rot_axis == 'Z' and rot_target == 'Z':
+        align_axis_to_vector(obj, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor to anchor_obj.center
+    obj.location = anchor_obj.location
+    
+    # Align Z (implicit in anchor if anchor is flat, but explicit instruction says align)
+    # Since we anchored to center, Z is already aligned.
+    
+    # Offset
+    obj.location += offset
+    
+    # Material
+    obj.data.materials.append(material)
+    
+    return obj
+
+# contact_L
+# Anchor to slot_L_cut.center. Note: slot_L_cut was discarded. 
+# We need to use the position calculated for slot_L_cut.
+# slot_L_cut was at: face_plate.center + (-0.015, 0.010, 0)
+slot_L_pos = face_plate.location + Vector((-0.015, 0.010, 0))
+contact_L = create_contact('contact_L', 'cube', (0.002, 0.030, 0.001), 'Z', 'Z', 
+                           bpy.data.objects.new('temp_slot_L', None), # Dummy anchor object to use logic
+                           Vector((0,0,-0.002)), mat_metal_copper)
+# Manually set location because dummy anchor doesn't have the right location
+contact_L.location = slot_L_pos + Vector((0, 0, -0.002))
+
+# contact_R
+slot_R_pos = face_plate.location + Vector((0.015, 0.010, 0))
+contact_R = create_contact('contact_R', 'cube', (0.002, 0.030, 0.001), 'Z', 'Z',
+                           bpy.data.objects.new('temp_slot_R', None),
+                           Vector((0,0,-0.002)), mat_metal_copper)
+contact_R.location = slot_R_pos + Vector((0, 0, -0.002))
+
+# contact_G
+hole_G_pos = face_plate.location + Vector((0, -0.020, 0))
+contact_G = create_contact('contact_G', 'cylinder', (0.003, 0.006), 'Z', 'Z',
+                           bpy.data.objects.new('temp_hole_G', None),
+                           Vector((0,0,-0.002)), mat_metal_steel)
+contact_G.location = hole_G_pos + Vector((0, 0, -0.002))
+
+# --- SECTION 5 – Final Assembly ---
+
+# Boolean-union contact_L from face_plate
+boolean_union(contact_L, face_plate)
+
+# Boolean-union contact_R from face_plate
+boolean_union(contact_R, face_plate)
+
+# Boolean-union contact_G from face_plate
+boolean_union(contact_G, face_plate)

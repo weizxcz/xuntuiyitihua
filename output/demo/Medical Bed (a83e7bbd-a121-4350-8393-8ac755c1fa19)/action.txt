@@ -1,0 +1,139 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.75,0.75,0.80,1.0).
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.0).
+Define material mat_blue_foam; diffuse_color = (0.10,0.20,0.50,1.0).
+Define material mat_grey_steel; diffuse_color = (0.40,0.40,0.45,1.0).
+Define material mat_white_pad; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main chassis  ---
+Create primitive cuboid with size 2.0×0.9×0.15 m and name it main_chassis.
+Rotate main_chassis so its +Z axis aligns +Z (world).
+Anchor main_chassis to world origin.
+Then move by offset(0, 0, 0.075).
+
+---  SECTION 2 – Create caster wheels  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.05×0.05 m and name it caster_wheel_r_c.
+  Rotate caster_wheel_r_c so its +Z axis aligns +Z (world).
+  Anchor caster_wheel_r_c to main_chassis.bottom_face.
+  Then offset(-0.9 + c*1.8, -0.4 + r*0.7, 0.025).
+
+---  SECTION 3 – Create wheel stems  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.02×0.05 m and name it stem_r_c.
+  Rotate stem_r_c so its +Z axis aligns +Z (world).
+  Connect caster_wheel_r_c.top + stem_r_c.bottom.
+
+---  SECTION 4 – Create mattress  ---
+Create primitive cuboid with size 2.0×0.9×0.1 m and name it mattress.
+Rotate mattress so its +Z axis aligns +Z (world).
+Align mattress.bottom_face to base_frame.top_face.
+Then move by offset(0, 0, 0.2).
+
+---  SECTION 5 – Create long support beams  ---
+For c in 0…1:
+  Create primitive cuboid with size 1.8×0.05×0.05 m and name it support_beam_long_c.
+  Rotate support_beam_long_c so its +Z axis aligns +Z (world).
+  Align support_beam_long_c.bottom_face to base_frame.top_face.
+  Then offset(-0.2 + c*0.4, 0, 0.15).
+
+---  SECTION 6 – Create short support beams  ---
+For r in 0…1:
+  Create primitive cuboid with size 0.05×0.8×0.05 m and name it support_beam_short_r.
+  Rotate support_beam_short_r so its +Z axis aligns +Z (world).
+  Align support_beam_short_r.bottom_face to base_frame.top_face.
+  Then offset(0, -0.2 + r*0.4, 0.15).
+
+---  SECTION 7 – Create head platform  ---
+Create primitive cuboid with size 0.8×0.9×0.02 m and name it head_platform.
+Rotate head_platform so its +Z axis aligns +Z (world).
+Align head_platform.bottom_face to base_frame.top_face.
+Then move by offset(0.6, 0, 0.25).
+
+---  SECTION 8 – Create head mattress  ---
+Create primitive cuboid with size 0.8×0.9×0.1 m and name it head_mattress.
+Rotate head_mattress so its +Z axis aligns +Z (world).
+Align head_mattress.bottom_face to head_platform.top_face.
+Then move by offset(0.6, 0, 0.31).
+
+---  SECTION 9 – Create head hinge joint  ---
+Create primitive cylinder with Ø0.05×0.1 m and name it hinge_joint_head.
+Rotate hinge_joint_head so its +Z axis aligns +Y (world).
+Align hinge_joint_head.bottom_face to base_frame.top_face.
+Then move by offset(0.2, 0, 0.25).
+
+---  SECTION 10 – Create foot platform  ---
+Create primitive cuboid with size 0.8×0.9×0.02 m and name it foot_platform.
+Rotate foot_platform so its +Z axis aligns +Z (world).
+Align foot_platform.bottom_face to base_frame.top_face.
+Then move by offset(-0.6, 0, 0.25).
+
+---  SECTION 11 – Create foot mattress  ---
+Create primitive cuboid with size 0.8×0.9×0.1 m and name it foot_mattress.
+Rotate foot_mattress so its +Z axis aligns +Z (world).
+Align foot_mattress.bottom_face to foot_platform.top_face.
+Then move by offset(-0.6, 0, 0.31).
+
+---  SECTION 12 – Create foot hinge joint  ---
+Create primitive cylinder with Ø0.05×0.1 m and name it hinge_joint_foot.
+Rotate hinge_joint_foot so its +Z axis aligns +Y (world).
+Align hinge_joint_foot.bottom_face to base_frame.top_face.
+Then move by offset(-0.2, 0, 0.25).
+
+---  SECTION 13 – Create side rails  ---
+For c in 0…1:
+  Create primitive cuboid with size 1.8×0.02×0.6 m and name it side_rail_c.
+  Rotate side_rail_c so its +Z axis aligns +Z (world).
+  Align side_rail_c.bottom_face to mattress.top_face.
+  Then offset(0, -0.45 + c*0.9, 0.5).
+
+---  SECTION 14 – Create rail supports  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cuboid with size 0.02×0.02×0.6 m and name it rail_support_r_c.
+  Rotate rail_support_r_c so its +Z axis aligns +Z (world).
+  Align rail_support_r_c.bottom_face to mattress.top_face.
+  Then offset(-0.4 + c*0.8, -0.45 + r*0.9, 0.5).
+
+---  SECTION 15 – Create control panel body  ---
+Create primitive cuboid with size 0.1×0.05×0.02 m and name it panel_body.
+Rotate panel_body so its +Z axis aligns +Z (world).
+Align panel_body.bottom_face to mattress.top_face.
+Then move by offset(0.95, 0.45, 0.3).
+
+---  SECTION 16 – Create control panel buttons  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.01×0.005 m and name it button_r_c.
+  Rotate button_r_c so its +Z axis aligns +Z (world).
+  Align button_r_c.bottom_face to panel_body.top_face.
+  Then offset(0.95 - 0.01 + c*0.02, 0.45 - 0.005 + r*0.01, 0.31).
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+Stage 4 complete.
+Stage 5 complete.
+Stage 6 complete.
+Stage 7 complete.
+Stage 8 complete.
+Stage 9 complete.
+Stage 10 complete.
+Stage 11 complete.
+Stage 12 complete.
+Stage 13 complete.
+Stage 14 complete.
+Stage 15 complete.
+Stage 16 complete.
+All stages complete.

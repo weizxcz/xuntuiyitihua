@@ -1,0 +1,60 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_nylon; diffuse_color = (0.8, 0.8, 0.8, 1.0).
+Define material foam_memory; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create foam_core structure  ---
+Create primitive cylinder with radius 0.04 m and length 0.15 m and name it left_arm.
+Rotate left_arm so its +Z axis aligns +Z (world).
+Anchor left_arm to world origin.
+Then move by offset(-0.08, 0, 0).
+
+Create primitive cylinder with radius 0.04 m and length 0.15 m and name it right_arm.
+Rotate right_arm so its +Z axis aligns +Z (world).
+Anchor right_arm to world origin.
+Then move by offset(0.08, 0, 0).
+
+Create primitive cylinder with radius 0.04 m and length 0.16 m and name it back_connector.
+Rotate back_connector so its +Z axis aligns +X (world).
+Anchor back_connector to world origin.
+Then move by offset(0, 0, 0).
+
+Boolean-union left_arm, right_arm, and back_connector to form foam_core.
+Stage 1 complete.
+
+---  SECTION 2 – Create fabric_cover structure  ---
+Create primitive cylinder with radius 0.045 m and length 0.15 m and name it left_sleeve.
+Rotate left_sleeve so its +Z axis aligns +Z (world).
+Anchor left_sleeve to world origin.
+Then move by offset(-0.08, 0, 0).
+
+Create primitive cylinder with radius 0.045 m and length 0.15 m and name it right_sleeve.
+Rotate right_sleeve so its +Z axis aligns +Z (world).
+Anchor right_sleeve to world origin.
+Then move by offset(0.08, 0, 0).
+
+Create primitive cylinder with radius 0.045 m and length 0.16 m and name it back_sleeve.
+Rotate back_sleeve so its +Z axis aligns +X (world).
+Anchor back_sleeve to world origin.
+Then move by offset(0, 0, 0).
+
+Boolean-union left_sleeve, right_sleeve, and back_sleeve to form fabric_cover.
+Stage 2 complete.
+
+---  SECTION 3 – Assemble travel_pillow  ---
+Boolean-union foam_core and fabric_cover to form travel_pillow.
+Stage 3 complete.
+
+All stages complete.

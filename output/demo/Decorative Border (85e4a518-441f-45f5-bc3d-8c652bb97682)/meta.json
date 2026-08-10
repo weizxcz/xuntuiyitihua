@@ -1,0 +1,44 @@
+{
+  "id": "85e4a518-441f-45f5-bc3d-8c652bb97682",
+  "name": "Decorative Border",
+  "instruction": "Could you design a decorative border for a page? It should have a repeating geometric pattern, with shapes like triangles and squares. The border should be about 1 inch wide and run along the edges of the page. Can you do this?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The triangles are correctly represented in the pattern.",
+        "The squares are accurately depicted in the design."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The border is designed to be about 1 inch wide."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The border is evenly distributed along all edges of the page.",
+        "The geometric shapes are arranged in a consistent manner."
+      ],
+      "Object distance and contact": [
+        "The repeating pattern is aligned correctly.",
+        "The shapes are proportionate to the width of the border."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The border meets the requirement of having a geometric pattern.",
+        "The specified width of 1 inch is accurately represented.",
+        "The border runs along all edges of the page as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

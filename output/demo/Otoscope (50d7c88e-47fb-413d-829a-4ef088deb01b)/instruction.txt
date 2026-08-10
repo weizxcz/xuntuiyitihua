@@ -1,0 +1,1 @@
+Let's create an otoscope. The device should have a cylindrical handle and a conical head. The head should have a small, circular lens for viewing. Add a light source at the tip of the head. Include a button on the handle to control the light.

@@ -1,0 +1,51 @@
+{
+  "id": "77eb99a8-53f8-4a63-9fa8-d9058c9891d2",
+  "name": "Raincoat",
+  "instruction": "Design a 3D model of a raincoat. It should have a hood, long sleeves, and a front zipper. The raincoat should be knee-length and have pockets on the front. The overall design should be simple and functional for rainy weather.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a raincoat.",
+        "The raincoat features a hood.",
+        "The raincoat has long sleeves.",
+        "The raincoat includes a front zipper.",
+        "The raincoat is knee-length.",
+        "The raincoat has pockets on the front."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the sleeves is proportionate to the knee-length design.",
+        "The hood is appropriately sized for the raincoat."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hood is positioned correctly on the top of the raincoat.",
+        "The long sleeves are attached symmetrically to the body of the raincoat.",
+        "The front zipper is aligned with the center of the raincoat.",
+        "The pockets are placed at a functional height for easy access."
+      ],
+      "Object distance and contact": [
+        "The sleeves do not overlap excessively with the body of the raincoat.",
+        "The pockets are securely attached to the front without gaps.",
+        "The zipper is flush with the fabric of the raincoat."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the requirement of being simple and functional."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

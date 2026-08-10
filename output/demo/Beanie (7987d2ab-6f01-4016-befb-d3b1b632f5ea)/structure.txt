@@ -1,0 +1,16 @@
+-- MATERIAL LIBRARY --
+fabric_green | diffuse_color=(0.05, 0.25, 0.05, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| beanie | Composite of beanie_body + beanie_crown | (1) execute 'beanie_body': Align(XY) beanie_body.center to world.center; offset(0,0,0.025); orientation=axis:+Z; mat=fabric_green; create_method=primitive; (2) execute 'beanie_crown': Align(XY) beanie_crown.center to beanie_body.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=fabric_green; create_method=primitive |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| beanie_body | Cylinder Ø0.220×0.150 m (radius R=0.110 m, height H=0.150 m) | Align(XY) beanie_body.center to world.center; offset(0,0,0.025); orientation=axis:+Z; mat=fabric_green; create_method=cylinder |
+| beanie_crown | Sphere Ø0.220 m (radius R=0.110 m) | Align(XY) beanie_crown.center to beanie_body.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=fabric_green; create_method=sphere |
+# ----------  END_GRAPH  ----------

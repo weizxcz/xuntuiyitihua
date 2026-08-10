@@ -1,0 +1,31 @@
+-- MATERIAL LIBRARY --
+mat_ash_wood | diffuse_color=(0.82, 0.70, 0.55, 1.0)
+mat_black_metal | diffuse_color=(0.10, 0.10, 0.10, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bedside_table | Composite of frame, legs, and drawer unit | assembly_order=[frame_group, drawer_group] |
+
+Layer 1 – Primary Structure (Frame & Legs)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_group | Composite of top panel and side rails | assembly_order=[top_panel, rail_L, rail_R] |
+| top_panel | Solid ash wood rectangular slab | size=0.45×0.35×0.025 m; Align(XY) top_panel.bottom_face to rail_L.top_face; Align(Z) top_panel.bottom_face to rail_L.top_face; mat=mat_ash_wood; create_method=primitive |
+| rail_L | Left side support rail | size=0.03×0.35×0.40 m; Align(XY) rail_L.right_face to top_panel.left_face; Align(Z) rail_L.top_face to top_panel.bottom_face; mat=mat_ash_wood; create_method=primitive |
+| rail_R | Right side support rail | size=0.03×0.35×0.40 m; Align(XY) rail_L.left_face to rail_R.right_face; Align(Z) rail_R.top_face to top_panel.bottom_face; mat=mat_ash_wood; create_method=primitive |
+| leg_LF | Front-left metal leg | size=0.02×0.02×0.55 m; Align(XY) leg_LF.top_face to rail_L.bottom_face; Align(Z) leg_LF.top_face to rail_L.bottom_face; offset(0.015, 0.015, -0.0125); mat=mat_black_metal; create_method=primitive |
+| leg_LB | Back-left metal leg | size=0.02×0.02×0.55 m; Align(XY) leg_LB.top_face to rail_L.bottom_face; Align(Z) leg_LB.top_face to rail_L.bottom_face; offset(0.015, -0.015, -0.0125); mat=mat_black_metal; create_method=primitive |
+| leg_RF | Front-right metal leg | size=0.02×0.02×0.55 m; Align(XY) leg_RF.top_face to rail_R.bottom_face; Align(Z) leg_RF.top_face to rail_R.bottom_face; offset(0.015, 0.015, -0.0125); mat=mat_black_metal; create_method=primitive |
+| leg_RB | Back-right metal leg | size=0.02×0.02×0.55 m; Align(XY) leg_RB.top_face to rail_R.bottom_face; Align(Z) leg_RB.top_face to rail_R.bottom_face; offset(0.015, -0.015, -0.0125); mat=mat_black_metal; create_method=primitive |
+
+Layer 2 – Secondary Structure (Drawer Unit)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| drawer_group | Composite of drawer box and handle | assembly_order=[drawer_box, drawer_handle] |
+| drawer_box | Hollow ash wood box | size=0.40×0.30×0.15 m; Align(XY) drawer_box.back_face to rail_L.front_face; Align(Z) drawer_box.bottom_face to rail_L.bottom_face; offset(0, 0.015, 0.075); mat=mat_ash_wood; create_method=primitive |
+| drawer_handle | Black metal pull handle | size=0.15×0.01×0.01 m; Align(XY) drawer_handle.back_face to drawer_box.front_face; Align(Z) drawer_handle.center to drawer_box.center; offset(0, 0.005, 0); mat=mat_black_metal; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

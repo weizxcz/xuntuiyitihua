@@ -1,0 +1,36 @@
+-- MATERIAL LIBRARY --
+mat_hex_blue | diffuse_color=(0.15,0.25,0.45,1.0)
+mat_tri_blue | diffuse_color=(0.15,0.25,0.45,1.0)
+mat_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_base | Composite base for two rug designs | A. Composite of rug_hex + rug_tri; Two adjacent rectangular rug sections placed side-by-side on a shared floor plane. |
+
+Layer 1 – Primary Structure (Hexagonal Design)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_hex | Hexagonal pattern rug section | A. Composite of hex_base + hex_tiles; A rectangular rug base with a repeating hexagonal tile pattern. |
+| hex_base | Rectangular base for hexagonal rug | cylinder Ø1.0×0.02 m (approximated as a large disc for simplicity, or cube 1.0×1.0×0.02 m). Let's use a cube for precise rectangular shape. cube 1.0×1.0×0.02 m. |
+| hex_tiles | Hexagonal tile pattern | pattern=grid(rows:5, cols:5, x_spacing:0.2, y_spacing:0.1732, start_offset:(0.1,0.1)); mat=mat_hex_blue; create_method=primitive; constraint=hexagon_prism; orientation=axis:+Z; offset(0,0,0.01) |
+| hexagon_prism | Hexagonal prism tile | cylinder Ø0.18×0.005 m (flat hexagon approx). |
+
+Layer 2 – Primary Structure (Triangular Design)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_tri | Triangular pattern rug section | A. Composite of tri_base + tri_tiles; A rectangular rug base with a repeating triangular tile pattern. |
+| tri_base | Rectangular base for triangular rug | cube 1.0×1.0×0.02 m. |
+| tri_tiles | Triangular tile pattern | pattern=grid(rows:5, cols:5, x_spacing:0.2, y_spacing:0.1732, start_offset:(0.1,0.1)); mat=mat_tri_blue; create_method=primitive; constraint=triangle_prism; orientation=axis:+Z; offset(0,0,0.01) |
+| triangle_prism | Triangular prism tile | cylinder Ø0.18×0.005 m (flat triangle approx). |
+
+Layer 3 – Assembly & Placement
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_hex | Hexagonal pattern rug section | Align(XY) rug_hex.center to (0,0); offset(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=boolean_union; constraint=hex_base + hex_tiles; assembly_order=[hex_base, hex_tiles] |
+| rug_tri | Triangular pattern rug section | Align(XY) rug_tri.center to (2,0); offset(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=boolean_union; constraint=tri_base + tri_tiles; assembly_order=[tri_base, tri_tiles] |
+| rug_base | Composite base for two rug designs | Align(XY) rug_base.center to Avg(rug_hex.center, rug_tri.center); offset(0,0,0); orientation=axis:+Z; mat=mat_white; create_method=boolean_union; constraint=rug_hex + rug_tri; assembly_order=[rug_hex, rug_tri] |
+
+# ----------  END_GRAPH  ----------

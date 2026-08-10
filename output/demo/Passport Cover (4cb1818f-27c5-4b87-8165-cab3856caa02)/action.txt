@@ -1,0 +1,75 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material leather_brown; diffuse_color = (0.35,0.20,0.10,1.0).
+Define material metal_brass; diffuse_color = (0.85,0.65,0.20,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create outer shell front and back panels  ---
+Create primitive cuboid with size 0.130×0.100×0.004 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Align front_panel.XY_face to passport_cover.XY_face.
+Then move by offset(0,0,0.002).
+
+Create primitive cuboid with size 0.130×0.100×0.004 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Align back_panel.XY_face to passport_cover.XY_face.
+Then move by offset(0,0,-0.002).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create spine and side flaps  ---
+Create primitive cuboid with size 0.010×0.100×0.004 m and name it spine.
+Rotate spine so its +Z axis aligns +Z (world).
+Align spine.XY_face to Avg(front_panel.left_face, back_panel.left_face).
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.040×0.100×0.004 m and name it left_flap.
+Rotate left_flap so its +Z axis aligns +Z (world).
+Align left_flap.right_face to spine.left_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.040×0.100×0.004 m and name it right_flap.
+Rotate right_flap so its +Z axis aligns +Z (world).
+Align right_flap.left_face to Avg(front_panel.right_face, back_panel.right_face).
+Then move by offset(0,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create inner lining  ---
+Create primitive cuboid with size 0.120×0.090×0.002 m and name it front_inner.
+Rotate front_inner so its +Z axis aligns +Z (world).
+Align front_inner.XY_face to front_panel.XY_face.
+Then move by offset(0,0,-0.002).
+
+Create primitive cuboid with size 0.120×0.090×0.002 m and name it back_inner.
+Rotate back_inner so its +Z axis aligns +Z (world).
+Align back_inner.XY_face to back_panel.XY_face.
+Then move by offset(0,0,0.002).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create closure mechanism  ---
+Create primitive cuboid with size 0.020×0.080×0.002 m and name it strap.
+Rotate strap so its +Z axis aligns +Z (world).
+Align strap.XY_face to right_flap.XY_face.
+Then move by offset(0.010,0,0).
+
+Create primitive cuboid with size 0.015×0.015×0.005 m and name it buckle.
+Rotate buckle so its +Z axis aligns +Z (world).
+Align buckle.XY_face to strap.right_face.
+Then move by offset(0.010,0,0).
+
+Stage 4 complete.
+
+All stages complete.

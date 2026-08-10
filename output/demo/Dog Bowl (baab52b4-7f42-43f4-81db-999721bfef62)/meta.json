@@ -1,0 +1,46 @@
+{
+  "id": "baab52b4-7f42-43f4-81db-999721bfef62",
+  "name": "Dog Bowl",
+  "instruction": "Can you create a 3D dog bowl for me? The bowl should be round and shallow, with a slightly raised edge. The color should be a bright, cheerful shade.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a dog bowl.",
+        "The bowl is round in shape.",
+        "The bowl is shallow in depth.",
+        "The edge of the bowl is slightly raised."
+      ],
+      "Color representation": [
+        "The color of the bowl is bright."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The raised edge is proportionate to the overall size of the bowl."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bowl has a consistent round shape from all angles.",
+        "The raised edge is evenly distributed around the bowl."
+      ],
+      "Object distance and contact": [
+        "The bowl sits flat on a surface.",
+        "There is no gap between the bowl and the surface it rests on."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The bowl meets the requirements of being round, shallow, and having a raised edge.",
+        "The color is bright and cheerful as requested."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

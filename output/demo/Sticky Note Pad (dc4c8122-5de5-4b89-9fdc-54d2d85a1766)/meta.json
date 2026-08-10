@@ -1,0 +1,43 @@
+{
+  "id": "dc4c8122-5de5-4b89-9fdc-54d2d85a1766",
+  "name": "Sticky Note Pad",
+  "instruction": "Create a 3D model of a sticky note pad. The pad should be a square, 3 inches on each side, with a stack of thin sheets.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a sticky note pad.",
+        "The pad is square in shape.",
+        "Each side of the pad measures 3 inches."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The dimensions of the pad are 3 inches by 3 inches."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The surface of the sheets is smooth for easy writing."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The sticky note pad is properly represented as a three-dimensional object.",
+        "The sheets are stacked vertically."
+      ],
+      "Object distance and contact": [
+        "The sheets are closely stacked without significant gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The dimensions of the pad are correctly implemented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

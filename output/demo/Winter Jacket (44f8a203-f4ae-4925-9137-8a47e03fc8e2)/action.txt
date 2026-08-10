@@ -1,0 +1,200 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_waterproof; diffuse_color = (0.15,0.25,0.35,1.0).
+Define material fabric_lining; diffuse_color = (0.85,0.85,0.90,1.0).
+Define material insulation; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material zipper_metal; diffuse_color = (0.60,0.60,0.65,1.0).
+Define material zipper_pull; diffuse_color = (0.20,0.20,0.20,1.0).
+Define material pocket_trim; diffuse_color = (0.10,0.10,0.10,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Shell Outer (Front & Back Panels)  ---
+Create primitive cuboid with size 0.30×0.40×0.002 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Move front_panel to (0, 0.15, 0).
+
+Create primitive cuboid with size 0.30×0.40×0.002 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Move back_panel to (0, -0.15, 0).
+
+Align front_panel.back_face to back_panel.front_face.
+Then offset(0,0,0.002).
+
+---  SECTION 2 – Create Shell Outer (Sleeves & Cuffs)  ---
+Create primitive cuboid with size 0.15×0.35×0.002 m and name it left_sleeve.
+Rotate left_sleeve so its +Z axis aligns +Z (world).
+Move left_sleeve to (-0.225, 0.15, 0).
+
+Create primitive cuboid with size 0.15×0.35×0.002 m and name it right_sleeve.
+Rotate right_sleeve so its +Z axis aligns +Z (world).
+Move right_sleeve to (0.225, 0.15, 0).
+
+Align front_panel.left_edge to left_sleeve.right_edge.
+Align front_panel.right_edge to right_sleeve.left_edge.
+
+Create primitive cuboid with size 0.15×0.05×0.002 m and name it left_cuff.
+Rotate left_cuff so its +Z axis aligns +Z (world).
+Move left_cuff to (-0.225, -0.05, 0).
+
+Create primitive cuboid with size 0.15×0.05×0.002 m and name it right_cuff.
+Rotate right_cuff so its +Z axis aligns +Z (world).
+Move right_cuff to (0.225, -0.05, 0).
+
+Align left_sleeve.bottom_edge to left_cuff.top_edge.
+Align right_sleeve.bottom_edge to right_cuff.top_edge.
+
+Boolean-union front_panel, back_panel, left_sleeve, right_sleeve, left_cuff, right_cuff; keep front_panel as shell_outer.
+
+---  SECTION 3 – Create Shell Inner (Lining Panels)  ---
+Create primitive cuboid with size 0.30×0.40×0.001 m and name it front_panel_inner.
+Rotate front_panel_inner so its +Z axis aligns +Z (world).
+Move front_panel_inner to (0, 0.15, 0).
+
+Create primitive cuboid with size 0.30×0.40×0.001 m and name it back_panel_inner.
+Rotate back_panel_inner so its +Z axis aligns +Z (world).
+Move back_panel_inner to (0, -0.15, 0).
+
+Align front_panel_inner.back_face to back_panel_inner.front_face.
+Then offset(0,0,0.002).
+
+Create primitive cuboid with size 0.15×0.35×0.001 m and name it left_sleeve_inner.
+Rotate left_sleeve_inner so its +Z axis aligns +Z (world).
+Move left_sleeve_inner to (-0.225, 0.15, 0).
+
+Create primitive cuboid with size 0.15×0.35×0.001 m and name it right_sleeve_inner.
+Rotate right_sleeve_inner so its +Z axis aligns +Z (world).
+Move right_sleeve_inner to (0.225, 0.15, 0).
+
+Align front_panel_inner.left_edge to left_sleeve_inner.right_edge.
+Align front_panel_inner.right_edge to right_sleeve_inner.left_edge.
+
+Boolean-union front_panel_inner, back_panel_inner, left_sleeve_inner, right_sleeve_inner; keep front_panel_inner as shell_inner.
+
+---  SECTION 4 – Create Insulation Layer  ---
+Create primitive cuboid with size 0.30×0.40×0.005 m and name it front_insulation.
+Rotate front_insulation so its +Z axis aligns +Z (world).
+Move front_insulation to (0, 0.15, 0).
+
+Create primitive cuboid with size 0.30×0.40×0.005 m and name it back_insulation.
+Rotate back_insulation so its +Z axis aligns +Z (world).
+Move back_insulation to (0, -0.15, 0).
+
+Align front_insulation.back_face to back_insulation.front_face.
+Then offset(0,0,0.002).
+
+Create primitive cuboid with size 0.15×0.35×0.005 m and name it left_sleeve_insulation.
+Rotate left_sleeve_insulation so its +Z axis aligns +Z (world).
+Move left_sleeve_insulation to (-0.225, 0.15, 0).
+
+Create primitive cuboid with size 0.15×0.35×0.005 m and name it right_sleeve_insulation.
+Rotate right_sleeve_insulation so its +Z axis aligns +Z (world).
+Move right_sleeve_insulation to (0.225, 0.15, 0).
+
+Align front_insulation.left_edge to left_sleeve_insulation.right_edge.
+Align front_insulation.right_edge to right_sleeve_insulation.left_edge.
+
+Boolean-union front_insulation, back_insulation, left_sleeve_insulation, right_sleeve_insulation; keep front_insulation as insulation_layer.
+
+---  SECTION 5 – Create Hood  ---
+Create primitive cuboid with size 0.25×0.25×0.002 m and name it hood_front.
+Rotate hood_front so its +Z axis aligns +Z (world).
+Move hood_front to (0, 0.15, 0.125).
+
+Create primitive cuboid with size 0.25×0.25×0.002 m and name it hood_back.
+Rotate hood_back so its +Z axis aligns +Z (world).
+Move hood_back to (0, 0.15, 0.125).
+
+Align hood_front.back_face to hood_back.front_face.
+Then offset(0,0,0.002).
+
+Align hood.bottom_face to shell_outer.back_panel.top_face.
+Then offset(0,0,0.005).
+
+Boolean-union hood_front, hood_back; keep hood_front as hood.
+
+---  SECTION 6 – Create Zipper Track  ---
+Create primitive cuboid with size 0.005×0.80×0.002 m and name it left_track.
+Rotate left_track so its +Z axis aligns +Z (world).
+Move left_track to (-0.0025, 0.15, 0).
+
+Create primitive cuboid with size 0.005×0.80×0.002 m and name it right_track.
+Rotate right_track so its +Z axis aligns +Z (world).
+Move right_track to (0.0025, 0.15, 0).
+
+Align left_track.right_edge to right_track.left_edge.
+Then offset(0,0,0.001).
+
+Align zipper_track.bottom_face to shell_outer.front_panel.bottom_face.
+Then offset(0,0,0.005).
+
+Boolean-union left_track, right_track; keep left_track as zipper_track.
+
+---  SECTION 7 – Create Zipper Pull  ---
+Create primitive cylinder with Ø0.010×0.020 m and name it zipper_pull.
+Rotate zipper_pull so its +Z axis aligns +Z (world).
+Align zipper_pull.bottom_face to zipper_track.top_face.
+Then offset(0,0,0.005).
+
+---  SECTION 8 – Create Left Pocket  ---
+Create primitive cuboid with size 0.15×0.20×0.002 m and name it pocket_left_front.
+Rotate pocket_left_front so its +Z axis aligns +Z (world).
+Move pocket_left_front to (-0.15, 0.15, 0).
+
+Create primitive cuboid with size 0.15×0.20×0.002 m and name it pocket_left_back.
+Rotate pocket_left_back so its +Z axis aligns +Z (world).
+Move pocket_left_back to (-0.15, 0.15, 0).
+
+Align pocket_left_front.back_face to pocket_left_back.front_face.
+Then offset(0,0,0.002).
+
+Align left_pocket.bottom_face to shell_outer.front_panel.bottom_face.
+Then offset(0,0,0.005).
+
+Align left_pocket.right_edge to shell_outer.front_panel.left_edge.
+Then offset(0.05,0,0).
+
+Boolean-union pocket_left_front, pocket_left_back; keep pocket_left_front as left_pocket.
+
+---  SECTION 9 – Create Right Pocket  ---
+Create primitive cuboid with size 0.15×0.20×0.002 m and name it pocket_right_front.
+Rotate pocket_right_front so its +Z axis aligns +Z (world).
+Move pocket_right_front to (0.15, 0.15, 0).
+
+Create primitive cuboid with size 0.15×0.20×0.002 m and name it pocket_right_back.
+Rotate pocket_right_back so its +Z axis aligns +Z (world).
+Move pocket_right_back to (0.15, 0.15, 0).
+
+Align pocket_right_front.back_face to pocket_right_back.front_face.
+Then offset(0,0,0.002).
+
+Align right_pocket.bottom_face to shell_outer.front_panel.bottom_face.
+Then offset(0,0,0.005).
+
+Align right_pocket.left_edge to shell_outer.front_panel.right_edge.
+Then offset(-0.05,0,0).
+
+Boolean-union pocket_right_front, pocket_right_back; keep pocket_right_front as right_pocket.
+
+---  SECTION 10 – Final Assembly  ---
+Align shell_inner to shell_outer.
+Align insulation_layer to shell_outer.
+Align hood to shell_outer.
+Align zipper_track to shell_outer.
+Align left_pocket to shell_outer.
+Align right_pocket to shell_outer.
+
+Assembly guideline satisfied.
+Stage 10 complete.
+
+All stages complete.

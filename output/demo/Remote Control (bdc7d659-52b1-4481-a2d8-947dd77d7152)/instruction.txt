@@ -1,0 +1,1 @@
+Could you create a remote control for a TV? It should have a rectangular shape with rounded edges. Include a power button, volume control buttons, and a numeric keypad.

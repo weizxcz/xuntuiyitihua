@@ -1,0 +1,32 @@
+-- MATERIAL LIBRARY --
+mat_floral_green | diffuse_color=(0.2, 0.4, 0.2, 1.0)
+mat_floral_pink | diffuse_color=(0.8, 0.4, 0.5, 1.0)
+mat_floral_white | diffuse_color=(0.95, 0.95, 0.95, 1.0)
+mat_wall_base | diffuse_color=(0.9, 0.9, 0.85, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wall_base | Base wall panel 1.0×1.0 m (single tile unit for seamless tiling) | pos=(0,0,0); orientation=axis:+Z; mat=mat_wall_base; create_method=primitive; size=1.0×1.0×0.02; assembly_order=[wall_base] |
+
+Layer 1 – Primary Structure (Floral Motif)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| flower_center | Stylized flower center (small disc) | Align(XY) flower_center.center to tile_center; Align(Z) flower_center.bottom_face to wall_base.top_face; offset(0,0,0.001); orientation=axis:+Z; mat=mat_floral_pink; create_method=primitive; size=0.04×0.04×0.005; assembly_order=[flower_center] |
+| petal_1 | Stylized petal 1 (top) | Align(XY) petal_1.center to tile_center; Align(Z) petal_1.bottom_face to wall_base.top_face; offset(0, 0.03, 0.001); orientation=axis:+Z; mat=mat_floral_white; create_method=primitive; size=0.02×0.06×0.003; assembly_order=[petal_1] |
+| petal_2 | Stylized petal 2 (right) | Align(XY) petal_2.center to tile_center; Align(Z) petal_2.bottom_face to wall_base.top_face; offset(0.03, 0, 0.001); orientation=axis:+Z; mat=mat_floral_white; create_method=primitive; size=0.06×0.02×0.003; assembly_order=[petal_2] |
+| petal_3 | Stylized petal 3 (bottom) | Align(XY) petal_3.center to tile_center; Align(Z) petal_3.bottom_face to wall_base.top_face; offset(0, -0.03, 0.001); orientation=axis:+Z; mat=mat_floral_white; create_method=primitive; size=0.02×0.06×0.003; assembly_order=[petal_3] |
+| petal_4 | Stylized petal 4 (left) | Align(XY) petal_4.center to tile_center; Align(Z) petal_4.bottom_face to wall_base.top_face; offset(-0.03, 0, 0.001); orientation=axis:+Z; mat=mat_floral_white; create_method=primitive; size=0.06×0.02×0.003; assembly_order=[petal_4] |
+| leaf_1 | Stylized leaf 1 (top-right) | Align(XY) leaf_1.center to tile_center; Align(Z) leaf_1.bottom_face to wall_base.top_face; offset(0.02, 0.02, 0.001); orientation=axis:+Z; mat=mat_floral_green; create_method=primitive; size=0.03×0.01×0.002; assembly_order=[leaf_1] |
+| leaf_2 | Stylized leaf 2 (bottom-left) | Align(XY) leaf_2.center to tile_center; Align(Z) leaf_2.bottom_face to wall_base.top_face; offset(-0.02, -0.02, 0.001); orientation=axis:+Z; mat=mat_floral_green; create_method=primitive; size=0.03×0.01×0.002; assembly_order=[leaf_2] |
+| tile_center | Virtual center point for the tile | pos=(0.5, 0.5, 0.01); assembly_order=[] |
+
+Layer 2 – Pattern Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| floral_tile | Composite floral motif tile | Composite of flower_center + petal_1 + petal_2 + petal_3 + petal_4 + leaf_1 + leaf_2; assembly_order=[flower_center, petal_1, petal_2, petal_3, petal_4, leaf_1, leaf_2] |
+| wall_pattern | Seamless repeating wall pattern | pattern=grid(rows:10, cols:10, x_spacing:1.0, y_spacing:1.0, start_offset:(0,0)); template=floral_tile; assembly_order=[floral_tile] |
+
+# ----------  END_GRAPH  ----------

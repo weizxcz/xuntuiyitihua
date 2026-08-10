@@ -1,0 +1,45 @@
+{
+  "id": "4c16da50-464e-4f6f-a1a9-5c90ea6133ea",
+  "name": "Star Symbol",
+  "instruction": "Design a simple star symbol with five evenly spaced points.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a star symbol.",
+        "The star has five points.",
+        "The points are evenly spaced."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of each point is consistent.",
+        "The angles between the points are equal."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The points of the star extend outward from a central point.",
+        "The star maintains a flat profile."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the points.",
+        "The points are evenly distributed around the center."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects a star symbol with five points.",
+        "All specified attributes are represented without deviation."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

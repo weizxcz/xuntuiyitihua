@@ -1,0 +1,49 @@
+-- MATERIAL LIBRARY --
+mat_plastic_grey | diffuse_color=(0.50,0.50,0.50,1.00)
+mat_plastic_white | diffuse_color=(0.95,0.95,0.95,1.00)
+mat_metal_steel | diffuse_color=(0.40,0.40,0.45,1.00)
+mat_metal_copper | diffuse_color=(0.85,0.50,0.20,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly for the circuit breaker box | assembly_order=[housing_group, internals_group] |
+
+Layer 1 – Primary Structure (Housing)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| housing_box | Main enclosure shell | A. Composite of outer_shell + inner_mounting_rails; mat=mat_plastic_grey; create_method=boolean_subtract; pos=(0,0,0); orientation=axis:+Z |
+| outer_shell | Outer plastic casing | A. Cuboid 0.300×0.200×0.150 m (W×H×D); mat=mat_plastic_grey; create_method=primitive; pos=(0,0,0) |
+| inner_void | Hollow interior space | A. Cuboid 0.280×0.180×0.140 m (W×H×D); mat=-; create_method=primitive; pos=(0,0,0); constraint=boolean_subtract from outer_shell |
+| mounting_rail_top | Top DIN rail | A. Cylinder Ø0.010×0.280 m; mat=mat_metal_steel; create_method=primitive; pos=(0, 0.085, 0.070); orientation=axis:+X |
+| mounting_rail_bottom | Bottom DIN rail | A. Cylinder Ø0.010×0.280 m; mat=mat_metal_steel; create_method=primitive; pos=(0, -0.085, 0.070); orientation=axis:+X |
+
+Layer 2 – Internal Components (Breakers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| breakers_group | Group of circuit breakers | assembly_order=[breaker_A, breaker_B, breaker_C] |
+| breaker_A | Single-pole breaker unit 1 | A. Composite of breaker_body + toggle_handle + terminal_top + terminal_bottom; mat=mat_plastic_white; create_method=union; pos=(0, 0.05, 0.075) |
+| breaker_body_A | Breaker main body | A. Cuboid 0.030×0.040×0.060 m; mat=mat_plastic_white; create_method=primitive; pos=(0,0,0) |
+| toggle_handle_A | Toggle switch handle | A. Cylinder Ø0.005×0.020 m; mat=mat_plastic_white; create_method=primitive; pos=(0.015, 0.020, 0.030); orientation=axis:+X |
+| terminal_top_A | Top electrical terminal | A. Cylinder Ø0.004×0.010 m; mat=mat_metal_copper; create_method=primitive; pos=(0, 0.020, 0.030); orientation=axis:+Y |
+| terminal_bottom_A | Bottom electrical terminal | A. Cylinder Ø0.004×0.010 m; mat=mat_metal_copper; create_method=primitive; pos=(0, -0.020, 0.030); orientation=axis:+Y |
+| breaker_B | Single-pole breaker unit 2 | A. Composite of breaker_body + toggle_handle + terminal_top + terminal_bottom; mat=mat_plastic_white; create_method=union; pos=(0.05, 0.05, 0.075) |
+| breaker_body_B | Breaker main body | A. Cuboid 0.030×0.040×0.060 m; mat=mat_plastic_white; create_method=primitive; pos=(0,0,0) |
+| toggle_handle_B | Toggle switch handle | A. Cylinder Ø0.005×0.020 m; mat=mat_plastic_white; create_method=primitive; pos=(0.015, 0.020, 0.030); orientation=axis:+X |
+| terminal_top_B | Top electrical terminal | A. Cylinder Ø0.004×0.010 m; mat=mat_metal_copper; create_method=primitive; pos=(0, 0.020, 0.030); orientation=axis:+Y |
+| terminal_bottom_B | Bottom electrical terminal | A. Cylinder Ø0.004×0.010 m; mat=mat_metal_copper; create_method=primitive; pos=(0, -0.020, 0.030); orientation=axis:+Y |
+| breaker_C | Single-pole breaker unit 3 | A. Composite of breaker_body + toggle_handle + terminal_top + terminal_bottom; mat=mat_plastic_white; create_method=union; pos=(0.10, 0.05, 0.075) |
+| breaker_body_C | Breaker main body | A. Cuboid 0.030×0.040×0.060 m; mat=mat_plastic_white; create_method=primitive; pos=(0,0,0) |
+| toggle_handle_C | Toggle switch handle | A. Cylinder Ø0.005×0.020 m; mat=mat_plastic_white; create_method=primitive; pos=(0.015, 0.020, 0.030); orientation=axis:+X |
+| terminal_top_C | Top electrical terminal | A. Cylinder Ø0.004×0.010 m; mat=mat_metal_copper; create_method=primitive; pos=(0, 0.020, 0.030); orientation=axis:+Y |
+| terminal_bottom_C | Bottom electrical terminal | A. Cylinder Ø0.004×0.010 m; mat=mat_metal_copper; create_method=primitive; pos=(0, -0.020, 0.030); orientation=axis:+Y |
+
+Layer 3 – Assembly & Constraints
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| assembly_housing | Final housing assembly | Align(Z) mounting_rail_top.bottom_face to outer_shell.top_face; Align(Z) mounting_rail_bottom.bottom_face to outer_shell.bottom_face; offset(0,0,0.005) |
+| assembly_breakers | Breakers mounted on rails | Align(Z) breaker_A.bottom_face to mounting_rail_top.top_face; Align(Z) breaker_B.bottom_face to mounting_rail_top.top_face; Align(Z) breaker_C.bottom_face to mounting_rail_top.top_face; offset(0,0,0.001) |
+
+# ----------  END_GRAPH  ----------

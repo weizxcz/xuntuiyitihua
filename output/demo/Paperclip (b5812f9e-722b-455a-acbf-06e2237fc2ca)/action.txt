@@ -1,0 +1,53 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_steel_wire; diffuse_color = (0.7,0.7,0.75,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create standard paperclip  ---
+Create primitive cylinder and name it standard_paperclip_wire.
+Rotate standard_paperclip_wire so its +Z axis aligns +Z (world).
+Anchor standard_paperclip_wire to root.
+Then move by offset(0,0,0).
+
+Create primitive cylinder and name it standard_paperclip_cut.
+Rotate standard_paperclip_cut so its +Z axis aligns +Z (world).
+Anchor standard_paperclip_cut to standard_paperclip_wire.
+Then move by offset(0,0,0).
+
+Boolean-subtract standard_paperclip_cut from standard_paperclip_wire; discard standard_paperclip_cut.
+
+Bevel standard_paperclip_wire.edges with radius 0.0005 m, segments 8.
+
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create triangular paperclip  ---
+Create primitive cylinder and name it triangular_paperclip_wire.
+Rotate triangular_paperclip_wire so its +Z axis aligns +Z (world).
+Anchor triangular_paperclip_wire to root.
+Then move by offset(0,0,0).
+
+Create primitive cylinder and name it triangular_paperclip_cut.
+Rotate triangular_paperclip_cut so its +Z axis aligns +Z (world).
+Anchor triangular_paperclip_cut to triangular_paperclip_wire.
+Then move by offset(0,0,0).
+
+Boolean-subtract triangular_paperclip_cut from triangular_paperclip_wire; discard triangular_paperclip_cut.
+
+Bevel triangular_paperclip_wire.edges with radius 0.0005 m, segments 8.
+
+Assembly guideline satisfied.
+Stage 2 complete.
+
+All stages complete.

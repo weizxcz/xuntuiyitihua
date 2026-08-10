@@ -1,0 +1,43 @@
+{
+  "id": "c42cf391-184f-400a-b7df-7b1ba0802ca3",
+  "name": "Decorative Wall Panel",
+  "instruction": "Design a decorative wall panel with a geometric pattern. Ensure the pattern is symmetrical and covers the entire surface of the panel.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a wall panel.",
+        "The wall panel has a rectangular shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pattern in the wall panel is proportionate to the entire wall penal."
+      ],
+      "Texture and surface detail": [
+        "The surface of the panel have a smooth finish."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The panel is designed to be flat against the wall.",
+        "The geometric pattern is evenly distributed across the panel."
+      ],
+      "Object distance and contact": [
+        "The panel should be securely mounted to the wall.",
+        "There should be no gaps between the panel and the wall."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The wall panel accurately reflects the requirement for a geometric pattern.",
+        "The symmetry of the pattern is maintained throughout the design."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

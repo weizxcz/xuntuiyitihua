@@ -1,0 +1,50 @@
+{
+  "id": "310c0a48-320b-4fdb-bfd2-97d76c6b9691",
+  "name": "Wallet",
+  "instruction": "Design a wallet with multiple compartments. The wallet should have a section for bills, a few slots for cards, and a small coin pocket with a snap closure.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a wallet.",
+        "The wallet features multiple compartments.",
+        "There is a section specifically for bills.",
+        "The wallet includes slots for cards.",
+        "There is a small coin pocket."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The compartments are proportionate to the overall size of the wallet.",
+        "The bill section is larger than the card slots and coin pocket."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The compartments are arranged logically within the wallet.",
+        "The bill section is positioned at the back for easy access.",
+        "The card slots are easily accessible from the front.",
+        "The coin pocket is placed securely to avoid bulk."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the bill section and card slots.",
+        "The coin pocket is securely attached without gaps.",
+        "The snap closure functions properly without interfering with other compartments."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified compartments are accurately represented.",
+        "The wallet includes a section for bills, card slots, and a coin pocket."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

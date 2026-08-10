@@ -1,0 +1,552 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size_x, size_y, size_z):
+    """Add a cube aligned with axes, centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size_x / 2, size_y / 2, size_z / 2)
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone aligned with Z axis, centered at origin."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, target_vector):
+    """Rotate object so its local +Z aligns with target_vector."""
+    if target_vector.length == 0:
+        return
+    
+    # Current Z axis
+    current_z = Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = current_z.rotation_difference(target_vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def align_object_axis_to_vector(obj, axis_index, target_vector):
+    """Rotate object so a specific local axis aligns with target_vector."""
+    if target_vector.length == 0:
+        return
+    
+    # Define local axes
+    local_axes = [
+        Vector((1, 0, 0)), # X
+        Vector((0, 1, 0)), # Y
+        Vector((0, 0, 1))  # Z
+    ]
+    
+    current_axis = local_axes[axis_index]
+    rot_quat = current_axis.rotation_difference(target_vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_world_center(obj):
+    """Get the world position of the object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_type='bottom'):
+    """
+    Get the world center of a specific face of an object.
+    Assumes object is axis-aligned or has known orientation.
+    """
+    # Get local bounds
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    
+    # Find face based on normal
+    target_normal = Vector((0, 0, -1)) # Default bottom
+    if face_type == 'top':
+        target_normal = Vector((0, 0, 1))
+    elif face_type == 'front':
+        target_normal = Vector((0, 1, 0))
+    elif face_type == 'back':
+        target_normal = Vector((0, -1, 0))
+    elif face_type == 'left':
+        target_normal = Vector((-1, 0, 0))
+    elif face_type == 'right':
+        target_normal = Vector((1, 0, 0))
+    
+    best_face = None
+    best_dot = -2.0
+    
+    for face in bm.faces:
+        dot = face.normal.dot(target_normal)
+        if dot > best_dot:
+            best_dot = dot
+            best_face = face
+            
+    if best_face:
+        # Calculate centroid
+        centroid = Vector((0, 0, 0))
+        for v in best_face.verts:
+            centroid += v.co
+        centroid /= len(best_face.verts)
+        bm.free()
+        return centroid
+    
+    bm.free()
+    return get_world_center(obj)
+
+def align_to_face(obj, target_obj, face_type='bottom'):
+    """
+    Align obj's bottom face to target_obj's specified face.
+    Moves obj so its bottom face center matches target face center.
+    """
+    target_center = get_face_center(target_obj, face_type)
+    obj_center = get_world_center(obj)
+    
+    # Calculate offset to move obj's center to target center
+    # Assuming obj is oriented such that its 'bottom' is -Z in local space
+    # We need to shift obj so its bottom face is at target_center.
+    # If obj is centered, bottom face is at obj_center - (0,0, height/2)
+    
+    # Get local height
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    
+    # Simple bounding box approach for offset
+    min_z = min(v.co.z for v in bm.verts)
+    max_z = max(v.co.z for v in bm.verts)
+    local_height = max_z - min_z
+    
+    bm.free()
+    
+    # Shift object so its bottom face (min_z) aligns with target_center
+    # Current bottom face Z = obj_center.z - (local_height/2) if centered
+    # We want new bottom face Z = target_center.z
+    # So new obj_center.z = target_center.z + local_height/2
+    
+    shift = target_center - obj_center
+    shift.z += local_height / 2
+    
+    obj.location += shift
+
+def align_center_to_center(obj, target_obj):
+    """Align object center to target object center."""
+    target_center = get_world_center(target_obj)
+    obj_center = get_world_center(obj)
+    obj.location += (target_center - obj_center)
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using modifier."""
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Perform boolean union."""
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj, radius, segments=8):
+    """Add bevel modifier and apply."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    mod.angle_limit = 0.0 # Bevel all edges by default if angle limit is 0 or handled by width
+    
+    # To bevel all edges, we can use the 'Weight' method or just apply with width
+    # Blender's bevel modifier with width=0.02 and segments=8 works well for simple cases
+    # However, to ensure it bevels all edges, we might need to set the width method to 'Weight' 
+    # or rely on the default behavior. For simplicity, we use the default.
+    
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def create_locator(name, location):
+    """Create a simple empty locator."""
+    bpy.ops.object.empty_add(location=location, type='PLAIN_AXES')
+    loc = bpy.context.active_object
+    loc.name = name
+    return loc
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_aluminum = make_material("mat_aluminum", (0.7, 0.7, 0.7, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_brass = make_material("mat_brass", (0.8, 0.6, 0.2, 1.0))
+mat_steel = make_material("mat_steel", (0.4, 0.4, 0.4, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create case_body ---
+
+# Create primitive cuboid with size 0.400×0.300×0.150 m and name it case_body.
+case_body = add_cube("case_body", 0.400, 0.300, 0.150)
+apply_material(case_body, mat_aluminum)
+
+# Rotate case_body so its +Z axis aligns +Z (world).
+# Already aligned by default.
+
+# Anchor case_body to world origin.
+case_body.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+# No change.
+
+# Create primitive cuboid with size 0.390×0.290×0.145 m and name it case_body_inner_cut.
+case_body_inner_cut = add_cube("case_body_inner_cut", 0.390, 0.290, 0.145)
+apply_material(case_body_inner_cut, mat_black_plastic)
+
+# Rotate case_body_inner_cut so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor case_body_inner_cut to case_body.bottom_face.
+# Align case_body_inner_cut.bottom_face to case_body.bottom_face.
+# Since it's a subtraction, we want the inner cut to be slightly inset or centered.
+# The instruction says "Anchor ... to case_body.bottom_face" then "offset(0,0,0.0025)".
+# This implies the cutter's bottom face is aligned with case_body's bottom face, then shifted up.
+
+# Align bottom face of cutter to bottom face of case_body
+align_to_face(case_body_inner_cut, case_body, 'bottom')
+
+# Then move by offset(0,0,0.0025).
+case_body_inner_cut.location.z += 0.0025
+
+# Boolean-subtract case_body_inner_cut from case_body; discard case_body_inner_cut.
+boolean_subtract(case_body_inner_cut, case_body)
+
+# Bevel case_body.edges with radius 0.020 m, segments 8.
+add_bevel(case_body, 0.020, 8)
+
+# --- SECTION 2 – Create case_lid ---
+
+# Create primitive cuboid with size 0.400×0.300×0.010 m and name it case_lid.
+case_lid = add_cube("case_lid", 0.400, 0.300, 0.010)
+apply_material(case_lid, mat_aluminum)
+
+# Rotate case_lid so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor case_lid to case_body.top_face.
+# Align case_lid.bottom_face to case_body.top_face.
+align_to_face(case_lid, case_body, 'top')
+
+# Then move by offset(0,0,0.010).
+case_lid.location.z += 0.010
+
+# Create primitive cuboid with size 0.390×0.290×0.005 m and name it case_lid_inner_cut.
+case_lid_inner_cut = add_cube("case_lid_inner_cut", 0.390, 0.290, 0.005)
+apply_material(case_lid_inner_cut, mat_black_plastic)
+
+# Rotate case_lid_inner_cut so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor case_lid_inner_cut to case_lid.bottom_face.
+align_to_face(case_lid_inner_cut, case_lid, 'bottom')
+
+# Then move by offset(0,0,0.0025).
+case_lid_inner_cut.location.z += 0.0025
+
+# Boolean-subtract case_lid_inner_cut from case_lid; discard case_lid_inner_cut.
+boolean_subtract(case_lid_inner_cut, case_lid)
+
+# Bevel case_lid.edges with radius 0.020 m, segments 8.
+add_bevel(case_lid, 0.020, 8)
+
+# --- SECTION 3 – Create hinge_bar ---
+
+# Create primitive cylinder with Ø0.010×0.300 m and name it hinge_bar.
+# Ø0.010 -> radius 0.005. Length 0.300.
+hinge_bar = add_cylinder("hinge_bar", 0.005, 0.300)
+apply_material(hinge_bar, mat_brass)
+
+# Rotate hinge_bar so its +Z axis aligns +Y (world).
+align_axis_to_vector(hinge_bar, Vector((0, 1, 0)))
+
+# Anchor hinge_bar to case_body.back_face.
+# Align hinge_bar.center to case_body.back_face.center.
+# Back face is -Y in local space of case_body (assuming standard orientation).
+# We need to find the center of case_body's back face.
+back_face_center = get_face_center(case_body, 'back')
+hinge_bar_center = get_world_center(hinge_bar)
+hinge_bar.location += (back_face_center - hinge_bar_center)
+
+# Then move by offset(0,0,0).
+# No change.
+
+# --- SECTION 4 – Create hinge_pins ---
+
+for i in range(3):
+    # Create primitive cylinder with Ø0.005×0.020 m and name it hinge_pin_i.
+    # Ø0.005 -> radius 0.0025. Length 0.020.
+    pin_name = f"hinge_pin_{i}"
+    hinge_pin = add_cylinder(pin_name, 0.0025, 0.020)
+    apply_material(hinge_pin, mat_brass)
+
+    # Rotate hinge_pin_i so its +Z axis aligns +X (world).
+    align_axis_to_vector(hinge_pin, Vector((1, 0, 0)))
+
+    # Anchor hinge_pin_i to hinge_bar.
+    # Align hinge_pin_i.center to hinge_bar.center.
+    hinge_bar_center = get_world_center(hinge_bar)
+    hinge_pin_center = get_world_center(hinge_pin)
+    hinge_pin.location += (hinge_bar_center - hinge_pin_center)
+
+    # Then move by offset(-0.100 + i*0.100, 0, 0).
+    offset_x = -0.100 + i * 0.100
+    hinge_pin.location.x += offset_x
+
+# --- SECTION 5 – Create latch_body_L ---
+
+# Create primitive cuboid with size 0.020×0.020×0.010 m and name it latch_body_L.
+latch_body_L = add_cube("latch_body_L", 0.020, 0.020, 0.010)
+apply_material(latch_body_L, mat_black_plastic)
+
+# Rotate latch_body_L so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor latch_body_L to case_body.front_face.
+# Align latch_body_L.center to case_body.front_face.left_side_center.
+# Front face is +Y in local space of case_body.
+# Left side center of front face.
+# We need to calculate the position of the left side center of the front face.
+# Case body center is (0,0,0). Front face is at y=0.150 (half width 0.300).
+# Left side is x=-0.200 (half width 0.400).
+# So left_side_center is (-0.200, 0.150, 0).
+
+# Let's compute this dynamically to be safe.
+front_face_center = get_face_center(case_body, 'front')
+# Left side is -X direction from center
+# We need the center of the left edge of the front face.
+# This is front_face_center + (-width/2, 0, 0) in local space, transformed.
+# Since case_body is axis aligned, we can do this simply.
+# Width is 0.400. Half width 0.200.
+# Left side center = front_face_center + (-0.200, 0, 0)
+left_side_center = front_face_center + Vector((-0.200, 0, 0))
+
+latch_body_L_center = get_world_center(latch_body_L)
+latch_body_L.location += (left_side_center - latch_body_L_center)
+
+# Then move by offset(0,0,0.005).
+latch_body_L.location.z += 0.005
+
+# --- SECTION 6 – Create latch_hook_L ---
+
+# Create primitive cylinder with Ø0.010×0.015 m and name it latch_hook_L.
+# Ø0.010 -> radius 0.005. Length 0.015.
+latch_hook_L = add_cylinder("latch_hook_L", 0.005, 0.015)
+apply_material(latch_hook_L, mat_brass)
+
+# Rotate latch_hook_L so its +Z axis aligns +Y (world).
+align_axis_to_vector(latch_hook_L, Vector((0, 1, 0)))
+
+# Anchor latch_hook_L to latch_body_L.
+# Align latch_hook_L.center to latch_body_L.front_face.center.
+front_face_center_l = get_face_center(latch_body_L, 'front')
+latch_hook_L_center = get_world_center(latch_hook_L)
+latch_hook_L.location += (front_face_center_l - latch_hook_L_center)
+
+# Then move by offset(0,0,0.010).
+latch_hook_L.location.z += 0.010
+
+# --- SECTION 7 – Create latch_body_R ---
+
+# Create primitive cuboid with size 0.020×0.020×0.010 m and name it latch_body_R.
+latch_body_R = add_cube("latch_body_R", 0.020, 0.020, 0.010)
+apply_material(latch_body_R, mat_black_plastic)
+
+# Rotate latch_body_R so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor latch_body_R to case_body.front_face.
+# Align latch_body_R.center to case_body.front_face.right_side_center.
+right_side_center = front_face_center + Vector((0.200, 0, 0))
+
+latch_body_R_center = get_world_center(latch_body_R)
+latch_body_R.location += (right_side_center - latch_body_R_center)
+
+# Then move by offset(0,0,0.005).
+latch_body_R.location.z += 0.005
+
+# --- SECTION 8 – Create latch_hook_R ---
+
+# Create primitive cylinder with Ø0.010×0.015 m and name it latch_hook_R.
+# Ø0.010 -> radius 0.005. Length 0.015.
+latch_hook_R = add_cylinder("latch_hook_R", 0.005, 0.015)
+apply_material(latch_hook_R, mat_brass)
+
+# Rotate latch_hook_R so its +Z axis aligns +Y (world).
+align_axis_to_vector(latch_hook_R, Vector((0, 1, 0)))
+
+# Anchor latch_hook_R to latch_body_R.
+# Align latch_hook_R.center to latch_body_R.front_face.center.
+front_face_center_r = get_face_center(latch_body_R, 'front')
+latch_hook_R_center = get_world_center(latch_hook_R)
+latch_hook_R.location += (front_face_center_r - latch_hook_R_center)
+
+# Then move by offset(0,0,0.010).
+latch_hook_R.location.z += 0.010
+
+# --- SECTION 9 – Create handle_base ---
+
+# Create primitive cuboid with size 0.060×0.020×0.010 m and name it handle_base.
+handle_base = add_cube("handle_base", 0.060, 0.020, 0.010)
+apply_material(handle_base, mat_black_plastic)
+
+# Rotate handle_base so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor handle_base to case_lid.top_face.
+# Align handle_base.center to case_lid.top_face.center.
+top_face_center_lid = get_face_center(case_lid, 'top')
+handle_base_center = get_world_center(handle_base)
+handle_base.location += (top_face_center_lid - handle_base_center)
+
+# Then move by offset(0,0,0.015).
+handle_base.location.z += 0.015
+
+# --- SECTION 10 – Create handle_grip ---
+
+# Create primitive cylinder with Ø0.015×0.060 m and name it handle_grip.
+# Ø0.015 -> radius 0.0075. Length 0.060.
+handle_grip = add_cylinder("handle_grip", 0.0075, 0.060)
+apply_material(handle_grip, mat_black_plastic)
+
+# Rotate handle_grip so its +Z axis aligns +Y (world).
+align_axis_to_vector(handle_grip, Vector((0, 1, 0)))
+
+# Anchor handle_grip to handle_base.
+# Align handle_grip.center to handle_base.top_face.center.
+top_face_center_base = get_face_center(handle_base, 'top')
+handle_grip_center = get_world_center(handle_grip)
+handle_grip.location += (top_face_center_base - handle_grip_center)
+
+# Then move by offset(0,0,0.010).
+handle_grip.location.z += 0.010
+
+# --- SECTION 11 – Create case_divider_1 ---
+
+# Create primitive cuboid with size 0.380×0.005×0.140 m and name it case_divider_1.
+case_divider_1 = add_cube("case_divider_1", 0.380, 0.005, 0.140)
+apply_material(case_divider_1, mat_aluminum)
+
+# Rotate case_divider_1 so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor case_divider_1 to case_body.
+# Align case_divider_1.center to case_body.center.
+case_body_center = get_world_center(case_body)
+case_divider_1_center = get_world_center(case_divider_1)
+case_divider_1.location += (case_body_center - case_divider_1_center)
+
+# Then move by offset(0,0,0.075).
+case_divider_1.location.z += 0.075
+
+# --- SECTION 12 – Create case_divider_2 ---
+
+# Create primitive cuboid with size 0.005×0.280×0.140 m and name it case_divider_2.
+case_divider_2 = add_cube("case_divider_2", 0.005, 0.280, 0.140)
+apply_material(case_divider_2, mat_aluminum)
+
+# Rotate case_divider_2 so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor case_divider_2 to case_body.
+# Align case_divider_2.center to case_body.center.
+case_divider_2_center = get_world_center(case_divider_2)
+case_divider_2.location += (case_body_center - case_divider_2_center)
+
+# Then move by offset(0,0,0.075).
+case_divider_2.location.z += 0.075
+
+# --- SECTION 13 – Create case_divider_3 ---
+
+# Create primitive cuboid with size 0.380×0.005×0.070 m and name it case_divider_3.
+case_divider_3 = add_cube("case_divider_3", 0.380, 0.005, 0.070)
+apply_material(case_divider_3, mat_aluminum)
+
+# Rotate case_divider_3 so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Anchor case_divider_3 to case_body.
+# Align case_divider_3.center to case_body.center.
+case_divider_3_center = get_world_center(case_divider_3)
+case_divider_3.location += (case_body_center - case_divider_3_center)
+
+# Then move by offset(0,0,0.110).
+case_divider_3.location.z += 0.110
+
+```

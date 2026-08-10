@@ -1,0 +1,107 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.75,0.75,0.75,1.0).
+Define material mat_black_plastic; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_copper; diffuse_color = (0.85,0.37,0.27,1.0).
+Define material mat_green_pcb; diffuse_color = (0.1,0.4,0.1,1.0).
+Define material mat_metal_grill; diffuse_color = (0.2,0.2,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create PSU Chassis Base  ---
+Create primitive cuboid with size 0.150×0.086×0.015 m and name it psu_chassis.
+Rotate psu_chassis so its +Z axis aligns +Z (world).
+Move psu_chassis to (0,0,0).
+
+---  SECTION 2 – Create PSU Case  ---
+Create primitive cuboid with size 0.150×0.086×0.015 m and name it psu_case.
+Rotate psu_case so its +Z axis aligns +Z (world).
+Align psu_case.center to psu_chassis.center.
+Boolean-subtract psu_case from psu_chassis; keep psu_chassis. // Creates hollow interior
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create Internal PCB  ---
+Create primitive cuboid with size 0.140×0.070×0.002 m and name it psu_pcb.
+Rotate psu_pcb so its +Z axis aligns +Z (world).
+Align psu_pcb.center to psu_case.center.
+Then move by offset(0,0,0.005).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create Transformer  ---
+Create primitive cuboid with size 0.060×0.040×0.030 m and name it psu_transformer.
+Rotate psu_transformer so its +Z axis aligns +Z (world).
+Align psu_transformer.center to psu_pcb.center.
+Then move by offset(0,0,0.015).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create Capacitors Array  ---
+Create primitive cylinder with Ø0.015×0.025 m and name it psu_capacitor_0.
+Rotate psu_capacitor_0 so its +Z axis aligns +Z (world).
+Align psu_capacitor_0.center to psu_pcb.center.
+Then move by offset(-0.045, -0.025, 0.015).
+
+Create primitive cylinder with Ø0.015×0.025 m and name it psu_capacitor_1.
+Rotate psu_capacitor_1 so its +Z axis aligns +Z (world).
+Align psu_capacitor_1.center to psu_pcb.center.
+Then move by offset(0.045, -0.025, 0.015).
+
+Create primitive cylinder with Ø0.015×0.025 m and name it psu_capacitor_2.
+Rotate psu_capacitor_2 so its +Z axis aligns +Z (world).
+Align psu_capacitor_2.center to psu_pcb.center.
+Then move by offset(-0.045, 0.025, 0.015).
+
+Create primitive cylinder with Ø0.015×0.025 m and name it psu_capacitor_3.
+Rotate psu_capacitor_3 so its +Z axis aligns +Z (world).
+Align psu_capacitor_3.center to psu_pcb.center.
+Then move by offset(0.045, 0.025, 0.015).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create Fan Grill  ---
+Create primitive cuboid with size 0.080×0.080×0.005 m and name it psu_fan_grill.
+Rotate psu_fan_grill so its +Z axis aligns -X (world).
+Align psu_fan_grill.center to psu_case.left_face.center.
+Then move by offset(-0.005,0,0).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Create Power Switch  ---
+Create primitive cuboid with size 0.010×0.010×0.010 m and name it psu_switch.
+Rotate psu_switch so its +Z axis aligns +X (world).
+Align psu_switch.center to psu_case.right_face.center.
+Then move by offset(0.005,0,0).
+Assembly guideline satisfied.
+Stage 7 complete.
+
+---  SECTION 8 – Create Connectors Array  ---
+Create primitive cuboid with size 0.015×0.010×0.015 m and name it psu_connector_0.
+Rotate psu_connector_0 so its +Z axis aligns +Z (world).
+Align psu_connector_0.center to psu_case.back_face.center.
+Then move by offset(-0.03, 0, 0.005).
+
+Create primitive cuboid with size 0.015×0.010×0.015 m and name it psu_connector_1.
+Rotate psu_connector_1 so its +Z axis aligns +Z (world).
+Align psu_connector_1.center to psu_case.back_face.center.
+Then move by offset(0, 0, 0.005).
+
+Create primitive cuboid with size 0.015×0.010×0.015 m and name it psu_connector_2.
+Rotate psu_connector_2 so its +Z axis aligns +Z (world).
+Align psu_connector_2.center to psu_case.back_face.center.
+Then move by offset(0.03, 0, 0.005).
+Assembly guideline satisfied.
+Stage 8 complete.
+
+All stages complete.

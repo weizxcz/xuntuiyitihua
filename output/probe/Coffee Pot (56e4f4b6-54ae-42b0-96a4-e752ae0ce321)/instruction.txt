@@ -1,0 +1,1 @@
+Design a coffee pot with a cylindrical body and a spout. Add a handle on one side and a lid on top. Ensure the spout is slightly curved for easy pouring.

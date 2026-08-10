@@ -1,0 +1,53 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_acrylic; diffuse_color = (0.9, 0.9, 0.95, 0.3).
+Define material mat_white_paint; diffuse_color = (0.95, 0.95, 0.95, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Root Holder Anchor  ---
+Create an Empty helper (cube display) and name it root_holder.
+Rotate root_holder so its axis aligns +Z (world).
+Move root_holder to (0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Outer Cylindrical Shell  ---
+Create primitive cylinder with size Ø0.102×0.152 m and name it base_cylinder.
+Rotate base_cylinder so its +Z axis aligns +Z (world).
+Anchor base_cylinder to root_holder.center.
+Align base_cylinder.bottom_face to root_holder.bottom_face.
+Stage 2 complete.
+
+---  SECTION 3 – Create First Divider Cutter  ---
+Create primitive cuboid with size 0.005×0.102×0.152 m and name it cutter_div_1.
+Rotate cutter_div_1 so its +Z axis aligns +Z (world).
+Anchor cutter_div_1 to root_holder.center.
+Align cutter_div_1.center to root_holder.center.
+Then move by offset(0.025, 0, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create Second Divider Cutter  ---
+Create primitive cuboid with size 0.005×0.102×0.152 m and name it cutter_div_2.
+Rotate cutter_div_2 so its +Z axis aligns +Z (world).
+Anchor cutter_div_2 to root_holder.center.
+Align cutter_div_2.center to root_holder.center.
+Then move by offset(0.025, 0, 0).
+Rotate cutter_div_2 so its local +Z axis achieves orientation=axis:+Z, rotated 120° relative to cutter_div_1.
+Stage 4 complete.
+
+---  SECTION 5 – Boolean Subtraction for Dividers  ---
+Boolean-subtract cutter_div_1 from base_cylinder; discard cutter_div_1.
+Boolean-subtract cutter_div_2 from base_cylinder; discard cutter_div_2.
+Stage 5 complete.
+
+All stages complete.

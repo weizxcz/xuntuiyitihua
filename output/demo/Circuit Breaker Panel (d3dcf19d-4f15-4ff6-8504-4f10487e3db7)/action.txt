@@ -1,0 +1,180 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.75,0.75,0.75,1.0).
+Define material mat_black_plastic; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_blue_plastic; diffuse_color = (0.1,0.3,0.8,1.0).
+Define material mat_green_plastic; diffuse_color = (0.1,0.6,0.1,1.0).
+Define material mat_glass; diffuse_color = (0.9,0.95,0.95,0.3).
+Define material mat_white_plastic; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create back plate  ---
+Create primitive cuboid with size 0.600×0.800×0.005 m and name it back_plate.
+Rotate back_plate so its +Z axis aligns +Z (world).
+Anchor back_plate to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create side frames  ---
+Create primitive cuboid with size 0.020×0.800×0.005 m and name it left_frame.
+Rotate left_frame so its +Z axis aligns +Z (world).
+Align left_frame.right_face to back_plate.left_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.020×0.800×0.005 m and name it right_frame.
+Rotate right_frame so its +Z axis aligns +Z (world).
+Align right_frame.left_face to back_plate.right_face.
+Then move by offset(0,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create top frame  ---
+Create primitive cuboid with size 0.600×0.020×0.005 m and name it top_frame.
+Rotate top_frame so its +Z axis aligns +Z (world).
+Align top_frame.bottom_face to back_plate.top_face.
+Then move by offset(0,0,0).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create bottom frame  ---
+Create primitive cuboid with size 0.600×0.020×0.005 m and name it bottom_frame.
+Rotate bottom_frame so its +Z axis aligns +Z (world).
+Align bottom_frame.top_face to back_plate.bottom_face.
+Then move by offset(0,0,0).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create door frame  ---
+Create primitive cuboid with size 0.560×0.760×0.005 m and name it door_frame.
+Rotate door_frame so its +Z axis aligns +Z (world).
+Align door_frame.center to back_plate.center.
+Then move by offset(0,0,0.010).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create door panel  ---
+Create primitive cuboid with size 0.560×0.760×0.005 m and name it door_panel.
+Rotate door_panel so its +Z axis aligns +Z (world).
+Align door_panel.center to door_frame.center.
+Then move by offset(0,0,0.002).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create handle  ---
+Create primitive cylinder with Ø0.020×0.150 m and name it handle.
+Rotate handle so its +Z axis aligns +X (world).
+Align handle.center to door_panel.right_face.
+Then move by offset(0.010,0,0).
+
+Stage 7 complete.
+
+---  SECTION 8 – Create latch  ---
+Create primitive cuboid with size 0.010×0.010×0.005 m and name it latch.
+Rotate latch so its +Z axis aligns +Z (world).
+Align latch.right_face to door_panel.left_face.
+Then move by offset(0,0.350,0).
+
+Stage 8 complete.
+
+---  SECTION 9 – Create breaker template components  ---
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_body.
+Rotate breaker_body so its +Z axis aligns +Z (world).
+Anchor breaker_body to world origin.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.010×0.030×0.005 m and name it switch.
+Rotate switch so its +Z axis aligns +Z (world).
+Align switch.bottom_face to breaker_body.top_face.
+Then move by offset(0,0,0.012).
+
+Create primitive cuboid with size 0.030×0.010×0.001 m and name it label.
+Rotate label so its +Z axis aligns +Z (world).
+Align label.bottom_face to breaker_body.front_face.
+Then move by offset(0,0.025,0.010).
+
+Stage 9 complete.
+
+---  SECTION 10 – Create breaker grid  ---
+For r in 0…2 and c in 0…2:
+  Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_r_c.
+  Rotate breaker_r_c so its +Z axis aligns +Z (world).
+  Align breaker_r_c.center to Avg(breaker_1.center, breaker_2.center, breaker_3.center, breaker_4.center, breaker_5.center, breaker_6.center, breaker_7.center, breaker_8.center, breaker_9.center).
+  Then offset(dx0 + c·0.060, dy0 + r·0.080, 0).
+  // Note: The graph specifies specific start_offsets for each breaker instance relative to a grid.
+  // To strictly follow the graph's pattern=grid definition with specific start_offsets per ID:
+  // We will generate them individually based on the graph's explicit start_offset values.
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_1.
+Rotate breaker_1 so its +Z axis aligns +Z (world).
+Align breaker_1.center to Avg(breaker_2.center, breaker_3.center).
+Then move by offset(-0.060, -0.080, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_2.
+Rotate breaker_2 so its +Z axis aligns +Z (world).
+Align breaker_2.center to Avg(breaker_1.center, breaker_3.center).
+Then move by offset(0, -0.080, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_3.
+Rotate breaker_3 so its +Z axis aligns +Z (world).
+Align breaker_3.center to Avg(breaker_1.center, breaker_2.center).
+Then move by offset(0.060, -0.080, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_4.
+Rotate breaker_4 so its +Z axis aligns +Z (world).
+Align breaker_4.center to Avg(breaker_5.center, breaker_6.center).
+Then move by offset(-0.060, 0, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_5.
+Rotate breaker_5 so its +Z axis aligns +Z (world).
+Align breaker_5.center to Avg(breaker_4.center, breaker_6.center).
+Then move by offset(0, 0, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_6.
+Rotate breaker_6 so its +Z axis aligns +Z (world).
+Align breaker_6.center to Avg(breaker_4.center, breaker_5.center).
+Then move by offset(0.060, 0, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_7.
+Rotate breaker_7 so its +Z axis aligns +Z (world).
+Align breaker_7.center to Avg(breaker_8.center, breaker_9.center).
+Then move by offset(-0.060, 0.080, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_8.
+Rotate breaker_8 so its +Z axis aligns +Z (world).
+Align breaker_8.center to Avg(breaker_7.center, breaker_9.center).
+Then move by offset(0, 0.080, 0).
+
+Create primitive cuboid with size 0.040×0.060×0.020 m and name it breaker_9.
+Rotate breaker_9 so its +Z axis aligns +Z (world).
+Align breaker_9.center to Avg(breaker_7.center, breaker_8.center).
+Then move by offset(0.060, 0.080, 0).
+
+Stage 10 complete.
+
+---  SECTION 11 – Create bus bar  ---
+Create primitive cuboid with size 0.500×0.010×0.005 m and name it bus_bar.
+Rotate bus_bar so its +Z axis aligns +X (world).
+Align bus_bar.center to back_plate.center.
+Then move by offset(0,0.350,0.010).
+
+Stage 11 complete.
+
+---  SECTION 12 – Create wire tray  ---
+Create primitive cuboid with size 0.500×0.020×0.010 m and name it wire_tray.
+Rotate wire_tray so its +Z axis aligns +X (world).
+Align wire_tray.center to back_plate.center.
+Then move by offset(0,-0.350,0.010).
+
+Stage 12 complete.
+
+All stages complete.

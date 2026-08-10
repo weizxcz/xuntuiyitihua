@@ -1,0 +1,259 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Ensure Z-up
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size[0], align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to match size (size param in primitive_cube_add is total width)
+    # The primitive_cube_add 'size' argument is the full width.
+    # If input is (x,y,z), we set scale accordingly if we used a unit cube, 
+    # but here we set size directly.
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    """Add a cone aligned to Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add a UV sphere aligned to Z axis."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform Boolean Subtract using the modifier stack."""
+    # Add modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, other_obj):
+    """Perform Boolean Union."""
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+
+def align_face_to_face(obj_source, obj_target, source_face='bottom', target_face='top', offset=0.0):
+    """
+    Aligns a face of source object to a face of target object.
+    Assumes objects are Z-up cylinders/cubes.
+    source_face: 'bottom' or 'top'
+    target_face: 'bottom' or 'top'
+    """
+    # Get bounding box centers and extents
+    src_bbox = obj_source.bound_box
+    tgt_bbox = obj_target.bound_box
+    
+    # Calculate current heights and centers
+    src_h = src_bbox[6].z - src_bbox[0].z
+    tgt_h = tgt_bbox[6].z - tgt_bbox[0].z
+    
+    src_cz = (src_bbox[6].z + src_bbox[0].z) / 2.0
+    tgt_cz = (tgt_bbox[6].z + tgt_bbox[0].z) / 2.0
+    
+    # Determine target Z position for source object
+    if source_face == 'bottom' and target_face == 'top':
+        # Source bottom touches Target top
+        target_z_bottom = tgt_bbox[6].z
+        source_z_bottom = target_z_bottom + offset
+        source_z_center = source_z_bottom + src_h / 2.0
+    elif source_face == 'top' and target_face == 'bottom':
+        # Source top touches Target bottom
+        target_z_top = tgt_bbox[0].z
+        source_z_top = target_z_top - offset
+        source_z_center = source_z_top - src_h / 2.0
+    elif source_face == 'bottom' and target_face == 'bottom':
+        # Source bottom touches Target bottom
+        target_z_bottom = tgt_bbox[0].z
+        source_z_bottom = target_z_bottom + offset
+        source_z_center = source_z_bottom + src_h / 2.0
+    elif source_face == 'top' and target_face == 'top':
+        # Source top touches Target top
+        target_z_top = tgt_bbox[6].z
+        source_z_top = target_z_top - offset
+        source_z_center = source_z_top - src_h / 2.0
+    else:
+        # Default: align centers if faces ambiguous, or just XY
+        source_z_center = tgt_cz
+        target_z_bottom = 0 # Fallback
+
+    # Align XY (Center to Center)
+    obj_source.location.x = obj_target.location.x
+    obj_source.location.y = obj_target.location.y
+    
+    # Align Z
+    obj_source.location.z = source_z_center
+
+def align_xy_face(obj_source, obj_target):
+    """Align XY planes (centers in XY)."""
+    obj_source.location.x = obj_target.location.x
+    obj_source.location.y = obj_target.location.y
+
+def rotate_local_z(obj, angle_deg):
+    """Rotate object around its local Z axis."""
+    # Convert to radians
+    angle_rad = math.radians(angle_deg)
+    
+    # Get current world rotation
+    # We need to rotate around the object's local Z axis.
+    # Since the object is Z-up, local Z is world Z.
+    obj.rotation_euler.z += angle_rad
+
+def apply_material(obj, mat):
+    """Apply material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Remove orphan data
+    bpy.ops.outliner.orphans_purge()
+
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_acrylic = make_material("mat_acrylic", (0.9, 0.9, 0.95, 0.3))
+    mat_inner_wall = make_material("mat_inner_wall", (0.8, 0.8, 0.85, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create base plate ---
+    # Create primitive cylinder with radius 0.0508 m and height 0.005 m and name it base_plate.
+    base_plate = add_cylinder("base_plate", 0.0508, 0.005)
+    apply_material(base_plate, mat_acrylic)
+    
+    # Rotate base_plate so its +Z axis aligns +Z (world). (Already done by add_cylinder)
+    
+    # Align base_plate.XY_face to root.XY_face.
+    # Note: 'root' is not defined in the prompt. Assuming 'root' refers to the global origin or a hypothetical parent.
+    # Since there is no 'root' object, we assume alignment to world origin (0,0,0) for the first object.
+    base_plate.location = (0, 0, 0)
+    
+    # Align base_plate.bottom_face to root.bottom_face.
+    # Assuming root.bottom_face is at Z=0.
+    # base_plate is created at Z=0 (center). Bottom is at -0.0025.
+    # We want bottom at Z=0.
+    base_plate.location.z = 0.005 / 2.0
+    
+    # Then move by offset(0, 0, 0).
+    base_plate.location += Vector((0, 0, 0))
+
+    # --- SECTION 2 – Create cylindrical wall ---
+    # Create primitive cylinder with radius 0.0508 m and height 0.1524 m and name it cylindrical_wall.
+    cylindrical_wall = add_cylinder("cylindrical_wall", 0.0508, 0.1524)
+    apply_material(cylindrical_wall, mat_inner_wall)
+    
+    # Rotate cylindrical_wall so its +Z axis aligns +Z (world).
+    
+    # Align cylindrical_wall.XY_face to base_plate.XY_face.
+    align_xy_face(cylindrical_wall, base_plate)
+    
+    # Align cylindrical_wall.bottom_face to base_plate.top_face.
+    # base_plate top is at Z = 0.005
+    # cylindrical_wall bottom should be at Z = 0.005
+    # cylindrical_wall center Z = 0.005 + 0.1524/2
+    cylindrical_wall.location.z = 0.005 + 0.1524 / 2.0
+    
+    # Then move by offset(0, 0, 0).
+    cylindrical_wall.location += Vector((0, 0, 0))
+
+    # --- SECTION 3 – Create radial dividers ---
+    
+    # Helper to create and position a divider
+    def create_divider(name, angle_deg):
+        # Create primitive cuboid with size 0.002×0.1524×0.1016 m
+        # Note: primitive_cube_add size is total width.
+        # We want dimensions: X=0.002, Y=0.1524, Z=0.1016
+        # However, the prompt says "size 0.002x0.1524x0.1016".
+        # In Blender, cube size is uniform. We need to scale.
+        cube = add_cube(name, 1.0) # Create unit cube
+        cube.scale = (0.002, 0.1524, 0.1016)
+        
+        # Rotate divider so its +Z axis aligns +Z (world).
+        cube.rotation_euler = (0, 0, 0)
+        
+        # Align divider.XY_face to root.XY_face.
+        # Assuming root is world origin XY.
+        cube.location.x = 0
+        cube.location.y = 0
+        
+        # Align divider.bottom_face to base_plate.top_face.
+        # base_plate top is at Z = 0.005
+        # divider height is 0.1016. Bottom should be at 0.005.
+        # Center Z = 0.005 + 0.1016/2
+        cube.location.z = 0.005 + 0.1016 / 2.0
+        
+        # Move by offset(0, 0, 0).
+        cube.location += Vector((0, 0, 0))
+        
+        # Rotation: Rotate divider about its local Z axis by angle_deg.
+        rotate_local_z(cube, angle_deg)
+        
+        return cube
+
+    # Create divider_1
+    divider_1 = create_divider("divider_1", 0)
+    
+    # Create divider_2
+    divider_2 = create_divider("divider_2", 120)
+    
+    # Create divider_3
+    divider_3 = create_divider("divider_3", 240)
+    
+    # Boolean-subtract divider_1 from cylindrical_wall; discard divider_1.
+    boolean_subtract(divider_1, cylindrical_wall)
+    
+    # Boolean-subtract divider_2 from cylindrical_wall; discard divider_2.
+    boolean_subtract(divider_2, cylindrical_wall)
+    
+    # Boolean-subtract divider_3 from cylindrical_wall; discard divider_3.
+    boolean_subtract(divider_3, cylindrical_wall)
+
+if __name__ == "__main__":
+    main()

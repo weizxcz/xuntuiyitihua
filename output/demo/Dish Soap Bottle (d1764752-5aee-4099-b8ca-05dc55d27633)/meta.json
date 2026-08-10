@@ -1,0 +1,45 @@
+{
+  "id": "d1764752-5aee-4099-b8ca-05dc55d27633",
+  "name": "Dish Soap Bottle",
+  "instruction": "Model a dish soap bottle. It should have a pump dispenser on top.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a dish soap bottle.",
+        "The bottle has a cylindrical shape.",
+        "The pump dispenser is attached to the top of the bottle."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pump dispenser is proportionate to the bottle."
+      ],
+      "Texture and surface detail": [
+        "The bottle is likely made of plastic.",
+        "The pump dispenser may be made of plastic or metal."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pump dispenser is correctly positioned at the top of the bottle.",
+        "The bottle's base is stable and supports the height of the bottle."
+      ],
+      "Object distance and contact": [
+        "The pump dispenser does not overlap with the bottle.",
+        "The pump is securely attached to the bottle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The dish soap bottle is accurately modeled with a pump dispenser.",
+        "All specified components are present and correctly represented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

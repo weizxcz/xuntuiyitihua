@@ -1,0 +1,49 @@
+{
+  "id": "16fcfc67-7493-4d76-9d5b-7fbf6a1347e0",
+  "name": "Floral Ornament",
+  "instruction": "Design a floral ornament with interwoven petals and leaves.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a floral ornament.",
+        "The ornament features interwoven petals.",
+        "The ornament includes leaves that are integrated with the petals.",
+        "The petals are shaped to resemble natural flower petals.",
+        "The leaves are shaped to resemble natural leaves."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The petals should be proportionate to the leaves.",
+        "The overall ornament should have a balanced appearance."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The petals should overlap slightly to create depth.",
+        "The leaves should be positioned in a way that they appear to be part of the same structure.",
+        "The ornament should have a clear focal point where the petals converge."
+      ],
+      "Object distance and contact": [
+        "The petals should not be too far apart to maintain cohesion.",
+        "The leaves should connect seamlessly with the petals.",
+        "There should be no gaps that disrupt the flow of the design."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified elements of interwoven petals and leaves are accurately represented.",
+        "The design adheres closely to the instruction without deviations."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

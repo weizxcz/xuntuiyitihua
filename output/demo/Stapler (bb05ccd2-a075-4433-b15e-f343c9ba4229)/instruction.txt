@@ -1,0 +1,1 @@
+Create a 3D model of a stapler. It should be compact and fit comfortably in one hand. The top part should be able to pivot open for refilling staples.

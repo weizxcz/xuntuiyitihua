@@ -1,0 +1,303 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location):
+    """Add a cube centered at location with given size."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    return obj
+
+def align_to_world_z(obj):
+    """Rotate object so its local +Z aligns with world +Z."""
+    # Default cube is already aligned, but for safety:
+    obj.rotation_euler = (0, 0, 0)
+
+def align_xy_face_to(obj_target, obj_source):
+    """
+    Aligns the XY face (normal +Z) of obj_source to match obj_target's orientation.
+    Since we are keeping everything axis-aligned, this essentially ensures 
+    the object is not rotated around X or Y axes relative to the target.
+    """
+    # In this script, all objects are created axis-aligned. 
+    # This function is a placeholder for complex orientation logic if needed.
+    pass
+
+def boolean_union(objects_to_union, result_name):
+    """
+    Performs a boolean union on a list of objects.
+    Returns the resulting object.
+    """
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+    # Apply modifiers to first object
+    target = objects_to_union[0]
+    
+    # We need to apply the boolean modifier to the target for each other object
+    # However, standard boolean modifier chain is tricky in script without clearing history.
+    # Better approach: Use BMesh or simple mesh join if no complex topology changes expected.
+    # But requirement says "Boolean-union". Let's use the modifier approach carefully.
+    
+    # To ensure clean union, we'll apply the union of all into the first object
+    # and delete the rest.
+    
+    # Note: Applying boolean modifiers sequentially can be slow and error-prone.
+    # For static geometry, mesh joining is often preferred, but we follow instructions.
+    
+    # Let's use a simpler approach for robustness in script:
+    # Join all meshes, then use a single boolean modifier if needed? 
+    # No, let's just join them. Since they are simple boxes, joining is topologically equivalent to union 
+    # if they don't intersect in complex ways. 
+    # BUT, to strictly follow "Boolean-union", we will use the modifier.
+    
+    # Actually, for a script generator, applying modifiers to multiple objects in a loop is complex.
+    # A more reliable way for "discard intermediate parts" is to join them into one mesh.
+    # If the prompt implies visual union, joining is fine. If it implies boolean logic for further cuts, we need modifiers.
+    # Given the complexity of chaining boolean modifiers in a single script run without user intervention,
+    # and the fact that these are simple boxes, I will use Mesh Joining for the "Union" steps 
+    # as it is the standard procedural way to combine primitives in Blender scripts unless specific boolean topology is required.
+    # However, the prompt explicitly says "Boolean-union". 
+    # Let's try to implement a clean boolean union using modifiers.
+    
+    # Strategy:
+    # 1. Make a copy of the first object to act as the base.
+    # 2. Add boolean modifier to base for each other object.
+    # 3. Apply all modifiers.
+    # 4. Delete originals.
+    
+    base = target.copy()
+    base.data = target.data.copy()
+    base.name = result_name
+    base.location = target.location
+    base.rotation_euler = target.rotation_euler
+    base.scale = target.scale
+    
+    # Link to scene
+    bpy.context.collection.objects.link(base)
+    
+    # Add boolean modifiers
+    for other in objects_to_union[1:]:
+        mod = base.modifiers.new(name="BoolUnion", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other
+    
+    # Apply modifiers
+    bpy.context.view_layer.objects.active = base
+    bpy.ops.object.modifier_apply(modifier=base.modifiers[0].name) # Apply first
+    # Re-select base to apply remaining
+    bpy.context.view_layer.objects.active = base
+    for mod in base.modifiers:
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+    # Delete original objects
+    for obj in objects_to_union:
+        bpy.data.objects.remove(obj, do_unlink=True)
+        
+    return base
+
+def boolean_union_simple_join(objects_to_union, result_name):
+    """
+    Alternative: Join meshes. This is faster and more stable for simple primitives.
+    """
+    if not objects_to_union:
+        return None
+        
+    # Select all
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = objects_to_union[0]
+        
+    bpy.ops.object.join()
+    result = bpy.context.active_object
+    result.name = result_name
+    return result
+
+# Using the simple join for stability in this specific context of box primitives, 
+# as chaining boolean modifiers in a script can be fragile without clearing history properly.
+# If strict boolean topology is needed, the modifier approach above is better, but join is safer for "discard intermediate".
+# I will use the modifier approach for correctness to the prompt "Boolean-union".
+
+def boolean_union_strict(objects_to_union, result_name):
+    if not objects_to_union:
+        return None
+    
+    # Clone the first object to be the result
+    src = objects_to_union[0]
+    res = src.copy()
+    res.data = src.data.copy()
+    res.name = result_name
+    bpy.context.collection.objects.link(res)
+    
+    # Add boolean modifiers for all other objects
+    for other in objects_to_union[1:]:
+        mod = res.modifiers.new(name="Bool", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other
+        
+    # Apply all modifiers
+    bpy.context.view_layer.objects.active = res
+    for mod in res.modifiers:
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+    # Remove originals
+    for obj in objects_to_union:
+        bpy.data.objects.remove(obj, do_unlink=True)
+        
+    return res
+
+# --- Main Script ---
+
+# 1. Scene Reset & Units
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+
+bpy.context.scene.unit_settings.scale_length = 1
+
+# 2. Materials
+mat_fabric_blue = make_material("fabric_blue", (0.1, 0.2, 0.4, 1))
+mat_fabric_white = make_material("fabric_white", (0.95, 0.95, 0.95, 1))
+mat_metal_silver = make_material("metal_silver", (0.7, 0.7, 0.7, 1))
+mat_wood_dark = make_material("wood_dark", (0.2, 0.1, 0.05, 1))
+mat_wood_light = make_material("wood_light", (0.8, 0.7, 0.5, 1))
+
+# --- SECTION 1: Bed Base Structure ---
+
+# Slat Frame
+slats = []
+for i in range(15):
+    offset_x = -0.28 + i * 0.04
+    slat = add_cube(f"slat_{i}", (0.03, 0.02, 1.9), (offset_x, 0, 0))
+    align_to_world_z(slat)
+    # Align XY face is default for cube creation at origin, then moved.
+    # The instruction says "Align slat_i.XY_face to bed_base.XY_face". 
+    # Since bed_base doesn't exist yet, this implies aligning to the global XY plane (Z=0 normal).
+    # Cube creation is already aligned.
+    slats.append(slat)
+
+slat_frame = boolean_union_strict(slates, "slat_frame")
+
+# Side Rails
+side_rail_long_1 = add_cube("side_rail_long_1", (0.05, 0.05, 2.0), (0, -0.65, 0))
+align_to_world_z(side_rail_long_1)
+
+side_rail_long_2 = add_cube("side_rail_long_2", (0.05, 0.05, 2.0), (0, 0.65, 0))
+align_to_world_z(side_rail_long_2)
+
+# End Rails
+end_rail_1 = add_cube("end_rail_1", (0.05, 0.05, 1.4), (-0.95, 0, 0))
+align_to_world_z(end_rail_1)
+
+end_rail_2 = add_cube("end_rail_2", (0.05, 0.05, 1.4), (0.95, 0, 0))
+align_to_world_z(end_rail_2)
+
+bed_base = boolean_union_strict([slat_frame, side_rail_long_1, side_rail_long_2, end_rail_1, end_rail_2], "bed_base")
+
+# --- SECTION 2: Bed Legs ---
+legs = []
+for r in range(2):
+    for c in range(2):
+        name = f"leg_{r}_{c}"
+        x = -0.95 + c * 1.9
+        y = -0.65 + r * 1.3
+        leg = add_cube(name, (0.05, 0.15, 0.05), (x, y, 0))
+        align_to_world_z(leg)
+        legs.append(leg)
+
+bed_legs = boolean_union_strict(legs, "bed_legs")
+
+# --- SECTION 3: Headboard ---
+headboard_panel = add_cube("headboard_panel", (0.05, 0.8, 1.4), (0, 0, -0.7))
+align_to_world_z(headboard_panel)
+
+headboard_posts = []
+for i in range(2):
+    name = f"headboard_post_{i}"
+    x = -0.65 + i * 1.3
+    post = add_cube(name, (0.05, 1.0, 0.05), (x, 0, -0.7))
+    align_to_world_z(post)
+    headboard_posts.append(post)
+
+headboard = boolean_union_strict([headboard_panel] + headboard_posts, "headboard")
+
+# --- SECTION 4: Footboard ---
+footboard_panel = add_cube("footboard_panel", (0.05, 0.6, 1.4), (0, 0, 0.7))
+align_to_world_z(footboard_panel)
+
+footboard_posts = []
+for i in range(2):
+    name = f"footboard_post_{i}"
+    x = -0.65 + i * 1.3
+    post = add_cube(name, (0.05, 0.8, 0.05), (x, 0, 0.7))
+    align_to_world_z(post)
+    footboard_posts.append(post)
+
+footboard = boolean_union_strict([footboard_panel] + footboard_posts, "footboard")
+
+# --- SECTION 5: Assemble Frame Structure ---
+# Connect headboard/footboard/legs to bed_base. 
+# Since they are already positioned relative to bed_base coordinates in previous steps,
+# we just union them.
+frame_structure = boolean_union_strict([bed_base, headboard, footboard, bed_legs], "frame_structure")
+
+# --- SECTION 6: Bedding ---
+mattress = add_cube("mattress", (1.4, 0.2, 2.0), (0, 0, 0.01))
+align_to_world_z(mattress)
+
+pillows = []
+for i in range(2):
+    name = f"pillow_{i}"
+    x = -0.2 + i * 0.4
+    pillow = add_cube(name, (0.6, 0.2, 0.4), (x, 0, 0.1))
+    align_to_world_z(pillow)
+    pillows.append(pillow)
+
+pillows_obj = boolean_union_strict(pillows, "pillows")
+
+duvet = add_cube("duvet", (1.4, 0.15, 2.0), (0, 0, 0.1))
+align_to_world_z(duvet)
+
+# --- SECTION 7: Final Assembly ---
+# Connect mattress/pillows/duvet to frame_structure.
+# Again, positions are relative.
+bed_frame = boolean_union_strict([frame_structure, mattress, pillows_obj, duvet], "bed_frame")
+
+# Apply Materials
+apply_material(bed_frame, mat_wood_light) # Assuming wood for frame
+# Note: The prompt didn't specify which material goes to which part in the final union.
+# I'll apply wood_light to the whole bed_frame as a default.
+```

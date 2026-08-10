@@ -1,0 +1,45 @@
+{
+  "id": "f44012b7-ac0e-431f-913d-43a2a6881f22",
+  "name": "Paper Folder",
+  "instruction": "Design a 3D model of a paper folder with three sections.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a paper folder.",
+        "The folder has three distinct sections.",
+        "Each section is clearly defined within the folder."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The sections are proportionate to the overall size of the folder.",
+        "Each section is of equal width or designed as specified."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The sections are arranged in a way that allows for easy access.",
+        "The folder opens and closes properly without obstruction."
+      ],
+      "Object distance and contact": [
+        "The sections are properly aligned within the folder.",
+        "There is no overlap between the sections."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the requirement for three sections.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

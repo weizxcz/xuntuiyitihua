@@ -1,0 +1,234 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_color = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size[0], align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # size in add_cube is half-width, so we pass the full dimensions divided by 2
+    # However, standard add_cube 'size' is half-width. 
+    # Input says size 0.250x0.180x0.015. 
+    # Let's scale it explicitly to be safe and clear.
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the target vector."""
+    # Default orientation of primitives in Blender is usually aligned with world, 
+    # but this helper ensures it if needed.
+    # For Z aligning to Z, no rotation needed.
+    pass
+
+def get_center(obj):
+    """Get world space center of object."""
+    # Transform center by matrix
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_type='right'):
+    """Get world space center of a specific face."""
+    # We need to calculate based on dimensions and rotation
+    # Assuming object is axis-aligned for simplicity in this specific script context
+    # or we use bounding box.
+    bbox_corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    
+    if face_type == 'right':
+        # Max X
+        max_x = max(bbox_corners, key=lambda v: v.x)
+        return max_x
+    elif face_type == 'left':
+        # Min X
+        min_x = min(bbox_corners, key=lambda v: v.x)
+        return min_x
+    elif face_type == 'center':
+        return get_center(obj)
+    return get_center(obj)
+
+def boolean_subtract(cutter, target, name="bool_result"):
+    """Perform boolean subtraction using modifier stack."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSub", type='SUBTRACT')
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    
+    # Rename result if necessary (it keeps target name usually)
+    target.name = name
+    return target
+
+def boolean_union(obj1, obj2, name="union_result"):
+    """Perform boolean union."""
+    # Ensure obj1 is active
+    bpy.context.view_layer.objects.active = obj1
+    
+    mod = obj1.modifiers.new(name="BooleanUnion", type='UNION')
+    mod.object = obj2
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove obj2
+    bpy.data.objects.remove(obj2, do_unlink=True)
+    
+    obj1.name = name
+    return obj1
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- BLOCK 1: Materials ---
+
+mat_plastic_blue = make_material("mat_plastic_blue", (0.1, 0.2, 0.8, 1.0))
+mat_plastic_white = make_material("mat_plastic_white", (0.9, 0.9, 0.9, 1.0))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1: Create base plate ---
+# Create primitive cuboid with size 0.250×0.180×0.015 m and name it base_plate.
+base_plate = add_cube("base_plate", (0.250, 0.180, 0.015))
+apply_material(base_plate, mat_plastic_blue)
+
+# Rotate base_plate so its +Z axis aligns +Z (world).
+# Default cube is already aligned, but we ensure it.
+base_plate.rotation_euler = (0, 0, 0)
+
+# Anchor base_plate to world origin.
+base_plate.location = (0, 0, 0)
+
+# Then move by offset(0, 0, 0).
+base_plate.location += Vector((0, 0, 0))
+
+# --- SECTION 2: Create thumb hole cutter ---
+# Create primitive cylinder with diameter 0.040 m and height 0.020 m and name it cutter_thumb_hole.
+# Radius = 0.020
+cutter_thumb_hole = add_cylinder("cutter_thumb_hole", radius=0.020, depth=0.020)
+apply_material(cutter_thumb_hole, mat_plastic_white)
+
+# Rotate cutter_thumb_hole so its +Z axis aligns +Z (world).
+cutter_thumb_hole.rotation_euler = (0, 0, 0)
+
+# Align cutter_thumb_hole.center to base_plate.center.
+base_center = get_center(base_plate)
+cutter_thumb_hole.location = base_center
+
+# Then move by offset(-0.080, 0, 0).
+cutter_thumb_hole.location += Vector((-0.080, 0, 0))
+
+# --- SECTION 3: Create well cutters ---
+well_cutters = []
+for r in range(0, 2): # 0..1
+    for c in range(0, 3): # 0..2
+        name = f"cutter_wells_{r}_{c}"
+        # Create primitive cylinder with diameter 0.030 m and height 0.012 m
+        cutter = add_cylinder(name, radius=0.015, depth=0.012)
+        apply_material(cutter, mat_plastic_white)
+        
+        # Rotate cutter_wells_r_c so its +Z axis aligns +Z (world).
+        cutter.rotation_euler = (0, 0, 0)
+        
+        # Align cutter_wells_r_c.center to base_plate.center.
+        cutter.location = base_center
+        
+        # Then offset(-0.040 + c·0.040, -0.015 + r·0.030, 0).
+        off_x = -0.040 + c * 0.040
+        off_y = -0.015 + r * 0.030
+        off_z = 0
+        cutter.location += Vector((off_x, off_y, off_z))
+        
+        well_cutters.append(cutter)
+
+# --- SECTION 4: Create brush holder ---
+# Create primitive cuboid with size 0.020×0.010×0.015 m and name it brush_holder.
+brush_holder = add_cube("brush_holder", (0.020, 0.010, 0.015))
+apply_material(brush_holder, mat_plastic_blue)
+
+# Rotate brush_holder so its +Z axis aligns +Z (world).
+brush_holder.rotation_euler = (0, 0, 0)
+
+# Align brush_holder.left_face to base_plate.right_face.
+# Calculate positions
+base_right_face = get_face_center(base_plate, 'right')
+holder_left_face = get_face_center(brush_holder, 'left')
+
+# We need to move brush_holder so its left face is at base_right_face.
+# Current left face is at holder.location.x - (holder.scale.x * 0.020 / 2) ? 
+# Actually, bound_box is in local space. 
+# Let's use the calculated face centers.
+# Target location for brush_holder center:
+# We want holder_left_face_world == base_right_face_world
+# holder_left_face_world = holder.location + (local_left_face - center_local) transformed by rot/scale
+# Since aligned to Z and scale is uniform-ish (or we track scale), let's simplify.
+# Local center is (0,0,0).
+# Local left face X is -size_x/2.
+# So we want: holder.location.x - (0.020/2) = base_right_face.x
+# holder.location.x = base_right_face.x + 0.010
+
+# Let's do it via vector math for robustness
+base_right_vec = base_right_face
+holder_local_left = Vector((-0.020/2, 0, 0)) # Local left face center relative to object center
+# Since rotation is identity, world local left is just local left.
+# We want: holder.location + holder_local_left = base_right_vec
+# holder.location = base_right_vec - holder_local_left
+
+brush_holder.location = base_right_vec - holder_local_left
+
+# Then move by offset(0, 0, 0).
+brush_holder.location += Vector((0, 0, 0))
+
+# --- SECTION 5: Perform Boolean Subtractions ---
+
+# Boolean-subtract cutter_thumb_hole from base_plate; discard cutter_thumb_hole.
+boolean_subtract(cutter_thumb_hole, base_plate, "base_plate")
+
+# For r in 0..1 and c in 0..2: Boolean-subtract cutter_wells_r_c from base_plate; discard cutter_wells_r_c.
+for cutter in well_cutters:
+    boolean_subtract(cutter, base_plate, "base_plate")
+
+# --- SECTION 6: Assemble Palette Base ---
+
+# Boolean-union base_plate and brush_holder; keep base_plate.
+boolean_union(base_plate, brush_holder, "base_plate")
+
+# Assembly guideline satisfied.
+```

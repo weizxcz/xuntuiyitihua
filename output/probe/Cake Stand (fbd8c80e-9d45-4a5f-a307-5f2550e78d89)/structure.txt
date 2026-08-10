@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+wood_oak | diffuse_color=(0.65,0.45,0.25,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cake_stand | Composite of base_pillar + top_plate; A cylindrical pedestal supporting a flat circular plate | assembly_order=[base_pillar], [top_plate] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_pillar | Cylinder Ø0.150×0.200 m (Radius R=0.075 m, Height H=0.200 m) | pos=(0,0,0); orientation=axis:+Z; mat=wood_oak; create_method=primitive; assembly_order=[base_pillar] |
+| top_plate | Cylinder Ø0.300×0.015 m (Radius R=0.150 m, Height H=0.015 m) | Align(XY) top_plate.bottom_face to base_pillar.top_face; offset(0,0,0); orientation=axis:+Z; mat=ceramic_white; create_method=primitive; assembly_order=[top_plate] |
+# ----------  END_GRAPH  ----------

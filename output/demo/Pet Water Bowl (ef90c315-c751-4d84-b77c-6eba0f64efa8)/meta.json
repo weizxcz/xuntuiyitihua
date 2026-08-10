@@ -1,0 +1,46 @@
+{
+  "id": "ef90c315-c751-4d84-b77c-6eba0f64efa8",
+  "name": "Pet Water Bowl",
+  "instruction": "Imagine a simple water bowl for pets. It should be circular with a diameter of 8 inches and a depth of 3 inches. The bowl has a flat base to prevent tipping. Ensure the interior is smooth and easy to clean, with no additional textures or patterns.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a circular water bowl.",
+        "The bowl has a flat base."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The diameter of the bowl is 8 inches.",
+        "The depth of the bowl is 3 inches."
+      ],
+      "Proportion": [
+        "There should be no gap between the bottom and the rim of the bowl."
+      ],
+      "Texture and surface detail": [
+        "The interior is smooth.",
+        "The interior is easy to clean.",
+        "There are no additional textures or patterns."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bowl maintains a consistent circular shape.",
+        "The depth is uniform throughout the bowl."
+      ],
+      "Object distance and contact": [
+        "The base of the bowl sits flat on a surface.",
+        "There are no gaps between the bowl and the surface it rests on."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The dimensions match the provided specifications."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

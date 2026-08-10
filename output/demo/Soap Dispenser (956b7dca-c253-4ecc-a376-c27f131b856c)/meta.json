@@ -1,0 +1,48 @@
+{
+  "id": "956b7dca-c253-4ecc-a376-c27f131b856c",
+  "name": "Soap Dispenser",
+  "instruction": "Can you create a soap dispenser for me?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a soap dispenser.",
+        "The soap dispenser has a cylindrical body.",
+        "The dispenser features a pump mechanism on top.",
+        "The base of the dispenser is slightly wider than the body."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pump mechanism is proportionate to the body.",
+        "The base is proportionate to the height of the dispenser."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pump mechanism is positioned at the top of the dispenser.",
+        "The base provides stability to the dispenser.",
+        "The body is designed to hold liquid soap."
+      ],
+      "Object distance and contact": [
+        "The pump is securely attached to the body.",
+        "There is no gap between the pump and the body.",
+        "The base does not overlap with the body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The soap dispenser is created as requested.",
+        "There are no deviations from the basic request."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,55 @@
+{
+  "id": "901638db-e0d8-4a55-88f4-afebd6116fdf",
+  "name": "Cargo Elevator",
+  "instruction": "Let's design a cargo elevator. Start with a rectangular platform, 8 feet by 10 feet. Add railings on all sides, with a gate on one side that can open and close. Include a control panel on the gate side, with buttons for up, down, and emergency stop. The elevator should have a pulley system at the top.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cargo elevator.",
+        "The platform is rectangular.",
+        "The dimensions of the platform are 8 feet by 10 feet.",
+        "The railings are present on all sides of the platform.",
+        "The gate is located on one side of the platform."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The dimensions of the platform are 8 feet in width and 10 feet in length."
+      ],
+      "Proportion": [
+        "The size of the railings is proportionate to the platform.",
+        "The control panel is appropriately sized for the gate side."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The platform is correctly positioned for use as an elevator.",
+        "The railings are properly placed around the platform.",
+        "The gate is positioned on one side for access.",
+        "The control panel is located on the same side as the gate.",
+        "The pulley system is correctly positioned at the top of the elevator."
+      ],
+      "Object distance and contact": [
+        "The railings do not overlap with the platform.",
+        "The gate connects seamlessly with the railings.",
+        "The control panel is accessible from the gate side.",
+        "The pulley system is securely attached to the top structure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The dimensions of the platform are correctly implemented.",
+        "The railings and gate are included as instructed.",
+        "The control panel with buttons is correctly placed.",
+        "The pulley system is included at the top."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

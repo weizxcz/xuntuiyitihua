@@ -1,0 +1,313 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    # size is (x, y, z)
+    half = [s / 2 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (half[0], half[1], half[2])
+    return obj
+
+def add_disc(name, radius, segments=32):
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=16, height_seg=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=5):
+    # Add bevel modifier
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(target_obj, cutter_obj):
+    # Ensure target is active for boolean modifier application
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter object
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(target_obj, cutter_obj):
+    bpy.context.view_layer.objects.active = target_obj
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    else:
+        return
+
+    target = vector.normalized()
+    if local_axis == target:
+        return
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        self.update_matrix()
+
+    def update_matrix(self):
+        self.matrix = self.obj.matrix_world.copy()
+
+    def center_world(self):
+        return self.matrix.to_translation()
+
+    def face_center_world(self, face_index=0):
+        # Approximate face center for simple primitives by checking vertices
+        # For a cube/cylinder/cone, we assume standard orientations or calculate bounding box
+        # This is a simplified locator for axis-aligned primitives
+        bbox_min, bbox_max = self.obj.bound_box
+        # Transform bbox points to world
+        world_pts = [self.matrix @ Vector(p) for p in bbox_min + bbox_max]
+        # This is a rough approximation; for precise face center, we'd need mesh data
+        # For this script, we rely on center + offset logic primarily
+        return self.center_world()
+
+    def radial_point_world(self, angle=0):
+        # Returns a point on the radial edge at given angle (radians) from center
+        # Assumes object is roughly cylindrical or spherical in XY plane
+        radius = self.obj.dimensions.x / 2
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
+        return self.center_world() + Vector((x, y, 0))
+
+def get_face_center(obj, axis='Z', direction=1):
+    """
+    Returns the world location of the center of a face on a primitive object.
+    axis: 'X', 'Y', or 'Z'
+    direction: 1 for positive, -1 for negative
+    """
+    # Get bounding box in local space
+    bbox = obj.bound_box
+    # Find min/max for the axis
+    if axis == 'X':
+        idx = 0
+    elif axis == 'Y':
+        idx = 1
+    elif axis == 'Z':
+        idx = 2
+    
+    # Find min and max values along the axis
+    min_val = min(p[idx] for p in bbox)
+    max_val = max(p[idx] for p in bbox)
+    
+    # Determine which face corresponds to direction
+    if direction == 1:
+        target_val = max_val
+    else:
+        target_val = min_val
+        
+    # Find a vertex on that face
+    target_vertex = None
+    for p in bbox:
+        if abs(p[idx] - target_val) < 1e-5:
+            target_vertex = p
+            break
+            
+    if target_vertex:
+        # Convert local vertex to world
+        return obj.matrix_world @ Vector(target_vertex)
+    
+    return obj.matrix_world.to_translation()
+
+def align_face_to_face(obj_a, obj_b, axis='Z', direction_a=-1, direction_b=1):
+    """
+    Aligns a face of obj_a to a face of obj_b.
+    axis: The axis along which to align (e.g., 'Z' for bottom-to-bottom)
+    direction_a: -1 for negative face, 1 for positive face
+    direction_b: -1 for negative face, 1 for positive face
+    """
+    center_a = obj_a.matrix_world.to_translation()
+    center_b = obj_b.matrix_world.to_translation()
+    
+    # Get face centers
+    face_a = get_face_center(obj_a, axis, direction_a)
+    face_b = get_face_center(obj_b, axis, direction_b)
+    
+    # Calculate offset needed to move obj_a's face to obj_b's face
+    # We want: center_a + offset + face_offset_a = face_b
+    # But simpler: move obj_a so its face center coincides with obj_b's face center
+    # However, we want to align them, so we move obj_a such that face_a == face_b
+    
+    # Current face_a position is face_a. We want it to be at face_b.
+    # Displacement = face_b - face_a
+    # But this moves the whole object.
+    
+    displacement = face_b - face_a
+    obj_a.location += displacement
+
+def align_center_to_center(obj_a, obj_b):
+    """Align center of obj_a to center of obj_b."""
+    center_b = obj_b.matrix_world.to_translation()
+    center_a = obj_a.matrix_world.to_translation()
+    obj_a.location += (center_b - center_a)
+
+def apply_offset(obj, offset_vector):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vector
+
+def set_material(obj, mat_name):
+    if mat_name in bpy.data.materials:
+        mat = bpy.data.materials[mat_name]
+        if obj.data.materials:
+            obj.data.materials[0] = mat
+        else:
+            obj.data.materials.append(mat)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+logo_text_mat = make_material("logo_text_mat", (0.1, 0.1, 0.1, 1.0))
+logo_graphic_mat = make_material("logo_graphic_mat", (0.2, 0.6, 1.0, 1.0))
+symbol_graphic_mat = make_material("symbol_graphic_mat", (1.0, 0.2, 0.2, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Root Anchor ---
+root = add_cube("root", (0.001, 0.001, 0.001))
+# Rotate root so its +Z axis aligns +Z (world) - already default
+align_axis_to_vector(root, 'Z', Vector((0, 0, 1)))
+# Anchor root to world origin
+root.location = Vector((0, 0, 0))
+# Move root by offset(0,0,0)
+apply_offset(root, Vector((0, 0, 0)))
+
+# --- SECTION 2 – Create Logo Text ---
+logo_text = add_cube("logo_text", (0.200, 0.050, 0.005))
+# Rotate logo_text so its +Z axis aligns +Z (world)
+align_axis_to_vector(logo_text, 'Z', Vector((0, 0, 1)))
+# Align logo_text.bottom_face to root.bottom_face
+# root is at 0,0,0 with size 0.001. Bottom face Z is -0.0005.
+# logo_text size 0.005. Bottom face Z is -0.0025 relative to center.
+# We want logo_text.bottom_face Z == root.bottom_face Z
+align_face_to_face(logo_text, root, axis='Z', direction_a=-1, direction_b=-1)
+# Move logo_text by offset(0,0,0)
+apply_offset(logo_text, Vector((0, 0, 0)))
+
+# Boolean-subtract logo_text from itself to clear internal geometry (simplified as no-op for cube)
+# Reconstruct via extrude_from_sketch logic:
+# Create plane_cutter and name it logo_text_cut with size 0.200×0.050 m; orientation=axis:+Z.
+logo_text_cut = add_cube("logo_text_cut", (0.200, 0.050, 0.001)) # Thin cutter
+align_axis_to_vector(logo_text_cut, 'Z', Vector((0, 0, 1)))
+# Anchor logo_text_cut to logo_text (center to center)
+align_center_to_center(logo_text_cut, logo_text)
+# Move logo_text_cut by offset(0,0,0)
+apply_offset(logo_text_cut, Vector((0, 0, 0)))
+# Boolean-subtract logo_text_cut from logo_text; discard logo_text_cut
+boolean_subtract(logo_text, logo_text_cut)
+
+# Apply material
+set_material(logo_text, "logo_text_mat")
+
+# --- SECTION 3 – Create Logo Graphic ---
+logo_graphic = add_cylinder("logo_graphic", radius=0.040, depth=0.005) # Diameter 0.080 -> Radius 0.040
+# Rotate logo_graphic so its +Z axis aligns +Z (world)
+align_axis_to_vector(logo_graphic, 'Z', Vector((0, 0, 1)))
+# Align logo_graphic.center to logo_text.center
+align_center_to_center(logo_graphic, logo_text)
+# Move logo_graphic by offset(0.15,0,0)
+apply_offset(logo_graphic, Vector((0.15, 0, 0)))
+
+# Apply material
+set_material(logo_graphic, "logo_graphic_mat")
+
+# --- SECTION 4 – Create Symbol Shape ---
+symbol_shape = add_cube("symbol_shape", (0.100, 0.100, 0.005))
+# Rotate symbol_shape so its +Z axis aligns +Z (world)
+align_axis_to_vector(symbol_shape, 'Z', Vector((0, 0, 1)))
+# Align symbol_shape.bottom_face to root.bottom_face
+align_face_to_face(symbol_shape, root, axis='Z', direction_a=-1, direction_b=-1)
+# Move symbol_shape by offset(0.40,0,0)
+apply_offset(symbol_shape, Vector((0.40, 0, 0)))
+
+# Boolean-subtract symbol_shape from itself (simplified)
+# Create plane_cutter and name it symbol_shape_cut with size 0.100×0.100 m; orientation=axis:+Z.
+symbol_shape_cut = add_cube("symbol_shape_cut", (0.100, 0.100, 0.001))
+align_axis_to_vector(symbol_shape_cut, 'Z', Vector((0, 0, 1)))
+# Anchor symbol_shape_cut to symbol_shape
+align_center_to_center(symbol_shape_cut, symbol_shape)
+# Move symbol_shape_cut by offset(0,0,0)
+apply_offset(symbol_shape_cut, Vector((0, 0, 0)))
+# Boolean-subtract symbol_shape_cut from symbol_shape; discard symbol_shape_cut
+boolean_subtract(symbol_shape, symbol_shape_cut)
+
+# Apply material
+set_material(symbol_shape, "symbol_graphic_mat")

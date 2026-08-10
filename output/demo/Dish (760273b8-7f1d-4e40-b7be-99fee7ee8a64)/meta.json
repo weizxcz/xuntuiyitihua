@@ -1,0 +1,43 @@
+{
+  "id": "760273b8-7f1d-4e40-b7be-99fee7ee8a64",
+  "name": "Dish",
+  "instruction": "Create a 3D model of a dish. It should be round and slightly deep.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a dish.",
+        "The dish is round in shape.",
+        "The dish has a slightly deep profile."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The base of the dish is proportionate to the entire dish."
+      ],
+      "Texture and surface detail": [
+        "The surface of the dish should be smooth."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The dish maintains a consistent depth throughout its round shape.",
+        "The curvature of the dish is uniform."
+      ],
+      "Object distance and contact": [
+        "The dish stands flat on a surface without wobbling."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The dish is accurately represented as round and slightly deep.",
+        "All specified attributes are included in the model."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

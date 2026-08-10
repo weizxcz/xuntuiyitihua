@@ -1,0 +1,22 @@
+-- MATERIAL LIBRARY --
+wood_dark | diffuse_color=(0.35, 0.20, 0.10, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| corner_shelf_root | Composite assembly of three triangular shelf tiers and a central vertical support structure | assembly_order=[tier_1, tier_2, tier_3, support_back] |
+
+Layer 1 – Primary Structure (Supports)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| support_back | Vertical rectangular prism serving as the main back support for the corner unit | size=0.020×0.020×1.800; Align(XY) support_back.center to world_origin(0,0,0); Align(Z) support_back.bottom_face to world_origin(0,0,0); orientation=axis:+Z; mat=wood_dark; create_method=primitive |
+
+Layer 2 – Shelf Tiers (Triangular)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tier_1 | Bottom triangular shelf plate | size=0.800×0.800×0.025 (base legs); Align(XY) tier_1.center to Avg(support_back.left_face, support_back.right_face); Align(Z) tier_1.bottom_face to support_back.bottom_face; offset(0,0,0.025); orientation=axis:+Z; mat=wood_dark; create_method=primitive |
+| tier_2 | Middle triangular shelf plate | size=0.600×0.600×0.025 (base legs); Align(XY) tier_2.center to Avg(support_back.left_face, support_back.right_face); Align(Z) tier_2.bottom_face to support_back.bottom_face; offset(0,0,0.600); orientation=axis:+Z; mat=wood_dark; create_method=primitive |
+| tier_3 | Top triangular shelf plate | size=0.400×0.400×0.025 (base legs); Align(XY) tier_3.center to Avg(support_back.left_face, support_back.right_face); Align(Z) tier_3.bottom_face to support_back.bottom_face; offset(0,0,1.200); orientation=axis:+Z; mat=wood_dark; create_method=primitive |
+# ----------  END_GRAPH  ----------

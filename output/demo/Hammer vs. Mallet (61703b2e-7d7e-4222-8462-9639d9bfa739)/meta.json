@@ -1,0 +1,49 @@
+{
+  "id": "61703b2e-7d7e-4222-8462-9639d9bfa739",
+  "name": "Hammer vs. Mallet",
+  "instruction": "Can you show me a 3D comparison between a hammer and a mallet?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The hammer has a flat striking face.",
+        "The hammer has a claw for pulling nails.",
+        "The mallet has a larger, round striking surface.",
+        "The mallet has a cylindrical head."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The hammer is usually around 30cm in length.",
+        "The mallet is generally larger, often around 35cm in length."
+      ],
+      "Proportion": [
+        "The hammer's head is proportionate to its handle.",
+        "The mallet's head is proportionate to its handle."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hammer's head is positioned at one end of the handle.",
+        "The mallet's head is centered on the handle.",
+        "Both objects are balanced for effective use."
+      ],
+      "Object distance and contact": [
+        "The hammer's head does not overlap with the handle.",
+        "The mallet's head does not overlap with the handle.",
+        "Both objects are displayed without any gaps between components."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the hammer and mallet are accurately represented.",
+        "The comparison clearly distinguishes between the two tools."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

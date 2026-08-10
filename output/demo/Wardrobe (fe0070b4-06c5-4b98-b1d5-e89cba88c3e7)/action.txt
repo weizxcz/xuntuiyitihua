@@ -1,0 +1,154 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_dark; diffuse_color = (0.20,0.15,0.10,1.0).
+Define material mat_wood_light; diffuse_color = (0.80,0.70,0.60,1.0).
+Define material mat_metal_silver; diffuse_color = (0.70,0.70,0.75,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Side Panels (Frame) ---
+Create primitive cuboid with size 0.600×2.200×0.020 m and name it side_panel_L.
+Rotate side_panel_L so its +Z axis aligns +Z (world).
+Anchor side_panel_L to world origin.
+Then move by offset(-0.300, 1.100, 0.000).
+
+Create primitive cuboid with size 0.600×2.200×0.020 m and name it side_panel_R.
+Rotate side_panel_R so its +Z axis aligns +Z (world).
+Anchor side_panel_R to world origin.
+Then move by offset(0.300, 1.100, 0.000).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Top and Bottom Panels ---
+Create primitive cuboid with size 0.600×0.020×0.600 m and name it top_panel.
+Rotate top_panel so its +Z axis aligns +Z (world).
+Align top_panel.bottom_face to Avg(side_panel_L.top_face, side_panel_R.top_face).
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.600×0.020×0.600 m and name it bottom_panel.
+Rotate bottom_panel so its +Z axis aligns +Z (world).
+Align bottom_panel.top_face to Avg(side_panel_L.bottom_face, side_panel_R.bottom_face).
+Then move by offset(0,0,0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Back Panel ---
+Create primitive cuboid with size 0.560×2.160×0.005 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Align back_panel.front_face to Avg(side_panel_L.back_face, side_panel_R.back_face).
+Then move by offset(0,0,0.010).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Center Stile ---
+Create primitive cuboid with size 0.020×2.160×0.020 m and name it center_stile.
+Rotate center_stile so its +Z axis aligns +Z (world).
+Align center_stile.left_face to Avg(side_panel_L.right_face, side_panel_R.left_face).
+Then move by offset(0,0,0).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Shelves ---
+Create primitive cuboid with size 0.560×0.020×0.560 m and name it shelf_1.
+Rotate shelf_1 so its +Z axis aligns +Z (world).
+Align shelf_1.bottom_face to Avg(side_panel_L.right_face, side_panel_R.left_face).
+Then move by offset(0,0.800,0).
+
+Create primitive cuboid with size 0.560×0.020×0.560 m and name it shelf_2.
+Rotate shelf_2 so its +Z axis aligns +Z (world).
+Align shelf_2.bottom_face to Avg(side_panel_L.right_face, side_panel_R.left_face).
+Then move by offset(0,1.400,0).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Rod Holders and Hanging Rod ---
+Create primitive cylinder with Ø0.010×0.050 m (D×H) and name it rod_holder_L.
+Rotate rod_holder_L so its +Z axis aligns +X (world).
+Align rod_holder_L.center to side_panel_L.right_face.
+Then move by offset(0,1.800,0).
+
+Create primitive cylinder with Ø0.010×0.050 m (D×H) and name it rod_holder_R.
+Rotate rod_holder_R so its +Z axis aligns +X (world).
+Align rod_holder_R.center to side_panel_R.left_face.
+Then move by offset(0,1.800,0).
+
+Create primitive cylinder with Ø0.020×0.560 m (D×W) and name it hanging_rod.
+Rotate hanging_rod so its +Z axis aligns +X (world).
+Align hanging_rod.center to Avg(rod_holder_L.center, rod_holder_R.center).
+Then move by offset(0,0,0).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create Drawer Box ---
+Create primitive cuboid with size 0.540×0.015×0.500 m (W×H×D) and name it drawer_box_bottom.
+Rotate drawer_box_bottom so its +Z axis aligns +Z (world).
+Align drawer_box_bottom.top_face to bottom_panel.top_face.
+Then move by offset(0,0.015,0.030).
+
+Create primitive cuboid with size 0.540×0.150×0.020 m (W×H×D) and name it drawer_box_front.
+Rotate drawer_box_front so its +Z axis aligns +Z (world).
+Align drawer_box_front.bottom_face to drawer_box_bottom.top_face.
+Then move by offset(0,0.075,0.240).
+
+Create primitive cuboid with size 0.540×0.150×0.020 m (W×H×D) and name it drawer_box_back.
+Rotate drawer_box_back so its +Z axis aligns +Z (world).
+Align drawer_box_back.bottom_face to drawer_box_bottom.top_face.
+Then move by offset(0,0.075,-0.240).
+
+Create primitive cuboid with size 0.020×0.150×0.500 m (W×H×D) and name it drawer_box_left.
+Rotate drawer_box_left so its +Z axis aligns +Z (world).
+Align drawer_box_left.bottom_face to drawer_box_bottom.top_face.
+Then move by offset(-0.260,0.075,0).
+
+Create primitive cuboid with size 0.020×0.150×0.500 m (W×H×D) and name it drawer_box_right.
+Rotate drawer_box_right so its +Z axis aligns +Z (world).
+Align drawer_box_right.bottom_face to drawer_box_bottom.top_face.
+Then move by offset(0.260,0.075,0).
+
+Stage 7 complete.
+
+---  SECTION 8 – Create Drawer Handle ---
+Create primitive cylinder with Ø0.010×0.080 m (D×H) and name it drawer_handle.
+Rotate drawer_handle so its +Z axis aligns +Y (world).
+Align drawer_handle.center to drawer_box_front.center.
+Then move by offset(0,0.075,0.010).
+
+Stage 8 complete.
+
+---  SECTION 9 – Create Doors ---
+Create primitive cuboid with size 0.280×2.100×0.020 m (W×H×D) and name it door_L.
+Rotate door_L so its +Z axis aligns +Z (world).
+Align door_L.right_face to center_stile.left_face.
+Then move by offset(-0.010,0,0).
+
+Create primitive cuboid with size 0.280×2.100×0.020 m (W×H×D) and name it door_R.
+Rotate door_R so its +Z axis aligns +Z (world).
+Align door_R.left_face to center_stile.right_face.
+Then move by offset(0.010,0,0).
+
+Stage 9 complete.
+
+---  SECTION 10 – Create Door Handles ---
+Create primitive cylinder with Ø0.010×0.080 m (D×H) and name it door_handle_L.
+Rotate door_handle_L so its +Z axis aligns +Y (world).
+Align door_handle_L.center to door_L.left_face.
+Then move by offset(-0.010,1.000,0).
+
+Create primitive cylinder with Ø0.010×0.080 m (D×H) and name it door_handle_R.
+Rotate door_handle_R so its +Z axis aligns +Y (world).
+Align door_handle_R.center to door_R.right_face.
+Then move by offset(0.010,1.000,0).
+
+Stage 10 complete.
+
+All stages complete.

@@ -1,0 +1,307 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects in the scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure collections are clean
+    for col in bpy.data.collections:
+        col.objects.link(bpy.context.collection)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube object with specific size and transform."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def get_world_center(obj):
+    """Get the world location of an object's center."""
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_type='top'):
+    """
+    Get the world location of a specific face center based on object orientation.
+    Assumes standard axis alignment for simplicity unless complex logic is needed.
+    """
+    loc = get_world_center(obj)
+    # Dimensions
+    sx, sy, sz = obj.dimensions
+    
+    # Offsets based on face type relative to object center
+    # Note: This assumes the object's local axes align with world axes or are handled by rotation.
+    # For robustness, we calculate offset in local space then transform.
+    
+    offset_local = Vector((0, 0, 0))
+    
+    if face_type == 'top_face':
+        offset_local.z = sz / 2
+    elif face_type == 'bottom_face':
+        offset_local.z = -sz / 2
+    elif face_type == 'front_face':
+        # Assuming +Y is front for standard Blender cube if rotated 0,0,0
+        # However, standard convention often varies. Let's assume +Y is front.
+        offset_local.y = sy / 2
+    elif face_type == 'back_face':
+        offset_local.y = -sy / 2
+    elif face_type == 'right_face':
+        offset_local.x = sx / 2
+    elif face_type == 'left_face':
+        offset_local.x = -sx / 2
+    elif face_type == 'center':
+        offset_local = Vector((0, 0, 0))
+        
+    # Transform local offset to world space
+    offset_world = obj.matrix_world * offset_local - loc
+    return loc + offset_world
+
+def align_object_to_vector(obj, vector):
+    """Rotate object so its local +Z aligns with the given world vector."""
+    if vector.length == 0:
+        return
+    
+    # Current up vector
+    current_up = Vector((0, 0, 1))
+    
+    # Calculate rotation
+    rot_quat = current_up.rotation_difference(vector)
+    
+    # Apply rotation
+    obj.rotation_euler = rot_quat.to_euler()
+
+def anchor_and_offset(obj_target, obj_source, anchor_type, offset_vec):
+    """
+    Anchor obj_source to obj_target based on anchor_type, then apply offset.
+    anchor_type: 'center', 'top_face', 'bottom_face', 'front_face', etc.
+    offset_vec: Vector to add after anchoring.
+    """
+    target_loc = get_world_center(obj_target)
+    
+    if anchor_type == 'center':
+        anchor_loc = target_loc
+    else:
+        anchor_loc = get_face_center(obj_target, anchor_type)
+        
+    # Move source to anchor
+    obj_source.location = anchor_loc
+    
+    # Apply offset
+    obj_source.location += offset_vec
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using modifier stack."""
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_union(union_obj, target_obj):
+    """Perform boolean union using modifier stack."""
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_black_plastic = make_material("mat_black_plastic", (0.10, 0.10, 0.10, 1.00))
+mat_grey_plastic = make_material("mat_grey_plastic", (0.50, 0.50, 0.50, 1.00))
+mat_screen_blue = make_material("mat_screen_blue", (0.05, 0.10, 0.20, 1.00))
+mat_white_plastic = make_material("mat_white_plastic", (0.90, 0.90, 0.90, 1.00))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Monitor Stand Assembly ---
+
+# Create monitor_stand_base first because monitor_stand_neck anchors to it
+# "Anchor monitor_stand_base to monitor_stand.bottom_face" -> monitor_stand doesn't exist yet.
+# This implies monitor_stand is a logical group or monitor_stand_base is the root.
+# However, the prompt says: "Anchor monitor_stand_base to monitor_stand.bottom_face."
+# Since monitor_stand isn't created yet, this is likely a typo for "desk_surface" or similar, 
+# OR "monitor_stand" refers to the assembly. 
+# Given "monitor_stand_neck" anchors to "monitor_stand_base", let's assume monitor_stand_base 
+# sits on the desk. But no desk is defined in Section 1. 
+# Let's look at Section 3: "Anchor cpu_tower_body to desk_surface.center".
+# It is highly probable that monitor_stand_base should anchor to "desk_surface" or a default ground.
+# However, strict adherence: "Anchor monitor_stand_base to monitor_stand.bottom_face".
+# If "monitor_stand" is the assembly name, we can't anchor to it before creation.
+# Let's assume "monitor_stand" in the anchor instruction for base is a mistake for "desk_surface" 
+# or we create a dummy "monitor_stand" object? No, that's overthinking.
+# Let's assume the user meant "desk_surface" or the base is placed at origin (0,0,0) effectively 
+# if no anchor is valid. 
+# BUT, looking at Section 3, "desk_surface" is used. 
+# Let's create a "desk_surface" object implicitly or explicitly? 
+# The prompt doesn't ask to create desk_surface. 
+# Let's assume "monitor_stand" in the anchor line for base is a typo for "desk_surface".
+# If I can't find desk_surface, I'll place it at 0,0,0.
+# Let's re-read carefully: "Anchor monitor_stand_base to monitor_stand.bottom_face."
+# Maybe "monitor_stand" is the name of the *assembly*? No, anchors are to objects.
+# Let's assume there is a missing step to create a desk, or "monitor_stand" is a typo for "world" or "origin".
+# Given the strictness, I will assume "monitor_stand" refers to a hypothetical parent or it's a typo for "desk_surface".
+# I will create a "desk_surface" object at origin to satisfy the anchor if it appears later, 
+# but for Section 1, I'll assume the base sits on the "desk_surface" which I will create as a large plane or cube at 0,0,0 
+# to make the scene coherent, OR I will just place the base at 0,0,0 if "monitor_stand" is invalid.
+# Let's look at Section 3: "Anchor cpu_tower_body to desk_surface.center".
+# I will create a "desk_surface" object (a large flat cube) at the start of Section 3 or earlier?
+# No, I must follow the order.
+# Let's assume "monitor_stand" in Section 1 is a typo for "desk_surface". I will create a "desk_surface" 
+# implicitly as a reference object if needed, or just place the base at 0,0,0.
+# To be safe and robust, I will create a "desk_surface" object (0.8x0.8x0.05) at 0,0,0 at the very beginning of Block 2 
+# if it doesn't exist, so anchors work.
+
+# Check if desk_surface exists, if not, create it as a reference plane/cube
+if "desk_surface" not in bpy.data.objects:
+    add_cube("desk_surface", (0.8, 0.8, 0.05), (0, 0, 0), (0, 0, 0), mat_grey_plastic)
+
+# 1. Create monitor_stand_base
+# "Anchor monitor_stand_base to monitor_stand.bottom_face" -> Interpreting as desk_surface.bottom_face or just desk_surface center if bottom face is ambiguous.
+# Let's assume it anchors to desk_surface.center for stability, or desk_surface.top_face.
+# The prompt says "monitor_stand.bottom_face". This is likely a typo for "desk_surface".
+# I will anchor to desk_surface.center.
+obj_monitor_stand_base = add_cube("monitor_stand_base", (0.20, 0.15, 0.01), (0, 0, 0), (0, 0, 0), mat_grey_plastic)
+# Rotate so +Z aligns +Z (already done by default)
+align_object_to_vector(obj_monitor_stand_base, Vector((0, 0, 1)))
+# Anchor to desk_surface.center (assuming typo correction)
+anchor_and_offset(bpy.data.objects["desk_surface"], obj_monitor_stand_base, 'center', Vector((0, 0, 0)))
+
+# 2. Create monitor_stand_neck
+obj_monitor_stand_neck = add_cube("monitor_stand_neck", (0.05, 0.05, 0.15), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_monitor_stand_neck, Vector((0, 0, 1)))
+# Anchor to monitor_stand_base.top_face
+anchor_and_offset(obj_monitor_stand_base, obj_monitor_stand_neck, 'top_face', Vector((0, 0, 0.005)))
+
+# --- SECTION 2 – Create Monitor Screen and Frame ---
+
+# 1. Create monitor_screen
+obj_monitor_screen = add_cube("monitor_screen", (0.50, 0.30, 0.005), (0, 0, 0), (0, 0, 0), mat_screen_blue)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_monitor_screen, Vector((0, 0, 1)))
+# Anchor to monitor_stand.top_face (Assuming monitor_stand refers to the assembly, likely monitor_stand_neck top or base top?)
+# "monitor_stand.top_face" is ambiguous. Usually means the top of the stand assembly.
+# monitor_stand_neck is the vertical part. Its top face is the highest point.
+anchor_and_offset(obj_monitor_stand_neck, obj_monitor_screen, 'top_face', Vector((0, 0, 0)))
+
+# 2. Create monitor_frame
+obj_monitor_frame = add_cube("monitor_frame", (0.52, 0.32, 0.01), (0, 0, 0), (0, 0, 0), mat_white_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_monitor_frame, Vector((0, 0, 1)))
+# Anchor to monitor_screen.center
+anchor_and_offset(obj_monitor_screen, obj_monitor_frame, 'center', Vector((0, 0, 0.002)))
+
+# --- SECTION 3 – Create CPU Tower Assembly ---
+
+# 1. Create cpu_tower_body
+obj_cpu_tower_body = add_cube("cpu_tower_body", (0.20, 0.45, 0.40), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_cpu_tower_body, Vector((0, 0, 1)))
+# Anchor to desk_surface.center
+anchor_and_offset(bpy.data.objects["desk_surface"], obj_cpu_tower_body, 'center', Vector((0.4, 0, 0.225)))
+
+# 2. Create cpu_front_panel
+obj_cpu_front_panel = add_cube("cpu_front_panel", (0.20, 0.45, 0.01), (0, 0, 0), (0, 0, 0), mat_grey_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_cpu_front_panel, Vector((0, 0, 1)))
+# Anchor to cpu_tower_body.front_face
+# Note: In Blender, +Y is often "front" for a cube at 0,0,0.
+anchor_and_offset(obj_cpu_tower_body, obj_cpu_front_panel, 'front_face', Vector((0, 0, 0.005)))
+
+# 3. Create cpu_power_button
+obj_cpu_power_button = add_cylinder("cpu_power_button", 0.005, 0.01, (0, 0, 0), (0, 0, 0), mat_white_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_cpu_power_button, Vector((0, 0, 1)))
+# Anchor to cpu_front_panel.center
+anchor_and_offset(obj_cpu_front_panel, obj_cpu_power_button, 'center', Vector((0, 0.1, 0.006)))
+
+# 4. Create cpu_usb_port
+obj_cpu_usb_port = add_cube("cpu_usb_port", (0.02, 0.01, 0.01), (0, 0, 0), (0, 0, 0), mat_grey_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_cpu_usb_port, Vector((0, 0, 1)))
+# Anchor to cpu_front_panel.center
+anchor_and_offset(obj_cpu_front_panel, obj_cpu_usb_port, 'center', Vector((0, -0.1, 0.006)))
+
+# --- SECTION 4 – Create Input Devices Assembly ---
+
+# 1. Create keyboard_base
+obj_keyboard_base = add_cube("keyboard_base", (0.45, 0.15, 0.02), (0, 0, 0), (0, 0, 0), mat_grey_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_keyboard_base, Vector((0, 0, 1)))
+# Anchor to desk_surface.center
+anchor_and_offset(bpy.data.objects["desk_surface"], obj_keyboard_base, 'center', Vector((0, 0.3, 0.01)))
+
+# 2. Create keyboard_keys
+obj_keyboard_keys = add_cube("keyboard_keys", (0.40, 0.10, 0.005), (0, 0, 0), (0, 0, 0), mat_white_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_keyboard_keys, Vector((0, 0, 1)))
+# Anchor to keyboard_base.top_face
+anchor_and_offset(obj_keyboard_base, obj_keyboard_keys, 'top_face', Vector((0, 0, 0.012)))
+
+# 3. Create mouse_body
+obj_mouse_body = add_cube("mouse_body", (0.10, 0.06, 0.04), (0, 0, 0), (0, 0, 0), mat_white_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_mouse_body, Vector((0, 0, 1)))
+# Anchor to desk_surface.center
+anchor_and_offset(bpy.data.objects["desk_surface"], obj_mouse_body, 'center', Vector((0.25, 0.3, 0.02)))
+
+# 4. Create mouse_button
+obj_mouse_button = add_cube("mouse_button", (0.05, 0.06, 0.01), (0, 0, 0), (0, 0, 0), mat_black_plastic)
+# Rotate so +Z aligns +Z
+align_object_to_vector(obj_mouse_button, Vector((0, 0, 1)))
+# Anchor to mouse_body.top_face
+anchor_and_offset(obj_mouse_body, obj_mouse_button, 'top_face', Vector((0, 0, 0.025)))
+
+print("All stages complete.")
+```

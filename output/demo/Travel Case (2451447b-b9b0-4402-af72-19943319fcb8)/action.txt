@@ -1,0 +1,149 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.7, 0.7, 0.7, 1.0).
+Define material mat_black_plastic; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+Define material mat_brass; diffuse_color = (0.8, 0.6, 0.2, 1.0).
+Define material mat_steel; diffuse_color = (0.4, 0.4, 0.4, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create case_body  ---
+Create primitive cuboid with size 0.400×0.300×0.150 m and name it case_body.
+Rotate case_body so its +Z axis aligns +Z (world).
+Anchor case_body to world origin.
+Then move by offset(0,0,0).
+Create primitive cuboid with size 0.390×0.290×0.145 m and name it case_body_inner_cut.
+Rotate case_body_inner_cut so its +Z axis aligns +Z (world).
+Anchor case_body_inner_cut to case_body.bottom_face.
+Then move by offset(0,0,0.0025).
+Boolean-subtract case_body_inner_cut from case_body; discard case_body_inner_cut.
+Bevel case_body.edges with radius 0.020 m, segments 8.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create case_lid  ---
+Create primitive cuboid with size 0.400×0.300×0.010 m and name it case_lid.
+Rotate case_lid so its +Z axis aligns +Z (world).
+Anchor case_lid to case_body.top_face.
+Align case_lid.bottom_face to case_body.top_face.
+Then move by offset(0,0,0.010).
+Create primitive cuboid with size 0.390×0.290×0.005 m and name it case_lid_inner_cut.
+Rotate case_lid_inner_cut so its +Z axis aligns +Z (world).
+Anchor case_lid_inner_cut to case_lid.bottom_face.
+Then move by offset(0,0,0.0025).
+Boolean-subtract case_lid_inner_cut from case_lid; discard case_lid_inner_cut.
+Bevel case_lid.edges with radius 0.020 m, segments 8.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create hinge_bar  ---
+Create primitive cylinder with Ø0.010×0.300 m and name it hinge_bar.
+Rotate hinge_bar so its +Z axis aligns +Y (world).
+Anchor hinge_bar to case_body.back_face.
+Align hinge_bar.center to case_body.back_face.center.
+Then move by offset(0,0,0).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create hinge_pins  ---
+For i in 0…2:
+  Create primitive cylinder with Ø0.005×0.020 m and name it hinge_pin_i.
+  Rotate hinge_pin_i so its +Z axis aligns +X (world).
+  Anchor hinge_pin_i to hinge_bar.
+  Align hinge_pin_i.center to hinge_bar.center.
+  Then move by offset(-0.100 + i*0.100, 0, 0).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create latch_body_L  ---
+Create primitive cuboid with size 0.020×0.020×0.010 m and name it latch_body_L.
+Rotate latch_body_L so its +Z axis aligns +Z (world).
+Anchor latch_body_L to case_body.front_face.
+Align latch_body_L.center to case_body.front_face.left_side_center.
+Then move by offset(0,0,0.005).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create latch_hook_L  ---
+Create primitive cylinder with Ø0.010×0.015 m and name it latch_hook_L.
+Rotate latch_hook_L so its +Z axis aligns +Y (world).
+Anchor latch_hook_L to latch_body_L.
+Align latch_hook_L.center to latch_body_L.front_face.center.
+Then move by offset(0,0,0.010).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Create latch_body_R  ---
+Create primitive cuboid with size 0.020×0.020×0.010 m and name it latch_body_R.
+Rotate latch_body_R so its +Z axis aligns +Z (world).
+Anchor latch_body_R to case_body.front_face.
+Align latch_body_R.center to case_body.front_face.right_side_center.
+Then move by offset(0,0,0.005).
+Assembly guideline satisfied.
+Stage 7 complete.
+
+---  SECTION 8 – Create latch_hook_R  ---
+Create primitive cylinder with Ø0.010×0.015 m and name it latch_hook_R.
+Rotate latch_hook_R so its +Z axis aligns +Y (world).
+Anchor latch_hook_R to latch_body_R.
+Align latch_hook_R.center to latch_body_R.front_face.center.
+Then move by offset(0,0,0.010).
+Assembly guideline satisfied.
+Stage 8 complete.
+
+---  SECTION 9 – Create handle_base  ---
+Create primitive cuboid with size 0.060×0.020×0.010 m and name it handle_base.
+Rotate handle_base so its +Z axis aligns +Z (world).
+Anchor handle_base to case_lid.top_face.
+Align handle_base.center to case_lid.top_face.center.
+Then move by offset(0,0,0.015).
+Assembly guideline satisfied.
+Stage 9 complete.
+
+---  SECTION 10 – Create handle_grip  ---
+Create primitive cylinder with Ø0.015×0.060 m and name it handle_grip.
+Rotate handle_grip so its +Z axis aligns +Y (world).
+Anchor handle_grip to handle_base.
+Align handle_grip.center to handle_base.top_face.center.
+Then move by offset(0,0,0.010).
+Assembly guideline satisfied.
+Stage 10 complete.
+
+---  SECTION 11 – Create case_divider_1  ---
+Create primitive cuboid with size 0.380×0.005×0.140 m and name it case_divider_1.
+Rotate case_divider_1 so its +Z axis aligns +Z (world).
+Anchor case_divider_1 to case_body.
+Align case_divider_1.center to case_body.center.
+Then move by offset(0,0,0.075).
+Assembly guideline satisfied.
+Stage 11 complete.
+
+---  SECTION 12 – Create case_divider_2  ---
+Create primitive cuboid with size 0.005×0.280×0.140 m and name it case_divider_2.
+Rotate case_divider_2 so its +Z axis aligns +Z (world).
+Anchor case_divider_2 to case_body.
+Align case_divider_2.center to case_body.center.
+Then move by offset(0,0,0.075).
+Assembly guideline satisfied.
+Stage 12 complete.
+
+---  SECTION 13 – Create case_divider_3  ---
+Create primitive cuboid with size 0.380×0.005×0.070 m and name it case_divider_3.
+Rotate case_divider_3 so its +Z axis aligns +Z (world).
+Anchor case_divider_3 to case_body.
+Align case_divider_3.center to case_body.center.
+Then move by offset(0,0,0.110).
+Assembly guideline satisfied.
+Stage 13 complete.
+
+All stages complete.

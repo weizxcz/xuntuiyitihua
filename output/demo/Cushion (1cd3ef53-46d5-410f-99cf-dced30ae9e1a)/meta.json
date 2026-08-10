@@ -1,0 +1,42 @@
+{
+  "id": "1cd3ef53-46d5-410f-99cf-dced30ae9e1a",
+  "name": "Cushion",
+  "instruction": "Craft a cushion that is square and plump.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a cushion.",
+        "The cushion is square in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The instruction does not specify material, so this attribute is not defined."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cushion has a uniform thickness throughout its square shape.",
+        "The cushion maintains its plumpness in all dimensions."
+      ],
+      "Object distance and contact": [
+        "The cushion is designed to rest flat on a surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The cushion meets the requirement of being square.",
+        "The cushion is designed to be plump as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

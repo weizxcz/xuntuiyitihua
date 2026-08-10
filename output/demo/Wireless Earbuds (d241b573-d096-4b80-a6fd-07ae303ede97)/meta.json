@@ -1,0 +1,46 @@
+{
+  "id": "d241b573-d096-4b80-a6fd-07ae303ede97",
+  "name": "Wireless Earbuds",
+  "instruction": "I'm looking for a pair of wireless earbuds. Create a sleek, compact design with a charging case. The earbuds should fit snugly into the case and have a touch-sensitive surface for controls. Compare them to other popular models in terms of size and usability.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The design features a pair of wireless earbuds.",
+        "The earbuds have a compact and sleek profile.",
+        "The charging case is designed to be portable."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the earbuds is proportionate to the charging case.",
+        "The earbuds fit snugly into the charging case without excess space."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The earbuds are designed to fit securely in the charging case.",
+        "The charging case is adequately sized to hold both earbuds without them falling out."
+      ],
+      "Object distance and contact": [
+        "The earbuds do not overlap when placed in the charging case.",
+        "There is a secure contact between the earbuds and the charging case for charging."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design meets the requirement for a pair of wireless earbuds.",
+        "The charging case is included as specified.",
+        "The touch-sensitive surface is incorporated for user controls."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

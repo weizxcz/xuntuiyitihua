@@ -1,0 +1,274 @@
+```python
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius=0.5, depth=1.0, segments=32):
+    """Add a cylinder centered at origin, aligned to Z."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + ".Data"
+    return obj
+
+def add_cube(name, size=1.0):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.name = name + ".Data"
+    return obj
+
+def add_empty(name, empty_type='PLAIN_AXES'):
+    """Add an empty object."""
+    bpy.ops.object.empty_add(type=empty_type, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='+Z', target_vector):
+    """Rotate object so its local axis aligns with target_vector."""
+    # Define local axis vectors
+    local_axes = {
+        '+X': Vector((1, 0, 0)),
+        '-X': Vector((-1, 0, 0)),
+        '+Y': Vector((0, 1, 0)),
+        '-Y': Vector((0, -1, 0)),
+        '+Z': Vector((0, 0, 1)),
+        '-Z': Vector((0, 0, -1)),
+    }
+    
+    if axis_to_align not in local_axes:
+        raise ValueError(f"Unknown axis: {axis_to_align}")
+        
+    src_axis = local_axes[axis_to_align]
+    tgt = target_vector.normalized()
+    
+    # Calculate rotation
+    rot_quat = src_axis.rotation_difference(tgt)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find specific points on an object's geometry."""
+    def __init__(self, obj):
+        self.obj = obj
+        self._update_matrix()
+
+    def _update_matrix(self):
+        # Ensure we are working with the world matrix
+        self.world_matrix = self.obj.matrix_world
+
+    def center_world(self):
+        """Return the world position of the object's origin (center)."""
+        return self.world_matrix.to_translation()
+
+    def face_center_world(self, face_index):
+        """Return the world position of the center of a specific face."""
+        mesh = self.obj.data
+        if face_index < len(mesh.polygons):
+            poly = mesh.polygons[face_index]
+            # Get face center in local space
+            local_center = poly.center
+            # Transform to world space
+            return self.world_matrix @ local_center
+        return self.center_world()
+
+    def radial_point_world(self, radius, angle=0):
+        """Return a point on the radial edge at a given angle (radians)."""
+        # This is a simplified approximation for cylinders/spheres
+        # For a cylinder aligned to Z, radial points are on the XY plane at height 0
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
+        z = 0
+        local_point = Vector((x, y, z))
+        return self.world_matrix @ local_point
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtraction using the modifier stack."""
+    target = bpy.data.objects.get(target_name)
+    cutter = bpy.data.objects.get(cutter_name)
+    
+    if not target or not cutter:
+        print(f"Error: Object '{target_name}' or '{cutter_name}' not found for boolean.")
+        return
+
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_union(target_name, union_name):
+    """Perform a boolean union."""
+    target = bpy.data.objects.get(target_name)
+    union = bpy.data.objects.get(union_name)
+    
+    if not target or not union:
+        print(f"Error: Object '{target_name}' or '{union_name}' not found for boolean.")
+        return
+
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def add_bevel(obj_name, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects.get(obj_name)
+    if not obj:
+        print(f"Error: Object '{obj_name}' not found for bevel.")
+        return
+    
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    
+    # Apply bevel
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def place_object(obj, anchor_obj, anchor_type='center', offset=(0,0,0)):
+    """
+    Anchor and offset an object relative to another.
+    anchor_type: 'center', 'bottom_face', 'top_face'
+    """
+    anchor_loc = None
+    
+    if anchor_type == 'center':
+        anchor_loc = Locator(anchor_obj).center_world()
+    elif anchor_type == 'bottom_face':
+        # For a cylinder aligned to Z, bottom face is usually index 0 or 1 depending on creation
+        # Standard cylinder creation: bottom face is often index 0
+        anchor_loc = Locator(anchor_obj).face_center_world(0)
+    elif anchor_type == 'top_face':
+        # Top face is usually the last index
+        anchor_loc = Locator(anchor_obj).face_center_world(len(anchor_obj.data.polygons) - 1)
+    else:
+        anchor_loc = Locator(anchor_obj).center_world()
+
+    # Calculate offset in world space (assuming offset is local to anchor's orientation if anchor is rotated)
+    # However, prompt says "Offset is in reference local axes".
+    # If anchor_obj is rotated, we need to transform offset by anchor's rotation.
+    # But usually, simple offsets are applied in world space if not specified otherwise.
+    # Let's assume offset is in the anchor's local space.
+    
+    # Transform offset vector by anchor's rotation matrix
+    rot_matrix = anchor_obj.matrix_world.to_3x3()
+    offset_vec = rot_matrix @ Vector(offset)
+    
+    # New location
+    new_loc = anchor_loc + offset_vec
+    
+    # Move object
+    obj.location = new_loc
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_acrylic = make_material("mat_acrylic", (0.9, 0.9, 0.95, 0.3))
+mat_cork = make_material("mat_cork", (0.6, 0.4, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create coaster group template and instantiate grid ---
+
+# Create an Empty helper (cube display) and name it coaster_group.
+coaster_group = add_empty("coaster_group", empty_type='PLAIN_AXES')
+
+# Rotate coaster_group so its axis aligns +Z (world).
+# It's an empty, default is +Z aligned to world +Z usually, but let's be explicit.
+align_axis_to_vector(coaster_group, '+Z', Vector((0, 0, 1)))
+
+# Move coaster_group to (0,0,0).
+coaster_group.location = (0, 0, 0)
+
+# For r in 0…1 and c in 0…1:
+for r in range(2):
+    for c in range(2):
+        # Create primitive cylinder with size Ø0.08×0.005 m and name it coaster_base_r_c.
+        # Radius = 0.04, Depth = 0.005
+        coaster_base = add_cylinder(f"coaster_base_{r}_{c}", radius=0.04, depth=0.005)
+        
+        # Rotate coaster_base_r_c so its +Z axis aligns +Z (world).
+        align_axis_to_vector(coaster_base, '+Z', Vector((0, 0, 1)))
+        
+        # Anchor coaster_base_r_c to coaster_group.center.
+        # Align coaster_base_r_c.bottom_face to coaster_group.bottom_face.
+        # Then offset(-0.06 + c·0.12, -0.06 + r·0.12, 0).
+        
+        # Note: coaster_group is an empty at (0,0,0). Its "bottom face" is effectively its origin.
+        # We anchor base to group center, align bottom faces (both are flat on Z=0 if created at origin),
+        # then apply offset.
+        
+        place_object(coaster_base, coaster_group, anchor_type='center', offset=(-0.06 + c * 0.12, -0.06 + r * 0.12, 0))
+        
+        # Apply material mat_cork to coaster_base_r_c.
+        if coaster_base.data.materials:
+            coaster_base.data.materials[0] = mat_cork
+        else:
+            coaster_base.data.materials.append(mat_cork)
+
+        # Create primitive cylinder with size Ø0.07×0.003 m and name it coaster_top_r_c.
+        # Radius = 0.035, Depth = 0.003
+        coaster_top = add_cylinder(f"coaster_top_{r}_{c}", radius=0.035, depth=0.003)
+        
+        # Rotate coaster_top_r_c so its +Z axis aligns +Z (world).
+        align_axis_to_vector(coaster_top, '+Z', Vector((0, 0, 1)))
+        
+        # Anchor coaster_top_r_c to coaster_base_r_c.center.
+        # Align coaster_top_r_c.bottom_face to coaster_base_r_c.top_face.
+        # Then offset(0,0,0.002).
+        
+        place_object(coaster_top, coaster_base, anchor_type='top_face', offset=(0, 0, 0.002))
+        
+        # Apply material mat_acrylic to coaster_top_r_c.
+        if coaster_top.data.materials:
+            coaster_top.data.materials[0] = mat_acrylic
+        else:
+            coaster_top.data.materials.append(mat_acrylic)
+
+# Stage 1 complete.
+# All stages complete.
+```

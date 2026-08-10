@@ -1,0 +1,31 @@
+# ===== 产物 / 生成物（不提交） =====
+output/
+checkpoints/
+qwen3/
+
+# ===== Python 缓存 =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== 虚拟环境 =====
+venv/
+.venv/
+env/
+
+# ===== 本地配置（含绝对路径的敏感配置） =====
+config/system_config.json
+
+# ===== 模型权重（大体积训练产物，不入库，仅保留源码） =====
+*.ckpt
+*.pt
+*.pth
+*.onnx

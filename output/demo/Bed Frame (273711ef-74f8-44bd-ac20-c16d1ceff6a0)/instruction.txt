@@ -1,0 +1,1 @@
+Create a 3D model of a bed frame. It should have a rectangular shape with four legs. Include a headboard and a footboard. Show the bed frame from different angles. Compare the height and design of the headboard and footboard.

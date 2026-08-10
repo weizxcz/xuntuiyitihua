@@ -1,0 +1,67 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_clear_plastic; diffuse_color = (0.94, 0.94, 0.94, 0.3).
+Define material mat_paper_blue; diffuse_color = (0.39, 0.58, 0.93, 1.0).
+Define material mat_paper_green; diffuse_color = (0.56, 0.93, 0.56, 1.0).
+Define material mat_paper_pink; diffuse_color = (1.0, 0.75, 0.80, 1.0).
+Define material mat_paper_yellow; diffuse_color = (1.0, 1.0, 0.88, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create holder base  ---
+Create primitive cylinder with diameter 0.100 m and height 0.015 m and name it holder_base.
+Rotate holder_base so its +Z axis aligns +Z (world).
+Anchor holder_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create holder back  ---
+Create primitive cuboid with size 0.100×0.080×0.015 m and name it holder_back.
+Rotate holder_back so its +Z axis aligns +Z (world).
+Align holder_back.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.0075).
+Stage 2 complete.
+
+---  SECTION 3 – Create yellow note stack  ---
+Create primitive cuboid with size 0.075×0.075×0.010 m and name it stack_yellow.
+Rotate stack_yellow so its +Z axis aligns +Z (world).
+Align stack_yellow.center to holder_base.center.
+Align stack_yellow.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.015).
+Stage 3 complete.
+
+---  SECTION 4 – Create blue note stack  ---
+Create primitive cuboid with size 0.075×0.075×0.010 m and name it stack_blue.
+Rotate stack_blue so its +Z axis aligns +Z (world).
+Align stack_blue.center to holder_base.center.
+Align stack_blue.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.025).
+Stage 4 complete.
+
+---  SECTION 5 – Create green note stack  ---
+Create primitive cuboid with size 0.075×0.075×0.010 m and name it stack_green.
+Rotate stack_green so its +Z axis aligns +Z (world).
+Align stack_green.center to holder_base.center.
+Align stack_green.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.035).
+Stage 5 complete.
+
+---  SECTION 6 – Create pink note stack  ---
+Create primitive cuboid with size 0.075×0.075×0.010 m and name it stack_pink.
+Rotate stack_pink so its +Z axis aligns +Z (world).
+Align stack_pink.center to holder_base.center.
+Align stack_pink.bottom_face to holder_base.top_face.
+Then move by offset(0,0,0.045).
+Stage 6 complete.
+
+All stages complete.

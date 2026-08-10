@@ -1,0 +1,43 @@
+{
+  "id": "9094f758-341f-469b-bec5-a1bbea7ebf1f",
+  "name": "Spice Rack",
+  "instruction": "Design a spice rack that can be mounted on a kitchen wall. \n\n1. It should have three tiers.\n2. Each tier should include a rail to prevent the spice jars from falling.\n3. Include mounting brackets on the back.\n4. Ensure the tiers are wide enough to hold standard spice jars.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The item in image is spice rack.",
+        "There are three tiers in the spice rack."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The tiers are proportionate to the rack"
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tiers are arranged vertically for efficient use of wall space.",
+        "The rails are positioned correctly to secure the spice jars."
+      ],
+      "Object distance and contact": [
+        "The tiers are evenly spaced to allow easy access to jars.",
+        "The mounting brackets are securely attached to the back of the rack."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified features are accurately represented.",
+        "The design adheres to the requirement of being wall-mounted."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

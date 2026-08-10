@@ -1,0 +1,248 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_face_to_face(obj_src, obj_tgt, src_face_axis, tgt_face_axis, offset_z=0):
+    """
+    Aligns a face of src object to a face of tgt object.
+    src_face_axis: 'X', '-X', 'Y', '-Y', 'Z', '-Z'
+    tgt_face_axis: 'X', '-X', 'Y', '-Y', 'Z', '-Z'
+    """
+    # Get world matrix of target
+    tgt_mat = obj_tgt.matrix_world
+    src_mat = obj_src.matrix_world
+    
+    # Define face normals in local space
+    face_normals = {
+        'X': Vector((1, 0, 0)), '-X': Vector((-1, 0, 0)),
+        'Y': Vector((0, 1, 0)), '-Y': Vector((0, -1, 0)),
+        'Z': Vector((0, 0, 1)), '-Z': Vector((0, 0, -1))
+    }
+    
+    # Get world normal of target face
+    tgt_normal = (tgt_mat @ face_normals[tgt_face_axis]).normalized()
+    
+    # Get world normal of source face
+    src_normal = (src_mat @ face_normals[src_face_axis]).normalized()
+    
+    # Calculate rotation to align normals
+    # We want src_normal to point in same direction as tgt_normal
+    rot_quat = src_normal.rotation_difference(tgt_normal)
+    
+    # Apply rotation to source object
+    obj_src.rotation_euler = rot_quat.to_euler()
+    obj_src.rotation_mode = 'QUATERNION' # Set mode to quat to avoid gimbal lock issues during calculation
+    
+    # Recalculate world matrix after rotation
+    src_mat = obj_src.matrix_world
+    
+    # Calculate position of source face center
+    # Half extents
+    hx = obj_src.dimensions.x / 2
+    hy = obj_src.dimensions.y / 2
+    hz = obj_src.dimensions.z / 2
+    
+    # Offset from center to face in local space
+    local_offsets = {
+        'X': (hx, 0, 0), '-X': (-hx, 0, 0),
+        'Y': (0, hy, 0), '-Y': (0, -hy, 0),
+        'Z': (0, 0, hz), '-Z': (0, 0, -hz)
+    }
+    
+    # World position of source face center
+    src_face_center = src_mat @ Vector(local_offsets[src_face_axis])
+    
+    # World position of target face center
+    tgt_face_center = tgt_mat @ Vector(local_offsets[tgt_face_axis])
+    
+    # Move source so its face center aligns with target face center
+    # But we need to be careful about the axis alignment.
+    # If we aligned normals, the faces are parallel.
+    # We just need to translate along the normal vector.
+    
+    # Actually, simpler approach:
+    # 1. Align normals (done above).
+    # 2. Project centers onto the normal vector.
+    # 3. Adjust position so faces touch.
+    
+    # Let's use a simpler locator-based approach for robustness.
+    pass
+
+def align_center_to_center(obj_src, obj_tgt):
+    """Aligns center of src to center of tgt."""
+    tgt_loc = obj_tgt.location
+    src_loc = obj_src.location
+    # We will adjust src location later, but for now just note the target center
+    return tgt_loc
+
+def align_bottom_to_bottom(obj_src, obj_tgt):
+    """Aligns bottom face (local -Z) of src to bottom face (local -Z) of tgt."""
+    # Get world matrix
+    tgt_mat = obj_tgt.matrix_world
+    src_mat = obj_src.matrix_world
+    
+    # Target bottom face center
+    tgt_bottom = tgt_mat @ Vector((0, 0, -obj_tgt.dimensions.z / 2))
+    
+    # Source bottom face center (before translation)
+    src_bottom_local = Vector((0, 0, -obj_src.dimensions.z / 2))
+    src_bottom_world = src_mat @ src_bottom_local
+    
+    # Calculate translation needed
+    diff = tgt_bottom - src_bottom_world
+    obj_src.location += diff
+
+def align_left_to_right(obj_src, obj_tgt):
+    """Aligns left face (local -X) of src to right face (local +X) of tgt."""
+    tgt_mat = obj_tgt.matrix_world
+    src_mat = obj_src.matrix_world
+    
+    # Target right face center
+    tgt_right = tgt_mat @ Vector((obj_tgt.dimensions.x / 2, 0, 0))
+    
+    # Source left face center (before translation)
+    src_left_local = Vector((-obj_src.dimensions.x / 2, 0, 0))
+    src_left_world = src_mat @ src_left_local
+    
+    # Calculate translation needed
+    diff = tgt_right - src_left_world
+    obj_src.location += diff
+
+def align_top_center_to_center(obj_src, obj_tgt):
+    """Aligns center of src to center of tgt's top face."""
+    tgt_mat = obj_tgt.matrix_world
+    # Target top face center
+    tgt_top = tgt_mat @ Vector((0, 0, obj_tgt.dimensions.z / 2))
+    
+    # Source center
+    src_center = obj_src.location
+    
+    # Calculate translation needed
+    diff = tgt_top - src_center
+    obj_src.location += diff
+
+def apply_offset(obj, offset):
+    obj.location += Vector(offset)
+
+def set_orientation_z_to_x(obj):
+    """Rotates object so its local +Z aligns with world +X."""
+    # World +X is (1, 0, 0)
+    # Local +Z is (0, 0, 1)
+    # Rotation needed: -90 degrees around Y axis
+    obj.rotation_euler = (0, -math.radians(90), 0)
+    obj.rotation_mode = 'EULER'
+
+def set_orientation_z_to_minus_y(obj):
+    """Rotates object so its local +Z aligns with world -Y."""
+    # World -Y is (0, -1, 0)
+    # Local +Z is (0, 0, 1)
+    # Rotation needed: 90 degrees around X axis
+    obj.rotation_euler = (math.radians(90), 0, 0)
+    obj.rotation_mode = 'EULER'
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Ensure we are in object mode
+    if bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+    bpy.context.scene.unit_settings.scale_length = 1
+    
+    # Block 1: Materials
+    mat_brush_head = make_material("mat_brush_head", (0.1, 0.4, 0.8, 1.0))
+    mat_brush_head_grip = make_material("mat_brush_head_grip", (0.0, 0.0, 0.0, 1.0))
+    mat_neck = make_material("mat_neck", (0.9, 0.9, 0.9, 1.0))
+    mat_neck_grip = make_material("mat_neck_grip", (0.0, 0.0, 0.0, 1.0))
+    mat_tufts = make_material("mat_tufts", (0.8, 0.8, 0.8, 1.0))
+    
+    # Block 2: Geometry Generation
+    
+    # SECTION 1 – Create handle body
+    handle_body = add_cube("handle_body", (0.150, 0.025, 0.012), (0, 0, 0), (0, 0, 0), mat_brush_head)
+    set_orientation_z_to_x(handle_body)
+    # Anchor to world origin (already at 0,0,0)
+    apply_offset(handle_body, (0, 0, 0))
+    
+    # SECTION 2 – Create handle grip
+    handle_grip = add_cube("handle_grip", (0.100, 0.027, 0.014), (0, 0, 0), (0, 0, 0), mat_brush_head_grip)
+    set_orientation_z_to_x(handle_grip)
+    # Align center to handle_body.center
+    align_center_to_center(handle_grip, handle_body)
+    # Align bottom_face to handle_body.bottom_face
+    align_bottom_to_bottom(handle_grip, handle_body)
+    apply_offset(handle_grip, (0, 0, 0.001))
+    
+    # SECTION 3 – Create neck body
+    neck_body = add_cube("neck_body", (0.030, 0.020, 0.010), (0, 0, 0), (0, 0, 0), mat_neck)
+    set_orientation_z_to_x(neck_body)
+    # Align neck_body.left_face to handle_body.right_face
+    align_left_to_right(neck_body, handle_body)
+    apply_offset(neck_body, (0, 0, 0))
+    
+    # SECTION 4 – Create neck grip
+    neck_grip = add_cube("neck_grip", (0.020, 0.022, 0.012), (0, 0, 0), (0, 0, 0), mat_neck_grip)
+    set_orientation_z_to_x(neck_grip)
+    # Align neck_grip.center to neck_body.center
+    align_center_to_center(neck_grip, neck_body)
+    # Align neck_grip.bottom_face to neck_body.bottom_face
+    align_bottom_to_bottom(neck_grip, neck_body)
+    apply_offset(neck_grip, (0, 0, 0.001))
+    
+    # SECTION 5 – Create head body
+    head_body = add_cube("head_body", (0.050, 0.020, 0.010), (0, 0, 0), (0, 0, 0), mat_brush_head)
+    set_orientation_z_to_x(head_body)
+    # Align head_body.left_face to neck_body.right_face
+    align_left_to_right(head_body, neck_body)
+    apply_offset(head_body, (0, 0, 0))
+    
+    # SECTION 6 – Create head grip
+    head_grip = add_cube("head_grip", (0.040, 0.022, 0.012), (0, 0, 0), (0, 0, 0), mat_brush_head_grip)
+    set_orientation_z_to_x(head_grip)
+    # Align head_grip.center to head_body.center
+    align_center_to_center(head_grip, head_body)
+    # Align head_grip.bottom_face to head_body.bottom_face
+    align_bottom_to_bottom(head_grip, head_body)
+    apply_offset(head_grip, (0, 0, 0.001))
+    
+    # SECTION 7 – Create bristle tufts grid
+    for r in range(3):
+        for c in range(3):
+            tuft_name = f"bristle_tuft_{r}_{c}"
+            tuft = add_cube(tuft_name, (0.002, 0.002, 0.015), (0, 0, 0), (0, 0, 0), mat_tufts)
+            set_orientation_z_to_minus_y(tuft)
+            # Align bristle_tuft_r_c.center to head_body.top_face.center
+            align_top_center_to_center(tuft, head_body)
+            # Offset(0.015 - c*0.005, 0.005 - r*0.005, 0.005)
+            offset_x = 0.015 - c * 0.005
+            offset_y = 0.005 - r * 0.005
+            offset_z = 0.005
+            apply_offset(tuft, (offset_x, offset_y, offset_z))
+
+if __name__ == "__main__":
+    main()

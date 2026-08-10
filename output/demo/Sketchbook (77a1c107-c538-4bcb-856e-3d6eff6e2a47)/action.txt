@@ -1,0 +1,57 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material cover_mat; diffuse_color = (0.15, 0.12, 0.10, 1.0).
+Define material paper_mat; diffuse_color = (0.95, 0.95, 0.90, 1.0).
+Define material spiral_mat; diffuse_color = (0.20, 0.20, 0.20, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create cover group (front and back boards)  ---
+Create primitive cuboid with size 0.216×0.279×0.0015 m and name it cover_front.
+Rotate cover_front so its +Z axis aligns +Z (world).
+Anchor cover_front to world origin.
+Then move by offset(0, 0, 0.0015).
+
+Create primitive cuboid with size 0.216×0.279×0.0015 m and name it cover_back.
+Rotate cover_back so its +Z axis aligns +Z (world).
+Anchor cover_back to world origin.
+Then move by offset(0, 0, -0.0015).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create pages group (stack of 100 pages)  ---
+For i in 0…99:
+  Create primitive cuboid with size 0.210×0.273×0.00015 m and name it page_{i+1}.
+  Rotate page_{i+1} so its +Z axis aligns +Z (world).
+  Anchor page_{i+1} to world origin.
+  Then move by offset(0.003, 0, 0.000075 + i*0.00015).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create spiral group (10 coils)  ---
+For i in 0…9:
+  Create primitive cylinder with diameter 0.006 m and length 0.0273 m and name it coil_{i+1}.
+  Rotate coil_{i+1} so its +Z axis aligns +Y (world).
+  Anchor coil_{i+1} to world origin.
+  Then move by offset(-0.010, -0.1265 + i*0.0175, 0.0075).
+
+Stage 3 complete.
+
+---  SECTION 4 – Assemble final sketchbook  ---
+Align cover_front.-Z_face to cover_back.+Z_face.
+Align pages_block.-Z_face to cover_front.+Z_face.
+Align spiral_binding.-Z_face to cover_front.+Z_face.
+Then move spiral_binding by offset(0, 0, 0).
+
+Assembly guideline satisfied.
+All stages complete.

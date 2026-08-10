@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+mat_cork | diffuse_color=(0.6,0.4,0.2,1.0)
+mat_pattern | diffuse_color=(0.1,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_base | Composite of base_disc + pattern_ring; simple circular coaster | assembly_order=[base_disc, pattern_ring] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_disc | Cylinder Ø0.1016×0.005 m (4" diameter, 5mm thickness) | pos=(0,0,0); orientation=axis:+Z; mat=mat_cork; create_method=primitive |
+| pattern_ring | Cylinder Ø0.080×0.005 m (simple ring pattern) | Align(XY) pattern_ring.center to base_disc.center; Align(Z) pattern_ring.bottom_face to base_disc.top_face; offset(0,0,0.000); orientation=axis:+Z; mat=mat_pattern; create_method=primitive |
+# ----------  END_GRAPH  ----------

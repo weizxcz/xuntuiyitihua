@@ -1,0 +1,47 @@
+{
+  "id": "2f2dd00d-6305-4afc-9d25-2500b1d6b33d",
+  "name": "Action Figure",
+  "instruction": "Imagine an action figure that exudes a sense of adventure and heroism. The figure should be posable with articulated joints. Include a small accessory like a sword or shield that can be held in its hand.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an action figure.",
+        "The figure has a humanoid shape.",
+        "The figure features articulated joints for posing."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The limbs are proportionate to the torso.",
+        "The head is proportionate to the body."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The articulated joints allow for a wide range of poses.",
+        "The figure stands upright without support.",
+        "The accessory fits securely in the figure's hand."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the figure's limbs and body.",
+        "The accessory is held firmly without any gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the action figure are represented.",
+        "The figure is posable with articulated joints as instructed.",
+        "An accessory is included and can be held in the figure's hand."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

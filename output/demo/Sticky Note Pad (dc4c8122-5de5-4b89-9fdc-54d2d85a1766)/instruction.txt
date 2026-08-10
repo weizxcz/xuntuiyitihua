@@ -1,0 +1,1 @@
+Create a 3D model of a sticky note pad. The pad should be a square, 3 inches on each side, with a stack of thin sheets.

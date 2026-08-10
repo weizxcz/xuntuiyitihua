@@ -1,0 +1,39 @@
+-- MATERIAL LIBRARY --
+mat_plastic_black | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_plastic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+mat_metal_silver | diffuse_color=(0.7,0.7,0.75,1.0)
+mat_metal_gold | diffuse_color=(1.0,0.84,0.0,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| usb_drive_root | Composite assembly of the USB drive housing, slider mechanism, and internal connector | assembly_order=[housing_group, slider_group, connector_group]; mat=-> |
+
+Layer 1 – Primary Structure (Housing)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| housing_main | Composite of housing_shell + housing_cap | assembly_order=[housing_shell, housing_cap]; mat=mat_plastic_black |
+| housing_shell | Main body shell, approx 0.060×0.020×0.008 m (L×W×H) | Align(XY) housing_shell.center to usb_drive_root.center; orientation=axis:+Z; mat=mat_plastic_black; create_method=primitive; constraint=cuboid 0.060×0.020×0.008 with rounded edges (radius 0.002); pos=(0,0,0) |
+| housing_cap | End cap covering the connector slot, approx 0.010×0.020×0.008 m | Align(XY) housing_cap.right_face to housing_shell.left_face; orientation=axis:+Z; mat=mat_plastic_black; create_method=primitive; constraint=cuboid 0.010×0.020×0.008; pos=(0,0,0) |
+
+Layer 2 – Slider Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| slider_body | Retractable slider block, approx 0.040×0.018×0.006 m | Align(XY) slider_body.center to housing_shell.center; offset(0.015, 0, 0); orientation=axis:+Z; mat=mat_plastic_white; create_method=primitive; constraint=cuboid 0.040×0.018×0.006 with rounded edges (radius 0.001); pos=(0,0,0) |
+| slider_groove | Internal groove for slider movement, boolean subtract from housing_shell | Align(XY) slider_groove.center to housing_shell.center; offset(0.015, 0, 0); orientation=axis:+Z; mat=->; create_method=boolean_subtract; constraint=cuboid 0.038×0.016×0.005; tool_id=housing_shell; pos=(0,0,0) |
+
+Layer 3 – Connector Group
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| connector_plug | USB Type-A plug assembly | assembly_order=[connector_shield, connector_core]; mat=-> |
+| connector_shield | Metal shield casing, approx 0.012×0.045×0.012 m | Align(XY) connector_shield.center to housing_shell.left_face; offset(-0.006, 0, 0); orientation=axis:+X; mat=mat_metal_silver; create_method=primitive; constraint=cuboid 0.012×0.045×0.012 with open ends; pos=(0,0,0) |
+| connector_core | Internal PCB and contacts, approx 0.010×0.035×0.008 m | Align(XY) connector_core.center to connector_shield.center; offset(0, 0, 0); orientation=axis:+X; mat=mat_plastic_black; create_method=primitive; constraint=cuboid 0.010×0.035×0.008; pos=(0,0,0) |
+| connector_pins | Gold-plated contact pins, 4 pins | assembly_order=[pin_1, pin_2, pin_3, pin_4]; mat=mat_metal_gold |
+| pin_1 | Pin 1, cylinder Ø0.001×0.005 m | Align(XY) pin_1.center to connector_core.left_face; offset(0, 0.008, 0); orientation=axis:+X; mat=mat_metal_gold; create_method=primitive; constraint=cylinder Ø0.001×0.005; pos=(0,0,0) |
+| pin_2 | Pin 2, cylinder Ø0.001×0.005 m | Align(XY) pin_2.center to connector_core.left_face; offset(0, 0.002, 0); orientation=axis:+X; mat=mat_metal_gold; create_method=primitive; constraint=cylinder Ø0.001×0.005; pos=(0,0,0) |
+| pin_3 | Pin 3, cylinder Ø0.001×0.005 m | Align(XY) pin_3.center to connector_core.left_face; offset(0, -0.002, 0); orientation=axis:+X; mat=mat_metal_gold; create_method=primitive; constraint=cylinder Ø0.001×0.005; pos=(0,0,0) |
+| pin_4 | Pin 4, cylinder Ø0.001×0.005 m | Align(XY) pin_4.center to connector_core.left_face; offset(0, -0.008, 0); orientation=axis:+X; mat=mat_metal_gold; create_method=primitive; constraint=cylinder Ø0.001×0.005; pos=(0,0,0) |
+
+# ----------  END_GRAPH  ----------

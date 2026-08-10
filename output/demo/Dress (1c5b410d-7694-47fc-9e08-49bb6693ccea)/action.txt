@@ -1,0 +1,74 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material metal_silver; diffuse_color = (0.75,0.75,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Bodice Group  ---
+Create primitive cylinder with radius 0.18 m and height 0.40 m and name it bodice_shell.
+Rotate bodice_shell so its +Z axis aligns +Z (world).
+Align bodice_shell.center to dress_root.center.
+Align bodice_shell.bottom_face to waist_seam.top_face.
+Create primitive cylinder with radius 0.18 m and height 0.02 m and name it waist_seam.
+Rotate waist_seam so its +Z axis aligns +Z (world).
+Align waist_seam.center to bodice_shell.center.
+Align waist_seam.top_face to bodice_shell.bottom_face.
+Boolean-union waist_seam from bodice_shell; discard waist_seam.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create Skirt Group  ---
+Create primitive cylinder with top radius 0.18 m, bottom radius 0.36 m, and height 0.40 m and name it skirt_shell.
+Rotate skirt_shell so its +Z axis aligns +Z (world).
+Align skirt_shell.center to waist_seam.center.
+Align skirt_shell.top_face to waist_seam.bottom_face.
+Boolean-union skirt_shell from waist_seam; discard skirt_shell.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create Sleeve Group  ---
+Create primitive sphere with radius 0.10 m and name it sleeve_L.
+Rotate sleeve_L so its +Z axis aligns +Z (world).
+Create plane_cutter and name it sleeve_L_cut with size 0.20×0.20 m; orientation=axis:+Z.
+Boolean-subtract sleeve_L_cut from sleeve_L; keep sleeve_L. // produces hemisphere
+Rotate sleeve_L so its curved face points +Z.
+Align sleeve_L.center to bodice_shell.side_at(135°).
+Align sleeve_L.bottom_face to bodice_shell.top_face.
+Create primitive sphere with radius 0.10 m and name it sleeve_R.
+Rotate sleeve_R so its +Z axis aligns +Z (world).
+Create plane_cutter and name it sleeve_R_cut with size 0.20×0.20 m; orientation=axis:+Z.
+Boolean-subtract sleeve_R_cut from sleeve_R; keep sleeve_R. // produces hemisphere
+Rotate sleeve_R so its curved face points +Z.
+Align sleeve_R.center to bodice_shell.side_at(45°).
+Align sleeve_R.bottom_face to bodice_shell.top_face.
+Boolean-union sleeve_L from bodice_shell; discard sleeve_L.
+Boolean-union sleeve_R from bodice_shell; discard sleeve_R.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create Zipper Group  ---
+Create primitive cuboid with size 0.02×0.30×0.002 m and name it zipper_track.
+Rotate zipper_track so its +Z axis aligns +Z (world).
+Align zipper_track.center to bodice_shell.back_face.center.
+Align zipper_track.front_face to bodice_shell.back_face.
+Create primitive cuboid with size 0.01×0.02×0.005 m and name it zipper_slider.
+Rotate zipper_slider so its +Z axis aligns +Z (world).
+Align zipper_slider.center to zipper_track.top_face.center.
+Align zipper_slider.bottom_face to zipper_track.top_face.
+Boolean-union zipper_track from bodice_shell; discard zipper_track.
+Boolean-union zipper_slider from bodice_shell; discard zipper_slider.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

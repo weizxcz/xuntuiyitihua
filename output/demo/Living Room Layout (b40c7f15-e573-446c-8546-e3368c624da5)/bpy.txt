@@ -1,0 +1,585 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def add_primitive(name, shape, size, location, rotation_euler):
+    """Add a primitive mesh object, set name, location, and rotation."""
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.5, depth=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'disc':
+        bpy.ops.mesh.primitive_circle_add(vertices=32, radius=0.5, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cone':
+        bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.5, radius2=0, depth=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'uvsphere':
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=0.5, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    else:
+        raise ValueError(f"Unknown shape: {shape}")
+    
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def get_bounding_box(obj):
+    """Return min and max corners of the object's bounding box in world space."""
+    # Ensure matrix is up to date
+    obj.update_from_matrix()
+    corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+    mins = Vector((min(c.x for c in corners), min(c.y for c in corners), min(c.z for c in corners)))
+    maxs = Vector((max(c.x for c in corners), max(c.y for c in corners), max(c.z for c in corners)))
+    return mins, maxs
+
+def get_face_center(obj, face_type):
+    """
+    Helper to get specific face centers based on orientation.
+    Assumes standard orientation: +Z is Up.
+    """
+    mins, maxs = get_bounding_box(obj)
+    
+    if face_type == 'bottom_face':
+        return Vector((0, 0, mins.z)) # Relative to center, but we need world pos
+        # Actually, let's return the world coordinate of the center of the bottom face
+        center_x = (mins.x + maxs.x) / 2
+        center_y = (mins.y + maxs.y) / 2
+        return Vector((center_x, center_y, mins.z))
+    elif face_type == 'top_face':
+        center_x = (mins.x + maxs.x) / 2
+        center_y = (mins.y + maxs.y) / 2
+        return Vector((center_x, center_y, maxs.z))
+    elif face_type == 'back_face':
+        # Assuming -Y is back
+        center_x = (mins.x + maxs.x) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((center_x, mins.y, center_z))
+    elif face_type == 'front_face':
+        # Assuming +Y is front
+        center_x = (mins.x + maxs.x) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((center_x, maxs.y, center_z))
+    elif face_type == 'left_face':
+        # Assuming -X is left
+        center_y = (mins.y + maxs.y) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((mins.x, center_y, center_z))
+    elif face_type == 'right_face':
+        # Assuming +X is right
+        center_y = (mins.y + maxs.y) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((maxs.x, center_y, center_z))
+    elif face_type == 'center':
+        return (mins + maxs) / 2
+    elif face_type == 'bottom_center':
+        center_x = (mins.x + maxs.x) / 2
+        center_y = (mins.y + maxs.y) / 2
+        return Vector((center_x, center_y, mins.z))
+    elif face_type == 'top_center':
+        center_x = (mins.x + maxs.x) / 2
+        center_y = (mins.y + maxs.y) / 2
+        return Vector((center_x, center_y, maxs.z))
+    elif face_type == 'back_center':
+        center_x = (mins.x + maxs.x) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((center_x, mins.y, center_z))
+    elif face_type == 'front_center':
+        center_x = (mins.x + maxs.x) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((center_x, maxs.y, center_z))
+    elif face_type == 'side':
+        # Ambiguous, usually means center of a side face. 
+        # Let's assume right face center for 'side' if not specified, or average of sides?
+        # Given the context "sofa_sectional.side", it likely implies the side face center.
+        # Let's pick the right face center as default for 'side' or calculate average of left/right?
+        # Let's assume Right Face Center for 'side'
+        center_y = (mins.y + maxs.y) / 2
+        center_z = (mins.z + maxs.z) / 2
+        return Vector((maxs.x, center_y, center_z))
+    elif face_type == 'base':
+        # Bottom face center
+        center_x = (mins.x + maxs.x) / 2
+        center_y = (mins.y + maxs.y) / 2
+        return Vector((center_x, center_y, mins.z))
+    elif face_type == 'corner':
+        # Back-left-bottom corner
+        return Vector((mins.x, mins.y, mins.z))
+    elif face_type == 'back_corner':
+        # Back-left-bottom corner
+        return Vector((mins.x, mins.y, mins.z))
+    elif face_type == 'wall_opposite_sofa':
+        # This is a relative anchor. 
+        # If sofa is at -Y, opposite wall is +Y wall of room.
+        # We will handle this logic in the main script by calculating the target point.
+        return None 
+    elif face_type == 'side_wall':
+        # Left wall (-X)
+        return None
+    else:
+        raise ValueError(f"Unknown face type: {face_type}")
+
+def align_object_to_anchor(obj, anchor_obj, anchor_type, target_type, offset_vec):
+    """
+    Aligns 'obj' to 'anchor_obj' based on specific face/point types.
+    Then applies an offset.
+    """
+    # 1. Get the anchor point on the anchor_obj
+    anchor_point = get_face_center(anchor_obj, anchor_type)
+    
+    # 2. Get the target point on the object being moved (obj)
+    # We want to move obj such that its 'target_type' coincides with 'anchor_point'
+    target_point_local = get_face_center(obj, target_type)
+    
+    # 3. Calculate the translation vector
+    # We need to move obj so that target_point_local moves to anchor_point
+    # Translation = anchor_point - target_point_local
+    translation = anchor_point - target_point_local
+    
+    # 4. Apply translation
+    obj.location += translation
+    
+    # 5. Apply offset
+    # Offset is in reference local axes. Assuming standard orientation, local axes align with world.
+    obj.location += offset_vec
+    
+    return obj
+
+def apply_material(obj, material):
+    """Apply material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = material
+    else:
+        obj.data.materials.append(material)
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_fabric_sofa = make_material("fabric_sofa", (0.25, 0.25, 0.30, 1.0))
+mat_glass_tv = make_material("glass_tv", (0.10, 0.10, 0.15, 0.9))
+mat_metal_tv_frame = make_material("metal_tv_frame", (0.15, 0.15, 0.15, 1.0))
+mat_wood_bookshelf = make_material("wood_bookshelf", (0.40, 0.25, 0.15, 1.0))
+mat_wood_table = make_material("wood_table", (0.35, 0.20, 0.10, 1.0))
+mat_fabric_lamp_shade = make_material("fabric_lamp_shade", (0.90, 0.85, 0.75, 0.8))
+mat_metal_lamp_stand = make_material("metal_lamp_stand", (0.80, 0.70, 0.50, 1.0))
+mat_ceramic_pot = make_material("ceramic_pot", (0.80, 0.80, 0.75, 1.0))
+mat_plant_leaves = make_material("plant_leaves", (0.10, 0.40, 0.10, 1.0))
+mat_rug_fabric = make_material("rug_fabric", (0.60, 0.60, 0.65, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# Helper for standard orientation
+rot_z = (0, 0, 0)
+
+# --- SECTION 1 – Create Room Shell ---
+# Create primitive cuboid with size 6.0×5.0×2.8 m and name it room_shell.
+room_shell = add_primitive("room_shell", "cube", (6.0, 5.0, 2.8), (0, 0, 0), rot_z)
+apply_material(room_shell, mat_wood_table) # Generic material for shell
+
+# Rotate room_shell so its +Z axis aligns +Z (world). (Already default)
+
+# Anchor room_shell.bottom_face to world origin (0,0,0).
+# Current center is (0,0,0). Bottom face Z is -2.8/2 = -1.4.
+# We need to move it up by 1.4 so bottom face is at Z=0.
+room_shell.location += Vector((0, 0, 1.4))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create Sofa Sectional ---
+# Create primitive cuboid with size 2.8×2.0×0.9 m and name it sofa_sectional.
+sofa_sectional = add_primitive("sofa_sectional", "cube", (2.8, 2.0, 0.9), (0, 0, 0), rot_z)
+apply_material(sofa_sectional, mat_fabric_sofa)
+
+# Rotate sofa_sectional so its +Z axis aligns +Z (world). (Already default)
+
+# Align sofa_sectional.bottom_face to room_shell.bottom_face.
+# room_shell.bottom_face is at Z=0.
+# sofa_sectional.bottom_face is currently at Z=-0.45 (center 0, height 0.9).
+# Move up by 0.45.
+sofa_sectional.location += Vector((0, 0, 0.45))
+
+# Align sofa_sectional.back_corner to room_shell.back_corner.
+# room_shell back_corner (min x, min y, min z) is (-3, -2.5, 0).
+# sofa_sectional back_corner (min x, min y, min z) relative to its center.
+# Let's get current world coords of sofa back corner.
+sofa_mins, _ = get_bounding_box(sofa_sectional)
+sofa_back_corner = Vector((sofa_mins.x, sofa_mins.y, sofa_mins.z))
+room_back_corner = Vector((-3.0, -2.5, 0.0))
+
+# Translation needed: room_back_corner - sofa_back_corner
+trans = room_back_corner - sofa_back_corner
+sofa_sectional.location += trans
+
+# Then move by offset(0.0, 0.0, 0.0).
+sofa_sectional.location += Vector((0.0, 0.0, 0.0))
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create TV Stand ---
+# Create primitive cuboid with size 1.6×0.4×0.5 m and name it tv_stand.
+tv_stand = add_primitive("tv_stand", "cube", (1.6, 0.4, 0.5), (0, 0, 0), rot_z)
+apply_material(tv_stand, mat_wood_table)
+
+# Rotate tv_stand so its +Z axis aligns +Z (world). (Already default)
+
+# Align tv_stand.bottom_face to room_shell.bottom_face.
+# room_shell bottom is Z=0.
+# tv_stand bottom is Z=-0.25.
+tv_stand.location += Vector((0, 0, 0.25))
+
+# Align tv_stand.back_face to room_shell.wall_opposite_sofa.
+# Sofa is at back (-Y). Opposite wall is front (+Y) wall of room.
+# Room front wall Y is max_y = 2.5.
+# tv_stand back_face (min y) needs to align with room front wall?
+# "back_face to wall_opposite_sofa" usually means the back of the TV stand touches the wall.
+# So tv_stand.min_y should be at room.max_y? Or centered against it?
+# Usually "align back_face to wall" means the back face is flush with the wall.
+# So tv_stand.min_y = room.max_y = 2.5.
+tv_stand_mins, tv_stand_maxs = get_bounding_box(tv_stand)
+tv_stand_back_y = tv_stand_mins.y
+room_front_wall_y = 2.5
+trans_y = room_front_wall_y - tv_stand_back_y
+tv_stand.location += Vector((0, trans_y, 0))
+
+# Then move by offset(0.0, 2.5, 0.0).
+tv_stand.location += Vector((0.0, 2.5, 0.0))
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create Bookshelf ---
+# Create primitive cuboid with size 0.8×0.3×2.0 m and name it bookshelf.
+bookshelf = add_primitive("bookshelf", "cube", (0.8, 0.3, 2.0), (0, 0, 0), rot_z)
+apply_material(bookshelf, mat_wood_bookshelf)
+
+# Rotate bookshelf so its +Z axis aligns +Z (world). (Already default)
+
+# Align bookshelf.bottom_face to room_shell.bottom_face.
+# room_shell bottom is Z=0.
+# bookshelf bottom is Z=-1.0.
+bookshelf.location += Vector((0, 0, 1.0))
+
+# Align bookshelf.back_face to room_shell.side_wall.
+# "side_wall" usually implies the left wall (-X) or right wall (+X).
+# Given the offset is -2.5 in X later, it likely anchors to the left wall (-X).
+# Room left wall X is min_x = -3.0.
+# bookshelf back_face (min y) aligning to side wall?
+# Wait, "back_face" is usually -Y. "side_wall" is -X or +X.
+# This instruction is slightly ambiguous. "Align back_face to side_wall" might mean
+# the back of the bookshelf is against the side wall.
+# If it's against the left wall (-X), then bookshelf.min_x = -3.0.
+# Let's assume "back_face" in the prompt context for a vertical object against a wall
+# might refer to the face touching the wall. If the wall is side (-X), then we align min_x.
+# However, the prompt says "back_face". Let's stick to the literal "back_face" (-Y)
+# aligning to a "side_wall". This doesn't make geometric sense unless the room is rotated.
+# Let's re-read: "Align bookshelf.back_face to room_shell.side_wall".
+# If side_wall is the left wall (-X), and we align the bookshelf's back face (-Y) to it,
+# it implies the bookshelf is rotated 90 degrees? No, rotation is fixed.
+# Most likely interpretation: The bookshelf is placed against the side wall.
+# So its side face (left or right) touches the wall.
+# Let's assume it touches the Left Wall (-X). So bookshelf.min_x = -3.0.
+# But the instruction says "back_face".
+# Let's look at the offset: offset(-2.5, 0.0, 0.0).
+# If we anchor to the left wall (-X), the center X would be -3.0 + 0.4 = -2.6.
+# Offset -2.5 would move it further left? No, offset is relative.
+# Let's try anchoring the bookshelf's LEFT face to the room's LEFT wall.
+# bookshelf.min_x = -3.0.
+# Current bookshelf center X is 0. Min X is -0.4.
+# Trans X = -3.0 - (-0.4) = -2.6.
+# Then offset(-2.5, 0, 0).
+# This seems plausible.
+
+# Let's assume "back_face" was a typo for "left_face" or "side_face" given "side_wall".
+# Or, "side_wall" refers to the wall at the back? No, that's back_wall.
+# Let's assume it anchors to the Left Wall (-X).
+bookshelf_mins, bookshelf_maxs = get_bounding_box(bookshelf)
+bookshelf_left_x = bookshelf_mins.x
+room_left_wall_x = -3.0
+trans_x = room_left_wall_x - bookshelf_left_x
+bookshelf.location += Vector((trans_x, 0, 0))
+
+# Then move by offset(-2.5, 0.0, 0.0).
+bookshelf.location += Vector((-2.5, 0.0, 0.0))
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Create Coffee Table ---
+# Create primitive cuboid with size 1.2×0.6×0.45 m and name it coffee_table.
+coffee_table = add_primitive("coffee_table", "cube", (1.2, 0.6, 0.45), (0, 0, 0), rot_z)
+apply_material(coffee_table, mat_wood_table)
+
+# Rotate coffee_table so its +Z axis aligns +Z (world). (Already default)
+
+# Align coffee_table.bottom_face to room_shell.bottom_face.
+# room_shell bottom is Z=0.
+# coffee_table bottom is Z=-0.225.
+coffee_table.location += Vector((0, 0, 0.225))
+
+# Align coffee_table.center to sofa_sectional.front_center.
+# sofa_sectional front_center (max y, center x, center z).
+sofa_mins, sofa_maxs = get_bounding_box(sofa_sectional)
+sofa_front_center = Vector(((sofa_mins.x + sofa_maxs.x)/2, sofa_maxs.y, (sofa_mins.z + sofa_maxs.z)/2))
+
+# coffee_table center is currently at its location.
+# We want coffee_table.center to be at sofa_front_center.
+# So coffee_table.location = sofa_front_center.
+coffee_table.location = sofa_front_center
+
+# Then move by offset(0.0, 1.2, 0.0).
+coffee_table.location += Vector((0.0, 1.2, 0.0))
+
+# Stage 5 complete.
+
+# --- SECTION 6 – Create Area Rug ---
+# Create primitive cuboid with size 2.5×2.0×0.005 m and name it rug.
+rug = add_primitive("rug", "cube", (2.5, 2.0, 0.005), (0, 0, 0), rot_z)
+apply_material(rug, mat_rug_fabric)
+
+# Rotate rug so its +Z axis aligns +Z (world). (Already default)
+
+# Align rug.bottom_face to room_shell.bottom_face.
+# room_shell bottom is Z=0.
+# rug bottom is Z=-0.0025.
+rug.location += Vector((0, 0, 0.0025))
+
+# Align rug.center to coffee_table.center.
+# coffee_table center is its current location.
+# Wait, coffee_table was moved. We need its current center.
+ct_mins, ct_maxs = get_bounding_box(coffee_table)
+ct_center = (ct_mins + ct_maxs) / 2
+
+# rug center is currently at its location.
+# We want rug.center to be at ct_center.
+rug.location = ct_center
+
+# Then move by offset(0.0, 0.8, 0.0025).
+rug.location += Vector((0.0, 0.8, 0.0025))
+
+# Stage 6 complete.
+
+# --- SECTION 7 – Create Floor Lamp ---
+# Create primitive cuboid with size 0.3×0.3×1.6 m and name it floor_lamp.
+floor_lamp = add_primitive("floor_lamp", "cube", (0.3, 0.3, 1.6), (0, 0, 0), rot_z)
+apply_material(floor_lamp, mat_metal_lamp_stand)
+
+# Rotate floor_lamp so its +Z axis aligns +Z (world). (Already default)
+
+# Align floor_lamp.bottom_face to room_shell.bottom_face.
+# room_shell bottom is Z=0.
+# floor_lamp bottom is Z=-0.8.
+floor_lamp.location += Vector((0, 0, 0.8))
+
+# Align floor_lamp.base to sofa_sectional.side.
+# sofa_sectional side (right face center).
+sofa_right_center = Vector((sofa_maxs.x, (sofa_mins.y + sofa_maxs.y)/2, (sofa_mins.z + sofa_maxs.z)/2))
+
+# floor_lamp base (bottom center).
+# Currently, floor_lamp center is (0,0,0.8). Base is (0,0,0).
+# We want floor_lamp.base to be at sofa_right_center.
+# So floor_lamp.location should be sofa_right_center.
+floor_lamp.location = sofa_right_center
+
+# Then move by offset(-1.2, 0.5, 0.0).
+floor_lamp.location += Vector((-1.2, 0.5, 0.0))
+
+# Stage 7 complete.
+
+# --- SECTION 8 – Create TV Screen ---
+# Create primitive cuboid with size 1.4×0.05×0.8 m and name it tv_screen.
+tv_screen = add_primitive("tv_screen", "cube", (1.4, 0.05, 0.8), (0, 0, 0), rot_z)
+apply_material(tv_screen, mat_glass_tv)
+
+# Rotate tv_screen so its +Z axis aligns +Z (world). (Already default)
+
+# Align tv_screen.bottom_face to tv_stand.top_face.
+# tv_stand top face Z.
+tv_stand_mins, tv_stand_maxs = get_bounding_box(tv_stand)
+tv_stand_top_z = tv_stand_maxs.z
+
+# tv_screen bottom face Z.
+# tv_screen center is (0,0,0). Bottom is -0.4.
+# We need to move tv_screen so its bottom is at tv_stand_top_z.
+# Current tv_screen bottom is -0.4.
+# Trans Z = tv_stand_top_z - (-0.4) = tv_stand_top_z + 0.4.
+tv_screen.location += Vector((0, 0, tv_stand_top_z + 0.4))
+
+# Align tv_screen.center to tv_stand.center.
+# tv_stand center.
+tv_stand_center = (tv_stand_mins + tv_stand_maxs) / 2
+
+# tv_screen center is currently at (0,0, tv_stand_top_z + 0.4).
+# We want tv_screen.center to be at tv_stand_center.
+# So we need to adjust X and Y.
+tv_screen.location.x = tv_stand_center.x
+tv_screen.location.y = tv_stand_center.y
+
+# Then move by offset(0.0, 0.0, 0.9).
+tv_screen.location += Vector((0.0, 0.0, 0.9))
+
+# Stage 8 complete.
+
+# --- SECTION 9 – Create Small Plant ---
+# Create primitive cuboid with size 0.2×0.2×0.3 m and name it small_plant.
+small_plant = add_primitive("small_plant", "cube", (0.2, 0.2, 0.3), (0, 0, 0), rot_z)
+apply_material(small_plant, mat_ceramic_pot)
+
+# Rotate small_plant so its +Z axis aligns +Z (world). (Already default)
+
+# Align small_plant.bottom_face to coffee_table.top_face.
+# coffee_table top face Z.
+ct_mins, ct_maxs = get_bounding_box(coffee_table)
+ct_top_z = ct_maxs.z
+
+# small_plant bottom face Z.
+# small_plant center is (0,0,0). Bottom is -0.15.
+# Trans Z = ct_top_z - (-0.15) = ct_top_z + 0.15.
+small_plant.location += Vector((0, 0, ct_top_z + 0.15))
+
+# Align small_plant.center to coffee_table.center.
+# coffee_table center.
+ct_center = (ct_mins + ct_maxs) / 2
+
+# small_plant center is currently at (0,0, ct_top_z + 0.15).
+# We want small_plant.center to be at ct_center.
+small_plant.location.x = ct_center.x
+small_plant.location.y = ct_center.y
+
+# Then move by offset(0.3, 1.3, 0.45).
+small_plant.location += Vector((0.3, 1.3, 0.45))
+
+# Stage 9 complete.
+
+# --- SECTION 10 – Create Large Plant ---
+# Create primitive cuboid with size 0.5×0.5×1.2 m and name it large_plant.
+large_plant = add_primitive("large_plant", "cube", (0.5, 0.5, 1.2), (0, 0, 0), rot_z)
+apply_material(large_plant, mat_ceramic_pot)
+
+# Rotate large_plant so its +Z axis aligns +Z (world). (Already default)
+
+# Align large_plant.bottom_face to room_shell.bottom_face.
+# room_shell bottom is Z=0.
+# large_plant bottom is Z=-0.6.
+large_plant.location += Vector((0, 0, 0.6))
+
+# Align large_plant.center to room_shell.corner.
+# room_shell corner (back-left-bottom) is (-3, -2.5, 0).
+# large_plant center is currently at (0,0,0.6).
+# We want large_plant.center to be at (-3, -2.5, 0.6)?
+# No, "center" usually implies the geometric center of the object.
+# If we align the center of the plant to the corner of the room, the plant will be half in the room.
+# Usually "align center to corner" means the object is centered on that point.
+# So large_plant.location = Vector((-3, -2.5, 0.6)).
+large_plant.location = Vector((-3, -2.5, 0.6))
+
+# Then move by offset(-2.2, -2.2, 0.0).
+large_plant.location += Vector((-2.2, -2.2, 0.0))
+
+# Stage 10 complete.
+
+# --- SECTION 11 – Create Lamp Shade ---
+# Create primitive cuboid with size 0.3×0.3×0.4 m and name it lamp_shade.
+lamp_shade = add_primitive("lamp_shade", "cube", (0.3, 0.3, 0.4), (0, 0, 0), rot_z)
+apply_material(lamp_shade, mat_fabric_lamp_shade)
+
+# Rotate lamp_shade so its +Z axis aligns +Z (world). (Already default)
+
+# Align lamp_shade.bottom_face to floor_lamp.top_face.
+# floor_lamp top face Z.
+fl_mins, fl_maxs = get_bounding_box(floor_lamp)
+fl_top_z = fl_maxs.z
+
+# lamp_shade bottom face Z.
+# lamp_shade center is (0,0,0). Bottom is -0.2.
+# Trans Z = fl_top_z - (-0.2) = fl_top_z + 0.2.
+lamp_shade.location += Vector((0, 0, fl_top_z + 0.2))
+
+# Align lamp_shade.center to floor_lamp.center.
+# floor_lamp center.
+fl_center = (fl_mins + fl_maxs) / 2
+
+# lamp_shade center is currently at (0,0, fl_top_z + 0.2).
+# We want lamp_shade.center to be at fl_center.
+lamp_shade.location.x = fl_center.x
+lamp_shade.location.y = fl_center.y
+
+# Then move by offset(-1.2, 0.5, 1.4).
+lamp_shade.location += Vector((-1.2, 0.5, 1.4))
+
+# Stage 11 complete.
+
+# --- SECTION 12 – Create Plant Leaves ---
+# Create primitive cuboid with size 0.4×0.4×0.5 m and name it plant_leaves.
+plant_leaves = add_primitive("plant_leaves", "cube", (0.4, 0.4, 0.5), (0, 0, 0), rot_z)
+apply_material(plant_leaves, mat_plant_leaves)
+
+# Rotate plant_leaves so its +Z axis aligns +Z (world). (Already default)
+
+# Align plant_leaves.bottom_face to large_plant.top_face.
+# large_plant top face Z.
+lp_mins, lp_maxs = get_bounding_box(large_plant)
+lp_top_z = lp_maxs.z
+
+# plant_leaves bottom face Z.
+# plant_leaves center is (0,0,0). Bottom is -0.25.
+# Trans Z = lp_top_z - (-0.25) = lp_top_z + 0.25.
+plant_leaves.location += Vector((0, 0, lp_top_z + 0.25))
+
+# Align plant_leaves.center to large_plant.center.
+# large_plant center.
+lp_center = (lp_mins + lp_maxs) / 2
+
+# plant_leaves center is currently at (0,0, lp_top_z + 0.25).
+# We want plant_leaves.center to be at lp_center.
+plant_leaves.location.x = lp_center.x
+plant_leaves.location.y = lp_center.y
+
+# Then move by offset(-2.2, -2.2, 0.6).
+plant_leaves.location += Vector((-2.2, -2.2, 0.6))
+
+# Stage 12 complete.
+
+# All stages complete.
+```

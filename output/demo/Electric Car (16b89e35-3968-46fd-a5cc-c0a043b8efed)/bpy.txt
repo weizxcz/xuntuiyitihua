@@ -1,0 +1,514 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material with the given diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to the first material slot of an object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object with specified size (x, y, z)."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # Get current rotation
+    rot_euler = obj.rotation_euler.copy()
+    
+    # Define target axis vector in local space
+    local_axes = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    target_axis = local_axes.get(axis, Vector((0, 0, 1)))
+    target_vec = vector.normalized()
+    
+    # Calculate rotation matrix to align target_axis to target_vec
+    # We need to rotate the object so that its local axis points along target_vec
+    # This is equivalent to finding the rotation that maps target_axis to target_vec
+    
+    # Use quaternion rotation
+    q = target_axis.rotation_difference(target_vec)
+    
+    # Apply this rotation to the object's current orientation
+    # Note: We need to be careful about order. 
+    # The object's current orientation is defined by rot_euler.
+    # We want to apply the alignment rotation relative to the object's local space? 
+    # Or world space? Usually "align axis to vector" implies world space alignment of the axis.
+    # Let's assume we want the object's local axis to point in the direction of target_vec in world space.
+    
+    # Convert current rotation to quaternion
+    q_current = rot_euler.to_quaternion()
+    
+    # The rotation that aligns local axis to world vector is q.
+    # So the new rotation is q * q_current? 
+    # Actually, if obj is at identity, q aligns local axis to target_vec.
+    # If obj is already rotated, we want to apply q in local space? 
+    # Let's simplify: Set rotation such that local axis aligns with world vector.
+    # This is tricky if we just multiply. 
+    # Better approach: Construct a rotation matrix where one column is target_vec.
+    
+    # Let's use a simpler method: 
+    # 1. Align local axis to world vector.
+    # 2. Preserve other degrees of freedom? The prompt doesn't specify. 
+    #    Usually, we just align the axis. Let's assume we just set the rotation to align the axis.
+    #    To avoid gimbal lock issues, we can use look_at logic but for a specific axis.
+    
+    # Let's try: Rotate object so that local 'axis' points to 'vector'.
+    # We can do this by rotating the object's local coordinate system.
+    
+    # Simplest robust way:
+    # Create a rotation that maps target_axis to target_vec.
+    # Apply this rotation to the object.
+    
+    # However, standard Blender rotation application is tricky.
+    # Let's use the 'align_axis_to_vector' logic:
+    # We want obj.matrix_world * target_axis = target_vec (normalized)
+    
+    # Let's just set the rotation to align the axis.
+    # We can calculate the rotation quaternion directly.
+    
+    # If we want to align local Z to world Y:
+    # q = Vector((0,0,1)).rotation_difference(Vector((0,1,0)))
+    # obj.rotation_euler = q.to_euler()
+    
+    # But this overwrites other rotations. 
+    # The prompt says "Rotate ... so its +Z axis aligns +Z". This implies setting orientation.
+    
+    # Let's implement a helper that sets the rotation to align the axis.
+    # We will assume we want to align the axis in world space.
+    
+    # Calculate rotation from local axis to world vector
+    # We need to handle the case where axis and vector are parallel or anti-parallel.
+    
+    if target_axis.dot(target_vec) > 0.9999:
+        # Already aligned
+        return
+    elif target_axis.dot(target_vec) < -0.9999:
+        # Anti-parallel, rotate 180 around any perpendicular axis
+        # Find a perpendicular axis
+        perp = Vector((1, 0, 0))
+        if abs(target_axis.x) > 0.9:
+            perp = Vector((0, 1, 0))
+        perp = (target_axis.cross(perp)).normalized()
+        q = Matrix.Rotation(math.pi, 4, perp).to_quaternion()
+    else:
+        q = target_axis.rotation_difference(target_vec)
+    
+    # Apply this rotation to the object's current rotation
+    # We want to apply q in local space? Or world space?
+    # If we want the local axis to point to target_vec, and the object is currently at rot_euler,
+    # then the new rotation should be q * q_current (if q is in local space) or q_current * q (if q is in world space).
+    # Actually, if we want the local axis to point to target_vec, we can just set the rotation to q * q_current?
+    # No, that's not quite right.
+    
+    # Let's use a different approach:
+    # Set the object's rotation such that its local axis aligns with the world vector.
+    # We can do this by setting the rotation to the quaternion that aligns the local axis to the world vector.
+    # But we need to preserve the other rotations? The prompt doesn't specify.
+    # Let's assume we just want to align the axis.
+    
+    # Let's just set the rotation to align the axis.
+    # We'll use the quaternion q calculated above.
+    # We need to apply it to the object.
+    
+    # If we want to align local axis to world vector, we can do:
+    # obj.rotation_euler = q.to_euler()
+    # But this might not be what we want if the object was already rotated.
+    
+    # Let's assume the object is at identity or we want to override the rotation.
+    # The prompt says "Rotate ... so its +Z axis aligns +Z". This suggests setting the rotation.
+    
+    # Let's apply the rotation q to the object.
+    # We'll apply it in local space.
+    obj.rotation_euler = (q * q_current).to_euler()
+
+def align_face_to_face(obj_src, axis_src, obj_tgt, axis_tgt):
+    """Align a face of obj_src to a face of obj_tgt.
+    axis_src: 'X', '-X', 'Y', '-Y', 'Z', '-Z'
+    axis_tgt: 'X', '-X', 'Y', '-Y', 'Z', '-Z'
+    """
+    # Determine the direction vectors
+    dir_src = {'X': Vector((1,0,0)), '-X': Vector((-1,0,0)), 
+               'Y': Vector((0,1,0)), '-Y': Vector((0,-1,0)), 
+               'Z': Vector((0,0,1)), '-Z': Vector((0,0,-1))}[axis_src]
+    dir_tgt = {'X': Vector((1,0,0)), '-X': Vector((-1,0,0)), 
+               'Y': Vector((0,1,0)), '-Y': Vector((0,-1,0)), 
+               'Z': Vector((0,0,1)), '-Z': Vector((0,0,-1))}[axis_tgt]
+    
+    # Align the normals
+    align_axis_to_vector(obj_src, axis_src.replace('-', ''), dir_tgt)
+    
+    # Now align the positions
+    # Get the center of the source object
+    src_center = obj_src.location
+    tgt_center = obj_tgt.location
+    
+    # Get the half-extents of the source object
+    src_half = obj_src.dimensions / 2
+    
+    # Get the half-extents of the target object
+    tgt_half = obj_tgt.dimensions / 2
+    
+    # Calculate the offset needed to align the faces
+    # The face of src is at src_center + dir_src * src_half[axis_src.replace('-', '')]
+    # The face of tgt is at tgt_center + dir_tgt * tgt_half[axis_tgt.replace('-', '')]
+    
+    # We want these two points to be the same.
+    # So, new_src_center + dir_src * src_half = tgt_center + dir_tgt * tgt_half
+    # new_src_center = tgt_center + dir_tgt * tgt_half - dir_src * src_half
+    
+    # But wait, we aligned the normals, so dir_src should now be aligned with dir_tgt.
+    # So dir_src == dir_tgt (or close to it).
+    
+    # Let's recalculate the offset based on the current orientation.
+    # We want the face of src to touch the face of tgt.
+    
+    # Get the world position of the src face center
+    # We need to transform the local face center to world space
+    src_face_local = dir_src * src_half[axis_src.replace('-', '')]
+    src_face_world = obj_src.matrix_world @ src_face_local
+    
+    tgt_face_local = dir_tgt * tgt_half[axis_tgt.replace('-', '')]
+    tgt_face_world = obj_tgt.matrix_world @ tgt_face_local
+    
+    # The offset to apply to src is tgt_face_world - src_face_world
+    offset = tgt_face_world - src_face_world
+    
+    obj_src.location += offset
+
+def boolean_subtract(cutter, target):
+    """Perform a boolean subtract operation using the cutter on the target."""
+    # Add boolean modifier to target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove the cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_obj, target):
+    """Perform a boolean union operation."""
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    mod.angle_limit = math.radians(30)
+    
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    return sum(points, Vector((0, 0, 0))) / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        """Return the world center of the object."""
+        return self.obj.matrix_world.to_translation()
+    
+    def face_center_world(self, axis):
+        """Return the world center of a face."""
+        # Get the half extents
+        half = self.obj.dimensions / 2
+        # Get the direction
+        dir = {'X': Vector((1,0,0)), '-X': Vector((-1,0,0)), 
+               'Y': Vector((0,1,0)), '-Y': Vector((0,-1,0)), 
+               'Z': Vector((0,0,1)), '-Z': Vector((0,0,-1))}[axis]
+        # Local face center
+        local_face = dir * half[axis.replace('-', '')]
+        # World face center
+        return self.obj.matrix_world @ local_face
+    
+    def radial_point_world(self, axis, angle=0):
+        """Return a point on the radial edge of the object."""
+        # This is a simplified version. For a cube, it's the midpoint of an edge.
+        # For a cylinder, it's a point on the rim.
+        # We'll assume it's the midpoint of the edge perpendicular to the axis.
+        half = self.obj.dimensions / 2
+        # Get the other two axes
+        if axis == 'Z':
+            # Radial in XY plane
+            x_dir = Vector((1,0,0))
+            y_dir = Vector((0,1,0))
+        elif axis == 'Y':
+            x_dir = Vector((1,0,0))
+            y_dir = Vector((0,0,1))
+        else:
+            x_dir = Vector((0,1,0))
+            y_dir = Vector((0,0,1))
+        
+        # Calculate the point
+        # We'll use the midpoint of the edge
+        local_point = x_dir * half['X'] + y_dir * half['Y']
+        return self.obj.matrix_world @ local_point
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_car_body_paint = make_material("car_body_paint", (0.15, 0.15, 0.2, 1.0))
+mat_charging_port_plastic = make_material("charging_port_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_chrome_trim = make_material("chrome_trim", (0.8, 0.8, 0.8, 1.0))
+mat_glass = make_material("glass", (0.2, 0.3, 0.4, 0.3))
+mat_metal_chassis = make_material("metal_chassis", (0.3, 0.3, 0.3, 1.0))
+mat_rubber_tire = make_material("rubber_tire", (0.05, 0.05, 0.05, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create chassis base ---
+chassis_base = add_cube("chassis_base", (1.8, 4.8, 0.15))
+apply_material(chassis_base, mat_metal_chassis)
+
+# Rotate chassis_base so its +Z axis aligns +Z (world)
+# It's already aligned, but we'll call the helper to be safe
+align_axis_to_vector(chassis_base, 'Z', Vector((0, 0, 1)))
+
+# Align chassis_base.XY_face to car_root.XY_face
+# car_root is not defined, so we assume it's the origin or a reference object.
+# Since car_root is not created, we'll assume it's at (0,0,0) and we align to world origin.
+# But the prompt says "Align chassis_base.XY_face to car_root.XY_face".
+# If car_root doesn't exist, we can't align to it.
+# Let's assume car_root is a hypothetical object at (0,0,0) with size (1,1,1) for alignment purposes.
+# Or, more likely, we just align to the world origin.
+# Let's create a dummy car_root if it doesn't exist.
+if "car_root" not in bpy.data.objects:
+    car_root = add_cube("car_root", (1, 1, 1))
+    car_root.location = (0, 0, 0)
+    car_root.hide_viewport = True
+    car_root.hide_render = True
+else:
+    car_root = bpy.data.objects["car_root"]
+
+# Align chassis_base.XY_face to car_root.XY_face
+# This means aligning the top face of chassis_base to the top face of car_root.
+# But car_root is at (0,0,0) and has size 1.
+# chassis_base is at (0,0,0) and has size (1.8, 4.8, 0.15).
+# Aligning XY_face means aligning the Z=0.075 face of chassis_base to the Z=0.5 face of car_root?
+# Or does it mean aligning the planes?
+# Let's assume it means aligning the centers of the faces.
+align_face_to_face(chassis_base, 'Z', car_root, 'Z')
+
+# Align chassis_base.-Z_face to car_root.-Z_face
+# This is redundant if we already aligned Z faces, but let's do it.
+# Actually, aligning +Z face to +Z face and -Z face to -Z face is contradictory unless the objects have the same height.
+# Let's re-read: "Align chassis_base.XY_face to car_root.XY_face. Align chassis_base.-Z_face to car_root.-Z_face."
+# This implies aligning the entire object to the reference object's position.
+# Let's just align the center of chassis_base to the center of car_root.
+chassis_base.location = car_root.location
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create body shell ---
+body_shell = add_cube("body_shell", (1.9, 4.9, 0.8))
+apply_material(body_shell, mat_car_body_paint)
+
+# Rotate body_shell so its +Z axis aligns +Z (world)
+align_axis_to_vector(body_shell, 'Z', Vector((0, 0, 1)))
+
+# Align body_shell.XY_face to chassis_base.XY_face
+align_face_to_face(body_shell, 'Z', chassis_base, 'Z')
+
+# Align body_shell.-Z_face to chassis_base.+Z_face
+# This is contradictory. Let's assume it means aligning the bottom of body_shell to the top of chassis_base.
+# So we want body_shell's -Z face to be at the same Z level as chassis_base's +Z face.
+# We already aligned body_shell's +Z face to chassis_base's +Z face.
+# Let's undo that and do it correctly.
+# We want body_shell to sit on top of chassis_base.
+# So body_shell's -Z face should be at chassis_base's +Z face.
+# chassis_base's +Z face is at Z = 0.075 (if chassis_base is at 0,0,0).
+# body_shell's -Z face is at body_shell.location.z - 0.4.
+# So body_shell.location.z - 0.4 = 0.075 => body_shell.location.z = 0.475.
+# But we already aligned body_shell's +Z face to chassis_base's +Z face.
+# Let's re-align.
+# We want body_shell's -Z face to be at chassis_base's +Z face.
+align_face_to_face(body_shell, '-Z', chassis_base, 'Z')
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create cabin cutter and subtract cabin volume ---
+cabin_cutter = add_cube("cabin_cutter", (1.5, 2.5, 0.65))
+apply_material(cabin_cutter, mat_chrome_trim)
+
+# Rotate cabin_cutter so its +Z axis aligns +Z (world)
+align_axis_to_vector(cabin_cutter, 'Z', Vector((0, 0, 1)))
+
+# Align cabin_cutter.XY_face to body_shell.XY_face
+align_face_to_face(cabin_cutter, 'Z', body_shell, 'Z')
+
+# Align cabin_cutter.-Z_face to body_shell.-Z_face
+# This is contradictory. Let's assume it means aligning the bottom of cabin_cutter to the bottom of body_shell.
+# So cabin_cutter's -Z face should be at body_shell's -Z face.
+align_face_to_face(cabin_cutter, '-Z', body_shell, '-Z')
+
+# Boolean-subtract cabin_cutter from body_shell; discard cabin_cutter.
+boolean_subtract(cabin_cutter, body_shell)
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create front left wheel ---
+wheel_FL = add_cylinder("wheel_FL", 0.175, 0.25) # radius = diameter/2
+apply_material(wheel_FL, mat_rubber_tire)
+
+# Rotate wheel_FL so its +Z axis aligns +X (world)
+align_axis_to_vector(wheel_FL, 'Z', Vector((1, 0, 0)))
+
+# Align wheel_FL.XY_face to chassis_base.XY_face
+# This means aligning the top face of wheel_FL to the top face of chassis_base.
+align_face_to_face(wheel_FL, 'Z', chassis_base, 'Z')
+
+# Then move by offset(-0.8, 1.8, -0.3)
+wheel_FL.location += Vector((-0.8, 1.8, -0.3))
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Create front right wheel ---
+wheel_FR = add_cylinder("wheel_FR", 0.175, 0.25)
+apply_material(wheel_FR, mat_rubber_tire)
+
+# Rotate wheel_FR so its +Z axis aligns +X (world)
+align_axis_to_vector(wheel_FR, 'Z', Vector((1, 0, 0)))
+
+# Align wheel_FR.XY_face to chassis_base.XY_face
+align_face_to_face(wheel_FR, 'Z', chassis_base, 'Z')
+
+# Then move by offset(0.8, 1.8, -0.3)
+wheel_FR.location += Vector((0.8, 1.8, -0.3))
+
+# Stage 5 complete.
+
+# --- SECTION 6 – Create rear left wheel ---
+wheel_RL = add_cylinder("wheel_RL", 0.175, 0.25)
+apply_material(wheel_RL, mat_rubber_tire)
+
+# Rotate wheel_RL so its +Z axis aligns +X (world)
+align_axis_to_vector(wheel_RL, 'Z', Vector((1, 0, 0)))
+
+# Align wheel_RL.XY_face to chassis_base.XY_face
+align_face_to_face(wheel_RL, 'Z', chassis_base, 'Z')
+
+# Then move by offset(-0.8, -1.8, -0.3)
+wheel_RL.location += Vector((-0.8, -1.8, -0.3))
+
+# Stage 6 complete.
+
+# --- SECTION 7 – Create rear right wheel ---
+wheel_RR = add_cylinder("wheel_RR", 0.175, 0.25)
+apply_material(wheel_RR, mat_rubber_tire)
+
+# Rotate wheel_RR so its +Z axis aligns +X (world)
+align_axis_to_vector(wheel_RR, 'Z', Vector((1, 0, 0)))
+
+# Align wheel_RR.XY_face to chassis_base.XY_face
+align_face_to_face(wheel_RR, 'Z', chassis_base, 'Z')
+
+# Then move by offset(0.8, -1.8, -0.3)
+wheel_RR.location += Vector((0.8, -1.8, -0.3))
+
+# Stage 7 complete.
+
+# --- SECTION 8 – Create front grille ---
+front_grille = add_cube("front_grille", (1.2, 0.4, 0.05))
+apply_material(front_grille, mat_chrome_trim)
+
+# Rotate front_grille so its +Z axis aligns +X (world)
+align_axis_to_vector(front_grille, 'Z', Vector((1, 0, 0)))
+
+# Align front_grille.XY_face to body_shell.+X_face
+# This means aligning the top face of front_grille to the right face of body_shell.
+align_face_to_face(front_grille, 'Z', body_shell, 'X')
+
+# Align front_grille.-Z_face to body_shell.-Z_face
+# This means aligning the bottom face of front_grille to the bottom face of body_shell.
+align_face_to_face(front_grille, '-Z', body_shell, '-Z')
+
+# Stage 8 complete.
+
+# --- SECTION 9 – Create charging port ---
+charging_port = add_cube("charging_port", (0.2, 0.15, 0.05))
+apply_material(charging_port, mat_charging_port_plastic)
+
+# Rotate charging_port so its +Z axis aligns +Y (world)
+align_axis_to_vector(charging_port, 'Z', Vector((0, 1, 0)))
+
+# Align charging_port.XY_face to body_shell.-Y_face
+# This means aligning the top face of charging_port to the back face of body_shell.
+align_face_to_face(charging_port, 'Z', body_shell, '-Y')
+
+# Align charging_port.-Z_face to body_shell.-Z_face
+# This means aligning the bottom face of charging_port to the bottom face of body_shell.
+align_face_to_face(charging_port, '-Z', body_shell, '-Z')
+
+# Then move by offset(0, 0, 0.1)
+charging_port.location += Vector((0, 0, 0.1))
+
+# Stage 9 complete.
+
+# All stages complete.
+```

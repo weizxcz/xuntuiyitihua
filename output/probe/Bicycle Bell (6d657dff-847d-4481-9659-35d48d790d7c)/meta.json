@@ -1,0 +1,43 @@
+{
+  "id": "6d657dff-847d-4481-9659-35d48d790d7c",
+  "name": "Bicycle Bell",
+  "instruction": "Design a bicycle bell. The bell is a simple dome shape with a diameter of 2 inches. It has a small lever on the side for ringing. Attach a clamp underneath for securing it to the handlebars.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a bicycle bell.",
+        "The bell has a simple dome shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The diameter of the bell is 2 inches."
+      ],
+      "Proportion": [
+        "The lever is proportionate to the bell."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The lever is positioned correctly on the side of the bell.",
+        "The clamp is appropriately placed underneath the bell."
+      ],
+      "Object distance and contact": [
+        "The clamp does not interfere with the bell's operation.",
+        "The lever is easily accessible without obstruction."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

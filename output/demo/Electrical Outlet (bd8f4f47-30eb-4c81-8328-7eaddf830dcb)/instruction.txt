@@ -1,0 +1,1 @@
+Create a standard electrical outlet. It should have two vertical slots and a round hole for the grounding pin.

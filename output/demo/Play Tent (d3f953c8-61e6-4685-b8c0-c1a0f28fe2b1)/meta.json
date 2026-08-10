@@ -1,0 +1,52 @@
+{
+  "id": "d3f953c8-61e6-4685-b8c0-c1a0f28fe2b1",
+  "name": "Play Tent",
+  "instruction": "Let's design a play tent. It should have a triangular frame with a fabric cover. The entrance should be in the front. Add a small window on one side. Inside, place a soft mat. Make sure the tent can be easily assembled and disassembled. The tent should be lightweight and portable. Add a small carrying bag for storage.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a play tent with a triangular frame.",
+        "There is a fabric cover over the frame.",
+        "The entrance is located at the front.",
+        "A small window is added on one side.",
+        "Inside, there is a soft mat placed on the ground."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the window is appropriate for the side of the tent.",
+        "The soft mat fits well inside the tent."
+      ],
+      "Texture and surface detail": [
+        "The fabric cover has a smooth texture suitable for a tent.",
+        "The soft mat has a comfortable texture for sitting or lying."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The triangular frame provides stability.",
+        "The fabric cover is securely attached to the frame.",
+        "The entrance is designed for easy access.",
+        "The small window allows for ventilation and light."
+      ],
+      "Object distance and contact": [
+        "The fabric cover does not gap from the frame.",
+        "The soft mat stays in place inside the tent."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The tent design includes a triangular frame, fabric cover, entrance, window, and mat.",
+        "The tent is designed to be lightweight and portable.",
+        "A small carrying bag for storage is included."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

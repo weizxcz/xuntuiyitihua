@@ -1,0 +1,47 @@
+{
+  "id": "5401f3b3-251a-410e-aab6-009016c45903",
+  "name": "Logo Design",
+  "instruction": "Create a 3D model of a logo. The logo should be a simple geometric shape, such as a circle or square, with an embedded letter or symbol in the center.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The logo is a geometric shape.",
+        "The shape is either a circle or a square.",
+        "The embedded letter or symbol is centrally located."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The embedded letter or symbol is proportionate to the geometric shape.",
+        "The overall dimensions maintain a balanced appearance."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The logo has depth to enhance its three-dimensional appearance.",
+        "The embedded letter or symbol is properly positioned within the shape.",
+        "The logo maintains a stable base if applicable."
+      ],
+      "Object distance and contact": [
+        "The embedded letter or symbol does not overlap the edges of the geometric shape.",
+        "There is a clear distinction between the shape and the embedded element."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The logo design adheres to the requirement of being a geometric shape.",
+        "The embedded letter or symbol is accurately represented in the center.",
+        "All specified attributes are accurately represented."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

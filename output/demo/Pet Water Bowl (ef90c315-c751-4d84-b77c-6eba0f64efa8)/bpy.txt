@@ -1,0 +1,281 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if not obj.data.materials:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, depth, segments=32):
+    """Add a disc (short cylinder) mesh object."""
+    return add_cylinder(name, radius, depth, segments)
+
+def add_cube(name, size):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, segments=32):
+    """Add a cone/tapered cylinder."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add an UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Align an object's local axis to a world vector."""
+    vec = Vector(vector).normalized()
+    axis_map = {
+        'X': obj.matrix_world.to_3x3().col[0],
+        'Y': obj.matrix_world.to_3x3().col[1],
+        'Z': obj.matrix_world.to_3x3().col[2]
+    }
+    current_axis = axis_map[axis]
+    
+    # Calculate rotation matrix to align current_axis to vec
+    rot_mat = current_axis.rotation_difference(vec).to_matrix().to_4x4()
+    obj.matrix_world = rot_mat @ obj.matrix_world
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        """Return the world position of the object's center."""
+        return self.obj.matrix_world.to_translation()
+
+    def face_center_world(self, face_normal_axis='Z'):
+        """Return the world position of the face center along the specified local axis."""
+        # Assuming the object is axis-aligned or we want the face in the direction of the axis
+        # For a cylinder/cone, +Z face is at top, -Z at bottom.
+        # We calculate the offset from center to the face in local space, then transform to world.
+        local_offset = Vector((0, 0, 0))
+        if face_normal_axis == 'Z':
+            local_offset.z = self.obj.dimensions.z / 2
+        elif face_normal_axis == 'Y':
+            local_offset.y = self.obj.dimensions.y / 2
+        elif face_normal_axis == 'X':
+            local_offset.x = self.obj.dimensions.x / 2
+        
+        # Transform local offset to world space
+        world_offset = self.obj.matrix_world @ local_offset - self.obj.matrix_world.to_translation()
+        return self.center_world() + world_offset
+
+    def radial_point_world(self, radius, angle=0, axis='Z'):
+        """Return a point on the radial edge."""
+        center = self.center_world()
+        # Simple radial point calculation assuming Z-up cylinder
+        x = radius * cos(angle)
+        y = radius * sin(angle)
+        z = 0
+        pt_local = Vector((x, y, z))
+        return self.obj.matrix_world @ pt_local
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using cutter on target."""
+    cutter = bpy.data.objects.get(cutter_name)
+    target = bpy.data.objects.get(target_name)
+    
+    if not cutter or not target:
+        print(f"Error: Object {cutter_name} or {target_name} not found.")
+        return
+
+    # Create cutter object for boolean
+    cutter_obj = cutter.copy()
+    cutter_obj.data = cutter.data.copy()
+    cutter_obj.name = cutter_name + "_cutter"
+    bpy.context.collection.objects.link(cutter_obj)
+    
+    # Apply cutter's transform to the new cutter object
+    cutter_obj.matrix_world = cutter.matrix_world
+
+    # Add Boolean Modifier to Target
+    bool_mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    bool_mod.operation = 'DIFFERENCE'
+    bool_mod.object = cutter_obj
+    
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+    
+    # Clean up cutter object
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    # Remove cutter data if not used elsewhere
+    if cutter.data.users == 0:
+        bpy.data.meshes.remove(cutter.data)
+
+def boolean_union(objects_to_union, keep_object_name):
+    """Perform boolean union on a list of objects, keeping the first one."""
+    if not objects_to_union:
+        return
+    
+    target = bpy.data.objects.get(keep_object_name)
+    if not target:
+        print(f"Error: Target object {keep_object_name} not found.")
+        return
+
+    # We will iteratively union other objects into the target
+    # Note: Blender's boolean union can be tricky with multiple objects. 
+    # A common approach is to join them first or use a loop.
+    # Here we use a loop with boolean union modifier.
+    
+    for obj in objects_to_union:
+        if obj.name == keep_object_name:
+            continue
+            
+        # Create a temporary union object or use the target directly
+        # To avoid modifier stack issues, we apply them one by one.
+        
+        # Add boolean union modifier to target
+        bool_mod = target.modifiers.new(name=f"BooleanUnion_{obj.name}", type='BOOLEAN')
+        bool_mod.operation = 'UNION'
+        bool_mod.object = obj
+        
+        # Apply modifier
+        bpy.context.view_layer.objects.active = target
+        bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+        
+        # Remove the source object after union
+        bpy.data.objects.remove(obj, do_unlink=True)
+        if obj.data.users == 0:
+            bpy.data.meshes.remove(obj.data)
+
+# --- Main Script Execution ---
+
+# (a) Scene Reset & Units
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Remove orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# (b) Material Creation
+mat_ceramic_white = make_material("ceramic_white", diffuse_color=(0.95, 0.95, 0.95, 1.0))
+
+# (c) Geometry Generation
+
+# --- SECTION 1 – Create base_disc ---
+# Create primitive cylinder with diameter 0.203 m and height 0.025 m
+base_disc = add_disc("base_disc", radius=0.203/2, depth=0.025)
+apply_material(base_disc, mat_ceramic_white)
+
+# Rotate base_disc so its +Z axis aligns +Z (world)
+# Default cylinder is Z-up, so this is already aligned, but we enforce it.
+align_axis_to_vector(base_disc, 'Z', (0, 0, 1))
+
+# Anchor base_disc to world origin
+base_disc.location = (0, 0, 0)
+
+# Move by offset(0,0,0)
+base_disc.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create outer_wall ---
+# Create primitive cylinder with diameter 0.203 m and height 0.076 m
+outer_wall = add_cylinder("outer_wall", radius=0.203/2, depth=0.076)
+apply_material(outer_wall, mat_ceramic_white)
+
+# Rotate outer_wall so its +Z axis aligns +Z (world)
+align_axis_to_vector(outer_wall, 'Z', (0, 0, 1))
+
+# Anchor outer_wall to base_disc.+Z_face
+loc_base = Locator(base_disc)
+anchor_point = loc_base.face_center_world('Z')
+outer_wall.location = anchor_point
+
+# Move by offset(0,0,0.025)
+# The offset is in reference local axes. Since outer_wall is Z-aligned, local Z is world Z.
+outer_wall.location += Vector((0, 0, 0.025))
+
+# --- SECTION 3 – Create inner_wall ---
+# Create primitive cylinder with diameter 0.178 m and height 0.051 m
+inner_wall = add_cylinder("inner_wall", radius=0.178/2, depth=0.051)
+apply_material(inner_wall, mat_ceramic_white)
+
+# Rotate inner_wall so its +Z axis aligns +Z (world)
+align_axis_to_vector(inner_wall, 'Z', (0, 0, 1))
+
+# Anchor inner_wall to base_disc.+Z_face
+anchor_point_inner = loc_base.face_center_world('Z')
+inner_wall.location = anchor_point_inner
+
+# Move by offset(0,0,0.025)
+inner_wall.location += Vector((0, 0, 0.025))
+
+# --- SECTION 4 – Assemble Bowl ---
+# Boolean-union outer_wall and inner_wall to base_disc; keep base_disc.
+# Note: The prompt says "Boolean-union outer_wall and inner_wall to base_disc".
+# This implies base_disc is the target, and outer_wall and inner_wall are added to it.
+# However, usually "assemble" implies combining them into a single mesh.
+# We will union outer_wall and inner_wall into base_disc.
+
+# First, let's handle the boolean union.
+# We need to ensure the objects are in the correct relative positions before union.
+# They are already positioned relative to base_disc.
+
+# Perform Union: base_disc + outer_wall
+boolean_union([outer_wall], "base_disc")
+
+# Perform Union: base_disc + inner_wall
+boolean_union([inner_wall], "base_disc")
+
+# The result is in base_disc.
+# Clean up any remaining temporary objects if necessary (already handled in boolean_union)
+
+print("All stages complete.")
+```

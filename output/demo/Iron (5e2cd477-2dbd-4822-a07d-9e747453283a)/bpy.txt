@@ -1,0 +1,337 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Alpha'].default_value = diffuse_color[3]
+    return mat
+
+def add_primitive(name, shape, size, location, rotation_euler):
+    """Add a primitive mesh object and apply transforms."""
+    if shape == 'cube':
+        bpy.ops.mesh.primitive_cube_add(size=size[0], location=location)
+        obj = bpy.context.active_object
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        # size: (diameter, height)
+        bpy.ops.mesh.primitive_cylinder_add(radius=size[0]/2, depth=size[1], location=location)
+        obj = bpy.context.active_object
+    elif shape == 'cone':
+        # size: (bottom_radius, top_radius, height)
+        bpy.ops.mesh.primitive_cone_add(radius1=size[0], radius2=size[1], depth=size[2], location=location)
+        obj = bpy.context.active_object
+    elif shape == 'uvsphere':
+        # size: (diameter)
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0]/2, location=location)
+        obj = bpy.context.active_object
+    
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # Determine current axis vector
+    if axis == 'X':
+        current = Vector((1, 0, 0))
+    elif axis == 'Y':
+        current = Vector((0, 1, 0))
+    elif axis == 'Z':
+        current = Vector((0, 0, 1))
+    
+    # Calculate rotation matrix
+    rot_mat = current.rotation_difference(vector).to_matrix().to_4x4()
+    
+    # Apply rotation relative to current orientation
+    obj.rotation_euler = rot_mat.to_euler()
+
+def get_face_center(obj, face_axis):
+    """Get the world location of a face center based on axis."""
+    # Ensure object is at origin for calculation, then transform
+    # We need the normal of the face in world space
+    # Simplified: The face center is at local offset + object world location
+    # But we need to account for rotation.
+    
+    # Get the local normal of the face
+    if face_axis == '+X': local_normal = Vector((1, 0, 0))
+    elif face_axis == '-X': local_normal = Vector((-1, 0, 0))
+    elif face_axis == '+Y': local_normal = Vector((0, 1, 0))
+    elif face_axis == '-Y': local_normal = Vector((0, -1, 0))
+    elif face_axis == '+Z': local_normal = Vector((0, 0, 1))
+    elif face_axis == '-Z': local_normal = Vector((0, 0, -1))
+    
+    # Transform normal to world space
+    world_normal = obj.matrix_world.to_3x3() @ local_normal
+    
+    # Get the half-dimensions to find the face center
+    half_size = obj.dimensions / 2
+    
+    # The face center is the object center + (half_size * world_normal)
+    # Note: obj.dimensions is in world space if object is scaled, but here we assume uniform scaling or no scale for alignment logic simplicity.
+    # However, for precise alignment, we should use the local extent transformed.
+    
+    # Let's use a more robust method: Project the object's bounding box corners
+    # Or simpler: The face center is at obj.location + (obj.matrix_world.to_3x3() @ (half_size * local_normal))
+    
+    # Wait, obj.dimensions returns world-space dimensions if scale != 1.
+    # If scale is 1, obj.dimensions == local dimensions.
+    # Let's assume scale is 1 for these primitives.
+    
+    offset = half_size * local_normal
+    world_offset = obj.matrix_world.to_3x3() @ offset
+    return obj.location + world_offset
+
+def align_faces(obj_source, source_face, obj_target, target_face):
+    """Align source face to target face (coplanar and same normal)."""
+    src_loc = get_face_center(obj_source, source_face)
+    tgt_loc = get_face_center(obj_target, target_face)
+    
+    # Calculate translation vector
+    diff = tgt_loc - src_loc
+    
+    # Apply translation
+    obj_source.location += diff
+
+def boolean_subtract(cutter, target):
+    """Perform boolean subtract using BMesh."""
+    # Create a copy of the target for boolean operation to avoid modifying original data directly if needed,
+    # but here we modify the target mesh directly.
+    
+    # Convert target to BMesh
+    bm = bmesh.new()
+    bm.from_mesh(target.data)
+    
+    # Convert cutter to BMesh
+    bm_cutter = bmesh.new()
+    bm_cutter.from_mesh(cutter.data)
+    
+    # Transform cutter bm to world space
+    bm_cutter.transform(cutter.matrix_world)
+    
+    # Perform boolean difference
+    bmesh.ops.boolean_cutter(
+        bm,
+        clipper_empty=False,
+        clipper_cut=True,
+        use_clipping=True,
+        use_boolean_result=True,
+        objects=[cutter], # This doesn't work directly with bm_cutter
+        # Actually, bmesh.ops.boolean_cutter takes a list of objects or a single mesh.
+        # Easier approach: Use bpy.ops.mesh.boolean_union/subtract on duplicates
+        pass
+    )
+    
+    # Fallback: Use bpy.ops for reliability in script context
+    # Select both
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    cutter.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    # We need to apply the cutter's transform to the target's context or use modifiers.
+    # Let's use modifiers for non-destructive, then apply.
+    
+    # Remove existing boolean modifier on target
+    for mod in target.modifiers:
+        if mod.type == 'BOOLEAN':
+            target.modifiers.remove(mod)
+            
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Clean up cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    
+    # Update mesh
+    target.data.update()
+
+def boolean_union(obj1, obj2):
+    """Perform boolean union."""
+    bpy.ops.object.select_all(action='DESELECT')
+    obj1.select_set(True)
+    obj2.select_set(True)
+    bpy.context.view_layer.objects.active = obj1
+    
+    for mod in obj1.modifiers:
+        if mod.type == 'BOOLEAN':
+            obj1.modifiers.remove(mod)
+            
+    mod = obj1.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = obj2
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(obj2, do_unlink=True)
+    obj1.data.update()
+
+# --- BLOCK 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- BLOCK 1: Materials ---
+
+mat_cord_black = make_material("cord_black", (0.1, 0.1, 0.1, 1.0))
+mat_metal_silver = make_material("metal_silver", (0.8, 0.8, 0.85, 1.0))
+mat_plastic_blue = make_material("plastic_blue", (0.2, 0.4, 0.8, 1.0))
+mat_plastic_grey = make_material("plastic_grey", (0.5, 0.5, 0.5, 1.0))
+mat_plastic_translucent = make_material("plastic_translucent", (0.9, 0.9, 0.95, 0.3))
+
+# --- BLOCK 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Soleplate Base ---
+soleplate_base = add_primitive("soleplate_base", "cube", (0.25, 0.10, 0.005), (0, 0, 0), (0, 0, 0))
+# Align +Z to +Z (already default)
+# Move to (0,0,0) (already default)
+# Assign material
+if mat_plastic_grey: soleplate_base.data.materials.append(mat_plastic_grey)
+
+# --- SECTION 2 – Create Steam Holes (Drilling Pattern) ---
+# Create a generic cutter for reference, though we create specific ones
+hole_cutter_template = add_primitive("hole_cutter", "cylinder", (0.002, 0.01), (0, 0, 0), (0, 0, 0))
+
+# Store cutter objects to delete later
+cutters_to_delete = []
+
+for r in range(3): # 0..2
+    for c in range(5): # 0..4
+        # Calculate offset
+        offset_x = -0.08 + c * 0.04
+        offset_y = -0.04 + r * 0.02
+        offset_z = 0
+        
+        # Create cutter
+        cutter_name = f"hole_cutter_r{r}_c{c}"
+        cutter = add_primitive(cutter_name, "cylinder", (0.002, 0.01), (0, 0, 0), (0, 0, 0))
+        
+        # Anchor to soleplate_base.+Z_face
+        # The +Z face of soleplate_base is at z = 0.005/2 = 0.0025
+        # We want the cutter to penetrate the surface.
+        # Anchor means place the cutter's center on the face? Or align faces?
+        # "Anchor hole_cutter_r_c to soleplate_base.+Z_face" usually implies positioning relative to that face.
+        # Given the offset is applied after, let's place the cutter at the face center first.
+        
+        face_center = get_face_center(soleplate_base, "+Z")
+        
+        # Move cutter to face center
+        cutter.location = face_center
+        
+        # Apply offset
+        cutter.location += Vector((offset_x, offset_y, offset_z))
+        
+        # Boolean subtract
+        boolean_subtract(cutter, soleplate_base)
+        cutters_to_delete.append(cutter)
+
+# --- SECTION 3 – Create Main Body ---
+body_main = add_primitive("body_main", "cube", (0.25, 0.10, 0.08), (0, 0, 0.0425), (0, 0, 0))
+if mat_plastic_grey: body_main.data.materials.append(mat_plastic_grey)
+
+# --- SECTION 4 – Create Handle ---
+handle_grip = add_primitive("handle_grip", "cube", (0.04, 0.06, 0.12), (0, 0, 0.12), (0, 0, 0))
+if mat_plastic_blue: handle_grip.data.materials.append(mat_plastic_blue)
+
+# --- SECTION 5 – Create Water Tank ---
+tank_body = add_primitive("tank_body", "cube", (0.08, 0.04, 0.15), (-0.12, 0, 0.08), (0, 0, 0))
+if mat_plastic_translucent: tank_body.data.materials.append(mat_plastic_translucent)
+
+tank_cap = add_primitive("tank_cap", "cylinder", (0.02, 0.01), (-0.12, 0, 0.16), (0, 0, 0))
+if mat_plastic_grey: tank_cap.data.materials.append(mat_plastic_grey)
+
+# --- SECTION 6 – Create Controls ---
+dial_temp = add_primitive("dial_temp", "cylinder", (0.03, 0.01), (0.05, 0.06, 0.10), (0, 0, 0))
+# Rotate so +Z aligns +Y
+align_axis_to_vector(dial_temp, 'Z', Vector((0, 1, 0)))
+if mat_metal_silver: dial_temp.data.materials.append(mat_metal_silver)
+
+btn_steam = add_primitive("btn_steam", "cube", (0.01, 0.01, 0.01), (0.08, 0.06, 0.10), (0, 0, 0))
+# Rotate so +Z aligns +Y
+align_axis_to_vector(btn_steam, 'Z', Vector((0, 1, 0)))
+if mat_plastic_blue: btn_steam.data.materials.append(mat_plastic_blue)
+
+btn_spray = add_primitive("btn_spray", "cube", (0.01, 0.01, 0.01), (0.11, 0.06, 0.10), (0, 0, 0))
+# Rotate so +Z aligns +Y
+align_axis_to_vector(btn_spray, 'Z', Vector((0, 1, 0)))
+if mat_plastic_blue: btn_spray.data.materials.append(mat_plastic_blue)
+
+# --- SECTION 7 – Create Cord ---
+cord_start = add_primitive("cord_start", "cube", (0.01, 0.01, 0.01), (0, 0.05, -0.005), (0, 0, 0))
+if mat_cord_black: cord_start.data.materials.append(mat_cord_black)
+
+cord_end = add_primitive("cord_end", "cube", (0.01, 0.01, 0.01), (0, 0.15, -0.05), (0, 0, 0))
+if mat_cord_black: cord_end.data.materials.append(mat_cord_black)
+
+# --- SECTION 8 – Final Assembly ---
+
+# Align body_main.+Z_face to soleplate_base.+Z_face
+# This implies they are touching.
+# soleplate_base +Z face is at z=0.0025.
+# body_main -Z face is at z=0.0425 - 0.04 = 0.0025.
+# They are already aligned in Z.
+# However, the instruction says "Align body_main.+Z_face to soleplate_base.+Z_face".
+# This might mean aligning the normals or positions.
+# If we align +Z to +Z, they would be on top of each other.
+# Let's assume it means aligning the faces to be coplanar.
+# But body_main is above soleplate_base.
+# Let's re-read: "Align body_main.+Z_face to soleplate_base.+Z_face"
+# This is ambiguous. Usually, you align opposite faces to stack.
+# Let's look at the next line: "Align body_main.-Z_face to soleplate_base.+Z_face"
+# This makes sense for stacking. The previous line might be a typo or implies a different relationship.
+# Given the coordinates:
+# soleplate_base center z = 0.0025. +Z face z = 0.005.
+# body_main center z = 0.0425. -Z face z = 0.0425 - 0.04 = 0.0025.
+# They are already touching at z=0.0025? No, soleplate is 0.005 thick.
+# soleplate_base z range: 0 to 0.005.
+# body_main z range: 0.0025 to 0.0825.
+# They overlap.
+# Let's assume the "Align" commands are meant to snap them together.
+# I will execute the align commands as written, assuming they adjust positions.
+
+align_faces(body_main, "+Z", soleplate_base, "+Z")
+align_faces(body_main, "-Z", soleplate_base, "+Z")
+align_faces(handle_grip, "+Z", body_main, "+Z")
+align_faces(tank_body, "+Z", body_main, "-X")
+align_faces(tank_cap, "+Z", tank_body, "+Z")
+align_faces(dial_temp, "+Z", body_main, "+Y")
+align_faces(btn_steam, "+Z", body_main, "+Y")
+align_faces(btn_spray, "+Z", body_main, "+Y")
+align_faces(cord_start, "+Z", soleplate_base, "-Z")
+align_faces(cord_end, "+Z", cord_start, "+Z")
+
+# Connect cord_start.-Z_face + cord_end.-Z_face
+# This likely means aligning them or creating a mesh between them.
+# Since they are cubes, we can align the faces.
+align_faces(cord_end, "-Z", cord_start, "-Z")
+
+# Clean up template cutter
+if hole_cutter_template:
+    bpy.data.objects.remove(hole_cutter_template, do_unlink=True)
+
+# Ensure all objects are selected for easy viewing
+bpy.ops.object.select_all(action='DESELECT')
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH':
+        obj.select_set(True)
+bpy.context.view_layer.objects.active = soleplate_base
+```

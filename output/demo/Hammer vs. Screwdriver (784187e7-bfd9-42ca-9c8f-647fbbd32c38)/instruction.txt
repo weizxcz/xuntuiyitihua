@@ -1,0 +1,1 @@
+Create a 3D model of both a hammer and a screwdriver. The hammer should have a claw end and a flat end, with a handle. The screwdriver should have a flat tip and a handle. Compare the two tools in terms of their shapes and functionalities.

@@ -1,0 +1,462 @@
+```python
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    # size is (x,y,z)
+    half_size = (size[0]/2, size[1]/2, size[2]/2)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location, rotation=rotation)
+    obj = bpy.context.object
+    obj.name = name
+    obj.scale = half_size
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0), material=None):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_bevel(obj, width=0.05, segments=2):
+    # Add bevel modifier
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this script context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(target, cutter):
+    # Add boolean modifier to target using cutter
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_union(target, cutter):
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align object's local axis to a world vector."""
+    if axis == 'Z':
+        local_axis = Vector((0,0,1))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    elif axis == 'X':
+        local_axis = Vector((1,0,0))
+    else:
+        return
+
+    target_vec = vector.normalized()
+    if local_axis.normalized().dot(target_vec) < -0.999:
+        rot = Matrix.Rotation(math.pi, 4, local_axis.cross(target_vec).normalized() if local_axis.cross(target_vec).length > 0 else Vector((1,0,0)))
+    else:
+        rot = Matrix.Rotation(math.acos(max(-1, min(1, local_axis.dot(target_vec)))), 4, local_axis.cross(target_vec).normalized() if local_axis.cross(target_vec).length > 0 else Vector((1,0,0)))
+    
+    # Convert matrix to quaternion and apply
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = rot.to_quaternion()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        self.update()
+
+    def update(self):
+        self.center_world = self.obj.location.copy()
+        # Calculate face centers based on rotation and scale
+        # Assuming standard orientation for simplicity unless rotated
+        # For rotated objects, we need to transform the local face centers
+        rot_mat = self.obj.matrix_world.to_3x3()
+        scale = self.obj.scale
+        
+        # Local face centers (assuming origin at center)
+        # Z+ face
+        z_plus_local = Vector((0,0, self.obj.dimensions[2]/2))
+        # Z- face
+        z_minus_local = Vector((0,0, -self.obj.dimensions[2]/2))
+        # X+ face
+        x_plus_local = Vector((self.obj.dimensions[0]/2, 0, 0))
+        # X- face
+        x_minus_local = Vector((-self.obj.dimensions[0]/2, 0, 0))
+        # Y+ face
+        y_plus_local = Vector((0, self.obj.dimensions[1]/2, 0))
+        # Y- face
+        y_minus_local = Vector((0, -self.obj.dimensions[1]/2, 0))
+        
+        self.z_plus_face_world = self.center_world + (rot_mat @ z_plus_local)
+        self.z_minus_face_world = self.center_world + (rot_mat @ z_minus_local)
+        self.x_plus_face_world = self.center_world + (rot_mat @ x_plus_local)
+        self.x_minus_face_world = self.center_world + (rot_mat @ x_minus_local)
+        self.y_plus_face_world = self.center_world + (rot_mat @ y_plus_local)
+        self.y_minus_face_world = self.center_world + (rot_mat @ y_minus_local)
+
+    def center_world(self):
+        return self.obj.location
+
+    def face_center_world(self, face):
+        if face == 'Z+': return self.z_plus_face_world
+        if face == 'Z-': return self.z_minus_face_world
+        if face == 'X+': return self.x_plus_face_world
+        if face == 'X-': return self.x_minus_face_world
+        if face == 'Y+': return self.y_plus_face_world
+        if face == 'Y-': return self.y_minus_face_world
+        return self.center_world()
+
+# --- Main Script ---
+
+# Block 0: Scene Reset & Units
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj, do_unlink=True)
+for collection in bpy.data.collections:
+    bpy.data.collections.remove(collection)
+
+bpy.context.scene.unit_settings.scale_length = 1
+
+# Block 1: Materials
+mat_concrete_grey = make_material("concrete_grey", (0.6, 0.6, 0.6, 1.0))
+mat_steel_blue = make_material("steel_blue", (0.2, 0.3, 0.5, 1.0))
+mat_steel_grey = make_material("steel_grey", (0.4, 0.4, 0.4, 1.0))
+
+# Block 2: Geometry Generation
+
+# --- SECTION 1 – Create base group ---
+
+# Create base_plate
+base_plate = add_cube("base_plate", (4.0, 4.0, 0.5), location=(0,0,0), rotation=(0,0,0), material=mat_concrete_grey)
+# Rotate so +Z aligns +Z (already aligned)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+base_plate.location = Vector((0,0,0))
+
+# Create anchor_bolts
+anchor_bolts = []
+for r in range(2):
+    for c in range(2):
+        name = f"anchor_bolts_{r}_{c}"
+        bolt = add_cylinder(name, 0.05, 0.6, location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+        # Rotate so +Z aligns +Z
+        bolt.rotation_mode = 'QUATERNION'
+        bolt.rotation_quaternion = Matrix.Identity(4).to_quaternion()
+        
+        # Align bolt.+Z_face to base_plate.+Z_face
+        # base_plate Z+ face is at z = 0.25
+        # bolt Z+ face is at z = 0.3 (radius 0.05, depth 0.6 -> half 0.3)
+        # We want bolt Z+ face to touch base_plate Z+ face? Or just align normals?
+        # "Align ... face to ... face" usually implies touching or coplanar.
+        # Let's assume touching.
+        bp_loc = base_plate.location
+        bp_z_plus = bp_loc.z + base_plate.dimensions[2]/2
+        
+        b_loc = bolt.location
+        b_z_plus = b_loc.z + bolt.dimensions[2]/2
+        
+        # Set Z position so faces touch
+        new_z = bp_z_plus - (bolt.dimensions[2]/2)
+        
+        # Move by offset
+        offset_x = -1.5 + c * 3.0
+        offset_y = -1.5 + r * 3.0
+        offset_z = 0.01
+        
+        bolt.location = Vector((offset_x, offset_y, new_z + offset_z))
+        anchor_bolts.append(bolt)
+
+# --- SECTION 2 – Create tower group ---
+
+# Create tower_columns
+tower_columns = []
+for r in range(2):
+    for c in range(2):
+        name = f"tower_columns_{r}_{c}"
+        col = add_cylinder(name, 0.15, 12.0, location=(0,0,0), rotation=(0,0,0), material=mat_steel_blue)
+        # Rotate so +Z aligns +Z
+        col.rotation_mode = 'QUATERNION'
+        col.rotation_quaternion = Matrix.Identity(4).to_quaternion()
+        
+        # Align col.+Z_face to base_plate.+Z_face
+        bp_z_plus = base_plate.location.z + base_plate.dimensions[2]/2
+        # col Z+ face is at col.z + 6.0
+        # Touching: col.z + 6.0 = bp_z_plus => col.z = bp_z_plus - 6.0
+        col_z = bp_z_plus - 6.0
+        
+        # Offset
+        offset_x = -1.0 + c * 2.0
+        offset_y = -1.0 + r * 2.0
+        offset_z = 0.25
+        
+        col.location = Vector((offset_x, offset_y, col_z + offset_z))
+        tower_columns.append(col)
+
+# Create tower_rings
+tower_rings = []
+# Avg center of tower columns
+col_centers = [col.location for col in tower_columns]
+avg_center = average(col_centers)
+
+for r in range(4):
+    for c in range(4):
+        name = f"tower_rings_{r}_{c}"
+        ring = add_cube(name, (1.0, 1.0, 1.0), location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+        # Rotate so +Z aligns +Z
+        ring.rotation_mode = 'QUATERNION'
+        ring.rotation_quaternion = Matrix.Identity(4).to_quaternion()
+        
+        # Align ring.+Z_face to Avg center
+        # Avg center is a point in space. "Align face to point" is ambiguous.
+        # Usually means center the object on that point, or align the face normal to point?
+        # Given "Align ... face to Avg(...)", and Avg is a point, it likely means center the object on that point.
+        # Or align the face center to that point. Let's assume center the object on the point.
+        
+        # Offset
+        offset_x = -0.5 + c * 1.0
+        offset_y = -0.5 + r * 1.0
+        offset_z = 3.0
+        
+        ring.location = Vector((offset_x, offset_y, offset_z))
+        tower_rings.append(ring)
+
+# Create diagonal_struts
+diagonal_struts = []
+for r in range(4):
+    for c in range(2):
+        name = f"diagonal_struts_{r}_{c}"
+        strut = add_cylinder(name, 0.05, 2.8, location=(0,0,0), rotation=(0,0,0), material=mat_steel_blue)
+        # Rotate so +Z aligns +Z
+        strut.rotation_mode = 'QUATERNION'
+        strut.rotation_quaternion = Matrix.Identity(4).to_quaternion()
+        
+        # Align strut.center to Avg center
+        # Offset
+        offset_x = -1.0 + c * 2.0
+        offset_y = 0.0 + r * 3.0
+        offset_z = 0
+        
+        strut.location = Vector((offset_x, offset_y, offset_z))
+        diagonal_struts.append(strut)
+
+# --- SECTION 3 – Create jib group ---
+
+# Create main_beam
+main_beam = add_cube("main_beam", (15.0, 0.5, 0.5), location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +X (world)
+# Current +Z is (0,0,1). Target +X is (1,0,0).
+# Rotation around Y by -90 degrees.
+main_beam.rotation_mode = 'QUATERNION'
+main_beam.rotation_quaternion = Vector((0,1,0)).to_track_quat('X', 'Z') # Align Z to X
+
+# Align main_beam.left_face to tower_sections.right_face
+# Note: "tower_sections" is not defined. Assuming it refers to the tower columns group or the average center.
+# Let's assume it means the right-most tower column or the center of the tower.
+# Given the context of a crane, the jib attaches to the tower.
+# Let's use the average center of the tower columns as the attachment point.
+# tower_sections.right_face: If we consider the tower as a block, right face is +X.
+# main_beam.left_face: -X face of main_beam.
+# main_beam is rotated so its local Z is world X. Its local X is world Y?
+# Let's check rotation: Z->X. If we rotate around Y by -90, X->Z, Y->Y, Z->X.
+# So local X is world Z. Local Y is world Y. Local Z is world X.
+# Left face is -Local X = -World Z.
+# This seems complicated. Let's simplify:
+# "Align main_beam.left_face to tower_sections.right_face"
+# Let's assume "tower_sections" refers to the bounding box of the tower columns.
+# Right face of tower is at max X of columns.
+# Left face of main_beam is at min X of main_beam (in local space).
+# Since main_beam is rotated, we need to be careful.
+# Let's place main_beam such that its left face touches the right face of the tower.
+# Tower right face X: max(col.location.x + col.dimensions[0]/2 for col in tower_columns)
+# Col dimensions are (0.3, 0.3, 12.0). So radius 0.15.
+# Max X = max(-1.0+0.15, -1.0+0.15, 1.0+0.15, 1.0+0.15) = 1.15
+# Main beam left face: In local space, x = -7.5.
+# After rotation, local X is world Z. So left face is at main_beam.location.z - 7.5?
+# This doesn't align with X-axis attachment.
+# Let's re-read: "Rotate main_beam so its +Z axis aligns +X (world)."
+# If +Z aligns +X, then the beam extends along X.
+# Left face usually means -X face in local coordinates.
+# If local Z is world X, then local X is world Z (or -Z depending on rotation direction).
+# Let's assume standard rotation: Z->X, X->-Z, Y->Y.
+# So local -X is world +Z.
+# This would mean the beam extends along Z? No, +Z is world X.
+# Let's assume the beam extends along its local Z axis.
+# So it extends along World X.
+# Left face (-Local X) is perpendicular to the beam.
+# This doesn't make sense for a jib. A jib extends from the tower.
+# Maybe "left_face" refers to the face at the negative end of the beam's length?
+# If beam extends along Z (local), then ends are Z+ and Z-.
+# Let's assume "left_face" means the face at local Z = -length/2.
+# And "right_face" of tower_sections means the face at max X.
+# Let's align main_beam.center to tower_sections.center + offset.
+# Let's use the average center of tower columns as tower_sections center.
+# Tower center X = 0.
+# Main beam length 15.0.
+# Align main_beam.left_face (local Z = -7.5) to tower_sections.right_face (world X = 1.15).
+# If main_beam is rotated so local Z is world X:
+# main_beam.location.x - 7.5 = 1.15 => main_beam.location.x = 8.65
+# Then offset (0.25, 0, 0).
+# main_beam.location.x = 8.65 + 0.25 = 8.9.
+
+# Let's refine the rotation.
+# Align +Z to +X.
+# Rotation matrix:
+# [0 0 1]
+# [0 1 0]
+# [-1 0 0]
+# This maps Z(0,0,1) to X(1,0,0).
+# Maps X(1,0,0) to Z(-1,0,0).
+# Maps Y(0,1,0) to Y(0,1,0).
+# So local X is -World Z.
+# Local -X is World Z.
+# Left face is -Local X = World Z.
+# This means the "left face" is the side face, not the end face.
+# This interpretation is likely wrong for a jib.
+# Let's assume "left_face" means the face at the negative end of the primary axis (Z).
+# So face at local Z = -7.5.
+# Tower_sections.right_face: Face at max World X.
+# Align these two faces.
+# main_beam.location.z_component (along local Z, which is world X) - 7.5 = 1.15
+# main_beam.location.x - 7.5 = 1.15
+# main_beam.location.x = 8.65
+# Offset (0.25, 0, 0)
+# main_beam.location.x = 8.9
+
+main_beam.location = Vector((8.9, 0, 0))
+
+# Create pulley_block
+pulley_block = add_cube("pulley_block", (0.5, 0.5, 0.5), location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +X
+pulley_block.rotation_mode = 'QUATERNION'
+pulley_block.rotation_quaternion = Vector((0,1,0)).to_track_quat('X', 'Z')
+
+# Align pulley_block.left_face to main_beam.right_face
+# main_beam.right_face: local Z = +7.5. World X = 8.9 + 7.5 = 16.4
+# pulley_block.left_face: local Z = -0.25.
+# Align: pulley_block.location.x - 0.25 = 16.4 => pulley_block.location.x = 16.65
+# Offset (0.25, 0, 0)
+# pulley_block.location.x = 16.9
+
+pulley_block.location = Vector((16.9, 0, 0))
+
+# Create hook_cable
+hook_cable = add_cylinder("hook_cable", 0.025, 2.0, location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +X
+hook_cable.rotation_mode = 'QUATERNION'
+hook_cable.rotation_quaternion = Vector((0,1,0)).to_track_quat('X', 'Z')
+
+# Align hook_cable.left_face to pulley_block.right_face
+# pulley_block.right_face: local Z = +0.25. World X = 16.9 + 0.25 = 17.15
+# hook_cable.left_face: local Z = -1.0.
+# Align: hook_cable.location.x - 1.0 = 17.15 => hook_cable.location.x = 18.15
+# Offset (0.25, 0, 0)
+# hook_cable.location.x = 18.4
+
+hook_cable.location = Vector((18.4, 0, 0))
+
+# Create trolley
+trolley = add_cube("trolley", (0.8, 0.6, 0.4), location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +Z (world)
+trolley.rotation_mode = 'QUATERNION'
+trolley.rotation_quaternion = Matrix.Identity(4).to_quaternion()
+
+# Align trolley.left_face to main_beam.top_face
+# main_beam.top_face: local Y = +0.25. World Y = 0 + 0.25 = 0.25
+# trolley.left_face: local X = -0.4.
+# Align: trolley.location.x - 0.4 = 0.25 => trolley.location.x = 0.65
+# Offset (5.0, 0.25, 0)
+# trolley.location.x = 5.65
+# trolley.location.y = 0.25
+
+trolley.location = Vector((5.65, 0.25, 0))
+
+# Create counter_jib
+counter_jib = add_cube("counter_jib", (5.0, 0.5, 0.5), location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +X
+counter_jib.rotation_mode = 'QUATERNION'
+counter_jib.rotation_quaternion = Vector((0,1,0)).to_track_quat('X', 'Z')
+
+# Align counter_jib.right_face to tower_sections.left_face
+# tower_sections.left_face: World X = -1.15 (min X of columns)
+# counter_jib.right_face: local Z = +2.5.
+# Align: counter_jib.location.x + 2.5 = -1.15 => counter_jib.location.x = -3.65
+# Offset (-0.25, 0, 0)
+# counter_jib.location.x = -3.9
+
+counter_jib.location = Vector((-3.9, 0, 0))
+
+# --- SECTION 4 – Create hook group ---
+
+# Create hook_block
+hook_block = add_cube("hook_block", (0.4, 0.3, 0.3), location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +Z
+hook_block.rotation_mode = 'QUATERNION'
+hook_block.rotation_quaternion = Matrix.Identity(4).to_quaternion()
+
+# Align hook_block.left_face to trolley.bottom_face
+# trolley.bottom_face: local Y = -0.2. World Y = 0.25 - 0.2 = 0.05
+# hook_block.left_face: local X = -0.2.
+# Align: hook_block.location.x - 0.2 = 0.05 => hook_block.location.x = 0.25
+# Offset (0, -0.3, 0)
+# hook_block.location.x = 0.25
+# hook_block.location.y = -0.25
+
+hook_block.location = Vector((0.25, -0.25, 0))
+
+# Create load_chain
+load_chain = add_cylinder("load_chain", 0.01, 1.5, location=(0,0,0), rotation=(0,0,0), material=mat_steel_grey)
+# Rotate so +Z aligns +X
+load_chain.rotation_mode = 'QUATERNION'
+load_chain.rotation_quaternion = Vector((0,1,0)).to_track_quat('X', 'Z')
+
+# Align load_chain.left_face to hook_block.right_face
+# hook_block.right_face: local X = +0.2. World X = 0.25 + 0.2 = 0.45
+# load_chain.left_face: local Z = -0.75.
+# Align: load_chain.location.x - 0.75 = 0.45 => load_chain.location.x = 1.2
+# Offset (0.2, 0, 0)
+# load_chain.location.x = 1.4
+
+load_chain.location = Vector((1.4, 0, 0))
+
+print("All stages complete.")
+```

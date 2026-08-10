@@ -1,0 +1,45 @@
+{
+  "id": "09857af5-0b48-4d88-b5a1-59c277fb07e9",
+  "name": "Recycling Symbol",
+  "instruction": "Design a 3D model of the universal recycling symbol. The arrows should form a continuous loop, pointing clockwise.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a universal recycling symbol.",
+        "The symbol consists of three arrows.",
+        "The arrows are arranged in a continuous loop."
+      ],
+      "Color representation": [
+        "The symbol is typically represented in green."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The arrows are proportionate to the symbol."
+      ],
+      "Texture and surface detail": [
+        "The surface of the arrows is smooth.",
+        "There may be a slight sheen to represent a recyclable material."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The arrows are positioned to create a clear loop.",
+        "The arrows maintain a consistent distance from each other."
+      ],
+      "Object distance and contact": [
+        "The arrows do not overlap inappropriately.",
+        "The ends of the arrows connect seamlessly."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the universal recycling symbol.",
+        "The arrows are correctly oriented and form a loop."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

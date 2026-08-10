@@ -1,0 +1,254 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.8 # Default roughness for wood/fabric
+    return mat
+
+def add_primitive_cube(name, size, location, rotation_euler):
+    """Add a cube primitive, set size, location, and rotation."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    return obj
+
+def add_primitive_cylinder(name, radius, depth, location, rotation_euler):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Align an object's local axis to a world vector."""
+    if axis == 'Z':
+        # Align Z to vector
+        quat = vector.to_track_quat('Z', 'Y')
+        obj.rotation_euler = quat.to_euler()
+    elif axis == 'X':
+        quat = vector.to_track_quat('X', 'Y')
+        obj.rotation_euler = quat.to_euler()
+    elif axis == 'Y':
+        quat = vector.to_track_quat('Y', 'Z')
+        obj.rotation_euler = quat.to_euler()
+
+def get_face_center(obj, face_index):
+    """Get the world location of a specific face center."""
+    # Ensure object is updated
+    obj.update_from_editmode()
+    # Get mesh data
+    me = obj.data
+    # Calculate face center in local space
+    face = me.polygons[face_index]
+    local_center = Vector((0, 0, 0))
+    for vi in face.vertices:
+        local_center += me.vertices[vi].co
+    local_center /= len(face.vertices)
+    
+    # Convert to world space
+    return obj.matrix_world @ local_center
+
+def get_face_normal(obj, face_index):
+    """Get the world normal of a specific face."""
+    me = obj.data
+    face = me.polygons[face_index]
+    # Get normal in local space
+    local_normal = face.normal
+    # Transform to world space
+    world_normal = obj.matrix_world.to_3x3() @ local_normal
+    return world_normal
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtract using the modifier stack."""
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter object
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    return target_obj
+
+def boolean_union(union_obj, target_obj):
+    """Perform boolean union using the modifier stack."""
+    # Add Boolean Modifier to Target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union object
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+    return target_obj
+
+def apply_material(obj, mat_name):
+    """Apply a material to an object."""
+    if mat_name in bpy.data.materials:
+        mat = bpy.data.materials[mat_name]
+        if obj.data.materials:
+            obj.data.materials[0] = mat
+        else:
+            obj.data.materials.append(mat)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_wood_dark = make_material("mat_wood_dark", (0.20, 0.10, 0.05, 1.0))
+mat_wood_light = make_material("mat_wood_light", (0.60, 0.45, 0.30, 1.0))
+mat_mirror = make_material("mat_mirror", (0.80, 0.85, 0.90, 1.0))
+mat_satin_white = make_material("mat_satin_white", (0.95, 0.95, 0.92, 1.0))
+mat_silk_red = make_material("mat_silk_red", (0.60, 0.05, 0.05, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# Helper for standard orientation (Z up)
+ROT_Z_UP = (0, 0, 0)
+
+# --- SECTION 1: Create base bottom ---
+base_bottom = add_primitive_cube("base_bottom", (0.30, 0.20, 0.02), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(base_bottom, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+apply_material(base_bottom, "mat_wood_dark")
+
+# --- SECTION 2: Create base sides ---
+# Create base_sides_void
+base_sides_void = add_primitive_cube("base_sides_void", (0.30, 0.20, 0.02), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(base_sides_void, 'Z', Vector((0, 0, 1)))
+# Anchor to base_bottom.+Z_face
+# base_bottom is 0.02 high. Top face is at Z = 0.01.
+# We want the bottom of base_sides_void to sit on top of base_bottom.
+# base_sides_void center Z is 0.01.
+anchor_loc = get_face_center(base_bottom, 5) # Assuming default cube, face 5 is +Z
+# Actually, let's calculate manually for precision:
+# base_bottom center is (0,0,0). Size Z is 0.02. Top face Z is 0.01.
+anchor_loc = Vector((0, 0, 0.01))
+base_sides_void.location = anchor_loc
+
+# Offset (0,0,0.01)
+base_sides_void.location += Vector((0, 0, 0.01))
+
+# Create base_interior_void
+base_interior_void = add_primitive_cube("base_interior_void", (0.28, 0.18, 0.018), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(base_interior_void, 'Z', Vector((0, 0, 1)))
+# Anchor to base_bottom.+Z_face
+base_interior_void.location = anchor_loc
+
+# Offset (0,0,0.01)
+base_interior_void.location += Vector((0, 0, 0.01))
+
+# Boolean subtract base_interior_void from base_sides_void
+boolean_subtract(base_interior_void, base_sides_void)
+base_sides_void.name = "base_sides"
+apply_material(base_sides_void, "mat_wood_dark")
+
+# --- SECTION 3: Create lid top ---
+lid_top = add_primitive_cube("lid_top", (0.30, 0.20, 0.02), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(lid_top, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+lid_top.location = Vector((0, 0, 0))
+# Offset (0,0,0.04)
+lid_top.location += Vector((0, 0, 0.04))
+apply_material(lid_top, "mat_wood_dark")
+
+# --- SECTION 4: Create lid hinge mount ---
+lid_hinge_mount = add_primitive_cube("lid_hinge_mount", (0.02, 0.02, 0.02), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(lid_hinge_mount, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+lid_hinge_mount.location = Vector((0, 0, 0))
+# Offset (0,-0.10,0.03)
+lid_hinge_mount.location += Vector((0, -0.10, 0.03))
+apply_material(lid_hinge_mount, "mat_wood_dark")
+
+# --- SECTION 5: Create lid mirror frame ---
+lid_mirror_frame = add_primitive_cube("lid_mirror_frame", (0.28, 0.18, 0.005), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(lid_mirror_frame, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+lid_mirror_frame.location = Vector((0, 0, 0))
+# Offset (0,0,0.035)
+lid_mirror_frame.location += Vector((0, 0, 0.035))
+apply_material(lid_mirror_frame, "mat_wood_dark")
+
+# --- SECTION 6: Create lid mirror surface ---
+lid_mirror_surface = add_primitive_cube("lid_mirror_surface", (0.26, 0.16, 0.001), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(lid_mirror_surface, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+lid_mirror_surface.location = Vector((0, 0, 0))
+# Offset (0,0,0.032)
+lid_mirror_surface.location += Vector((0, 0, 0.032))
+apply_material(lid_mirror_surface, "mat_mirror")
+
+# --- SECTION 7: Create ring tray ---
+ring_tray = add_primitive_cube("ring_tray", (0.10, 0.10, 0.005), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(ring_tray, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+ring_tray.location = Vector((0, 0, 0))
+# Offset (-0.05,0,0.005)
+ring_tray.location += Vector((-0.05, 0, 0.005))
+apply_material(ring_tray, "mat_wood_light")
+
+# --- SECTION 8: Create necklace rail ---
+necklace_rail = add_primitive_cube("necklace_rail", (0.20, 0.02, 0.005), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(necklace_rail, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+necklace_rail.location = Vector((0, 0, 0))
+# Offset (0,0.05,0.005)
+necklace_rail.location += Vector((0, 0.05, 0.005))
+apply_material(necklace_rail, "mat_wood_light")
+
+# --- SECTION 9: Create earring holder ---
+earring_holder = add_primitive_cube("earring_holder", (0.08, 0.08, 0.005), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(earring_holder, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+earring_holder.location = Vector((0, 0, 0))
+# Offset (0.05,-0.05,0.005)
+earring_holder.location += Vector((0.05, -0.05, 0.005))
+apply_material(earring_holder, "mat_wood_light")
+
+# --- SECTION 10: Create velvet lining ---
+velvet_lining = add_primitive_cube("velvet_lining", (0.28, 0.18, 0.002), (0, 0, 0), ROT_Z_UP)
+align_axis_to_vector(velvet_lining, 'Z', Vector((0, 0, 1)))
+# Anchor to world origin
+velvet_lining.location = Vector((0, 0, 0))
+# Offset (0,0,0.001)
+velvet_lining.location += Vector((0, 0, 0.001))
+apply_material(velvet_lining, "mat_satin_white")
+```

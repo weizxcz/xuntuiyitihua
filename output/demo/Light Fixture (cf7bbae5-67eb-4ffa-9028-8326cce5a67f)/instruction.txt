@@ -1,0 +1,1 @@
+Create a simple light fixture with a round base that can be mounted on the ceiling. It should have a single bulb socket in the center.

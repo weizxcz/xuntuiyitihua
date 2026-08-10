@@ -1,0 +1,24 @@
+-- MATERIAL LIBRARY --
+fabric_nylon | diffuse_color=(0.8, 0.8, 0.8, 1.0)
+foam_memory | diffuse_color=(0.1, 0.1, 0.1, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| travel_pillow | Composite of foam_core + fabric_cover; U-shaped ergonomic neck support | assembly_order=[foam_core], [fabric_cover] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| foam_core | Composite of left_arm + right_arm + back_connector; U-shaped memory foam block | assembly_order=[left_arm], [right_arm], [back_connector] |
+| left_arm | Cylinder Ø0.08×0.15 m (radius 0.04 m, length 0.15 m) | pos=(-0.08, 0, 0); orientation=axis:+Z; mat=foam_memory; create_method=primitive |
+| right_arm | Cylinder Ø0.08×0.15 m (radius 0.04 m, length 0.15 m) | pos=(0.08, 0, 0); orientation=axis:+Z; mat=foam_memory; create_method=primitive |
+| back_connector | Cylinder Ø0.08×0.16 m (radius 0.04 m, length 0.16 m) | pos=(0, 0, 0); orientation=axis:+X; mat=foam_memory; create_method=primitive |
+| fabric_cover | Composite of left_sleeve + right_sleeve + back_sleeve; U-shaped fabric shell | assembly_order=[left_sleeve], [right_sleeve], [back_sleeve] |
+| left_sleeve | Cylinder Ø0.09×0.15 m (radius 0.045 m, length 0.15 m) | pos=(-0.08, 0, 0); orientation=axis:+Z; mat=fabric_nylon; create_method=primitive |
+| right_sleeve | Cylinder Ø0.09×0.15 m (radius 0.045 m, length 0.15 m) | pos=(0.08, 0, 0); orientation=axis:+Z; mat=fabric_nylon; create_method=primitive |
+| back_sleeve | Cylinder Ø0.09×0.16 m (radius 0.045 m, length 0.16 m) | pos=(0, 0, 0); orientation=axis:+X; mat=fabric_nylon; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

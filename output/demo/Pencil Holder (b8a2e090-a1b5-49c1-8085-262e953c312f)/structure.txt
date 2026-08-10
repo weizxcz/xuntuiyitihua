@@ -1,0 +1,25 @@
+-- MATERIAL LIBRARY --
+mat_acrylic | diffuse_color=(0.9,0.9,0.95,0.3)
+mat_white_paint | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root_holder | Composite assembly of the pencil holder structure | assembly_order=[base_cylinder, dividers]; mat=mat_white_paint; create_method=assembly |
+
+Layer 1 – Primary Structure (Outer Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_cylinder | Outer cylindrical shell Ø0.102×0.152 m (4" dia × 6" tall) | Align(XY) base_cylinder.center to root_holder.center; Align(Z) base_cylinder.bottom_face to root_holder.bottom_face; orientation=axis:+Z; mat=mat_acrylic; create_method=primitive(cylinder); size=Ø0.102×0.152; constraint=wall_thickness=0.005 (implied for structural integrity) |
+
+Layer 2 – Internal Organization (Dividers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| divider_1 | Vertical partition slice 1 | Align(XY) divider_1.center to root_holder.center; Align(Z) divider_1.bottom_face to base_cylinder.bottom_face; orientation=axis:+Z; mat=mat_acrylic; create_method=boolean_subtract; tool_id=cutter_div_1; constraint=pierce base_cylinder; size=Ø0.102×0.152 (full height cut) |
+| divider_2 | Vertical partition slice 2 | Align(XY) divider_2.center to root_holder.center; Align(Z) divider_2.bottom_face to base_cylinder.bottom_face; orientation=axis:+Z; mat=mat_acrylic; create_method=boolean_subtract; tool_id=cutter_div_2; constraint=pierce base_cylinder; size=Ø0.102×0.152 (full height cut) |
+| cutter_div_1 | Cutter for first compartment division | Align(XY) cutter_div_1.center to root_holder.center; orientation=axis:+Z; mat=mat_white_paint; create_method=primitive(cube); size=0.005×0.102×0.152; constraint=position=radial_offset(0.025) from center |
+| cutter_div_2 | Cutter for second compartment division | Align(XY) cutter_div_2.center to root_holder.center; orientation=axis:+Z; mat=mat_white_paint; create_method=primitive(cube); size=0.005×0.102×0.152; constraint=position=radial_offset(0.025) from center, rotated 120° relative to cutter_div_1 |
+
+# ----------  END_GRAPH  ----------

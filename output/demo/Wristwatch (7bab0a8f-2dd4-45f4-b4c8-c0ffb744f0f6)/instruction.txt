@@ -1,0 +1,1 @@
+Design a wristwatch with a round face and a simple strap.

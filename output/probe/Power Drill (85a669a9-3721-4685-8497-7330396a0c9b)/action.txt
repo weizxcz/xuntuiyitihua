@@ -1,0 +1,101 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_abs; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material mat_grey_al; diffuse_color = (0.60,0.60,0.65,1.00).
+Define material mat_grip_tpe; diffuse_color = (0.15,0.15,0.15,1.00).
+Define material mat_metal_steel; diffuse_color = (0.70,0.70,0.75,1.00).
+Define material mat_orange_abs; diffuse_color = (0.90,0.40,0.10,1.00).
+Define material mat_translucent_white; diffuse_color = (0.95,0.95,0.95,0.30).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Main Body Shell  ---
+Create primitive cuboid with size 0.055×0.055×0.08 m and name it body_shell_base.
+Rotate body_shell_base so its +Z axis aligns +Z (world).
+Anchor body_shell_base to drill_root.center.
+Then move by offset(0, 0, 0).
+Create primitive cylinder with size Ø0.045×0.12 m and name it handle_base.
+Rotate handle_base so its +Z axis aligns +Z (world).
+Align handle_base.center to body_shell_base.center.
+Then move by offset(0, -0.06, 0).
+Boolean-union handle_base from body_shell_base; discard handle_base.
+Create primitive cylinder with size Ø0.048×0.10 m and name it grip_cutter.
+Rotate grip_cutter so its +Z axis aligns +Z (world).
+Align grip_cutter.center to body_shell_base.left_face.
+Then move by offset(-0.0015, 0, 0).
+Boolean-subtract grip_cutter from body_shell_base; discard grip_cutter.
+Create primitive cuboid with size 0.048×0.048×0.002 m and name it grip_overlay.
+Rotate grip_overlay so its +Z axis aligns +Z (world).
+Align grip_overlay.left_face to body_shell_base.left_face.
+Then move by offset(0.001, 0, 0).
+Boolean-union grip_overlay from body_shell_base; discard grip_overlay.
+Create primitive cuboid with size 0.055×0.055×0.06 m and name it head_casing.
+Rotate head_casing so its +Z axis aligns +Z (world).
+Align head_casing.right_face to body_shell_base.right_face.
+Boolean-union head_casing from body_shell_base; discard head_casing.
+Bevel body_shell_base.edges with radius 0.005 m, segments 4.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create Trigger and Switch Assembly  ---
+Create primitive cuboid with size 0.015×0.03×0.01 m and name it trigger.
+Rotate trigger so its +Z axis aligns +Z (world).
+Align trigger.bottom_face to body_shell_base.bottom_face.
+Then move by offset(0, 0, 0.02).
+Create primitive cylinder with size Ø0.005×0.02 m and name it trigger_spring.
+Rotate trigger_spring so its +Z axis aligns +Z (world).
+Align trigger_spring.bottom_face to trigger.top_face.
+Boolean-union trigger_spring from trigger; discard trigger_spring.
+Create primitive cuboid with size 0.01×0.02×0.005 m and name it fwd_rev_switch.
+Rotate fwd_rev_switch so its +Z axis aligns +Z (world).
+Align fwd_rev_switch.left_face to body_shell_base.left_face.
+Then move by offset(0, 0, 0.03).
+Create primitive cylinder with size Ø0.012×0.005 m and name it switch_cap.
+Rotate switch_cap so its +Z axis aligns +Z (world).
+Align switch_cap.bottom_face to fwd_rev_switch.top_face.
+Boolean-union switch_cap from fwd_rev_switch; discard switch_cap.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create Chuck and Drive Assembly  ---
+Create primitive cylinder with size Ø0.035×0.04 m and name it chuck_body.
+Rotate chuck_body so its +Z axis aligns +X (world).
+Align chuck_body.left_face to head_casing.right_face.
+Create primitive cuboid with size 0.02×0.035×0.02 m and name it chuck_jaws_base.
+Rotate chuck_jaws_base so its +Z axis aligns +X (world).
+Align chuck_jaws_base.left_face to chuck_body.right_face.
+Boolean-union chuck_jaws_base from chuck_body; discard chuck_jaws_base.
+Create primitive cylinder with size Ø0.015×0.03 m and name it bit_holder.
+Rotate bit_holder so its +Z axis aligns +X (world).
+Align bit_holder.left_face to chuck_body.right_face.
+Boolean-union bit_holder from chuck_body; discard bit_holder.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create Battery Pack  ---
+Create primitive cuboid with size 0.045×0.06×0.03 m and name it battery_pack.
+Rotate battery_pack so its +Z axis aligns +Z (world).
+Align battery_pack.top_face to body_shell_base.bottom_face.
+Then move by offset(0, 0, -0.015).
+Create primitive cylinder with size Ø0.002×0.005 m and name it battery_contacts.
+Rotate battery_contacts so its +Z axis aligns +Z (world).
+Align battery_contacts.bottom_face to battery_pack.bottom_face.
+Boolean-union battery_contacts from battery_pack; discard battery_contacts.
+Create primitive cuboid with size 0.01×0.02×0.005 m and name it battery_latch.
+Rotate battery_latch so its +Z axis aligns +Z (world).
+Align battery_latch.left_face to battery_pack.left_face.
+Boolean-union battery_latch from battery_pack; discard battery_latch.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

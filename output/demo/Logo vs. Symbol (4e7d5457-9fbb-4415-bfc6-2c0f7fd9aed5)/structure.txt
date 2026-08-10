@@ -1,0 +1,26 @@
+-- MATERIAL LIBRARY --
+logo_text_mat | diffuse_color=(0.1,0.1,0.1,1.0)
+logo_graphic_mat | diffuse_color=(0.2,0.6,1.0,1.0)
+symbol_graphic_mat | diffuse_color=(1.0,0.2,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of logo_group + symbol_group | assembly_order=[logo_group], [symbol_group] |
+
+Layer 1 – Primary Structure (Logo Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| logo_group | Composite of logo_text + logo_graphic | assembly_order=[logo_text], [logo_graphic] |
+| logo_text | Text block "LOGO" approx 0.200×0.050×0.005 m (W×H×T) | Align(Z) logo_text.bottom_face to root.bottom_face; orientation=axis:+Z; mat=logo_text_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Define bounding box W=0.200, H=0.050. Create a simplified sans-serif 'L' shape polygon: Start (0,0), Right 0.04, Up 0.05, Right 0.04, Down 0.02, Right 0.04, Down 0.03, Left 0.12, Close. Extrude thickness t=0.005m along +Z. Caps enabled. |
+| logo_graphic | Circular emblem Ø0.080×0.005 m | Align(XY) logo_graphic.center to logo_text.center; offset(0.15, 0, 0); orientation=axis:+Z; mat=logo_graphic_mat; create_method=cylinder |
+
+Layer 2 – Primary Structure (Symbol Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| symbol_group | Composite of symbol_shape | assembly_order=[symbol_shape] |
+| symbol_shape | Abstract geometric mark approx 0.100×0.100×0.005 m | Align(Z) symbol_shape.bottom_face to root.bottom_face; offset(0.40, 0, 0); orientation=axis:+Z; mat=symbol_graphic_mat; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Define bounding box W=0.100, H=0.100. Create a diamond shape: Vertices at (0.05, 0.10), (0.10, 0.05), (0.05, 0.00), (0.00, 0.05). Close loop. Extrude thickness t=0.005m along +Z. Caps enabled. |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,43 @@
+{
+  "id": "58ea2b7f-aa5f-433f-87b1-fe8488d27a50",
+  "name": "Wall Clock",
+  "instruction": "Design a wall clock that also functions as a decorative piece. The clock should have large, easy-to-read numbers and a sweeping second hand. Around the clock face, add a series of small compartments that can hold tiny decorative items or trinkets. The overall design should be both functional and aesthetically pleasing.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a wall clock.",
+        "The clock face is circular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The number is proportionate to thge entire clock."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The clock face is properly positioned for visibility.",
+        "The compartments are evenly distributed around the clock face."
+      ],
+      "Object distance and contact": [
+        "The compartments do not obstruct the view of the clock numbers.",
+        "The second hand moves freely without interference from the compartments."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the clock are accurately represented.",
+        "The design fulfills the dual function of being a clock and a decorative piece."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

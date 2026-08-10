@@ -1,0 +1,46 @@
+{
+  "id": "90551f74-7711-48e7-a8c9-18ba9e82b03b",
+  "name": "Coaster Set",
+  "instruction": "Could you design a coaster set for me?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The coasters are circular in shape.",
+        "Each coaster is uniform in size."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "Each coaster has a diameter of 10cm.",
+        "The thickness of each coaster is 0.5cm."
+      ],
+      "Proportion": [
+        "Each coaster is proportionally consistent, with a circular shape and uniform thickness throughout.",
+        "The diameter-to-thickness ratio of each coaster is balanced, ensuring functionality and aesthetic appeal."
+      ],
+      "Texture and surface detail": [
+        "The surface has a textured finish for grip.",
+        "The edges are smooth to prevent scratching surfaces."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The coasters are stacked neatly when not in use.",
+        "Each coaster is flat and stable on a surface."
+      ],
+      "Object distance and contact": [
+        "The coasters do not overlap when stacked.",
+        "There is adequate space between coasters when placed side by side."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects a coaster set.",
+        "All specified attributes are considered in the design."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

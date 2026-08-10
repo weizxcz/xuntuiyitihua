@@ -1,0 +1,315 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_text_object(text, name, size=0.01, depth=0.001):
+    """Create a text object and convert to mesh."""
+    bpy.ops.object.text_add()
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.data.size = size
+    obj.data.extrude = depth
+    bpy.ops.object.convert(target='MESH')
+    return obj
+
+def add_cylinder(radius, depth, segments=32, name="cylinder"):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(radius, segments=32, name="disc"):
+    """Add a flat disc aligned to Z axis."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    # Extrude slightly to make it a thin solid if needed, or keep as face
+    # For boolean/cutters, a face is often enough, but let's make it a thin cylinder for robustness
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0, 0, 0.001)})
+    bpy.ops.object.mode_set(mode='OBJECT')
+    return obj
+
+def add_cube(size_x, size_y, size_z, name="cube"):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=1) # Size 1, we will scale
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size_x, size_y, size_z)
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, segments=32, name="cone"):
+    """Add a cone/tapered cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, width_seg=16, height_seg=16, name="sphere"):
+    """Add a UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.005, segments=4):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    mod.angle_limit = math.radians(30)
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(host_obj, cutter_obj):
+    """Perform boolean subtract using BMesh."""
+    # Ensure host is active
+    bpy.context.view_layer.objects.active = host_obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Use the built-in boolean modifier for stability in scripts
+    mod = host_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    bpy.context.view_layer.objects.active = host_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup cutter if desired, or keep it. Usually keep for debugging, but let's hide it.
+    cutter_obj.hide_viewport = True
+    cutter_obj.hide_render = True
+
+def boolean_union(host_obj, union_obj):
+    """Perform boolean union."""
+    bpy.context.view_layer.objects.active = host_obj
+    mod = host_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.context.view_layer.objects.active = host_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    union_obj.hide_viewport = True
+    union_obj.hide_render = True
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Align object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+        
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.update_matrix()
+
+    def update_matrix(self):
+        self.matrix_world = self.obj.matrix_world.copy()
+        self.center = self.matrix_world.to_translation()
+        
+        # Calculate bounding box center for more robust anchoring if needed
+        # But for simple primitives, center is usually fine.
+        # For face anchoring, we need to determine the normal.
+        
+    def center_world(self):
+        return self.center
+
+    def face_center_world(self, face_axis='Z', face_side=1):
+        """
+        Returns the center of a specific face.
+        face_axis: 'X', 'Y', or 'Z'
+        face_side: 1 for positive axis, -1 for negative axis
+        """
+        # Get dimensions
+        dim = self.obj.dimensions
+        # Get rotation
+        rot = self.obj.rotation_euler
+        
+        # Simple approach: offset from center by half dimension along the axis
+        # This assumes the object is axis-aligned or we are working in local space transformed to world
+        # To be robust, we transform the local face center to world
+        
+        local_offset = Vector((0, 0, 0))
+        if face_axis == 'X':
+            local_offset.x = (dim.x / 2) * face_side
+        elif face_axis == 'Y':
+            local_offset.y = (dim.y / 2) * face_side
+        elif face_axis == 'Z':
+            local_offset.z = (dim.z / 2) * face_side
+            
+        # Transform local offset to world
+        world_offset = self.matrix_world.to_3x3() @ local_offset
+        return self.center + world_offset
+
+    def radial_point_world(self, axis='Z', angle=0):
+        """Returns a point on the radial edge of the object."""
+        # Assuming cylindrical symmetry around the specified axis
+        # This is a simplified radial point calculation
+        dim = self.obj.dimensions
+        radius = dim.x / 2 if axis == 'Z' else dim.y / 2 # Approximation
+        
+        # This is complex for arbitrary shapes, so we'll stick to center/face for anchoring
+        return self.center
+
+def anchor_to_center(anchor_obj, target_obj):
+    """Move target_obj so its center matches anchor_obj's center."""
+    anchor_loc = anchor_obj.matrix_world.to_translation()
+    target_loc = target_obj.matrix_world.to_translation()
+    target_obj.location += (anchor_loc - target_loc)
+
+def align_face(anchor_obj, target_obj, anchor_axis='Z', target_axis='Z'):
+    """
+    Align target_obj's face to anchor_obj's face.
+    Assumes both are roughly aligned with world axes or we align normals.
+    """
+    # Get face centers
+    anchor_face_loc = anchor_obj.Locator.face_center_world(anchor_axis, 1)
+    target_face_loc = target_obj.Locator.face_center_world(target_axis, 1)
+    
+    # Calculate offset to move target face to anchor face
+    offset = anchor_face_loc - target_face_loc
+    target_obj.location += offset
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Create a clean root object to anchor to
+bpy.ops.object.empty_add(type='PLAIN_AXES')
+calendar_root = bpy.context.active_object
+calendar_root.name = "calendar_root"
+calendar_root.location = (0, 0, 0)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_calendar_body = make_material("mat_calendar_body", (0.941, 0.941, 0.941, 1))
+mat_calendar_binding = make_material("mat_calendar_binding", (0.863, 0.863, 0.863, 1))
+mat_calendar_text = make_material("mat_calendar_text", (0.196, 0.196, 0.196, 1))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create binding group ---
+
+# Create primitive cuboid
+binding_rect = add_cube(0.120, 0.020, 0.005, "binding_rect")
+binding_rect.data.materials.append(mat_calendar_binding)
+
+# Rotate so +Z aligns +Z (already default, but explicit)
+align_axis_to_vector(binding_rect, 'Z', Vector((0, 0, 1)))
+
+# Anchor to calendar_root.center
+anchor_to_center(calendar_root, binding_rect)
+
+# Align binding_rect.+Z_face to calendar_root.+Z_face
+# Since both are centered and aligned, faces are already aligned. 
+# If calendar_root is just an empty, it has no face. 
+# The prompt implies calendar_root has a +Z face. 
+# Assuming calendar_root is a proxy for the main assembly center, 
+# and we are placing binding_rect relative to it.
+# If calendar_root is an Empty, face_center_world might fail if it has no geometry.
+# Let's assume calendar_root is a placeholder for the main body's position.
+# We will treat calendar_root as a point anchor for now, as empties don't have faces.
+# However, the prompt says "Align binding_rect.+Z_face to calendar_root.+Z_face".
+# If calendar_root is an Empty, we can't align to its face. 
+# We will assume calendar_root represents the main body's position/orientation.
+# Let's create a dummy geometry for calendar_root if it doesn't have one, 
+# or just skip face alignment if it's an empty.
+# For this script, we'll assume calendar_root is a valid mesh or we align to its location.
+# Given the ambiguity, we'll stick to center anchoring and assume orientation is handled by the root.
+
+# Move by offset(0, 0.060, 0)
+binding_rect.location += Vector((0, 0.060, 0))
+
+# --- SECTION 2 – Create body group ---
+
+# Create primitive cuboid
+body_cube = add_cube(0.100, 0.100, 0.005, "body_cube")
+body_cube.data.materials.append(mat_calendar_body)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(body_cube, 'Z', Vector((0, 0, 1)))
+
+# Anchor body_cube to calendar_root.center
+anchor_to_center(calendar_root, body_cube)
+
+# Align body_cube.+Z_face to calendar_root.+Z_face
+# Same logic as above. If calendar_root is an empty, we skip face alignment 
+# or assume it's aligned with world Z.
+# Since we anchored to center, and calendar_root is at (0,0,0), body_cube is at (0,0,0).
+
+# Move by offset(0, 0, 0)
+body_cube.location += Vector((0, 0, 0))
+
+# --- SECTION 3 – Create text group ---
+
+# Create primitive cuboid
+text_prism = add_cube(0.010, 0.060, 0.001, "text_prism")
+text_prism.data.materials.append(mat_calendar_text)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(text_prism, 'Z', Vector((0, 0, 1)))
+
+# Anchor text_prism to body_cube.center
+anchor_to_center(body_cube, text_prism)
+
+# Align text_prism.+Z_face to body_cube.+Z_face
+# Both are centered at the same point now. 
+# If we want them to touch faces, we need to offset.
+# But the prompt says "Align face", which usually means coplanar or touching.
+# If they are both centered, their +Z faces are at Z = +0.0025.
+# They are already aligned.
+
+# Move by offset(0, 0, 0)
+text_prism.location += Vector((0, 0, 0))
+
+# Final cleanup: Hide the root empty if it's just a helper
+calendar_root.hide_viewport = True
+calendar_root.hide_render = True
+```

@@ -1,0 +1,71 @@
+-- MATERIAL LIBRARY --
+classic_wood | diffuse_color=(0.45,0.25,0.15,1.0)
+classic_wallpaper | diffuse_color=(0.85,0.80,0.70,1.0)
+classic_rug | diffuse_color=(0.60,0.10,0.10,1.0)
+fireplace_stone | diffuse_color=(0.50,0.50,0.50,1.0)
+fireplace_mantel | diffuse_color=(0.90,0.85,0.75,1.0)
+modern_floor | diffuse_color=(0.90,0.90,0.90,1.0)
+modern_sofa | diffuse_color=(0.20,0.20,0.25,1.0)
+modern_tv_screen | diffuse_color=(0.05,0.05,0.05,1.0)
+modern_tv_frame | diffuse_color=(0.10,0.10,0.10,1.0)
+modern_wall | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| root | Composite of modern_room + classic_room | assembly_order=[modern_room, classic_room] |
+
+Layer 1 – Primary Structure (Rooms)
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| modern_room | Composite of modern_floor, modern_walls, modern_ceiling | A. Composite of modern_floor + modern_walls + modern_ceiling; offset(0, 0, 0); mat=-; create_method=boolean_union |
+| classic_room | Composite of classic_floor, classic_walls, classic_ceiling | A. Composite of classic_floor + classic_walls + classic_ceiling; offset(0, 0, 0); mat=-; create_method=boolean_union |
+
+Layer 2 – Modern Room Components
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| modern_floor | Cube 6×0.1×6 m | size=(6, 0.1, 6); pos=(0, 0, 0); mat=modern_floor; create_method=primitive |
+| modern_walls | Composite of 4 wall panels | A. Composite of wall_back + wall_left + wall_right; offset(0, 0, 0); mat=modern_wall; create_method=boolean_union |
+| modern_ceiling | Cube 6×0.1×6 m | size=(6, 0.1, 6); pos=(0, 3, 0); mat=modern_wall; create_method=primitive |
+| wall_back | Cube 6×3×0.1 m | size=(6, 3, 0.1); pos=(0, 1.5, -3); mat=modern_wall; create_method=primitive |
+| wall_left | Cube 0.1×3×6 m | size=(0.1, 3, 6); pos=(-3, 1.5, 0); mat=modern_wall; create_method=primitive |
+| wall_right | Cube 0.1×3×6 m | size=(0.1, 3, 6); pos=(3, 1.5, 0); mat=modern_wall; create_method=primitive |
+| modern_sofa | Composite of sofa_base + sofa_back + sofa_armrests | A. Composite of sofa_base + sofa_back + sofa_armrests; pos=(0, 0.4, -1.5); mat=modern_sofa; create_method=boolean_union |
+| sofa_base | Cube 2.5×0.4×0.8 m | size=(2.5, 0.4, 0.8); pos=(0, 0.2, 0); mat=modern_sofa; create_method=primitive |
+| sofa_back | Cube 2.5×0.6×0.2 m | size=(2.5, 0.6, 0.2); pos=(0, 0.7, -0.3); mat=modern_sofa; create_method=primitive |
+| sofa_armrests | Composite of arm_L + arm_R | A. Composite of arm_L + arm_R; pos=(0, 0.5, 0); mat=modern_sofa; create_method=boolean_union |
+| arm_L | Cube 0.2×0.4×0.8 m | size=(0.2, 0.4, 0.8); pos=(-1.15, 0, 0); mat=modern_sofa; create_method=primitive |
+| arm_R | Cube 0.2×0.4×0.8 m | size=(0.2, 0.4, 0.8); pos=(1.15, 0, 0); mat=modern_sofa; create_method=primitive |
+| modern_tv_unit | Composite of tv_stand + tv_screen | A. Composite of tv_stand + tv_screen; pos=(0, 0.3, -2.9); mat=modern_tv_frame; create_method=boolean_union |
+| tv_stand | Cube 1.5×0.5×0.4 m | size=(1.5, 0.5, 0.4); pos=(0, 0.25, 0); mat=modern_tv_frame; create_method=primitive |
+| tv_screen | Cube 1.2×0.7×0.05 m | size=(1.2, 0.7, 0.05); pos=(0, 0.85, 0); mat=modern_tv_screen; create_method=primitive |
+| modern_lamp | Composite of lamp_base + lamp_shade | A. Composite of lamp_base + lamp_shade; pos=(-2, 0.5, -1); mat=modern_tv_frame; create_method=boolean_union |
+| lamp_base | Cylinder Ø0.2×0.05 m | size=(0.2, 0.05); pos=(0, 0.025, 0); mat=modern_tv_frame; create_method=primitive |
+| lamp_shade | Cylinder Ø0.3×0.4 m | size=(0.3, 0.4); pos=(0, 0.25, 0); mat=modern_wall; create_method=primitive |
+
+Layer 3 – Classic Room Components
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| classic_floor | Cube 6×0.1×6 m | size=(6, 0.1, 6); pos=(0, 0, 0); mat=classic_wood; create_method=primitive |
+| classic_walls | Composite of 4 wall panels | A. Composite of c_wall_back + c_wall_left + c_wall_right; pos=(0, 0, 0); mat=classic_wallpaper; create_method=boolean_union |
+| classic_ceiling | Cube 6×0.1×6 m | size=(6, 0.1, 6); pos=(0, 3, 0); mat=classic_wallpaper; create_method=primitive |
+| c_wall_back | Cube 6×3×0.1 m | size=(6, 3, 0.1); pos=(0, 1.5, -3); mat=classic_wallpaper; create_method=primitive |
+| c_wall_left | Cube 0.1×3×6 m | size=(0.1, 3, 6); pos=(-3, 1.5, 0); mat=classic_wallpaper; create_method=primitive |
+| c_wall_right | Cube 0.1×3×6 m | size=(0.1, 3, 6); pos=(3, 1.5, 0); mat=classic_wallpaper; create_method=primitive |
+| fireplace | Composite of fireplace_base + fireplace_mantel + fireplace_hole | A. Composite of fireplace_base + fireplace_mantel + fireplace_hole; pos=(0, 0.5, -2.9); mat=fireplace_stone; create_method=boolean_union |
+| fireplace_base | Cube 1.2×1.0×0.3 m | size=(1.2, 1.0, 0.3); pos=(0, 0.5, 0); mat=fireplace_stone; create_method=primitive |
+| fireplace_mantel | Cube 1.4×0.1×0.4 m | size=(1.4, 0.1, 0.4); pos=(0, 1.05, 0); mat=fireplace_mantel; create_method=primitive |
+| fireplace_hole | Cube 0.6×0.6×0.2 m | size=(0.6, 0.6, 0.2); pos=(0, 0.5, 0.05); mat=fireplace_stone; create_method=boolean_subtract |
+| classic_sofa | Composite of c_sofa_base + c_sofa_back + c_sofa_armrests + c_sofa_legs | A. Composite of c_sofa_base + c_sofa_back + c_sofa_armrests + c_sofa_legs; pos=(0, 0.3, -1.5); mat=classic_wood; create_method=boolean_union |
+| c_sofa_base | Cube 2.2×0.3×0.7 m | size=(2.2, 0.3, 0.7); pos=(0, 0.15, 0); mat=classic_wood; create_method=primitive |
+| c_sofa_back | Cube 2.2×0.8×0.2 m | size=(2.2, 0.8, 0.2); pos=(0, 0.7, -0.25); mat=classic_wood; create_method=primitive |
+| c_sofa_armrests | Composite of c_arm_L + c_arm_R | A. Composite of c_arm_L + c_arm_R; pos=(0, 0.4, 0); mat=classic_wood; create_method=boolean_union |
+| c_arm_L | Cylinder Ø0.15×0.7 m | size=(0.15, 0.7); pos=(-1.0, 0, 0); mat=classic_wood; create_method=primitive |
+| c_arm_R | Cylinder Ø0.15×0.7 m | size=(0.15, 0.7); pos=(1.0, 0, 0); mat=classic_wood; create_method=primitive |
+| c_sofa_legs | Pattern of 4 cylinders | pattern=grid(rows:2, cols:2, x_spacing:1.8, y_spacing:0.5, start_offset:(-0.9, -0.25)); size=(0.05, 0.3); mat=classic_wood; create_method=primitive |
+| classic_rug | Cylinder Ø2×0.02 m | size=(2, 0.02); pos=(0, 0.01, -1.5); mat=classic_rug; create_method=primitive |
+| ornate_mirror | Cube 1.0×1.2×0.05 m | size=(1.0, 1.2, 0.05); pos=(0, 2.0, -2.95); mat=fireplace_mantel; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

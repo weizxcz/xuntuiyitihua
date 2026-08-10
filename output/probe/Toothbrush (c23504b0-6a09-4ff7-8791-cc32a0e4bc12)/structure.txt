@@ -1,0 +1,51 @@
+-- MATERIAL LIBRARY --
+mat_brush_head | diffuse_color=(0.1,0.4,0.8,1.0)
+mat_brush_head_grip | diffuse_color=(0.0,0.0,0.0,1.0)
+mat_neck | diffuse_color=(0.9,0.9,0.9,1.0)
+mat_neck_grip | diffuse_color=(0.0,0.0,0.0,1.0)
+mat_tufts | diffuse_color=(0.8,0.8,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| toothbrush | Composite of handle, neck, head, and bristles | assembly_order=[handle_group, neck_group, head_group, bristle_group] |
+
+Layer 1 – Primary Structure (Handle)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle | Composite of main handle body and grip | assembly_order=[handle_body, handle_grip] |
+| handle_body | Rectangular prism approx 0.150×0.025×0.012 m (L×W×H) | pos=(0, 0, 0); orientation=axis:+X; mat=mat_brush_head; create_method=primitive |
+| handle_grip | Rectangular prism approx 0.100×0.027×0.014 m (L×W×H) | Align(XY) handle_grip.center to handle_body.center; Align(Z) handle_grip.bottom_face to handle_body.bottom_face; offset(0,0,0.001); orientation=axis:+X; mat=mat_brush_head_grip; create_method=primitive |
+
+Layer 2 – Primary Structure (Neck)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| neck | Composite of neck body and grip | assembly_order=[neck_body, neck_grip] |
+| neck_body | Rectangular prism approx 0.030×0.020×0.010 m (L×W×H) | Align(X) neck_body.left_face to handle_body.right_face; offset(0,0,0); orientation=axis:+X; mat=mat_neck; create_method=primitive |
+| neck_grip | Rectangular prism approx 0.020×0.022×0.012 m (L×W×H) | Align(XY) neck_grip.center to neck_body.center; Align(Z) neck_grip.bottom_face to neck_body.bottom_face; offset(0,0,0.001); orientation=axis:+X; mat=mat_neck_grip; create_method=primitive |
+
+Layer 3 – Primary Structure (Head)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| head | Composite of head body and grip | assembly_order=[head_body, head_grip] |
+| head_body | Rectangular prism approx 0.050×0.020×0.010 m (L×W×H) | Align(X) head_body.left_face to neck_body.right_face; offset(0,0,0); orientation=axis:+X; mat=mat_brush_head; create_method=primitive |
+| head_grip | Rectangular prism approx 0.040×0.022×0.012 m (L×W×H) | Align(XY) head_grip.center to head_body.center; Align(Z) head_grip.bottom_face to head_body.bottom_face; offset(0,0,0.001); orientation=axis:+X; mat=mat_brush_head_grip; create_method=primitive |
+
+Layer 4 – Primary Structure (Bristles)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bristle_tuft | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | pos=(0,0,0); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_array | Composite of multiple bristle tufts | assembly_order=[bristle_tuft_0_0, bristle_tuft_0_1, bristle_tuft_0_2, bristle_tuft_1_0, bristle_tuft_1_1, bristle_tuft_1_2, bristle_tuft_2_0, bristle_tuft_2_1, bristle_tuft_2_2] |
+| bristle_tuft_0_0 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_0_0.center to head_body.top_face.center; offset(0.015, 0.005, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_0_1 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_0_1.center to head_body.top_face.center; offset(0.015, 0.000, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_0_2 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_0_2.center to head_body.top_face.center; offset(0.015, -0.005, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_1_0 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_1_0.center to head_body.top_face.center; offset(0.010, 0.005, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_1_1 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_1_1.center to head_body.top_face.center; offset(0.010, 0.000, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_1_2 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_1_2.center to head_body.top_face.center; offset(0.010, -0.005, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_2_0 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_2_0.center to head_body.top_face.center; offset(0.005, 0.005, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_2_1 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_2_1.center to head_body.top_face.center; offset(0.005, 0.000, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+| bristle_tuft_2_2 | Single tuft of bristles approx 0.002×0.002×0.015 m (W×H×L) | Align(XY) bristle_tuft_2_2.center to head_body.top_face.center; offset(0.005, -0.005, 0.005); orientation=axis:-Y; mat=mat_tufts; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

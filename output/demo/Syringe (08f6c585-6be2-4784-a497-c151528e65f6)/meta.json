@@ -1,0 +1,47 @@
+{
+  "id": "08f6c585-6be2-4784-a497-c151528e65f6",
+  "name": "Syringe",
+  "instruction": "Design a medical syringe. It should have a cylindrical barrel, a plunger, and a needle. Include measurement markings on the barrel.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a medical syringe.",
+        "The barrel is cylindrical in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The barrel includes clear measurement markings.",
+        "The markings are evenly spaced and easy to read."
+      ],
+      "Texture and surface detail": [
+        "The barrel is likely made of transparent plastic.",
+        "The plunger is made of a compatible material for smooth operation.",
+        "The needle is made of stainless steel."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The plunger is correctly positioned within the barrel.",
+        "The needle is properly aligned with the barrel.",
+        "The syringe components are proportionate to each other."
+      ],
+      "Object distance and contact": [
+        "The plunger fits snugly within the barrel without gaps.",
+        "The needle is securely attached to the barrel."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (barrel, plunger, needle) are accurately represented.",
+        "Measurement markings on the barrel are included as instructed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

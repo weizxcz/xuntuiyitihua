@@ -1,0 +1,44 @@
+-- MATERIAL LIBRARY --
+board_green | diffuse_color=(0.15,0.45,0.15,1.0)
+board_white | diffuse_color=(0.95,0.95,0.95,1.0)
+card_stock | diffuse_color=(0.90,0.90,0.85,1.0)
+dice_white | diffuse_color=(0.95,0.95,0.95,1.0)
+dice_red | diffuse_color=(0.85,0.10,0.10,1.0)
+piece_blue | diffuse_color=(0.10,0.20,0.80,1.0)
+piece_red | diffuse_color=(0.80,0.10,0.10,1.0)
+piece_yellow | diffuse_color=(0.90,0.80,0.10,1.0)
+piece_green | diffuse_color=(0.10,0.70,0.10,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| game_set | Composite of board + pieces + dice + cards | assembly_order=[board_group, pieces_group, dice_group, cards_group] |
+
+Layer 1 – Primary Structure (Board)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| board_base | Square board base 0.300×0.300×0.020 m | pos=(0,0,0); orientation=axis:+Z; mat=board_green; create_method=primitive(cube) |
+| board_grid | Grid pattern overlay on board | Align(XY) board_grid.bottom_face to board_base.top_face; offset(0,0,0.001); mat=board_white; create_method=boolean_subtract; constraint=grid_lines_width=0.005m, spacing=0.050m |
+
+Layer 2 – Game Pieces (Figurines)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| piece_blue | Blue pawn 0.040×0.040×0.060 m | pos=(-0.10, -0.10, 0.040); orientation=axis:+Z; mat=piece_blue; create_method=primitive(cylinder) |
+| piece_red | Red pawn 0.040×0.040×0.060 m | pos=(0.10, -0.10, 0.040); orientation=axis:+Z; mat=piece_red; create_method=primitive(cylinder) |
+| piece_yellow | Yellow pawn 0.040×0.040×0.060 m | pos=(-0.10, 0.10, 0.040); orientation=axis:+Z; mat=piece_yellow; create_method=primitive(cylinder) |
+| piece_green | Green pawn 0.040×0.040×0.060 m | pos=(0.10, 0.10, 0.040); orientation=axis:+Z; mat=piece_green; create_method=primitive(cylinder) |
+
+Layer 3 – Dice
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| dice_1 | White die 0.020×0.020×0.020 m | pos=(-0.05, 0.15, 0.020); orientation=axis:+Z; mat=dice_white; create_method=primitive(cube) |
+| dice_2 | Red die 0.020×0.020×0.020 m | pos=(0.05, 0.15, 0.020); orientation=axis:+Z; mat=dice_red; create_method=primitive(cube) |
+
+Layer 4 – Cards
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| card_stack | Stack of 5 cards 0.080×0.050×0.002 m each | pos=(0, 0.15, 0.020); orientation=axis:+Z; mat=card_stock; create_method=primitive(cube) |
+
+# ----------  END_GRAPH  ----------

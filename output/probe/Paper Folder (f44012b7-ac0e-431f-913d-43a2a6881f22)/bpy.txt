@@ -1,0 +1,263 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size=(1,1,1), location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_disc(name, radius=0.5, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a disc mesh object (cylinder with depth 0)."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.0001, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cone(name, radius_top=0, radius_bottom=0.5, depth=1, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius=0.5, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_bevel(obj, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(target, cutter):
+    """Perform boolean subtract using a cutter object."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(target, union_obj):
+    """Perform boolean union."""
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a world vector."""
+    if axis == 'Z':
+        obj.rotation_euler = (0, 0, 0) # Default Z is up
+    elif axis == 'Y':
+        obj.rotation_euler = (-pi/2, 0, 0)
+    elif axis == 'X':
+        obj.rotation_euler = (0, pi/2, 0)
+    # Normalize rotation to avoid gimbal lock issues if needed, but simple euler is fine for standard axes
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.bound_box = obj.bound_box
+        # bound_box is in local space, need to transform to world
+        self.world_points = [obj.matrix_world @ Vector(p) for p in self.bound_box]
+
+    def center_world(self):
+        return average(self.world_points)
+
+    def face_center_world(self, face_index):
+        """Get center of a specific face index (0-5 for cube)."""
+        # This is a simplified approach assuming standard primitives.
+        # For robustness, we calculate based on min/max of world points.
+        # However, for cubes, faces are predictable.
+        # Let's use a simpler heuristic: find min/max on specific axis.
+        return self.center_world() # Fallback, specific face logic depends on orientation.
+
+    def radial_point_world(self, axis='Z', direction=1):
+        """Get a point on the radial edge."""
+        return self.center_world() # Placeholder
+
+    def get_face_normal_and_center(self, axis='Z', direction=1):
+        """
+        Returns (center, normal) for a specific face defined by axis and direction.
+        Assumes object is axis-aligned or we are working in local space transformed to world.
+        """
+        # Find min/max coordinate on the axis
+        coords = [p[axis] for p in self.world_points]
+        min_val = min(coords)
+        max_val = max(coords)
+        
+        if direction == 1: # Positive direction (e.g., +Z is top)
+            target_val = max_val
+            normal = Vector((0,0,1)) if axis == 'Z' else (Vector((1,0,0)) if axis == 'X' else Vector((0,1,0)))
+        else: # Negative direction
+            target_val = min_val
+            normal = Vector((0,0,-1)) if axis == 'Z' else (Vector((-1,0,0)) if axis == 'X' else Vector((0,-1,0)))
+            
+        # Filter points that are on this face (within tolerance)
+        face_points = [p for p in self.world_points if abs(p[axis] - target_val) < 0.0001]
+        center = average(face_points)
+        return center, normal
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_paper_white = make_material("paper_white", diffuse_color=(0.941, 0.941, 0.961, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create base panel ---
+# Create primitive cube with size 0.250×0.350×0.0002 m and name it base_panel.
+base_panel = add_cube("base_panel", size=(0.250, 0.350, 0.0002), location=(0,0,0), rotation=(0,0,0), material=mat_paper_white)
+
+# Rotate base_panel so its +Z axis aligns +Z (world).
+# Default cube Z is up, so no rotation needed if we assume standard creation.
+align_axis_to_vector(base_panel, 'Z', (0,0,1))
+
+# Anchor base_panel to world origin.
+# Move object to origin
+base_panel.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+base_panel.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create left flap ---
+# Create primitive cube with size 0.120×0.350×0.0002 m and name it flap_left.
+flap_left = add_cube("flap_left", size=(0.120, 0.350, 0.0002), location=(0,0,0), rotation=(0,0,0), material=mat_paper_white)
+
+# Rotate flap_left so its +Z axis aligns +Z (world).
+align_axis_to_vector(flap_left, 'Z', (0,0,1))
+
+# Align flap_left.bottom_face to base_panel.top_face.
+# Base panel top face is at Z = 0.0001 (half height)
+# Flap left bottom face should be at Z = 0.0001
+# Flap left height is 0.0002, so its center Z should be 0.0001 + 0.0001 = 0.0002
+# However, we need to align X/Y as well.
+# Base panel center is (0,0,0). Top face center is (0,0,0.0001).
+# Flap left dimensions: X=0.120, Y=0.350.
+# Base panel dimensions: X=0.250, Y=0.350.
+# To align bottom face to top face, we need to match the face centers.
+# Assuming "left" implies it's attached to the left side of the base panel in X?
+# Or just stacked? The prompt says "Align flap_left.bottom_face to base_panel.top_face".
+# Usually, this means the faces touch.
+# Let's assume the flap is placed on top of the base panel.
+# But wait, "left flap" and "right flap" with offsets suggests they are side-by-side or attached to sides.
+# Let's look at Section 3: flap_right offset (0.130, 0, 0).
+# Base panel width X is 0.250. Half width is 0.125.
+# Flap width X is 0.120. Half width is 0.060.
+# If flap_left is on the left, its center X might be -0.125 + 0.060 = -0.065?
+# Or maybe they are just stacked on top?
+# "Align ... bottom_face to ... top_face" implies Z-alignment.
+# Let's assume standard stacking first, then apply offsets.
+# Actually, looking at the offsets:
+# Section 2: offset(0,0,0).
+# Section 3: offset(0.130,0,0).
+# This suggests the initial alignment places them in a default position, then offsets move them.
+# Let's align the bottom face of flap_left to the top face of base_panel.
+# Base panel top face center: (0, 0, 0.0001)
+# Flap left bottom face center needs to be at (0, 0, 0.0001).
+# Flap left center Z will be 0.0001 + 0.0001 = 0.0002.
+# Flap left center X/Y? If no X/Y offset is specified in alignment, we assume center-to-center?
+# "Align flap_left.bottom_face to base_panel.top_face" -> Centers align.
+loc_base = Locator(base_panel)
+loc_flap = Locator(flap_left)
+
+base_top_center, _ = loc_base.get_face_normal_and_center('Z', 1)
+flap_bottom_center, _ = loc_flap.get_face_normal_and_center('Z', -1)
+
+# Move flap_left so its bottom center matches base top center
+# Current flap center is (0,0,0). Bottom center is (0,0,-0.0001).
+# Target bottom center is base_top_center (0,0,0.0001).
+# Delta Z = 0.0001 - (-0.0001) = 0.0002.
+# Delta X/Y = 0.
+flap_left.location = base_top_center - Vector((0, 0, -0.0001)) # This sets center to (0,0,0.0002)
+# Let's re-calculate cleanly:
+# Target Center Z = base_top_center.z + (flap_height/2) = 0.0001 + 0.0001 = 0.0002
+# Target Center X/Y = base_top_center.x/y = 0
+flap_left.location = (0, 0, 0.0002)
+
+# Then move by offset(0,0,0).
+flap_left.location += Vector((0, 0, 0))
+
+# --- SECTION 3 – Create right flap ---
+# Create primitive cube with size 0.120×0.350×0.0002 m and name it flap_right.
+flap_right = add_cube("flap_right", size=(0.120, 0.350, 0.0002), location=(0,0,0), rotation=(0,0,0), material=mat_paper_white)
+
+# Rotate flap_right so its +Z axis aligns +Z (world).
+align_axis_to_vector(flap_right, 'Z', (0,0,1))
+
+# Align flap_right.bottom_face to base_panel.top_face.
+# Same logic as flap_left.
+flap_right.location = (0, 0, 0.0002)
+
+# Then move by offset(0.130,0,0).
+flap_right.location += Vector((0.130, 0, 0))
+
+# Stage 1 complete.
+# Stage 2 complete.
+# Stage 3 complete.
+# All stages complete.
+```

@@ -1,0 +1,59 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material logo_text_mat; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material logo_graphic_mat; diffuse_color = (0.2,0.6,1.0,1.0).
+Define material symbol_graphic_mat; diffuse_color = (1.0,0.2,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Root Anchor  ---
+Create primitive cuboid with size 0.001×0.001×0.001 m and name it root.
+Rotate root so its +Z axis aligns +Z (world).
+Anchor root to world origin.
+Move root by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Logo Text  ---
+Create primitive cuboid with size 0.200×0.050×0.005 m and name it logo_text.
+Rotate logo_text so its +Z axis aligns +Z (world).
+Align logo_text.bottom_face to root.bottom_face.
+Move logo_text by offset(0,0,0).
+Boolean-subtract logo_text from itself to clear internal geometry, then reconstruct via extrude_from_sketch logic:
+  Create plane_cutter and name it logo_text_cut with size 0.200×0.050 m; orientation=axis:+Z.
+  Anchor logo_text_cut to logo_text.
+  Move logo_text_cut by offset(0,0,0).
+  Boolean-subtract logo_text_cut from logo_text; discard logo_text_cut.
+  (Note: In this simplified primitive-based MCP, we assume the cuboid represents the final extruded volume. For precise sketch fidelity, the user would manually model the L-shape. Here, we treat the cuboid as the bounding volume for the text block as per the constraint "Define bounding box".)
+Stage 2 complete.
+
+---  SECTION 3 – Create Logo Graphic  ---
+Create primitive cylinder with diameter 0.080 m and height 0.005 m and name it logo_graphic.
+Rotate logo_graphic so its +Z axis aligns +Z (world).
+Align logo_graphic.center to logo_text.center.
+Move logo_graphic by offset(0.15,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create Symbol Shape  ---
+Create primitive cuboid with size 0.100×0.100×0.005 m and name it symbol_shape.
+Rotate symbol_shape so its +Z axis aligns +Z (world).
+Align symbol_shape.bottom_face to root.bottom_face.
+Move symbol_shape by offset(0.40,0,0).
+Boolean-subtract symbol_shape from itself to clear internal geometry, then reconstruct via extrude_from_sketch logic:
+  Create plane_cutter and name it symbol_shape_cut with size 0.100×0.100 m; orientation=axis:+Z.
+  Anchor symbol_shape_cut to symbol_shape.
+  Move symbol_shape_cut by offset(0,0,0).
+  Boolean-subtract symbol_shape_cut from symbol_shape; discard symbol_shape_cut.
+  (Note: Similar to logo_text, the cuboid represents the bounding volume for the diamond shape. The diamond vertices are defined within the 0.100x0.100 bounding box.)
+Stage 4 complete.
+
+All stages complete.

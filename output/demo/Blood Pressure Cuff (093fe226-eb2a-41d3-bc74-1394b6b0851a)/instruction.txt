@@ -1,0 +1,1 @@
+Create a blood pressure cuff. The cuff should be adjustable to fit different arm sizes, with a small rectangular digital display attached to it. The display should show systolic and diastolic readings.

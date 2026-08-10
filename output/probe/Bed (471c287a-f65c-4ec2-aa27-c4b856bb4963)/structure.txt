@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+fabric_blue | diffuse_color=(0.1,0.2,0.4,1)
+fabric_white | diffuse_color=(0.95,0.95,0.95,1)
+metal_silver | diffuse_color=(0.7,0.7,0.7,1)
+wood_dark | diffuse_color=(0.2,0.1,0.05,1)
+wood_light | diffuse_color=(0.8,0.7,0.5,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bed_frame | Composite of bed\_base + 4× bed\_leg + headboard + footboard + side\_rails + mattress + pillows + duvet | assembly\_order=[frame\_structure, bedding] |
+
+Layer 1 – Primary Structure (Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bed\_base | Composite of slat\_frame + 2× side\_rail\_long + 2× end\_rail | Align(XY) bed\_base.center to (0,0,0); orientation=axis:+Z; mat=wood\_light; create\_method=boolean\_union; assembly\_order=[slats, rails] |
+| slat\_frame | Composite of 15× slat | Align(XY) slat\_frame.center to bed\_base.center; orientation=axis:+Z; mat=wood\_light; create\_method=pattern; constraint=grid(rows=1, cols=15, x\_spacing=0.04, y\_spacing=0, start\_offset=(-0.28,0)); size=0.03×0.02×1.9 (W×H×L); assembly\_order=[slat] |
+| slat | Rectangular prism 0.03×0.02×1.9 m | Align(XY) slat.center to slat\_frame.center; orientation=axis:+Z; mat=wood\_light; create\_method=primitive; assembly\_order=- |
+| side\_rail\_long | Rectangular prism 0.05×0.05×2.0 m | Align(XY) side\_rail\_long.center to bed\_base.center; orientation=axis:+Z; mat=wood\_light; create\_method=primitive; assembly\_order=[rail\_long] |
+| end\_rail | Rectangular prism 0.05×0.05×1.4 m | Align(XY) end\_rail.center to bed\_base.center; orientation=axis:+Z; mat=wood\_light; create\_method=primitive; assembly\_order=[rail\_end] |
+| bed\_leg | Rectangular prism 0.05×0.15×0.05 m | Align(XY) bed\_leg.center to bed\_base.center; orientation=axis:+Z; mat=wood\_dark; create\_method=pattern; constraint=grid(rows=2, cols=2, x\_spacing=1.9, y\_spacing=1.3, start\_offset=(-0.95,-0.65)); assembly\_order=[leg] |
+| leg | Rectangular prism 0.05×0.15×0.05 m | Align(XY) leg.center to bed\_leg.center; orientation=axis:+Z; mat=wood\_dark; create\_method=primitive; assembly\_order=- |
+| headboard | Composite of headboard\_panel + 2× headboard\_post | Align(XY) headboard.center to bed\_base.center; orientation=axis:+Z; mat=wood\_dark; create\_method=boolean\_union; assembly\_order=[panel, posts] |
+| headboard\_panel | Rectangular prism 0.05×0.8×1.4 m | Align(XY) headboard\_panel.center to headboard.center; orientation=axis:+Z; mat=wood\_dark; create\_method=primitive; assembly\_order=- |
+| headboard\_post | Rectangular prism 0.05×1.0×0.05 m | Align(XY) headboard\_post.center to headboard.center; orientation=axis:+Z; mat=wood\_dark; create\_method=pattern; constraint=grid(rows=1, cols=2, x\_spacing=1.3, y\_spacing=0, start\_offset=(-0.65,0)); assembly\_order=[post] |
+| post | Rectangular prism 0.05×1.0×0.05 m | Align(XY) post.center to headboard\_post.center; orientation=axis:+Z; mat=wood\_dark; create\_method=primitive; assembly\_order=- |
+| footboard | Composite of footboard\_panel + 2× footboard\_post | Align(XY) footboard.center to bed\_base.center; orientation=axis:+Z; mat=wood\_dark; create\_method=boolean\_union; assembly\_order=[panel, posts] |
+| footboard\_panel | Rectangular prism 0.05×0.6×1.4 m | Align(XY) footboard\_panel.center to footboard.center; orientation=axis:+Z; mat=wood\_dark; create\_method=primitive; assembly\_order=- |
+| footboard\_post | Rectangular prism 0.05×0.8×0.05 m | Align(XY) footboard\_post.center to footboard.center; orientation=axis:+Z; mat=wood\_dark; create\_method=pattern; constraint=grid(rows=1, cols=2, x\_spacing=1.3, y\_spacing=0, start\_offset=(-0.65,0)); assembly\_order=[post] |
+
+Layer 2 – Bedding
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| mattress | Rectangular prism 1.4×0.2×2.0 m | Align(XY) mattress.center to bed\_base.center; orientation=axis:+Z; mat=fabric\_white; create\_method=primitive; assembly\_order=- |
+| pillows | Composite of 2× pillow | Align(XY) pillows.center to bed\_base.center; orientation=axis:+Z; mat=fabric\_white; create\_method=pattern; constraint=grid(rows=1, cols=2, x\_spacing=0.4, y\_spacing=0, start\_offset=(-0.2,0)); assembly\_order=[pillow] |
+| pillow | Rounded cube 0.6×0.2×0.4 m | Align(XY) pillow.center to pillows.center; orientation=axis:+Z; mat=fabric\_white; create\_method=primitive; assembly\_order=- |
+| duvet | Rectangular prism 1.4×0.15×2.0 m | Align(XY) duvet.center to bed\_base.center; orientation=axis:+Z; mat=fabric\_blue; create\_method=primitive; assembly\_order=- |
+
+# ----------  END_GRAPH  ----------

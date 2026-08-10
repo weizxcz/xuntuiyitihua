@@ -1,0 +1,1 @@
+Create a basic thermometer with a slender body and a small digital display. The tip should be rounded for safety. The display should show temperature readings in both Celsius and Fahrenheit.

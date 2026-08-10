@@ -1,0 +1,27 @@
+-- MATERIAL LIBRARY --
+blade_steel | diffuse_color=(180,185,190,1)
+handle_grip | diffuse_color=(30,30,30,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| kitchen_knife | Composite of blade_steel + handle_grip; assembled into a functional kitchen knife | assembly_order=[blade_group], [handle_group] |
+
+Layer 1 – Primary Structure (Blade)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| blade_steel | Composite of blade_blank + bevel_left + bevel_right; tapered, sharp-edged blade | assembly_order=[blade_blank], [bevel_left], [bevel_right] |
+| blade_blank | Rectangular prism approx 0.200×0.040×0.003 m (L×W×T) | pos=(0, 0, 0); orientation=axis:+Z; mat=blade_steel; create_method=primitive; constraint=box(0.200, 0.040, 0.003) |
+| bevel_left | Wedge shape subtracted from left side of blade_blank to create taper and edge | Align(XZ) bevel_left.right_face to blade_blank.left_face; offset(0, 0, 0); orientation=axis:+Z; mat=blade_steel; create_method=boolean_subtract; constraint=prism(0.200, 0.020, 0.003) |
+| bevel_right | Wedge shape subtracted from right side of blade_blank to create taper and edge | Align(XZ) bevel_right.left_face to blade_blank.right_face; offset(0, 0, 0); orientation=axis:+Z; mat=blade_steel; create_method=boolean_subtract; constraint=prism(0.200, 0.020, 0.003) |
+
+Layer 2 – Primary Structure (Handle)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_grip | Composite of handle_base + handle_contour; ergonomic, curved grip | assembly_order=[handle_base], [handle_contour] |
+| handle_base | Cylindrical prism approx 0.120×0.025×0.025 m (L×W×H) | Align(X) handle_base.right_face to blade_blank.left_face; offset(-0.005, 0, 0); orientation=axis:+X; mat=handle_grip; create_method=primitive; constraint=cylinder(0.0125, 0.120) |
+| handle_contour | Ergonomic curves subtracted from handle_base to improve grip | Align(XYZ) handle_contour.center to handle_base.center; offset(0, 0, 0); orientation=axis:+X; mat=handle_grip; create_method=boolean_subtract; constraint=complex_curve(0.120, 0.025, 0.025) |
+
+# ----------  END_GRAPH  ----------

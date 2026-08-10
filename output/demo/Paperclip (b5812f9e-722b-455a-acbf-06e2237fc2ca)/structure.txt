@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+mat_steel_wire | diffuse_color=(0.7,0.7,0.75,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly containing both paperclip variants | assembly_order=[standard_paperclip, triangular_paperclip] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| standard_paperclip | Standard double-loop paperclip (Olivier) | Composite of wire segments forming two nested loops; mat=mat_steel_wire; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Path defined by two concentric semi-circles connected by straight tangent segments. Outer loop radius R=0.004 m, inner loop radius r=0.003 m. Wire diameter d=0.001 m. Extrude thickness t=0.001 m along +Z. Caps enabled. Maintain sharp transitions at tangent points. |
+| triangular_paperclip | Triangular loop paperclip | Composite of wire segments forming a triangular loop with rounded corners; mat=mat_steel_wire; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Path defined by an equilateral triangle with side length L=0.008 m, corners rounded with radius r=0.002 m. Wire diameter d=0.001 m. Extrude thickness t=0.001 m along +Z. Caps enabled. Preserve rounded corners via high vertex density. |
+
+# ----------  END_GRAPH  ----------

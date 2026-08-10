@@ -1,0 +1,310 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    # Adjust roughness/metallic for better visual approximation if needed, 
+    # but sticking to diffuse_color as requested implies basic shading.
+    return mat
+
+def assign_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        assign_material(obj, material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        assign_material(obj, material)
+    return obj
+
+def get_world_center(obj):
+    """Get the world space center of an object."""
+    return obj.matrix_world.to_translation()
+
+def get_face_center(obj, face_type='top'):
+    """
+    Get the world space center of a specific face of an object.
+    Assumes object is axis-aligned or has been oriented such that local Z is up.
+    """
+    # Local center
+    center_local = Vector((0, 0, 0))
+    
+    # Determine offset based on face type and object dimensions
+    # Assuming standard primitives created with scale
+    if face_type == 'top':
+        offset_local = Vector((0, 0, obj.dimensions[2]/2))
+    elif face_type == 'bottom':
+        offset_local = Vector((0, 0, -obj.dimensions[2]/2))
+    else:
+        offset_local = Vector((0, 0, 0))
+        
+    local_face_center = center_local + offset_local
+    
+    # Convert to world space
+    world_face_center = obj.matrix_world @ local_face_center
+    return world_face_center
+
+def align_to_face(target_obj, source_obj, target_face='top', source_face='bottom'):
+    """
+    Align source_obj's face to target_obj's face.
+    Moves source_obj so its face center matches target face center.
+    """
+    target_center = get_face_center(target_obj, target_face)
+    source_center = get_face_center(source_obj, source_face)
+    
+    # Calculate translation vector
+    delta = target_center - source_center
+    source_obj.location += delta
+
+def apply_offset(obj, offset_vector):
+    """Apply an offset to an object's location."""
+    obj.location += offset_vector
+
+def orient_z_up(obj):
+    """Ensure object's +Z axis aligns with world +Z."""
+    # For standard primitives, default rotation is often (0,0,0) which aligns Z up.
+    # If rotation was set differently, we reset it.
+    obj.rotation_euler = (0, 0, 0)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_abs_black = make_material("abs_black", (0.10, 0.10, 0.10))
+mat_abs_white = make_material("abs_white", (0.95, 0.95, 0.95))
+mat_aluminum_silver = make_material("aluminum_silver", (0.75, 0.75, 0.78))
+mat_lcd_green = make_material("lcd_green", (0.10, 0.80, 0.10))
+mat_nylon_black = make_material("nylon_black", (0.05, 0.05, 0.05))
+mat_nylon_white = make_material("nylon_white", (0.90, 0.90, 0.90))
+mat_silicone_grey = make_material("silicone_grey", (0.60, 0.60, 0.60))
+mat_velcro_gray = make_material("velcro_gray", (0.50, 0.50, 0.50))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Display Unit Main Body ---
+main_body = add_cube(
+    name="main_body",
+    size=(0.080, 0.120, 0.025),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_abs_black
+)
+orient_z_up(main_body)
+# Move to pos=(0,0,0) is already done in add_cube
+
+# --- SECTION 2 – Create Display Unit Screen Beze ---
+screen_beze = add_cube(
+    name="screen_beze",
+    size=(0.060, 0.080, 0.002),
+    location=(0, 0, 0), # Temp location
+    rotation_euler=(0, 0, 0),
+    material=mat_abs_white
+)
+orient_z_up(screen_beze)
+align_to_face(screen_beze, main_body, target_face='top', source_face='bottom')
+apply_offset(screen_beze, (0, 0, 0.001))
+
+# --- SECTION 3 – Create Display Unit LCD Screen ---
+lcd_screen = add_cube(
+    name="lcd_screen",
+    size=(0.050, 0.070, 0.001),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_lcd_green
+)
+orient_z_up(lcd_screen)
+align_to_face(lcd_screen, screen_beze, target_face='top', source_face='bottom')
+apply_offset(lcd_screen, (0, 0, 0.001))
+
+# --- SECTION 4 – Create Display Unit Button Panel ---
+button_panel = add_cube(
+    name="button_panel",
+    size=(0.060, 0.030, 0.002),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_nylon_black
+)
+orient_z_up(button_panel)
+align_to_face(button_panel, main_body, target_face='top', source_face='bottom')
+apply_offset(button_panel, (0, -0.045, 0.001))
+
+# --- SECTION 5 – Create Display Unit Start Button ---
+# Cylinder: Ø0.015 -> Radius 0.0075, Height 0.005
+button_start = add_cylinder(
+    name="button_start",
+    radius=0.0075,
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_nylon_white
+)
+orient_z_up(button_start)
+align_to_face(button_start, button_panel, target_face='top', source_face='bottom')
+apply_offset(button_start, (-0.015, 0, 0.001))
+
+# --- SECTION 6 – Create Display Unit Memory Button ---
+# Cylinder: Ø0.010 -> Radius 0.005, Height 0.005
+button_memory = add_cylinder(
+    name="button_memory",
+    radius=0.005,
+    depth=0.005,
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_nylon_white
+)
+orient_z_up(button_memory)
+align_to_face(button_memory, button_panel, target_face='top', source_face='bottom')
+apply_offset(button_memory, (0.015, 0, 0.001))
+
+# --- SECTION 7 – Create Display Unit Internal Electronics ---
+internal_electronics = add_cube(
+    name="internal_electronics",
+    size=(0.070, 0.110, 0.015),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_silicone_grey
+)
+orient_z_up(internal_electronics)
+align_to_face(internal_electronics, main_body, target_face='bottom', source_face='bottom')
+apply_offset(internal_electronics, (0, 0, -0.005))
+
+# --- SECTION 8 – Create Cuff Band ---
+cuff_band = add_cube(
+    name="cuff_band",
+    size=(0.040, 0.300, 0.005),
+    location=(0.15, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_nylon_black
+)
+orient_z_up(cuff_band)
+
+# --- SECTION 9 – Create Cuff Inner Padding ---
+cuff_inner = add_cube(
+    name="cuff_inner",
+    size=(0.038, 0.290, 0.003),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_silicone_grey
+)
+orient_z_up(cuff_inner)
+align_to_face(cuff_inner, cuff_band, target_face='top', source_face='bottom')
+apply_offset(cuff_inner, (0, 0, 0.001))
+
+# --- SECTION 10 – Create Cuff Bladder ---
+bladder = add_cube(
+    name="bladder",
+    size=(0.035, 0.280, 0.001),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_silicone_grey
+)
+orient_z_up(bladder)
+align_to_face(bladder, cuff_inner, target_face='top', source_face='bottom')
+apply_offset(bladder, (0, 0, 0.001))
+
+# --- SECTION 11 – Create Velcro Hook ---
+velcro_hook = add_cube(
+    name="velcro_hook",
+    size=(0.040, 0.100, 0.002),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_velcro_gray
+)
+orient_z_up(velcro_hook)
+align_to_face(velcro_hook, cuff_band, target_face='top', source_face='bottom')
+apply_offset(velcro_hook, (0, 0.100, 0.001))
+
+# --- SECTION 12 – Create Velcro Loop ---
+velcro_loop = add_cube(
+    name="velcro_loop",
+    size=(0.040, 0.100, 0.002),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_velcro_gray
+)
+orient_z_up(velcro_loop)
+align_to_face(velcro_loop, cuff_band, target_face='top', source_face='bottom')
+apply_offset(velcro_loop, (0, -0.100, 0.001))
+
+# --- SECTION 13 – Create Air Connector ---
+# Cylinder: Ø0.010 -> Radius 0.005, Height 0.015
+air_connector = add_cylinder(
+    name="air_connector",
+    radius=0.005,
+    depth=0.015,
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_abs_black
+)
+orient_z_up(air_connector)
+align_to_face(air_connector, cuff_band, target_face='top', source_face='bottom')
+apply_offset(air_connector, (0, 0.150, 0.001))
+
+# --- SECTION 14 – Create Air Tube ---
+# Cylinder: Ø0.005 -> Radius 0.0025, Height 0.500
+air_tube = add_cylinder(
+    name="air_tube",
+    radius=0.0025,
+    depth=0.500,
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_abs_black
+)
+orient_z_up(air_tube)
+align_to_face(air_tube, air_connector, target_face='top', source_face='bottom')
+apply_offset(air_tube, (0, 0, 0.007))
+```

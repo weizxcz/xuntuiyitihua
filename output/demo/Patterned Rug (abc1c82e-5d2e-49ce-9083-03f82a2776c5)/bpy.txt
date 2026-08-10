@@ -1,0 +1,459 @@
+```python
+import bpy
+import math
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with a specific diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube and apply transforms."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_primitive_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder and apply transforms."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_primitive_cuboid(name, x, y, z, location, rotation_euler, material=None):
+    """Add a cube scaled to dimensions x,y,z."""
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (x/2, y/2, z/2)
+    obj.rotation_euler = rotation_euler
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_bottom_to_top(bottom_obj, top_obj):
+    """Align the bottom face of bottom_obj to the top face of top_obj in Z."""
+    # Get world bounds
+    bm_bottom = bmesh.new()
+    bm_top = bmesh.new()
+    
+    # We need to work in world space for accurate alignment if objects are rotated,
+    # but here we assume simple Z-alignment.
+    # Calculate top Z of top_obj
+    # Since objects are axis-aligned, we can use bounds
+    min_b, max_b = bottom_obj.bound_box
+    min_t, max_t = top_obj.bound_box
+    
+    # Transform bounds to world space
+    # Simple approach: assume Z-up alignment.
+    # Top of top_obj in world Z
+    top_z_world = max_t[6] * top_obj.scale[2] + top_obj.location[2] # Approximate if scale is uniform, but let's be precise
+    
+    # Actually, let's use the helper logic:
+    # Find the highest Z point of the top object
+    # And the lowest Z point of the bottom object
+    
+    # To be robust, we calculate the offset required to move bottom_obj's lowest Z to top_obj's highest Z
+    # Note: bound_box is local.
+    
+    # Local min/max Z
+    local_min_z_bottom = min(min_b[i][2] for i in range(8))
+    local_max_z_bottom = max(min_b[i][2] for i in range(8))
+    local_min_z_top = min(min_t[i][2] for i in range(8))
+    local_max_z_top = max(min_t[i][2] for i in range(8))
+    
+    # World Z of top face of top_obj
+    # Assuming top_obj is not rotated around X/Y significantly (Z-up)
+    world_top_z = top_obj.location[2] + (local_max_z_top * top_obj.scale[2])
+    
+    # World Z of bottom face of bottom_obj (before move)
+    world_bottom_z_current = bottom_obj.location[2] + (local_min_z_bottom * bottom_obj.scale[2])
+    
+    # Delta Z needed
+    delta_z = world_top_z - world_bottom_z_current
+    
+    bottom_obj.location[2] += delta_z
+    
+    bm_bottom.free()
+    bm_top.free()
+
+def align_bottom_to_world_z(bottom_obj, z_val):
+    """Align the bottom face of bottom_obj to a specific world Z."""
+    bm = bmesh.new()
+    min_b = bottom_obj.bound_box
+    local_min_z_bottom = min(min_b[i][2] for i in range(8))
+    
+    world_bottom_z_current = bottom_obj.location[2] + (local_min_z_bottom * bottom_obj.scale[2])
+    delta_z = z_val - world_bottom_z_current
+    bottom_obj.location[2] += delta_z
+    bm.free()
+
+def boolean_union(target_obj, cutter_obj):
+    """Perform boolean union: cutter_obj is merged into target_obj. target_obj becomes the result."""
+    # Add Boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    return target_obj
+
+def boolean_subtract(target_obj, cutter_obj):
+    """Perform boolean subtraction: cutter_obj cuts into target_obj."""
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    return target_obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # This is a simplified helper. For strict Z-up, we often just set rotation.
+    # If axis is 'Z' and vector is (0,0,1), rotation is (0,0,0).
+    pass
+
+def get_polar_location(angle_deg, radius, center=(0,0,0)):
+    """Get X,Y location from polar coordinates."""
+    angle_rad = math.radians(angle_deg)
+    x = center[0] + radius * math.cos(angle_rad)
+    y = center[1] + radius * math.sin(angle_rad)
+    return (x, y, center[2])
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_geometric_blue = make_material("mat_geometric_blue", (0.1, 0.2, 0.8, 1.0))
+mat_geometric_white = make_material("mat_geometric_white", (0.9, 0.9, 0.9, 1.0))
+mat_floral_blue = make_material("mat_floral_blue", (0.1, 0.2, 0.8, 1.0))
+mat_floral_green = make_material("mat_floral_green", (0.1, 0.5, 0.1, 1.0))
+mat_floral_red = make_material("mat_floral_red", (0.8, 0.1, 0.1, 1.0))
+mat_floral_white = make_material("mat_floral_white", (0.9, 0.9, 0.9, 1.0))
+mat_rug_base = make_material("mat_rug_base", (0.8, 0.7, 0.6, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Rug Base ---
+# Create primitive cuboid with size 2.0×3.0×0.02 m and name it rug_base.
+# Rotate rug_base so its +Z axis aligns +Z (world).
+# Align rug_base.bottom_face to (0,0,0).
+# Then move by offset(0,0,0).
+
+rug_base = add_primitive_cuboid("rug_base", 2.0, 3.0, 0.02, (0, 0, 0), (0, 0, 0), mat_rug_base)
+# Align bottom face to Z=0
+# Current bottom Z is -0.01 (half of 0.02). Move up by 0.01.
+rug_base.location[2] += 0.01
+# Offset (0,0,0) applied.
+
+# --- SECTION 2 – Create Geometric Pattern Grid ---
+# Create Empty helper (cube display) and name it geo_pattern_union.
+# Rotate geo_pattern_union so its axis aligns +Z (world).
+# Move geo_pattern_union to (0,0,0).
+
+# We will use a collection or just a parent object to hold the union result.
+# Since we need to boolean union many tiles, we'll accumulate them into a temporary mesh or use a parent.
+# However, the prompt says "Boolean-union ... into geo_pattern_union".
+# Let's create an empty object to serve as the container/parent for the union logic, 
+# or better, create a mesh object that will hold the final union.
+
+geo_pattern_union = bpy.data.objects.new("geo_pattern_union", None)
+geo_pattern_union.empty_display_size = 0.1
+geo_pattern_union.empty_display_type = 'CUBE'
+bpy.context.collection.objects.link(geo_pattern_union)
+geo_pattern_union.location = (0, 0, 0)
+geo_pattern_union.rotation_euler = (0, 0, 0)
+
+# Helper to create tiles and add to a list for union
+tiles_to_union = []
+
+# For r in 0…5 and c in 0…3:
+#   Create primitive cuboid with size 0.5×0.5×0.002 m and name it geo_tile_A_r_c.
+#   Rotate geo_tile_A_r_c so its +Z axis aligns +Z (world).
+#   Align geo_tile_A_r_c.bottom_face to rug_base.top_face.
+#   Then offset(0.25 + c·0.5, 0.75 - r·0.5, 0.01).
+
+for r in range(6):
+    for c in range(4):
+        name = f"geo_tile_A_{r}_{c}"
+        # Initial location doesn't matter much as we align, but let's start near target
+        # Offset calculation
+        off_x = 0.25 + c * 0.5
+        off_y = 0.75 - r * 0.5
+        off_z = 0.01
+        
+        # Create cube
+        tile = add_primitive_cuboid(name, 0.5, 0.5, 0.002, (off_x, off_y, 0), (0, 0, 0), mat_geometric_blue)
+        
+        # Align bottom face to rug_base.top_face
+        # rug_base top face is at Z = 0.02 (since bottom was aligned to 0 and height is 0.02)
+        # Wait, rug_base bottom was aligned to 0. So top is at 0.02.
+        # tile height is 0.002. Half height is 0.001.
+        # We want tile bottom (local -0.001) to be at world 0.02.
+        # So tile location Z should be 0.02 + 0.001 = 0.021.
+        # But we also have an offset Z of 0.01.
+        # The prompt says: "Align ... Then offset(0.25..., 0.75..., 0.01)".
+        # This implies the offset is applied AFTER alignment.
+        # So:
+        # 1. Align bottom to rug_base.top (Z=0.02). Tile Z becomes 0.021.
+        # 2. Apply offset (0,0,0.01). Tile Z becomes 0.021 + 0.01 = 0.031.
+        
+        # Let's re-read carefully: "Align ... Then offset(...)"
+        # So we align first.
+        align_bottom_to_world_z(tile, 0.02) # Aligns bottom to Z=0.02
+        
+        # Then apply offset
+        tile.location[0] += off_x
+        tile.location[1] += off_y
+        tile.location[2] += off_z
+        
+        tiles_to_union.append(tile)
+
+# For r in 0…5 and c in 0…3:
+#   Create primitive cuboid with size 0.5×0.5×0.002 m and name it geo_tile_B_r_c.
+#   Rotate geo_tile_B_r_c so its +Z axis aligns +Z (world).
+#   Align geo_tile_B_r_c.bottom_face to rug_base.top_face.
+#   Then offset(0.75 + c·0.5, 0.75 - r·0.5, 0.01).
+
+for r in range(6):
+    for c in range(4):
+        name = f"geo_tile_B_{r}_{c}"
+        off_x = 0.75 + c * 0.5
+        off_y = 0.75 - r * 0.5
+        off_z = 0.01
+        
+        tile = add_primitive_cuboid(name, 0.5, 0.5, 0.002, (off_x, off_y, 0), (0, 0, 0), mat_geometric_white)
+        
+        # Align bottom to rug_base.top (Z=0.02)
+        align_bottom_to_world_z(tile, 0.02)
+        
+        # Apply offset
+        tile.location[0] += off_x
+        tile.location[1] += off_y
+        tile.location[2] += off_z
+        
+        tiles_to_union.append(tile)
+
+# Boolean-union geo_tile_A_r_c and geo_tile_B_r_c into geo_pattern_union.
+# Since geo_pattern_union is an Empty, we need to create a mesh object to hold the union.
+# We'll create a temporary mesh object, union all tiles into it, then link it.
+
+# Create a dummy mesh object to serve as the union target
+geo_pattern_mesh = bpy.data.objects.new("geo_pattern_mesh", None)
+bpy.context.collection.objects.link(geo_pattern_mesh)
+
+# Union all tiles into geo_pattern_mesh
+# Start with the first tile as the base
+if tiles_to_union:
+    base_tile = tiles_to_union[0]
+    # Move base tile to be the base
+    # Actually, let's just union everything into a new empty mesh object
+    
+    # Create a new object to hold the result
+    union_result = bpy.data.objects.new("geo_pattern_union_result", None)
+    bpy.context.collection.objects.link(union_result)
+    
+    # Use the first tile as the initial base
+    current_base = tiles_to_union[0]
+    
+    # Union the rest
+    for i in range(1, len(tiles_to_union)):
+        cutter = tiles_to_union[i]
+        boolean_union(current_base, cutter)
+    
+    # Now current_base holds the union of all tiles.
+    # We want to parent this to geo_pattern_union or replace it.
+    # The prompt says "Boolean-union ... into geo_pattern_union".
+    # Let's rename current_base to geo_pattern_union and unlink the empty.
+    
+    # Remove the empty helper
+    bpy.data.objects.remove(geo_pattern_union, do_unlink=True)
+    
+    # Rename the result
+    current_base.name = "geo_pattern_union"
+    # Re-link to collection if needed (it's already there)
+    
+    # Apply materials? The prompt doesn't specify material for tiles in the union, 
+    # but they were created with mat_geometric_blue/white.
+    # The union object will keep the material of the base.
+    # Let's assign mat_geometric_blue to the final union object for consistency.
+    if current_base.data.materials:
+        current_base.data.materials[0] = mat_geometric_blue
+    else:
+        current_base.data.materials.append(mat_geometric_blue)
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create Floral Pattern Motif ---
+# Create Empty helper (cube display) and name it floral_pattern_union.
+# Rotate floral_pattern_union so its axis aligns +Z (world).
+# Move floral_pattern_union to (0,0,0).
+
+floral_pattern_union = bpy.data.objects.new("floral_pattern_union", None)
+floral_pattern_union.empty_display_size = 0.1
+floral_pattern_union.empty_display_type = 'CUBE'
+bpy.context.collection.objects.link(floral_pattern_union)
+floral_pattern_union.location = (0, 0, 0)
+floral_pattern_union.rotation_euler = (0, 0, 0)
+
+# Create primitive cylinder with Ø0.2×0.003 m and name it floral_center.
+# Rotate floral_center so its +Z axis aligns +Z (world).
+# Align floral_center.bottom_face to rug_base.top_face.
+# Then move by offset(0,0,0.01).
+
+floral_center = add_primitive_cylinder("floral_center", 0.1, 0.003, (0, 0, 0), (0, 0, 0), mat_floral_red)
+# Align bottom to rug_base.top (Z=0.02)
+align_bottom_to_world_z(floral_center, 0.02)
+# Offset (0,0,0.01)
+floral_center.location[2] += 0.01
+
+# For i in 0…5:
+#   Create primitive cuboid with size 0.1×0.05×0.002 m and name it petal_prism_i.
+#   Rotate petal_prism_i so its +Z axis aligns +Z (world).
+#   Align petal_prism_i.bottom_face to rug_base.top_face.
+#   Then position at polar(i·60°; dr=0.1).
+
+petals = []
+for i in range(6):
+    name = f"petal_prism_{i}"
+    angle = i * 60
+    loc = get_polar_location(angle, 0.1, (0,0,0))
+    
+    petal = add_primitive_cuboid(name, 0.1, 0.05, 0.002, loc, (0, 0, 0), mat_floral_red)
+    
+    # Align bottom to rug_base.top (Z=0.02)
+    align_bottom_to_world_z(petal, 0.02)
+    
+    # Note: The prompt says "Then position at polar...". 
+    # Usually, this means the offset IS the polar position.
+    # But we already placed it at polar loc.
+    # Let's re-read: "Align ... Then position at polar..."
+    # This implies the alignment sets the Z, and the polar sets X/Y.
+    # So we align Z, then set X/Y to polar coords.
+    
+    # Re-align Z first
+    align_bottom_to_world_z(petal, 0.02)
+    # Then set X/Y
+    petal.location[0] = loc[0]
+    petal.location[1] = loc[1]
+    
+    petals.append(petal)
+
+# For i in 0…3:
+#   Create primitive cuboid with size 0.15×0.04×0.002 m and name it leaf_prism_i.
+#   Rotate leaf_prism_i so its +Z axis aligns +Z (world).
+#   Align leaf_prism_i.bottom_face to rug_base.top_face.
+#   Then position at polar(i·90° + 45°; dr=0.12).
+
+leaves = []
+for i in range(4):
+    name = f"leaf_prism_{i}"
+    angle = i * 90 + 45
+    loc = get_polar_location(angle, 0.12, (0,0,0))
+    
+    leaf = add_primitive_cuboid(name, 0.15, 0.04, 0.002, loc, (0, 0, 0), mat_floral_green)
+    
+    # Align bottom to rug_base.top (Z=0.02)
+    align_bottom_to_world_z(leaf, 0.02)
+    
+    # Set X/Y
+    leaf.location[0] = loc[0]
+    leaf.location[1] = loc[1]
+    
+    leaves.append(leaf)
+
+# Boolean-union floral_center, petal_prism_i, and leaf_prism_i into floral_pattern_union.
+# Similar to Section 2, we create a mesh object for the union.
+
+floral_parts = [floral_center] + petals + leaves
+
+if floral_parts:
+    base_floral = floral_parts[0]
+    for i in range(1, len(floral_parts)):
+        cutter = floral_parts[i]
+        boolean_union(base_floral, cutter)
+    
+    # Remove the empty helper
+    bpy.data.objects.remove(floral_pattern_union, do_unlink=True)
+    
+    # Rename result
+    base_floral.name = "floral_pattern_union"
+    
+    # Assign material
+    if base_floral.data.materials:
+        base_floral.data.materials[0] = mat_floral_blue # Or a mix? Prompt doesn't specify. Let's use floral_blue.
+    else:
+        base_floral.data.materials.append(mat_floral_blue)
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Final Assembly ---
+# Boolean-union rug_base and geo_pattern_union into rug_root.
+# Boolean-union rug_root and floral_pattern_union into rug_root.
+
+# Create rug_root
+rug_root = bpy.data.objects.new("rug_root", None)
+bpy.context.collection.objects.link(rug_root)
+
+# Union rug_base and geo_pattern_union
+# We need to perform boolean union. 
+# Let's use rug_base as the base.
+boolean_union(rug_base, bpy.data.objects["geo_pattern_union"])
+
+# Now rug_base holds the union of base and pattern.
+# Rename it to rug_root
+rug_base.name = "rug_root"
+
+# Union rug_root and floral_pattern_union
+boolean_union(rug_root, bpy.data.objects["floral_pattern_union"])
+
+# Final material assignment for rug_root
+if rug_root.data.materials:
+    rug_root.data.materials[0] = mat_rug_base
+else:
+    rug_root.data.materials.append(mat_rug_base)
+
+# Assembly guideline satisfied.
+# Stage 4 complete.
+# All stages complete.
+```

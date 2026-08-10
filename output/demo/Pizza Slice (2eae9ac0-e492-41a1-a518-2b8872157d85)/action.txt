@@ -1,0 +1,65 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material cheese_yellow; diffuse_color = (0.9, 0.8, 0.1, 1.0).
+Define material crust_brown; diffuse_color = (0.6, 0.3, 0.1, 1.0).
+Define material pepperoni_red; diffuse_color = (0.8, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create crust base  ---
+Create primitive cuboid with size 0.3×0.3×0.015 m and name it crust_base.
+Rotate crust_base so its +Z axis aligns +Z (world).
+Align crust_base.bottom_face to world.origin.
+Then move by offset(0, 0, 0).
+Create plane_cutter and name it crust_base_cut with size 0.3×0.3 m; orientation=axis:+Z.
+Anchor crust_base_cut to crust_base.
+Boolean-subtract crust_base_cut from crust_base; keep crust_base. // This step is conceptual; the actual geometry is defined by the sketch constraints below.
+// Correction for Sketch-based Extrusion:
+Create primitive cuboid with size 0.3×0.3×0.015 m and name it crust_base_raw.
+Rotate crust_base_raw so its +Z axis aligns +Z (world).
+Align crust_base_raw.bottom_face to world.origin.
+Then move by offset(0, 0, 0).
+// Since MCP does not support direct BMesh sketching in this format, we approximate the triangular wedge using a prism or boolean operations.
+// However, the prompt asks for specific vertices. We will create a triangular prism.
+Delete crust_base_raw.
+Create primitive prism with base triangle vertices (0,0), (0.3, 0.15), (0.3, -0.15) and height 0.015 m and name it crust_base.
+Rotate crust_base so its +Z axis aligns +Z (world).
+Align crust_base.bottom_face to world.origin.
+Then move by offset(0, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create cheese layer  ---
+Create primitive prism with base triangle vertices (0.01, 0.01), (0.29, 0.14), (0.29, -0.14) and height 0.002 m and name it cheese_layer.
+Rotate cheese_layer so its +Z axis aligns +Z (world).
+Align cheese_layer.bottom_face to crust_base.top_face.
+Then move by offset(0, 0, 0.001).
+Stage 2 complete.
+
+---  SECTION 3 – Create pepperoni toppings  ---
+Create primitive cylinder with Ø0.04×0.003 m and name it pepperoni_1.
+Rotate pepperoni_1 so its +Z axis aligns +Z (world).
+Align pepperoni_1.bottom_face to cheese_layer.top_face.
+Then move by offset(0.1, 0.05, 0.001).
+
+Create primitive cylinder with Ø0.04×0.003 m and name it pepperoni_2.
+Rotate pepperoni_2 so its +Z axis aligns +Z (world).
+Align pepperoni_2.bottom_face to cheese_layer.top_face.
+Then move by offset(0.15, -0.05, 0.001).
+
+Create primitive cylinder with Ø0.04×0.003 m and name it pepperoni_3.
+Rotate pepperoni_3 so its +Z axis aligns +Z (world).
+Align pepperoni_3.bottom_face to cheese_layer.top_face.
+Then move by offset(0.2, 0.0, 0.001).
+Stage 3 complete.
+
+All stages complete.

@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+mat_body | diffuse_color=(0.15,0.15,0.15,1.0)
+mat_cap | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_connector | diffuse_color=(0.9,0.8,0.3,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| usb_drive | Composite of body + cap + connector; USB flash drive | assembly_order=[body_group, cap_group]; mat=->; create_method=union |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_group | Composite of body + connector | assembly_order=[body, connector]; mat=->; create_method=union |
+| cap_group | Removable cap | assembly_order=[cap]; mat=->; create_method=primitive |
+
+Layer 2 – Body & Connector
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body | Rectangular body 0.060×0.020×0.005 m | pos=(0, 0, 0); orientation=axis:+Z; mat=mat_body; create_method=cube |
+| connector | USB-A connector 0.012×0.029×0.004 m | Align(Z) connector.bottom_face to body.top_face; offset(0, 0, 0.0025); orientation=axis:+Z; mat=mat_connector; create_method=cube |
+
+Layer 3 – Cap
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cap | Removable cap 0.060×0.020×0.005 m | Align(Z) cap.bottom_face to body.top_face; offset(0, 0, 0.005); orientation=axis:+Z; mat=mat_cap; create_method=cube |
+
+# ----------  END_GRAPH  ----------

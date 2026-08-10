@@ -1,0 +1,49 @@
+{
+  "id": "093fe226-eb2a-41d3-bc74-1394b6b0851a",
+  "name": "Blood Pressure Cuff",
+  "instruction": "Create a blood pressure cuff. The cuff should be adjustable to fit different arm sizes, with a small rectangular digital display attached to it. The display should show systolic and diastolic readings.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a blood pressure cuff.",
+        "The cuff has an adjustable design to fit various arm sizes.",
+        "The digital display is small and rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cuff includes a mechanism for inflation and deflation.",
+        "The display shows systolic readings.",
+        "The display shows diastolic readings."
+      ],
+      "Texture and surface detail": [
+        "The cuff is made from a flexible and durable material suitable for medical use.",
+        "The display is made from a material that allows for clear visibility."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cuff wraps around the arm without excessive overlap.",
+        "The digital display is positioned for easy viewing while the cuff is worn.",
+        "The adjustable mechanism is easily accessible."
+      ],
+      "Object distance and contact": [
+        "The cuff fits snugly against the arm without gaps.",
+        "The display is securely attached to the cuff."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The cuff is adjustable as instructed.",
+        "The display correctly shows both systolic and diastolic readings."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

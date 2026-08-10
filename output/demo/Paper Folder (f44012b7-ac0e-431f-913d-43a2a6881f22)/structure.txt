@@ -1,0 +1,18 @@
+-- MATERIAL LIBRARY --
+mat_paper_white | diffuse_color=(240,240,240,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of folder_base + divider_1 + divider_2 | assembly_order=[folder_base], [divider_1], [divider_2] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| folder_base | Flat sheet folded into a U-shape (3 sections) | size=0.210×0.297×0.005 (A4 paper dimensions, folded); mat=mat_paper_white; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Define a rectangle 0.210m wide by 0.297m high. **Folding lines:** Add two vertical lines at x=0.070m and x=0.140m to create three equal sections of width 0.070m. **Extrude:** thickness t=0.005m along +Z. **Folding:** Apply boolean operations or mesh deformation to fold the sections at 90 degrees relative to each other, creating a central section and two side pockets. The side sections should be folded upwards to form pockets. |
+| divider_1 | Vertical partition for the first section | size=0.060×0.280×0.005; mat=mat_paper_white; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Define a rectangle 0.060m wide by 0.280m high. **Extrude:** thickness t=0.005m along +Z. **Placement:** Align(XY) divider_1.bottom_face to folder_base.section_1.top_face; offset(0,0,0.002); orientation=axis:+Z |
+| divider_2 | Vertical partition for the second section | size=0.060×0.280×0.005; mat=mat_paper_white; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Define a rectangle 0.060m wide by 0.280m high. **Extrude:** thickness t=0.005m along +Z. **Placement:** Align(XY) divider_2.bottom_face to folder_base.section_2.top_face; offset(0,0,0.002); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

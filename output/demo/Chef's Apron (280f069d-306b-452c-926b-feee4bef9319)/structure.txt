@@ -1,0 +1,33 @@
+-- MATERIAL LIBRARY --
+fabric_black | diffuse_color=(0.05,0.05,0.05,1.0)
+fabric_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| apron_root | Composite of apron_body + neck_strap + waist_tie + pocket_L + pocket_R | assembly_order=[apron_body], [neck_strap], [waist_tie], [pocket_L, pocket_R] |
+
+Layer 1 – Primary Structure (Apron Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| apron_body | Apron body panel approx 0.800×1.000×0.002 m (W×H×T) | Align(XY) apron_body.center to apron_root.center; orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle W=0.800 m, H=1.000 m. Vertices at (±0.400, ±0.500). **Extrude:** thickness t=0.002 m along +Z with caps. |
+
+Layer 2 – Neck Strap
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| neck_strap | Neck strap approx 0.020×0.600×0.002 m (W×H×T) | Align(XY) neck_strap.center to apron_body.top_face.center; offset(0, -0.010, 0); orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle W=0.020 m, H=0.600 m. Vertices at (±0.010, ±0.300). **Extrude:** thickness t=0.002 m along +Z with caps. |
+
+Layer 3 – Waist Ties
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| waist_tie_L | Left waist tie approx 0.050×0.800×0.002 m (W×H×T) | Align(XY) waist_tie_L.center to apron_body.left_face.center; offset(-0.025, 0, 0); orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle W=0.050 m, H=0.800 m. Vertices at (±0.025, ±0.400). **Extrude:** thickness t=0.002 m along +Z with caps. |
+| waist_tie_R | Right waist tie approx 0.050×0.800×0.002 m (W×H×T) | Align(XY) waist_tie_R.center to apron_body.right_face.center; offset(0.025, 0, 0); orientation=axis:+Z; mat=fabric_black; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle W=0.050 m, H=0.800 m. Vertices at (±0.025, ±0.400). **Extrude:** thickness t=0.002 m along +Z with caps. |
+
+Layer 4 – Pockets
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pocket_L | Left front pocket approx 0.300×0.300×0.002 m (W×H×T) | Align(XY) pocket_L.center to apron_body.front_face.center; offset(-0.200, 0.100, 0.001); orientation=axis:+Z; mat=fabric_white; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle W=0.300 m, H=0.300 m. Vertices at (±0.150, ±0.150). **Extrude:** thickness t=0.002 m along +Z with caps. |
+| pocket_R | Right front pocket approx 0.300×0.300×0.002 m (W×H×T) | Align(XY) pocket_R.center to apron_body.front_face.center; offset(0.200, 0.100, 0.001); orientation=axis:+Z; mat=fabric_white; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Rectangle W=0.300 m, H=0.300 m. Vertices at (±0.150, ±0.150). **Extrude:** thickness t=0.002 m along +Z with caps. |
+# ----------  END_GRAPH  ----------

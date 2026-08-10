@@ -1,0 +1,44 @@
+{
+  "id": "267ad1e0-59ab-4a2e-becf-76c8386289d5",
+  "name": "Fire Exit Sign",
+  "instruction": "Design a fire exit sign. The sign should be rectangular with the words \"FIRE EXIT\" prominently displayed in the center. Include a running figure and an arrow pointing to the left. Ensure the text and symbols are clearly visible.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The sign is rectangular in shape.",
+        "The dimensions of the rectangle are appropriate for visibility."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The words on the sign are proportionate to the sign."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The text is centered within the rectangle.",
+        "The running figure is positioned appropriately relative to the text.",
+        "The arrow is placed to the left of the running figure."
+      ],
+      "Object distance and contact": [
+        "There is adequate spacing between the text, running figure, and arrow.",
+        "The elements do not overlap, ensuring clarity."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design follows the instruction without deviations."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

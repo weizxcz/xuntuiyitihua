@@ -1,0 +1,130 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_plastic_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_plastic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Front-Left Vertical Support Leg  ---
+Create primitive cuboid with size 0.02×0.02×0.45 m and name it leg_fl.
+Rotate leg_fl so its +Z axis aligns +Z (world).
+Anchor leg_fl to world origin.
+Then move by offset(0, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Front-Right Vertical Support Leg  ---
+Create primitive cuboid with size 0.02×0.02×0.45 m and name it leg_fr.
+Rotate leg_fr so its +Z axis aligns +Z (world).
+Anchor leg_fr to leg_fl.+Z_face.
+Align leg_fr.+X_face to leg_fl.+X_face.
+Then move by offset(0.30, 0, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create Back-Left Vertical Support Leg  ---
+Create primitive cuboid with size 0.02×0.02×0.45 m and name it leg_bl.
+Rotate leg_bl so its +Z axis aligns +Z (world).
+Anchor leg_bl to leg_fl.+Z_face.
+Align leg_bl.+Y_face to leg_fl.+Y_face.
+Then move by offset(0, 0.20, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create Back-Right Vertical Support Leg  ---
+Create primitive cuboid with size 0.02×0.02×0.45 m and name it leg_br.
+Rotate leg_br so its +Z axis aligns +Z (world).
+Anchor leg_br to leg_fr.+Z_face.
+Align leg_br.+Y_face to leg_fr.+Y_face.
+Then move by offset(0, 0.20, 0).
+Stage 4 complete.
+
+---  SECTION 5 – Create Bottom Shelf (Tier 1)  ---
+Create primitive cuboid with size 0.30×0.20×0.01 m and name it shelf_l1.
+Rotate shelf_l1 so its +Z axis aligns +Z (world).
+Anchor shelf_l1 to leg_fl.+Z_face.
+Align shelf_l1.+X_face to leg_fl.+X_face.
+Align shelf_l1.+Y_face to leg_fl.+Y_face.
+Then move by offset(0, 0, 0.005).
+Stage 5 complete.
+
+---  SECTION 6 – Create Middle Shelf (Tier 2)  ---
+Create primitive cuboid with size 0.30×0.20×0.01 m and name it shelf_l2.
+Rotate shelf_l2 so its +Z axis aligns +Z (world).
+Anchor shelf_l2 to leg_fl.+Z_face.
+Align shelf_l2.+X_face to leg_fl.+X_face.
+Align shelf_l2.+Y_face to leg_fl.+Y_face.
+Then move by offset(0, 0, 0.15).
+Stage 6 complete.
+
+---  SECTION 7 – Create Top Shelf (Tier 3)  ---
+Create primitive cuboid with size 0.30×0.20×0.01 m and name it shelf_l3.
+Rotate shelf_l3 so its +Z axis aligns +Z (world).
+Anchor shelf_l3 to leg_fl.+Z_face.
+Align shelf_l3.+X_face to leg_fl.+X_face.
+Align shelf_l3.+Y_face to leg_fl.+Y_face.
+Then move by offset(0, 0, 0.30).
+Stage 7 complete.
+
+---  SECTION 8 – Create Front Connectors (Tier 1, 2, 3)  ---
+Create primitive cuboid with size 0.02×0.02×0.28 m and name it connector_fl_1.
+Rotate connector_fl_1 so its +Z axis aligns +X (world).
+Anchor connector_fl_1 to leg_fl.+X_face.
+Align connector_fl_1.+Y_face to leg_fl.+Y_face.
+Then move by offset(0.14, 0, 0.005).
+
+Create primitive cuboid with size 0.02×0.02×0.28 m and name it connector_fl_2.
+Rotate connector_fl_2 so its +Z axis aligns +X (world).
+Anchor connector_fl_2 to leg_fl.+X_face.
+Align connector_fl_2.+Y_face to leg_fl.+Y_face.
+Then move by offset(0.14, 0, 0.15).
+
+Create primitive cuboid with size 0.02×0.02×0.28 m and name it connector_fl_3.
+Rotate connector_fl_3 so its +Z axis aligns +X (world).
+Anchor connector_fl_3 to leg_fl.+X_face.
+Align connector_fl_3.+Y_face to leg_fl.+Y_face.
+Then move by offset(0.14, 0, 0.30).
+Stage 8 complete.
+
+---  SECTION 9 – Create Back Connectors (Tier 1, 2, 3)  ---
+Create primitive cuboid with size 0.02×0.02×0.28 m and name it connector_bl_1.
+Rotate connector_bl_1 so its +Z axis aligns +X (world).
+Anchor connector_bl_1 to leg_bl.+X_face.
+Align connector_bl_1.+Y_face to leg_bl.+Y_face.
+Then move by offset(0.14, 0, 0.005).
+
+Create primitive cuboid with size 0.02×0.02×0.28 m and name it connector_bl_2.
+Rotate connector_bl_2 so its +Z axis aligns +X (world).
+Anchor connector_bl_2 to leg_bl.+X_face.
+Align connector_bl_2.+Y_face to leg_bl.+Y_face.
+Then move by offset(0.14, 0, 0.15).
+
+Create primitive cuboid with size 0.02×0.02×0.28 m and name it connector_bl_3.
+Rotate connector_bl_3 so its +Z axis aligns +X (world).
+Anchor connector_bl_3 to leg_bl.+X_face.
+Align connector_bl_3.+Y_face to leg_bl.+Y_face.
+Then move by offset(0.14, 0, 0.30).
+Stage 9 complete.
+
+---  SECTION 10 – Create Side Connectors (Front and Back)  ---
+Create primitive cuboid with size 0.02×0.02×0.30 m and name it connector_side_fl.
+Rotate connector_side_fl so its +Z axis aligns +Y (world).
+Anchor connector_side_fl to leg_fl.+Y_face.
+Align connector_side_fl.+X_face to leg_fl.+X_face.
+Then move by offset(0, 0.14, 0).
+
+Create primitive cuboid with size 0.02×0.02×0.30 m and name it connector_side_bl.
+Rotate connector_side_bl so its +Z axis aligns +Y (world).
+Anchor connector_side_bl to leg_bl.+Y_face.
+Align connector_side_bl.+X_face to leg_bl.+X_face.
+Then move by offset(0, 0.14, 0).
+Stage 10 complete.
+
+All stages complete.

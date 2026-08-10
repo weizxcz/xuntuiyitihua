@@ -1,0 +1,91 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_piano; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_wood_dark; diffuse_color = (0.25,0.12,0.05,1.0).
+Define material mat_wood_light; diffuse_color = (0.85,0.75,0.60,1.0).
+Define material mat_white_key; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material mat_black_key; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_metal_pedal; diffuse_color = (0.7,0.7,0.7,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Body Group (Shell and Legs)  ---
+Create primitive curved_box with length=1.5, height=0.6, depth=0.5, curvature=0.2 and name it shell.
+Rotate shell so its +Z axis aligns +Z (world).
+Anchor shell to piano_root.center.
+Then move by offset(0, 0, 0).
+
+Create cylinder with Ø0.05×0.7 m and name it leg_L.
+Rotate leg_L so its +Z axis aligns +Z (world).
+Align leg_L.top_face to shell.bottom_face.
+Then move by offset(0.6, 0.2, 0).
+
+Create cylinder with Ø0.05×0.7 m and name it leg_R.
+Rotate leg_R so its +Z axis aligns +Z (world).
+Align leg_R.top_face to shell.bottom_face.
+Then move by offset(-0.6, 0.2, 0).
+
+Create cylinder with Ø0.05×0.7 m and name it leg_back.
+Rotate leg_back so its +Z axis aligns +Z (world).
+Align leg_back.top_face to shell.bottom_face.
+Then move by offset(0, -0.2, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Lid Group  ---
+Create primitive curved_plate with length=1.4, width=0.5, thickness=0.02, curvature=0.2 and name it lid_panel.
+Rotate lid_panel so its +Z axis aligns +Z (world).
+Align lid_panel.bottom_face to shell.top_face.
+Then move by offset(0, 0.1, 0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Keyboard Group  ---
+Create cube with size 1.2×0.15×0.05 m and name it keybed.
+Rotate keybed so its +Z axis aligns +Z (world).
+Align keybed.top_face to shell.top_face.
+Then move by offset(0, 0.3, 0.01).
+
+For r in 0…0 and c in 0…51:
+  Create cube with size 0.023×0.015×0.025 m and name it white_keys_r_c.
+  Rotate white_keys_r_c so its +Z axis aligns +Z (world).
+  Align white_keys_r_c.bottom_face to keybed.top_face.
+  Then offset(-0.6 + c·0.023, 0, 0.025).
+
+For r in 0…0 and c in 0…35:
+  Create cube with size 0.03×0.015×0.025 m and name it black_keys_r_c.
+  Rotate black_keys_r_c so its +Z axis aligns +Z (world).
+  Align black_keys_r_c.bottom_face to keybed.top_face.
+  Then offset(-0.55 + c·0.03, 0.01, 0.04).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Pedal Group  ---
+Create cylinder with Ø0.03×0.05 m and name it pedal_L.
+Rotate pedal_L so its +Z axis aligns +Z (world).
+Align pedal_L.top_face to shell.bottom_face.
+Then move by offset(0.4, 0, 0).
+
+Create cylinder with Ø0.03×0.05 m and name it pedal_M.
+Rotate pedal_M so its +Z axis aligns +Z (world).
+Align pedal_M.top_face to shell.bottom_face.
+Then move by offset(0, 0, 0).
+
+Create cylinder with Ø0.03×0.05 m and name it pedal_R.
+Rotate pedal_R so its +Z axis aligns +Z (world).
+Align pedal_R.top_face to shell.bottom_face.
+Then move by offset(-0.4, 0, 0).
+
+Stage 4 complete.
+
+All stages complete.

@@ -1,0 +1,137 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material metal_grey; diffuse_color = (0.4,0.4,0.4,1.0).
+Define material metal_yellow; diffuse_color = (0.9,0.7,0.1,1.0).
+Define material rubber_black; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material steel_cable; diffuse_color = (0.3,0.3,0.3,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create forklift body components  ---
+Create primitive cuboid with size 1.2×0.6×0.1 m and name it chassis.
+Rotate chassis so its +Z axis aligns +Z (world).
+Anchor chassis to scene_root.origin.
+Then move by offset(0,0,0.1).
+
+Create primitive cuboid with size 0.8×0.6×0.8 m and name it cab.
+Rotate cab so its +Z axis aligns +Z (world).
+Anchor cab to scene_root.origin.
+Then move by offset(0.2,0,0.5).
+
+Create primitive cuboid with size 0.4×0.6×0.3 m and name it counterweight.
+Rotate counterweight so its +Z axis aligns +Z (world).
+Anchor counterweight to scene_root.origin.
+Then move by offset(-0.7,0,0.25).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create forklift wheels  ---
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.3×0.1 m and name it wheel_r_c.
+  Rotate wheel_r_c so its +Z axis aligns +X (world).
+  Anchor wheel_r_c to scene_root.origin.
+  Then offset(-0.4 + c·0.8, -0.3 + r·0.6, 0.15).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create forklift mast components  ---
+Create primitive cuboid with size 0.05×0.05×2.0 m and name it rail_L.
+Rotate rail_L so its +Z axis aligns +Z (world).
+Anchor rail_L to scene_root.origin.
+Then move by offset(-0.6,0,1.1).
+
+Create primitive cuboid with size 0.05×0.05×2.0 m and name it rail_R.
+Rotate rail_R so its +Z axis aligns +Z (world).
+Anchor rail_R to scene_root.origin.
+Then move by offset(0.6,0,1.1).
+
+Create primitive cylinder with Ø0.05×1.5 m and name it hydraulic.
+Rotate hydraulic so its +Z axis aligns +Z (world).
+Anchor hydraulic to scene_root.origin.
+Then move by offset(0,0,0.8).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create forklift forks components  ---
+Create primitive cuboid with size 0.1×0.6×0.1 m and name it carriage.
+Rotate carriage so its +Z axis aligns +Z (world).
+Anchor carriage to scene_root.origin.
+Then move by offset(0,0,2.1).
+
+Create primitive cuboid with size 0.05×0.05×1.2 m and name it fork_L.
+Rotate fork_L so its +Z axis aligns +X (world).
+Anchor fork_L to scene_root.origin.
+Then move by offset(-0.3,0,2.1).
+
+Create primitive cuboid with size 0.05×0.05×1.2 m and name it fork_R.
+Rotate fork_R so its +Z axis aligns +X (world).
+Anchor fork_R to scene_root.origin.
+Then move by offset(0.3,0,2.1).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create crane base components  ---
+Create primitive cuboid with size 1.0×0.6×0.3 m and name it base_counterweight.
+Rotate base_counterweight so its +Z axis aligns +Z (world).
+Anchor base_counterweight to scene_root.origin.
+Then move by offset(-0.5,0,0.15).
+
+Create primitive cuboid with size 0.8×0.6×0.8 m and name it base_cab.
+Rotate base_cab so its +Z axis aligns +Z (world).
+Anchor base_cab to scene_root.origin.
+Then move by offset(0.2,0,0.5).
+
+Create primitive cylinder with Ø0.4×4.0 m and name it tower.
+Rotate tower so its +Z axis aligns +Z (world).
+Anchor tower to scene_root.origin.
+Then move by offset(0,0,2.0).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create crane jib components  ---
+Create primitive cuboid with size 0.2×0.2×3.0 m and name it jib_arm.
+Rotate jib_arm so its +Z axis aligns +X (world).
+Anchor jib_arm to scene_root.origin.
+Then move by offset(1.5,0,4.1).
+
+Create primitive cuboid with size 0.2×0.2×1.0 m and name it counter_jib.
+Rotate counter_jib so its +Z axis aligns +X (world).
+Anchor counter_jib to scene_root.origin.
+Then move by offset(-0.5,0,4.1).
+
+Create primitive cone with Ø0.3×0.5 m and name it apex.
+Rotate apex so its +Z axis aligns +Z (world).
+Anchor apex to scene_root.origin.
+Then move by offset(0,0,4.35).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create crane cable and hook  ---
+Create primitive cylinder with Ø0.02×2.0 m and name it crane_cable.
+Rotate crane_cable so its +Z axis aligns +Z (world).
+Anchor crane_cable to scene_root.origin.
+Then move by offset(3.0,0,3.1).
+
+Create primitive cylinder with Ø0.05×0.2 m and name it hook_shank.
+Rotate hook_shank so its +Z axis aligns +Z (world).
+Anchor hook_shank to scene_root.origin.
+Then move by offset(3.0,0,2.0).
+
+Create primitive torus with Ø0.1×0.05 m and name it hook_body.
+Rotate hook_body so its +Z axis aligns +X (world).
+Anchor hook_body to scene_root.origin.
+Then move by offset(3.0,0,1.9).
+
+Stage 7 complete.
+
+All stages complete.

@@ -1,0 +1,45 @@
+-- MATERIAL LIBRARY --
+fabric_exterior | diffuse_color=(0.8, 0.2, 0.2, 1.0)
+fabric_interior | diffuse_color=(0.9, 0.9, 0.9, 1.0)
+zipper_track | diffuse_color=(0.5, 0.5, 0.5, 1.0)
+zipper_pull | diffuse_color=(0.8, 0.8, 0.8, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cosmetic_bag | Composite of exterior shell, interior lining, zipper assembly, and internal dividers | assembly_order=[exterior_shell, interior_lining, zipper_assembly, internal_dividers] |
+
+Layer 1 – Primary Structure (Exterior Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| exterior_shell | Composite of front_panel + back_panel + bottom_panel + side_gusset | assembly_order=[front_panel, back_panel, bottom_panel, side_gusset] |
+| front_panel | Rectangular fabric panel 0.200×0.150×0.002 m | Align(XY) front_panel.center to (0,0,0); orientation=axis:+Z; mat=fabric_exterior; create_method=primitive(cube) |
+| back_panel | Rectangular fabric panel 0.200×0.150×0.002 m | Align(XY) back_panel.center to (0,0,0); orientation=axis:+Z; mat=fabric_exterior; create_method=primitive(cube) |
+| bottom_panel | Rectangular fabric panel 0.200×0.100×0.002 m | Align(XY) bottom_panel.center to (0,0,0); orientation=axis:+Z; mat=fabric_exterior; create_method=primitive(cube) |
+| side_gusset | Rectangular fabric strip 0.100×0.150×0.002 m | Align(XY) side_gusset.center to (0,0,0); orientation=axis:+Z; mat=fabric_exterior; create_method=primitive(cube) |
+
+Layer 2 – Primary Structure (Interior Lining)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| interior_lining | Composite of front_lining + back_lining + bottom_lining | assembly_order=[front_lining, back_lining, bottom_lining] |
+| front_lining | Rectangular fabric panel 0.190×0.140×0.001 m | Align(XY) front_lining.center to (0,0,0); orientation=axis:+Z; mat=fabric_interior; create_method=primitive(cube) |
+| back_lining | Rectangular fabric panel 0.190×0.140×0.001 m | Align(XY) back_lining.center to (0,0,0); orientation=axis:+Z; mat=fabric_interior; create_method=primitive(cube) |
+| bottom_lining | Rectangular fabric panel 0.190×0.090×0.001 m | Align(XY) bottom_lining.center to (0,0,0); orientation=axis:+Z; mat=fabric_interior; create_method=primitive(cube) |
+
+Layer 3 – Closure System (Zipper)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| zipper_assembly | Composite of zipper_track + zipper_pull | assembly_order=[zipper_track, zipper_pull] |
+| zipper_track | Linear track 0.200×0.010×0.005 m | Align(XY) zipper_track.center to (0,0,0.075); orientation=axis:+X; mat=zipper_track; create_method=primitive(cube) |
+| zipper_pull | Small tab 0.020×0.010×0.002 m | Align(XY) zipper_pull.center to (0.100,0,0.075); orientation=axis:+Z; mat=zipper_pull; create_method=primitive(cube) |
+
+Layer 4 – Internal Organization (Dividers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| internal_dividers | Composite of divider_A + divider_B | assembly_order=[divider_A, divider_B] |
+| divider_A | Vertical partition 0.190×0.140×0.001 m | Align(XY) divider_A.center to (0,0,0); orientation=axis:+Z; mat=fabric_interior; create_method=primitive(cube) |
+| divider_B | Vertical partition 0.190×0.140×0.001 m | Align(XY) divider_B.center to (0,0,0); orientation=axis:+Z; mat=fabric_interior; create_method=primitive(cube) |
+
+# ----------  END_GRAPH  ----------

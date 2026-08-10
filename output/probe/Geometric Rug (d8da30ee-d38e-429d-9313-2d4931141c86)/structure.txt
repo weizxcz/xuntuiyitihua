@@ -1,0 +1,43 @@
+-- MATERIAL LIBRARY --
+mat_hex_blue | diffuse_color=(0.15,0.25,0.45,1.0)
+mat_tri_blue | diffuse_color=(0.15,0.25,0.45,1.0)
+mat_tri_dark_blue | diffuse_color=(0.05,0.10,0.20,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_base | Composite base for two rug designs | A. Composite of rug_hex_design + rug_tri_design; Side-by-side placement on a shared floor plane. |
+
+Layer 1 – Primary Structure (Hexagonal Design)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_hex_design | Hexagonal pattern rug section | A. Composite of hex_tiling_group + hex_border_group; Positioned on the left half of the rug_base. |
+| hex_tiling_group | Central hexagonal tiling area | A. Composite of hex_tile_1 + hex_tile_2 + ... + hex_tile_N; Arranged in a honeycomb grid. |
+| hex_tile_1 | Single hexagonal tile | Cylinder Ø0.200×0.005 m (flat cylinder approximating hexagon for simplicity, or use extrude_from_sketch for true hex). Let's use extrude_from_sketch for precision. |
+| hex_tile_2 | Single hexagonal tile | Same as hex_tile_1, offset. |
+| hex_border_group | Border frame for hex design | Cube 0.500×0.050×0.005 m (frame segments); Surrounds the tiling group. |
+
+Layer 2 – Primary Structure (Triangular Design)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_tri_design | Triangular pattern rug section | A. Composite of tri_tiling_group + tri_border_group; Positioned on the right half of the rug_base. |
+| tri_tiling_group | Central triangular tiling area | A. Composite of tri_tile_1 + tri_tile_2 + ... + tri_tile_N; Arranged in a tessellating triangle grid. |
+| tri_tile_1 | Single triangular tile | Extruded triangle prism. |
+| tri_tile_2 | Single triangular tile | Same as tri_tile_1, offset. |
+| tri_border_group | Border frame for tri design | Cube 0.500×0.050×0.005 m (frame segments); Surrounds the tiling group. |
+
+Layer 3 – Leaf Nodes & Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hex_tile_1 | Hexagonal tile | Cylinder Ø0.200×0.005 m; mat=mat_hex_blue; create_method=primitive (cylinder approx) or extrude_from_sketch. Let's use extrude_from_sketch for true hex. |
+| hex_tile_1 | Hexagonal tile | Align(XY) hex_tile_1.center to (0,0,0); orientation=axis:+Z; mat=mat_hex_blue; create_method=extrude_from_sketch; constraint=BMesh sketch: Regular hexagon, radius 0.100 m, thickness 0.005 m. |
+| hex_tile_2 | Hexagonal tile | Align(XY) hex_tile_2.center to (0.173, 0.100, 0); orientation=axis:+Z; mat=mat_hex_blue; create_method=extrude_from_sketch; constraint=BMesh sketch: Regular hexagon, radius 0.100 m, thickness 0.005 m. |
+| hex_border_group | Hex border | Cube 0.500×0.050×0.005 m; mat=mat_hex_blue; create_method=primitive (cube); Align(XY) hex_border_group.center to hex_tiling_group.center; offset(0,0,0.0025) |
+| tri_tile_1 | Triangular tile | Extruded equilateral triangle, side 0.200 m, thickness 0.005 m; mat=mat_tri_blue; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.200 m, thickness 0.005 m. |
+| tri_tile_2 | Triangular tile | Same as tri_tile_1, offset. |
+| tri_tile_2 | Triangular tile | Align(XY) tri_tile_2.center to (0.100, 0.173, 0); orientation=axis:+Z; mat=mat_tri_dark_blue; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.200 m, thickness 0.005 m. |
+| tri_border_group | Tri border | Cube 0.500×0.050×0.005 m; mat=mat_tri_blue; create_method=primitive (cube); Align(XY) tri_border_group.center to tri_tiling_group.center; offset(0,0,0.0025) |
+
+# ----------  END_GRAPH  ----------

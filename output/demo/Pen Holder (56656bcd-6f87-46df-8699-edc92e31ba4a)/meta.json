@@ -1,0 +1,46 @@
+{
+  "id": "56656bcd-6f87-46df-8699-edc92e31ba4a",
+  "name": "Pen Holder",
+  "instruction": "Can you create a pen holder that can organize pens, pencils, and markers? Ensure it has multiple compartments of varying sizes to accommodate different writing instruments. The design should be functional and aesthetically pleasing for a desktop setting.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pen holder.",
+        "The pen holder has multiple compartments."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The compartments are proportionate to the overall size of the pen holder.",
+        "The height and width of the pen holder are balanced for stability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The compartments are arranged in a way that maximizes space.",
+        "The design allows for easy access to all writing instruments.",
+        "The pen holder maintains stability when filled with items."
+      ],
+      "Object distance and contact": [
+        "There is adequate space between compartments to prevent overcrowding.",
+        "The base of the pen holder is flat and stable on the desktop."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the pen holder are accurately represented.",
+        "The design includes multiple compartments of varying sizes as requested.",
+        "The pen holder is functional for organizing pens, pencils, and markers."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

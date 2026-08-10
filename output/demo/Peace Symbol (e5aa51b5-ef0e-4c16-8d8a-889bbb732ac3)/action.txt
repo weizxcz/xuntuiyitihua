@@ -1,0 +1,63 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create outer ring  ---
+Create primitive torus with Outer Radius 0.100 m, Tube Radius 0.010 m and name it outer_ring.
+Rotate outer_ring so its +Z axis aligns +Z (world).
+Align outer_ring.center to peace_symbol.center.
+Align outer_ring.bottom_face to peace_symbol.bottom_face.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create vertical stem  ---
+Create primitive cylinder with Ø0.020 m and height 0.200 m and name it vertical_stem.
+Rotate vertical_stem so its +Z axis aligns +Z (world).
+Align vertical_stem.center to peace_symbol.center.
+Align vertical_stem.bottom_face to peace_symbol.bottom_face.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create left diagonal  ---
+Create primitive cylinder with Ø0.020 m and height 0.141 m and name it left_diagonal.
+Rotate left_diagonal so its +Z axis aligns +Z (world).
+Rotate left_diagonal so its local +Z axis achieves orientation=axis:+Z (world) then apply rotation=axis:Z,135°.
+Align left_diagonal.center to peace_symbol.center.
+Align left_diagonal.bottom_face to peace_symbol.bottom_face.
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create right diagonal  ---
+Create primitive cylinder with Ø0.020 m and height 0.141 m and name it right_diagonal.
+Rotate right_diagonal so its +Z axis aligns +Z (world).
+Rotate right_diagonal so its local +Z axis achieves orientation=axis:+Z (world) then apply rotation=axis:Z,45°.
+Align right_diagonal.center to peace_symbol.center.
+Align right_diagonal.bottom_face to peace_symbol.bottom_face.
+Then move by offset(0,0,0).
+Stage 4 complete.
+
+---  SECTION 5 – Assemble inner lines union  ---
+Boolean-union vertical_stem, left_diagonal, and right_diagonal to create inner_lines.
+Align inner_lines.center to peace_symbol.center.
+Align inner_lines.bottom_face to peace_symbol.bottom_face.
+Then move by offset(0,0,0).
+Stage 5 complete.
+
+---  SECTION 6 – Assemble peace symbol union  ---
+Boolean-union outer_ring and inner_lines to create peace_symbol.
+Assembly guideline satisfied.
+Stage 6 complete.
+
+All stages complete.

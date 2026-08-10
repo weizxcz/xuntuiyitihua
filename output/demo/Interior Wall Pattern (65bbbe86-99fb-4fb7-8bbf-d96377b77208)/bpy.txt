@@ -1,0 +1,316 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc (flat cylinder) aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube with given total size (x, y, z)."""
+    sx, sy, sz = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.scale = (sx, sy, sz)
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    """Add a cone aligned with Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=16):
+    """Add a UV sphere aligned with Z axis."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width, segments=2, profile=0.5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.profile = profile
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    axis_map = {'X': (1, 0, 0), 'Y': (0, 1, 0), 'Z': (0, 0, 1)}
+    local_axis = Vector(axis_map[axis])
+    target = Vector(vector).normalized()
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        self.update_matrix()
+
+    def update_matrix(self):
+        self.matrix_world = self.obj.matrix_world.copy()
+
+    def center_world(self):
+        return self.matrix_world.to_translation()
+
+    def face_center_world(self, face_index=0):
+        # Approximate face center based on normal and position
+        # For simple primitives, we assume standard orientations
+        # This is a simplified helper; for complex meshes, actual mesh data is needed
+        # Here we assume the "top" face is +Z local
+        local_center = Vector((0, 0, 0))
+        # If we want the center of a specific face, we'd need mesh data.
+        # For alignment purposes, we often just use the object center or a specific offset.
+        # Let's assume this helper is for getting the center of the "top" face of a flat object.
+        # We'll return the center + half height in local Z transformed to world.
+        # This requires knowing the object's dimensions.
+        # For simplicity in this generator, we will rely on explicit alignment logic in the main script
+        # rather than a generic face_center_world which is ambiguous without mesh context.
+        return self.center_world()
+
+    def radial_point_world(self, angle, radius):
+        """Get a point on the radial circle in the XY plane."""
+        x = math.cos(angle) * radius
+        y = math.sin(angle) * radius
+        return self.matrix_world @ Vector((x, y, 0))
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform boolean subtraction using BMesh."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    target_obj.select_set(True)
+    
+    # Create boolean modifier on target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_objs, keep_obj):
+    """Perform boolean union of multiple objects into keep_obj."""
+    # Ensure keep_obj is active
+    bpy.context.view_layer.objects.active = keep_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    keep_obj.select_set(True)
+    
+    # Add boolean modifiers for each union object
+    for obj in union_objs:
+        mod = keep_obj.modifiers.new(name=f"BooleanUnion_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+    
+    # Apply all modifiers
+    for mod in keep_obj.modifiers:
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union objects
+    for obj in union_objs:
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+def align_center_to(obj_a, obj_b):
+    """Align center of obj_a to center of obj_b."""
+    loc_a = obj_a.location
+    loc_b = obj_b.location
+    obj_a.location = loc_b
+
+def align_bottom_face_to_top_face(obj_bottom, obj_top):
+    """Align the bottom face of obj_bottom to the top face of obj_top."""
+    # Get dimensions
+    h_bottom = obj_bottom.dimensions.z
+    h_top = obj_top.dimensions.z
+    
+    # Current positions
+    y_bottom = obj_bottom.location.y
+    y_top = obj_top.location.y
+    
+    # We want the bottom of obj_bottom to be at the top of obj_top
+    # Top of obj_top is at y_top + h_top/2
+    # Bottom of obj_bottom is at obj_bottom.location.y - h_bottom/2
+    
+    target_y = y_top + h_top / 2
+    obj_bottom.location.y = target_y + h_bottom / 2
+    
+    # Also align X and Z centers if needed? 
+    # The prompt says "Align flower_center.bottom_face to wall_base.top_face"
+    # Usually implies Z alignment (height) and potentially X/Y centering if not already done.
+    # Since we align centers to tile_center first, X/Y should be correct.
+    # We just need to fix Z.
+    
+    # Let's do it more robustly using world coordinates
+    # Top face of obj_top: center + (0,0,h_top/2)
+    top_face_z = obj_top.location.z + h_top / 2
+    
+    # Bottom face of obj_bottom: center - (0,0,h_bottom/2)
+    # We want bottom_face_z == top_face_z
+    # obj_bottom.location.z - h_bottom/2 = top_face_z
+    # obj_bottom.location.z = top_face_z + h_bottom/2
+    
+    obj_bottom.location.z = top_face_z + h_bottom / 2
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+
+mat_floral_green = make_material("mat_floral_green", (0.2, 0.4, 0.2, 1.0))
+mat_floral_pink = make_material("mat_floral_pink", (0.8, 0.4, 0.5, 1.0))
+mat_floral_white = make_material("mat_floral_white", (0.95, 0.95, 0.95, 1.0))
+mat_wall_base = make_material("mat_wall_base", (0.9, 0.9, 0.85, 1.0))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1: Create base wall panel ---
+wall_base = add_cube("wall_base", (1.0, 1.0, 0.02))
+wall_base.data.materials.append(mat_wall_base)
+align_axis_to_vector(wall_base, 'Z', (0, 0, 1))
+# Anchor to world origin
+wall_base.location = (0, 0, 0)
+# Offset (0,0,0)
+wall_base.location += Vector((0, 0, 0))
+
+# --- SECTION 2: Create virtual center point ---
+tile_center = add_cube("tile_center", (0.05, 0.05, 0.05)) # Small helper cube
+tile_center.display_type = 'CUBE'
+align_axis_to_vector(tile_center, 'Z', (0, 0, 1))
+tile_center.location = (0.5, 0.5, 0.01)
+
+# --- SECTION 3: Create floral motif components ---
+
+# Helper function to create and position parts
+def create_floral_part(name, size, offset, material):
+    part = add_cube(name, size)
+    part.data.materials.append(material)
+    align_axis_to_vector(part, 'Z', (0, 0, 1))
+    
+    # Align center to tile_center
+    align_center_to(part, tile_center)
+    
+    # Align bottom face to wall_base top face
+    align_bottom_face_to_top_face(part, wall_base)
+    
+    # Apply offset
+    part.location += Vector(offset)
+    
+    return part
+
+flower_center = create_floral_part("flower_center", (0.04, 0.04, 0.005), (0, 0, 0.001), mat_floral_green)
+petal_1 = create_floral_part("petal_1", (0.02, 0.06, 0.003), (0, 0.03, 0.001), mat_floral_pink)
+petal_2 = create_floral_part("petal_2", (0.06, 0.02, 0.003), (0.03, 0, 0.001), mat_floral_pink)
+petal_3 = create_floral_part("petal_3", (0.02, 0.06, 0.003), (0, -0.03, 0.001), mat_floral_pink)
+petal_4 = create_floral_part("petal_4", (0.06, 0.02, 0.003), (-0.03, 0, 0.001), mat_floral_pink)
+leaf_1 = create_floral_part("leaf_1", (0.03, 0.01, 0.002), (0.02, 0.02, 0.001), mat_floral_green)
+leaf_2 = create_floral_part("leaf_2", (0.03, 0.01, 0.002), (-0.02, -0.02, 0.001), mat_floral_green)
+
+# --- SECTION 4: Assemble composite floral tile ---
+# Boolean-union flower_center, petal_1, petal_2, petal_3, petal_4, leaf_1, leaf_2; keep flower_center.
+union_parts = [petal_1, petal_2, petal_3, petal_4, leaf_1, leaf_2]
+boolean_union(union_parts, flower_center)
+
+# Rename flower_center to floral_tile
+flower_center.name = "floral_tile"
+
+# --- SECTION 5: Generate seamless wall pattern ---
+for r in range(10):
+    for c in range(10):
+        tile_name = f"wall_tile_{r}_{c}"
+        wall_tile = add_cube(tile_name, (1.0, 1.0, 0.02))
+        wall_tile.data.materials.append(mat_wall_base)
+        align_axis_to_vector(wall_tile, 'Z', (0, 0, 1))
+        
+        # Anchor to world origin
+        wall_tile.location = (0, 0, 0)
+        
+        # Offset
+        offset_x = c * 1.0
+        offset_y = r * 1.0
+        wall_tile.location += Vector((offset_x, offset_y, 0))
+        
+        # Boolean-union wall_tile_r_c with floral_tile; keep wall_tile_r_c.
+        # We need to instance or copy the floral_tile geometry for each union.
+        # Since boolean_union removes the union objects, we must create a copy of floral_tile for each tile.
+        
+        # Create a copy of floral_tile
+        bpy.context.view_layer.objects.active = wall_tile
+        bpy.ops.object.select_all(action='DESELECT')
+        wall_tile.select_set(True)
+        floral_tile_copy = floral_tile.copy()
+        floral_tile_copy.data = floral_tile.data.copy()
+        floral_tile_copy.name = f"floral_tile_copy_{r}_{c}"
+        bpy.context.collection.objects.link(floral_tile_copy)
+        
+        # Align the copy to the current wall_tile position
+        # The floral_tile was created at tile_center (0.5, 0.5, ...) relative to wall_base (0,0,0)
+        # But now we are placing a new wall_tile at (c, r, 0).
+        # The floral pattern should be centered on the tile.
+        # The original floral_tile was centered at tile_center (0.5, 0.5, 0.01) relative to world origin?
+        # No, tile_center was at (0.5, 0.5, 0.01).
+        # The floral parts were aligned to tile_center.
+        # So the floral_tile is centered at (0.5, 0.5, 0.01 + small_z).
+        # When we create a new wall_tile at (c, r, 0), we want the floral pattern centered at (c+0.5, r+0.5, 0.01).
+        
+        floral_tile_copy.location = Vector((c + 0.5, r + 0.5, 0.01))
+        
+        # Perform boolean union
+        boolean_union([floral_tile_copy], wall_tile)
+        
+        # Rename wall_tile_r_c to wall_pattern_r_c
+        wall_tile.name = f"wall_pattern_{r}_{c}"
+
+```

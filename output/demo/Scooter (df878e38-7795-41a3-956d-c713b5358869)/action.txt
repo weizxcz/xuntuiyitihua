@@ -1,0 +1,125 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material mat_black_rubber; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_steel; diffuse_color = (0.4,0.4,0.5,1.0).
+Define material mat_yellow_plastic; diffuse_color = (0.9,0.8,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create steering column (stem, handlebar, grips)  ---
+Create primitive cylinder with Radius=0.015m, Height=0.500m and name it stem.
+Rotate stem so its +Z axis aligns +Z (world).
+Anchor stem.bottom to deck_plate.top.
+Align stem.bottom to deck_plate.top.
+Then move by offset(0.25, 0, 0.005).
+
+Create primitive cylinder with Radius=0.01m, Length=0.500m and name it handlebar.
+Rotate handlebar so its +Z axis aligns +Y (world).
+Anchor handlebar.center to stem.top.
+Align handlebar.center to stem.top.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with Radius=0.015m, Length=0.05m and name it grip_L.
+Rotate grip_L so its +Z axis aligns +Y (world).
+Anchor grip_L.center to handlebar.left_face.
+Align grip_L.center to handlebar.left_face.
+Then move by offset(-0.02, 0, 0).
+
+Create primitive cylinder with Radius=0.015m, Length=0.05m and name it grip_R.
+Rotate grip_R so its +Z axis aligns +Y (world).
+Anchor grip_R.center to handlebar.right_face.
+Align grip_R.center to handlebar.right_face.
+Then move by offset(0.02, 0, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create deck (deck_plate, rear_fender, brake_pedal)  ---
+Create primitive cube with Length=0.600m, Width=0.150m, Thickness=0.005m and name it deck_plate.
+Rotate deck_plate so its +Z axis aligns +Z (world).
+Move deck_plate to (0,0,0).
+
+Create primitive cylinder with Radius=0.15m, Length=0.15m and name it rear_fender.
+Rotate rear_fender so its +Z axis aligns +Z (world).
+Anchor rear_fender.bottom to deck_plate.top.
+Align rear_fender.bottom to deck_plate.top.
+Then move by offset(0, -0.25, 0.005).
+Create plane_cutter and name it rear_fender_cut with size 0.15×0.15×0.15 m; orientation=axis:+Z.
+Boolean-subtract rear_fender_cut from rear_fender; keep rear_fender. // produces hemisphere
+Rotate rear_fender so its curved face points +Z.
+
+Create primitive cube with Length=0.10m, Width=0.10m, Thickness=0.002m and name it brake_pedal.
+Rotate brake_pedal so its +Z axis aligns +Z (world).
+Anchor brake_pedal.center to deck_plate.center.
+Align brake_pedal.center to deck_plate.center.
+Then move by offset(0, -0.25, 0.005).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create front wheel (hub, rim, tire, spokes)  ---
+Create primitive cylinder with Radius=0.02m, Length=0.05m and name it front_hub.
+Rotate front_hub so its +Z axis aligns +Y (world).
+Anchor front_hub.center to stem.bottom.
+Align front_hub.center to stem.bottom.
+Then move by offset(0.25, 0, -0.15).
+
+Create primitive torus with MajorRadius=0.15m, MinorRadius=0.01m and name it front_rim.
+Rotate front_rim so its +Z axis aligns +Y (world).
+Anchor front_rim.center to front_hub.center.
+Align front_rim.center to front_hub.center.
+Then move by offset(0, 0, 0).
+
+Create primitive torus with MajorRadius=0.15m, MinorRadius=0.02m and name it front_tire.
+Rotate front_tire so its +Z axis aligns +Y (world).
+Anchor front_tire.center to front_rim.center.
+Align front_tire.center to front_rim.center.
+Then move by offset(0, 0, 0).
+
+For i in 0…11:
+  Create primitive cylinder with Radius=0.001m, Length=0.15m and name it front_spoke_i.
+  Rotate front_spoke_i so its +Z axis aligns +Y (world).
+  Anchor front_spoke_i.center to front_hub.center.
+  Align front_spoke_i.center to front_hub.center.
+  Then position at polar(0° + i·30°; dr=0.15).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create rear wheel (hub, rim, tire, spokes)  ---
+Create primitive cylinder with Radius=0.02m, Length=0.05m and name it rear_hub.
+Rotate rear_hub so its +Z axis aligns +Y (world).
+Anchor rear_hub.center to deck_plate.bottom.
+Align rear_hub.center to deck_plate.bottom.
+Then move by offset(-0.25, 0, -0.005).
+
+Create primitive torus with MajorRadius=0.15m, MinorRadius=0.01m and name it rear_rim.
+Rotate rear_rim so its +Z axis aligns +Y (world).
+Anchor rear_rim.center to rear_hub.center.
+Align rear_rim.center to rear_hub.center.
+Then move by offset(0, 0, 0).
+
+Create primitive torus with MajorRadius=0.15m, MinorRadius=0.02m and name it rear_tire.
+Rotate rear_tire so its +Z axis aligns +Y (world).
+Anchor rear_tire.center to rear_rim.center.
+Align rear_tire.center to rear_rim.center.
+Then move by offset(0, 0, 0).
+
+For i in 0…11:
+  Create primitive cylinder with Radius=0.001m, Length=0.15m and name it rear_spoke_i.
+  Rotate rear_spoke_i so its +Z axis aligns +Y (world).
+  Anchor rear_spoke_i.center to rear_hub.center.
+  Align rear_spoke_i.center to rear_hub.center.
+  Then position at polar(0° + i·30°; dr=0.15).
+
+Stage 4 complete.
+
+All stages complete.

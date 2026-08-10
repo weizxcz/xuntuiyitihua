@@ -1,0 +1,49 @@
+{
+  "id": "d608d703-fd9c-4be7-b88b-c05ad029c814",
+  "name": "Travel Bag",
+  "instruction": "Design a travel bag. The bag should have a large main compartment, multiple pockets, and a shoulder strap. It should evoke a sense of adventure and readiness for travel.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a travel bag.",
+        "The bag features a large main compartment.",
+        "The bag has multiple pockets for organization.",
+        "The shoulder strap is attached for easy carrying."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the main compartment is proportionate to the overall size of the bag.",
+        "The shoulder strap is appropriately sized for comfort and usability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The main compartment is easily accessible from the top.",
+        "The pockets are strategically placed for easy reach.",
+        "The shoulder strap is positioned to allow for balanced carrying."
+      ],
+      "Object distance and contact": [
+        "The pockets do not interfere with the main compartment access.",
+        "The shoulder strap is securely attached without causing instability.",
+        "There is no overlap between the pockets and the main compartment."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the travel bag are accurately represented.",
+        "The design evokes a sense of adventure as instructed.",
+        "There are no deviations from the instructions provided."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,88 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material ceramic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material metal_silver; diffuse_color = (0.8,0.8,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Body Group  ---
+Create primitive cylinder with radius 0.050 m and height 0.150 m and name it body.
+Rotate body so its +Z axis aligns +Z (world).
+Anchor body to world origin.
+Move body by offset(0,0,0).
+
+Create primitive cylinder with radius 0.050 m and height 0.005 m and name it body_bottom.
+Rotate body_bottom so its +Z axis aligns +Z (world).
+Align body_bottom.top_face to body.bottom_face.
+Then move by offset(0,0,0.0025).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Spout Group  ---
+Create primitive cylinder with radius 0.015 m and height 0.040 m and name it spout_base.
+Rotate spout_base so its +Z axis aligns +X (world).
+Align spout_base.right_face to body.left_face.
+Then move by offset(0.050,0,0.050).
+
+Create primitive cone with base radius 0.010 m and height 0.030 m and name it spout_tip.
+Rotate spout_tip so its +Z axis aligns +X (world).
+Align spout_tip.left_face to spout_base.right_face.
+Then move by offset(0.020,0,0.010).
+
+Create primitive torus with major radius 0.020 m and minor radius 0.015 m and name it spout_curve.
+Rotate spout_curve so its +Z axis aligns +Z (world).
+Align spout_curve.center to Avg(spout_base.center, spout_tip.center).
+
+Boolean-union spout_base, spout_tip, and spout_curve into spout_union.
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Handle Group  ---
+Create primitive torus with major radius 0.040 m and minor radius 0.005 m and name it handle_arc.
+Rotate handle_arc so its +Z axis aligns +Z (world).
+Align handle_arc.center to body.left_face.
+Then move by offset(-0.060,0,0.075).
+
+Create primitive cylinder with radius 0.005 m and height 0.020 m and name it handle_top.
+Rotate handle_top so its +Z axis aligns +X (world).
+Align handle_top.right_face to handle_arc.left_face.
+Then move by offset(0.040,0,0.040).
+
+Create primitive cylinder with radius 0.005 m and height 0.020 m and name it handle_bottom.
+Rotate handle_bottom so its +Z axis aligns +X (world).
+Align handle_bottom.right_face to handle_arc.left_face.
+Then move by offset(0.040,0,-0.040).
+
+Boolean-union handle_arc, handle_top, and handle_bottom into handle_union.
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Lid Group  ---
+Create full_sphere with radius 0.050 m and name it lid_dome.
+Rotate lid_dome so its +Z axis aligns +Z (world).
+Align lid_dome.center to body.top_face.
+Then move by offset(0,0,0.075).
+Create plane_cutter and name it lid_dome_cut with size 0.100×0.100 m; orientation=axis:+Z.
+Boolean-subtract lid_dome_cut from lid_dome; keep lid_dome. // produces hemisphere
+Rotate lid_dome so its curved face points +Z.
+
+Create primitive sphere with radius 0.010 m and name it lid_knob.
+Rotate lid_knob so its +Z axis aligns +Z (world).
+Align lid_knob.center to lid_dome.top_face.
+Then move by offset(0,0,0.060).
+
+Boolean-union lid_dome and lid_knob into lid_union.
+
+Stage 4 complete.
+
+All stages complete.

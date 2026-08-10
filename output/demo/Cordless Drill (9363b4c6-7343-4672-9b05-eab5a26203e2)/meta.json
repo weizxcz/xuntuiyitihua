@@ -1,0 +1,49 @@
+{
+  "id": "9363b4c6-7343-4672-9b05-eab5a26203e2",
+  "name": "Cordless Drill",
+  "instruction": "Design a cordless drill with a rechargeable battery pack at the base, a trigger for variable speed control, and a chuck for holding different drill bits. Include a built-in LED light near the chuck to illuminate the work area.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a cordless drill.",
+        "The drill has a cylindrical body.",
+        "The base is wider to accommodate the rechargeable battery pack.",
+        "The chuck is located at the front of the drill."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The battery pack is proportionate to the size of the drill body.",
+        "The chuck is appropriately sized for standard drill bits."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The battery pack is securely attached to the base of the drill.",
+        "The trigger is positioned for easy access with the index finger.",
+        "The chuck is aligned with the drill body for proper bit insertion.",
+        "The LED light is positioned near the chuck for optimal illumination."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the battery pack and the drill body.",
+        "The trigger is easily reachable without obstruction.",
+        "The LED light is mounted securely and does not interfere with the chuck."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified features, including the battery pack, trigger, chuck, and LED light, are accurately represented.",
+        "There are no deviations from the instructions provided."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,43 @@
+{
+  "id": "202a5af8-3378-4c65-a969-9d59b8f5492a",
+  "name": "Transformer",
+  "instruction": "Can you create a 3D model of an electrical transformer? It should have a cylindrical core with windings around it. Include the input and output terminals on opposite sides.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The core is cylindrical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The core, input and output terminals are proportionate to the entire transformer."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical core is the central component.",
+        "The windings are evenly distributed around the core.",
+        "The input and output terminals are positioned correctly on opposite sides."
+      ],
+      "Object distance and contact": [
+        "The windings do not overlap with the terminals.",
+        "There is adequate space between the terminals and the core."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "The cylindrical core and windings are correctly modeled."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

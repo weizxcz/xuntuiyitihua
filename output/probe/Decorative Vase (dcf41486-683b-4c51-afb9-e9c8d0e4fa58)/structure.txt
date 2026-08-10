@@ -1,0 +1,18 @@
+-- MATERIAL LIBRARY --
+ceramic_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| vase | Composite of vase_body + vase_base + vase_rim; A simple, elegant decorative vase with a wide base tapering to a narrow opening. | assembly_order=[vase_body, vase_base, vase_rim]; mat=ceramic_white; create_method=union |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| vase_body | Cylinder Ø0.200×0.300 m (Radius R=0.100 m, Height H=0.300 m) | pos=(0,0,0.150); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| vase_base | Cylinder Ø0.220×0.020 m (Radius R=0.110 m, Height H=0.020 m) | pos=(0,0,0.010); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+| vase_rim | Torus Ø0.140×0.005 m (Major Radius R=0.070 m, Minor Radius r=0.0025 m) | pos=(0,0,0.300); orientation=axis:+Z; mat=ceramic_white; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

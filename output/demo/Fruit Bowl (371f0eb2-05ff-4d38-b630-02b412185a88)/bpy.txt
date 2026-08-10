@@ -1,0 +1,288 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units_metres():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder primitive, centered at origin, aligned to Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='TRIFAN')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    # Ensure rotation is identity
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def add_cube(name, size):
+    """Add a cube primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Align an object's local axis to a target world vector."""
+    # Get current direction of the object's axis
+    if axis == 'X':
+        current_dir = obj.matrix_world.to_3x3().col[0]
+    elif axis == 'Y':
+        current_dir = obj.matrix_world.to_3x3().col[1]
+    else: # Z
+        current_dir = obj.matrix_world.to_3x3().col[2]
+    
+    # Calculate rotation matrix to align current_dir to target vector
+    # Normalize inputs
+    current_dir = current_dir.normalized()
+    target_dir = vector.normalized()
+    
+    # Avoid division by zero or invalid rotation if vectors are parallel
+    if abs(current_dir.dot(target_dir)) > 0.9999:
+        return # Already aligned or opposite (simple case)
+    
+    rot_quat = current_dir.rotation_difference(target_dir)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find specific points on an object's mesh."""
+    def __init__(self, obj):
+        self.obj = obj
+        # Ensure we have a copy of the mesh data for calculation
+        self.mesh = obj.data
+    
+    def center_world(self):
+        """Return the world-space center of the object's bounding box."""
+        # Using bounding box center is robust for primitives
+        min_co, max_co = self.obj.bound_box
+        # bound_box vertices are local
+        local_center = Vector([(min_co[0][0]+max_co[0][0])/2, 
+                               (min_co[1][1]+max_co[1][1])/2, 
+                               (min_co[2][2]+max_co[2][2])/2])
+        return self.obj.matrix_world @ local_center
+
+    def face_center_world(self, face_index):
+        """Return the world-space center of a specific face."""
+        if face_index < 0 or face_index >= len(self.mesh.polygons):
+            return self.center_world()
+        poly = self.mesh.polygons[face_index]
+        # Get vertices of the face
+        verts = [self.mesh.vertices[i] for i in poly.vertices]
+        # Calculate local center
+        local_center = average([v.co for v in verts])
+        return self.obj.matrix_world @ local_center
+
+    def radial_point_world(self, face_index, fraction=0.5):
+        """Return a point on the radial edge of a face."""
+        if face_index < 0 or face_index >= len(self.mesh.polygons):
+            return self.center_world()
+        poly = self.mesh.polygons[face_index]
+        if len(poly.vertices) < 2:
+            return self.face_center_world(face_index)
+        
+        v1 = self.mesh.vertices[poly.vertices[0]]
+        v2 = self.mesh.vertices[poly.vertices[1]]
+        
+        local_pt = v1.co.lerp(v2.co, fraction)
+        return self.obj.matrix_world @ local_pt
+
+def get_top_face_index(obj):
+    """Heuristic to find the top face of a Z-aligned cylinder."""
+    # For a cylinder created by add_cylinder, the top face is usually the last one or specific index.
+    # However, to be robust, we look for the face with the highest Z normal.
+    best_idx = -1
+    best_z = -999
+    for i, poly in enumerate(obj.data.polygons):
+        # Get face normal in world space
+        normal = poly.normal.copy()
+        obj.data.transform(obj.matrix_world) # This modifies the mesh data temporarily, bad practice for read-only
+        # Better: transform normal manually
+        world_normal = obj.matrix_world.to_3x3() * poly.normal
+        if world_normal.z > best_z:
+            best_z = world_normal.z
+            best_idx = i
+    return best_idx
+
+def get_bottom_face_index(obj):
+    """Heuristic to find the bottom face of a Z-aligned cylinder."""
+    best_idx = -1
+    best_z = 999
+    for i, poly in enumerate(obj.data.polygons):
+        world_normal = obj.matrix_world.to_3x3() * poly.normal
+        if world_normal.z < best_z:
+            best_z = world_normal.z
+            best_idx = i
+    return best_idx
+
+def align_faces(obj_align, obj_target, align_face_idx, target_face_idx):
+    """
+    Align obj_align's face to obj_target's face.
+    Assumes both are roughly Z-aligned.
+    Moves obj_align so its face center matches target face center.
+    """
+    loc_align = Locator(obj_align)
+    loc_target = Locator(obj_target)
+    
+    # Get centers
+    center_align = loc_align.face_center_world(align_face_idx)
+    center_target = loc_target.face_center_world(target_face_idx)
+    
+    # Calculate offset
+    offset = center_target - center_align
+    
+    # Apply offset
+    obj_align.location += offset
+
+def boolean_subtract(cutter_name, target_name):
+    """
+    Perform a boolean subtract operation.
+    Creates a boolean modifier on target using cutter.
+    """
+    target = bpy.data.objects.get(target_name)
+    cutter = bpy.data.objects.get(cutter_name)
+    
+    if not target or not cutter:
+        print(f"Error: Object {target_name} or {cutter_name} not found.")
+        return
+
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.object = cutter
+    mod.operation = 'DIFFERENCE'
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Delete cutter after use to keep scene clean
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_obj_name, target_name):
+    """
+    Perform a boolean union operation.
+    """
+    target = bpy.data.objects.get(target_name)
+    union_obj = bpy.data.objects.get(union_obj_name)
+    
+    if not target or not union_obj:
+        print(f"Error: Object {target_name} or {union_obj_name} not found.")
+        return
+
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.object = union_obj
+    mod.operation = 'UNION'
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj_name, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects.get(obj_name)
+    if not obj:
+        print(f"Error: Object {obj_name} not found.")
+        return
+    
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    
+    # Apply bevel
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+mat_ceramic_white = make_material("ceramic_white", (0.95, 0.95, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create bowl body ---
+# Create primitive cylinder with diameter 0.250 m and height 0.080 m and name it bowl_body.
+# Diameter 0.250 -> Radius 0.125
+bowl_body = add_cylinder("bowl_body", radius=0.125, depth=0.080)
+
+# Rotate bowl_body so its +Z axis aligns +Z (world).
+# add_cylinder creates aligned to Z by default, but we ensure it.
+align_axis_to_vector(bowl_body, 'Z', Vector((0, 0, 1)))
+
+# Anchor bowl_body to world origin.
+bowl_body.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+bowl_body.location += Vector((0, 0, 0))
+
+# Assign material
+bowl_body.data.materials.append(mat_ceramic_white)
+
+# --- SECTION 2 – Create base foot ---
+# Create primitive cylinder with diameter 0.060 m and height 0.010 m and name it base_foot.
+base_foot = add_cylinder("base_foot", radius=0.030, depth=0.010)
+
+# Rotate base_foot so its +Z axis aligns +Z (world).
+align_axis_to_vector(base_foot, 'Z', Vector((0, 0, 1)))
+
+# Align base_foot.top_face to bowl_body.bottom_face.
+# Find face indices
+top_face_bf = get_top_face_index(base_foot)
+bottom_face_bb = get_bottom_face_index(bowl_body)
+
+# Align faces
+align_faces(base_foot, bowl_body, top_face_bf, bottom_face_bb)
+
+# Then move by offset(0,0,-0.005).
+# The offset is in reference local axes. Since it's Z-aligned, local Z is world Z.
+base_foot.location += Vector((0, 0, -0.005))
+
+# Assign material
+base_foot.data.materials.append(mat_ceramic_white)
+
+print("All stages complete.")
+```

@@ -1,0 +1,47 @@
+{
+  "id": "c2b92c2f-45d9-4645-bc56-a9dbfb066fcc",
+  "name": "Chocolate Box",
+  "instruction": "Design a 3D model of a rectangular chocolate box. The box should have a lid that can be opened and closed. Inside, create individual compartments for each piece of chocolate. The compartments should be arranged in neat rows and columns. Include a ribbon tied around the box for decoration.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a rectangular chocolate box.",
+        "The box has a rectangular shape with a lid.",
+        "The lid is designed to open and close."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The lid fits snugly on the box without excessive overhang.",
+        "The compartments are evenly spaced within the box."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The lid is correctly positioned to open upwards.",
+        "The compartments are arranged in neat rows and columns.",
+        "The box maintains a stable structure when the lid is opened."
+      ],
+      "Object distance and contact": [
+        "The lid does not overlap with the box when closed.",
+        "There is sufficient space between compartments for easy access to chocolates.",
+        "The ribbon is securely tied around the box without interfering with the lid."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes, including the lid and compartments, are accurately represented.",
+        "The ribbon decoration is included as instructed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

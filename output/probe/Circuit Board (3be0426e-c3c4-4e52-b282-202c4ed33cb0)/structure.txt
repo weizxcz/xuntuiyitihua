@@ -1,0 +1,45 @@
+-- MATERIAL LIBRARY --
+board_green | diffuse_color=(0.1,0.4,0.1,1)
+copper_gold | diffuse_color=(0.8,0.6,0.2,1)
+ic_black | diffuse_color=(0.1,0.1,0.1,1)
+resistor_beige | diffuse_color=(0.8,0.7,0.5,1)
+capacitor_blue | diffuse_color=(0.1,0.2,0.6,1)
+led_red | diffuse_color=(0.9,0.1,0.1,1)
+led_green | diffuse_color=(0.1,0.9,0.1,1)
+connector_black | diffuse_color=(0.15,0.15,0.15,1)
+connector_gold | diffuse_color=(0.9,0.7,0.3,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root_board | Composite of base PCB + components + connectors | assembly_order=[base_layer, components_layer, connectors_layer] |
+
+Layer 1 – Primary Structure (Base PCB)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pcb_base | Rectangular PCB substrate 0.100×0.080×0.002 m | pos=(0,0,0); orientation=axis:+Z; mat=board_green; create_method=primitive(cube); constraint=dimensions 0.100m x 0.080m x 0.002m |
+| pcb_copper_layer | Thin copper trace layer on top surface | Align(XY) pcb_copper_layer.bottom_face to pcb_base.top_face; offset(0,0,0.0001); mat=copper_gold; create_method=primitive(cube); constraint=dimensions 0.098m x 0.078m x 0.0001m |
+
+Layer 2 – Components Layer
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| ic_1 | Integrated Circuit (DIP-8) 0.010×0.004×0.002 m | Align(XY) ic_1.center to (0.02, 0.02); Align(Z) ic_1.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.001); mat=ic_black; create_method=primitive(cube); constraint=dimensions 0.010m x 0.004m x 0.002m |
+| ic_2 | Integrated Circuit (SOP-16) 0.010×0.006×0.002 m | Align(XY) ic_2.center to (-0.02, 0.02); Align(Z) ic_2.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.001); mat=ic_black; create_method=primitive(cube); constraint=dimensions 0.010m x 0.006m x 0.002m |
+| res_1 | Resistor (Axial) Ø0.003×0.010 m | Align(XY) res_1.center to (0.02, -0.02); Align(Z) res_1.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.0015); mat=resistor_beige; create_method=primitive(cylinder); constraint=radius 0.0015m, height 0.010m |
+| res_2 | Resistor (Axial) Ø0.003×0.010 m | Align(XY) res_2.center to (-0.02, -0.02); Align(Z) res_2.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.0015); mat=resistor_beige; create_method=primitive(cylinder); constraint=radius 0.0015m, height 0.010m |
+| cap_1 | Capacitor (Ceramic Disc) Ø0.005×0.002 m | Align(XY) cap_1.center to (0.04, 0.02); Align(Z) cap_1.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.001); mat=capacitor_blue; create_method=primitive(cylinder); constraint=radius 0.0025m, height 0.002m |
+| cap_2 | Capacitor (Electrolytic) Ø0.006×0.010 m | Align(XY) cap_2.center to (-0.04, 0.02); Align(Z) cap_2.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.005); mat=capacitor_blue; create_method=primitive(cylinder); constraint=radius 0.003m, height 0.010m |
+| led_1 | LED (Red, 5mm) Ø0.005×0.004 m | Align(XY) led_1.center to (0.04, -0.02); Align(Z) led_1.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.002); mat=led_red; create_method=primitive(cylinder); constraint=radius 0.0025m, height 0.004m |
+| led_2 | LED (Green, 5mm) Ø0.005×0.004 m | Align(XY) led_2.center to (-0.04, -0.02); Align(Z) led_2.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.002); mat=led_green; create_method=primitive(cylinder); constraint=radius 0.0025m, height 0.004m |
+
+Layer 3 – Connectors Layer
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| conn_1 | USB Type-A Connector 0.020×0.010×0.005 m | Align(XY) conn_1.center to (0.05, 0); Align(Z) conn_1.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.0025); mat=connector_black; create_method=primitive(cube); constraint=dimensions 0.020m x 0.010m x 0.005m |
+| conn_2 | Header Pin Block (2x5) 0.020×0.010×0.005 m | Align(XY) conn_2.center to (-0.05, 0); Align(Z) conn_2.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.0025); mat=connector_black; create_method=primitive(cube); constraint=dimensions 0.020m x 0.010m x 0.005m |
+| conn_pins_1 | Gold Plated Pins for USB | Align(XY) conn_pins_1.center to (0.05, 0); Align(Z) conn_pins_1.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.0025); mat=connector_gold; create_method=primitive(cube); constraint=dimensions 0.018m x 0.008m x 0.001m |
+| conn_pins_2 | Gold Plated Pins for Header | Align(XY) conn_pins_2.center to (-0.05, 0); Align(Z) conn_pins_2.bottom_face to pcb_copper_layer.top_face; offset(0,0,0.0025); mat=connector_gold; create_method=primitive(cube); constraint=dimensions 0.018m x 0.008m x 0.001m |
+
+# ----------  END_GRAPH  ----------

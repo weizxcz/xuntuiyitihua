@@ -1,0 +1,40 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_acrylic; diffuse_color = (0.9, 0.9, 0.95, 0.3).
+Define material mat_cork; diffuse_color = (0.6, 0.4, 0.2, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create coaster group template and instantiate grid  ---
+Create an Empty helper (cube display) and name it coaster_group.
+Rotate coaster_group so its axis aligns +Z (world).
+Move coaster_group to (0,0,0).
+
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with size Ø0.08×0.005 m and name it coaster_base_r_c.
+  Rotate coaster_base_r_c so its +Z axis aligns +Z (world).
+  Anchor coaster_base_r_c to coaster_group.center.
+  Align coaster_base_r_c.bottom_face to coaster_group.bottom_face.
+  Then offset(-0.06 + c·0.12, -0.06 + r·0.12, 0).
+  Apply material mat_cork to coaster_base_r_c.
+
+  Create primitive cylinder with size Ø0.07×0.003 m and name it coaster_top_r_c.
+  Rotate coaster_top_r_c so its +Z axis aligns +Z (world).
+  Anchor coaster_top_r_c to coaster_base_r_c.center.
+  Align coaster_top_r_c.bottom_face to coaster_base_r_c.top_face.
+  Then offset(0,0,0.002).
+  Apply material mat_acrylic to coaster_top_r_c.
+
+Stage 1 complete.
+
+All stages complete.

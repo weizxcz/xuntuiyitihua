@@ -1,0 +1,1 @@
+Create a ladder with a height of 15 feet and a width of 2 feet. It should have evenly spaced rungs and be suitable for both indoor and outdoor use.

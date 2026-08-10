@@ -1,0 +1,51 @@
+-- MATERIAL LIBRARY --
+mat_black_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_silver_steel | diffuse_color=(0.7,0.7,0.8,1.0)
+mat_translucent_plastic | diffuse_color=(0.9,0.9,0.9,0.3)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| carrier_base | Composite of base_pan + side_pan_L + side_pan_R + back_pan + front_frame + door_frame + handle_base + latch_base + ventilation_holes | Assembly: base_pan + side_pan_L + side_pan_R + back_pan + front_frame + door_frame + handle_base + latch_base + ventilation_holes; create_method=boolean_union; mat=mat_black_plastic; pos=(0,0,0); orientation=axis:+Z |
+
+Layer 1 – Primary Structure (Base & Walls)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_pan | Cube 0.5×0.3×0.02 m | Align(XY) base_pan.top_face to world.origin; orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| side_pan_L | Cube 0.5×0.02×0.3 m | Align(XY) side_pan_L.right_face to base_pan.left_face; Align(Z) side_pan_L.bottom_face to base_pan.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| side_pan_R | Cube 0.5×0.02×0.3 m | Align(XY) side_pan_R.left_face to base_pan.right_face; Align(Z) side_pan_R.bottom_face to base_pan.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| back_pan | Cube 0.3×0.02×0.3 m | Align(XY) back_pan.front_face to base_pan.back_face; Align(Z) back_pan.bottom_face to base_pan.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| front_frame | Composite of front_left_post + front_right_post + front_top_bar + front_bottom_bar | Assembly: front_left_post + front_right_post + front_top_bar + front_bottom_bar; create_method=boolean_union; mat=mat_black_plastic; pos=(0,0,0); orientation=axis:+Z |
+| front_left_post | Cylinder Ø0.02×0.3 m | Align(XY) front_left_post.center to base_pan.left_face; Align(Z) front_left_post.bottom_face to base_pan.top_face; offset(0.01,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| front_right_post | Cylinder Ø0.02×0.3 m | Align(XY) front_right_post.center to base_pan.right_face; Align(Z) front_right_post.bottom_face to base_pan.top_face; offset(-0.01,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| front_top_bar | Cube 0.3×0.02×0.02 m | Align(XY) front_top_bar.center to Avg(front_left_post.center, front_right_post.center); Align(Z) front_top_bar.bottom_face to front_left_post.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| front_bottom_bar | Cube 0.3×0.02×0.02 m | Align(XY) front_bottom_bar.center to Avg(front_left_post.center, front_right_post.center); Align(Z) front_bottom_bar.top_face to base_pan.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+
+Layer 2 – Door & Latch Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_frame | Composite of door_left_bar + door_right_bar + door_top_bar + door_bottom_bar | Assembly: door_left_bar + door_right_bar + door_top_bar + door_bottom_bar; create_method=boolean_union; mat=mat_black_plastic; pos=(0,0,0); orientation=axis:+Z |
+| door_left_bar | Cylinder Ø0.015×0.28 m | Align(XY) door_left_bar.center to front_left_post.center; Align(Z) door_left_bar.bottom_face to front_bottom_bar.top_face; offset(0.015,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| door_right_bar | Cylinder Ø0.015×0.28 m | Align(XY) door_right_bar.center to front_right_post.center; Align(Z) door_right_bar.bottom_face to front_bottom_bar.top_face; offset(-0.015,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| door_top_bar | Cube 0.28×0.015×0.015 m | Align(XY) door_top_bar.center to Avg(door_left_bar.center, door_right_bar.center); Align(Z) door_top_bar.bottom_face to door_left_bar.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| door_bottom_bar | Cube 0.28×0.015×0.015 m | Align(XY) door_bottom_bar.center to Avg(door_left_bar.center, door_right_bar.center); Align(Z) door_bottom_bar.top_face to front_bottom_bar.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| door_bars | Pattern of 5 cylinders Ø0.01×0.28 m | pattern=grid(rows:1, cols:5, x_spacing:0.05, y_spacing:0, start_offset:(-0.1,0)); Align(XY) door_bars[*].center to Avg(door_left_bar.center, door_right_bar.center); Align(Z) door_bars[*].bottom_face to door_bottom_bar.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_silver_steel; create_method=primitive |
+| latch_base | Cube 0.04×0.02×0.02 m | Align(XY) latch_base.center to door_right_bar.center; Align(Z) latch_base.bottom_face to door_bottom_bar.top_face; offset(0.02,0,0); orientation=axis:+Z; mat=mat_silver_steel; create_method=primitive |
+| latch_hook | Cylinder Ø0.01×0.03 m | Align(XY) latch_hook.center to latch_base.center; Align(Z) latch_hook.bottom_face to latch_base.top_face; offset(0,0,0); orientation=axis:+Z; mat=mat_silver_steel; create_method=primitive |
+| latch_strike | Cube 0.02×0.02×0.01 m | Align(XY) latch_strike.center to door_left_bar.center; Align(Z) latch_strike.bottom_face to door_bottom_bar.top_face; offset(0.02,0,0); orientation=axis:+Z; mat=mat_silver_steel; create_method=primitive |
+
+Layer 3 – Ventilation & Handle
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| ventilation_holes | Pattern of 10 cylinders Ø0.02×0.01 m | pattern=grid(rows:2, cols:5, x_spacing:0.05, y_spacing:0.05, start_offset:(-0.1,0)); Align(XY) ventilation_holes[*].center to side_pan_L.center; Align(Z) ventilation_holes[*].bottom_face to base_pan.top_face; offset(0,0,0.1); orientation=axis:+X; mat=mat_translucent_plastic; create_method=primitive |
+| handle_base | Cube 0.1×0.02×0.02 m | Align(XY) handle_base.center to base_pan.center; Align(Z) handle_base.bottom_face to base_pan.top_face; offset(0,0,0.15); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| handle_arch | Torus R=0.05 r=0.01 | Align(XY) handle_arch.center to handle_base.center; Align(Z) handle_arch.bottom_face to handle_base.top_face; offset(0,0,0); orientation=axis:+Y; mat=mat_black_plastic; create_method=primitive |
+
+Layer 4 – Top Cover (Detachable)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| top_cover | Cube 0.5×0.3×0.02 m | Align(XY) top_cover.bottom_face to base_pan.top_face; offset(0,0,0.3); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

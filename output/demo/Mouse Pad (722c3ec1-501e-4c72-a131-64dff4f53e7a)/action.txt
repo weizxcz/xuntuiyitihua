@@ -1,0 +1,36 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_base; diffuse_color = (0,0,0,1).
+Define material mat_surface; diffuse_color = (0.1,0.1,0.1,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base layer (base + surface)  ---
+Create primitive cuboid with size 0.350×0.250×0.004 m and name it base.
+Rotate base so its +Z axis aligns +Z (world).
+Anchor base to mouse_pad.center.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.340×0.240×0.002 m and name it surface.
+Rotate surface so its +Z axis aligns +Z (world).
+Align surface.+Z_face to base.+Z_face.
+Then move by offset(0,0,0.002).
+
+Boolean-union base and surface; keep base.
+Stage 1 complete.
+
+---  SECTION 2 – Create mouse pad composite  ---
+Boolean-union base_layer and mouse_pad; keep mouse_pad.
+Stage 2 complete.
+
+All stages complete.

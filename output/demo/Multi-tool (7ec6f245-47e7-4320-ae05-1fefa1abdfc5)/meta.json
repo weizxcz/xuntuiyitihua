@@ -1,0 +1,54 @@
+{
+  "id": "7ec6f245-47e7-4320-ae05-1fefa1abdfc5",
+  "name": "Multi-tool",
+  "instruction": "Please design a multi-tool with multiple functionalities. Include a knife blade, scissors, a bottle opener, and a small saw. Each tool should fold out from a central handle.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a multi-tool.",
+        "The central handle is designed to accommodate multiple tools.",
+        "The knife blade is foldable.",
+        "The scissors are foldable.",
+        "The bottle opener is foldable.",
+        "The small saw is foldable."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the knife blade is appropriate for a multi-tool.",
+        "The scissors are compact yet functional.",
+        "The bottle opener is sized for standard bottles.",
+        "The small saw is sized for portability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tools fold out from the central handle without obstruction.",
+        "The knife blade extends away from the handle for safety.",
+        "The scissors open outward from the handle.",
+        "The bottle opener is positioned for easy access.",
+        "The small saw extends in a way that allows for effective use."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the tools when folded.",
+        "Each tool locks securely in place when extended.",
+        "The tools do not interfere with each other when in use."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified tools are included and accurately represented.",
+        "The folding mechanism for each tool is functional and clear."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

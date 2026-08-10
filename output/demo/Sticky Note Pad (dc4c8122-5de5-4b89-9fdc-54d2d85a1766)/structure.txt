@@ -1,0 +1,37 @@
+-- MATERIAL LIBRARY --
+paper_backing | diffuse_color=(139,69,19,1.0)
+paper_sheet | diffuse_color=(255,255,0,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sticky_note_pad | Composite of backing + stacked sheets | assembly_order=[backing_group], [sheets_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| backing | Rectangular prism (cube) 0.0762×0.0762×0.005 m | Align(XY) backing.center to sticky_note_pad.center; Align(Z) backing.bottom_face to sticky_note_pad.bottom_face; offset(0,0,-0.0025); orientation=axis:+Z; mat=paper_backing; create_method=primitive |
+| sheets_group | Composite of 20 thin sheets | assembly_order=[sheet_0], [sheet_1], …, [sheet_19] |
+| sheet_0 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_0.center to backing.center; Align(Z) sheet_0.bottom_face to backing.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_1 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_1.center to backing.center; Align(Z) sheet_1.bottom_face to sheet_0.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_2 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_2.center to backing.center; Align(Z) sheet_2.bottom_face to sheet_1.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_3 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_3.center to backing.center; Align(Z) sheet_3.bottom_face to sheet_2.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_4 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_4.center to backing.center; Align(Z) sheet_4.bottom_face to sheet_3.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_5 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_5.center to backing.center; Align(Z) sheet_5.bottom_face to sheet_4.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_6 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_6.center to backing.center; Align(Z) sheet_6.bottom_face to sheet_5.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_7 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_7.center to backing.center; Align(Z) sheet_7.bottom_face to sheet_6.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_8 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_8.center to backing.center; Align(Z) sheet_8.bottom_face to sheet_7.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_9 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_9.center to backing.center; Align(Z) sheet_9.bottom_face to sheet_8.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_10 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_10.center to backing.center; Align(Z) sheet_10.bottom_face to sheet_9.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_11 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_11.center to backing.center; Align(Z) sheet_11.bottom_face to sheet_10.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_12 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_12.center to backing.center; Align(Z) sheet_12.bottom_face to sheet_11.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_13 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_13.center to backing.center; Align(Z) sheet_13.bottom_face to sheet_12.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_14 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_14.center to backing.center; Align(Z) sheet_14.bottom_face to sheet_13.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_15 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_15.center to backing.center; Align(Z) sheet_15.bottom_face to sheet_14.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_16 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_16.center to backing.center; Align(Z) sheet_16.bottom_face to sheet_15.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_17 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_17.center to backing.center; Align(Z) sheet_17.bottom_face to sheet_16.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_18 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_18.center to backing.center; Align(Z) sheet_18.bottom_face to sheet_17.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+| sheet_19 | Rectangular prism (cube) 0.0762×0.0762×0.0001 m | Align(XY) sheet_19.center to backing.center; Align(Z) sheet_19.bottom_face to sheet_18.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=paper_sheet; create_method=primitive |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,44 @@
+{
+  "id": "4a38cea1-c2d1-40f8-8652-2efe244602e4",
+  "name": "Fuse",
+  "instruction": "Model a basic fuse. It should be cylindrical with metal caps on both ends.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cylindrical fuse.",
+        "The fuse has metal caps on both ends."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the cylindrical body is proportionate to the diameter."
+      ],
+      "Texture and surface detail": [
+        "The body of the fuse is represented as a non-metallic material.",
+        "The caps are accurately depicted as metallic."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical shape is accurately represented in three dimensions.",
+        "The metal caps are correctly positioned at both ends of the cylinder."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the caps and the cylindrical body.",
+        "The caps are flush with the ends of the cylindrical body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

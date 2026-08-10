@@ -1,0 +1,211 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    bpy.ops.mesh.primitive_cube_add(size=size, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='Z', target_vector=(0, 0, 1)):
+    """Aligns an object's local axis to a target world vector."""
+    if axis_to_align == 'Z':
+        axis = Vector((0, 0, 1))
+    elif axis_to_align == 'Y':
+        axis = Vector((0, 1, 0))
+    elif axis_to_align == 'X':
+        axis = Vector((1, 0, 0))
+    else:
+        return
+
+    target = Vector(target_vector).normalized()
+    current = axis.copy()
+    
+    # Calculate rotation matrix
+    rot_mat = current.rotation_difference(target).to_matrix().to_4x4()
+    obj.matrix_world = rot_mat @ obj.matrix_world
+
+def boolean_union(objs, result_name):
+    """Performs boolean union on a list of objects and returns the resulting object."""
+    if not objs:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objs:
+        obj.select_set(True)
+    
+    # Set active object as the first one
+    bpy.context.view_layer.objects.active = objs[0]
+    
+    # Apply boolean modifier to all but the first
+    for obj in objs[1:]:
+        mod = obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = objs[0]
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Now we have multiple meshes in the active object's place? 
+    # Actually, applying boolean on secondary objects modifies them to match the first.
+    # We need to join them.
+    bpy.ops.object.join()
+    
+    result = bpy.context.active_object
+    result.name = result_name
+    return result
+
+def boolean_subtract(base_obj, cutter_obj, result_name):
+    """Subtracts cutter from base using boolean modifier."""
+    mod = base_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    base_obj.name = result_name
+    return base_obj
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to meters
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_black_abs = make_material("mat_black_abs", (0.05, 0.05, 0.05, 1.0))
+mat_clear_acrylic = make_material("mat_clear_acrylic", (0.9, 0.95, 1.0, 0.3))
+mat_silicone_grey = make_material("mat_silicone_grey", (0.4, 0.4, 0.4, 1.0))
+mat_white_pp = make_material("mat_white_pp", (0.95, 0.95, 0.95, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create base_plate ---
+base_plate = add_cylinder("base_plate", 0.125, 0.015)
+align_axis_to_vector(base_plate, 'Z', (0, 0, 1))
+base_plate.location = (0, 0, 0)
+base_plate.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create outer_wall ---
+outer_wall = add_cylinder("outer_wall", 0.125, 0.120)
+align_axis_to_vector(outer_wall, 'Z', (0, 0, 1))
+outer_wall.location = (0, 0, 0)
+outer_wall.location += Vector((0, 0, 0.0675))
+
+# --- SECTION 3 – Create inner_basin ---
+inner_basin = add_cylinder("inner_basin", 0.110, 0.100)
+align_axis_to_vector(inner_basin, 'Z', (0, 0, 1))
+inner_basin.location = (0, 0, 0)
+inner_basin.location += Vector((0, 0, 0.0675))
+
+# --- SECTION 4 – Assemble base_shell ---
+base_shell = boolean_union([base_plate, outer_wall, inner_basin], "base_shell")
+
+# --- SECTION 5 – Create water_surface ---
+water_surface = add_cylinder("water_surface", 0.105, 0.001)
+align_axis_to_vector(water_surface, 'Z', (0, 0, 1))
+water_surface.location = (0, 0, 0)
+water_surface.location += Vector((0, 0, 0.110))
+
+# --- SECTION 6 – Create water_volume ---
+water_volume = add_cylinder("water_volume", 0.105, 0.090)
+align_axis_to_vector(water_volume, 'Z', (0, 0, 1))
+water_volume.location = (0, 0, 0)
+water_volume.location += Vector((0, 0, 0.060))
+
+# --- SECTION 7 – Assemble water_basin ---
+water_basin = boolean_union([water_surface, water_volume], "water_basin")
+
+# --- SECTION 8 – Create filter_housing ---
+filter_housing = add_cylinder("filter_housing", 0.040, 0.040)
+align_axis_to_vector(filter_housing, 'Z', (0, 0, 1))
+filter_housing.location = (0, 0, 0)
+filter_housing.location += Vector((0, 0, 0.035))
+
+# --- SECTION 9 – Create filter_cartridge ---
+filter_cartridge = add_cylinder("filter_cartridge", 0.035, 0.030)
+align_axis_to_vector(filter_cartridge, 'Z', (0, 0, 1))
+filter_cartridge.location = (0, 0, 0)
+filter_cartridge.location += Vector((0, 0, 0.035))
+
+# --- SECTION 10 – Create filter_sponge ---
+filter_sponge = add_cylinder("filter_sponge", 0.0375, 0.010)
+align_axis_to_vector(filter_sponge, 'Z', (0, 0, 1))
+filter_sponge.location = (0, 0, 0)
+filter_sponge.location += Vector((0, 0, 0.040))
+
+# --- SECTION 11 – Assemble filtration_unit ---
+filtration_unit = boolean_union([filter_housing, filter_cartridge, filter_sponge], "filtration_unit")
+
+# --- SECTION 12 – Create pump_motor ---
+pump_motor = add_cylinder("pump_motor", 0.030, 0.050)
+align_axis_to_vector(pump_motor, 'Z', (0, 0, 1))
+pump_motor.location = (0, 0, 0)
+pump_motor.location += Vector((0, 0, 0.030))
+
+# --- SECTION 13 – Create impeller ---
+impeller = add_cylinder("impeller", 0.025, 0.010)
+align_axis_to_vector(impeller, 'Z', (0, 0, 1))
+impeller.location = (0, 0, 0)
+impeller.location += Vector((0, 0, 0.060))
+
+# --- SECTION 14 – Create intake_strainer ---
+intake_strainer = add_cylinder("intake_strainer", 0.020, 0.020)
+align_axis_to_vector(intake_strainer, 'Z', (0, 0, 1))
+intake_strainer.location = (0, 0, 0)
+intake_strainer.location += Vector((0, 0, 0.020))
+
+# --- SECTION 15 – Assemble pump_assembly ---
+pump_assembly = boolean_union([pump_motor, impeller, intake_strainer], "pump_assembly")
+
+# --- SECTION 16 – Create spout_body ---
+spout_body = add_cylinder("spout_body", 0.015, 0.080)
+align_axis_to_vector(spout_body, 'Z', (0, 0, 1))
+spout_body.location = (0, 0, 0)
+spout_body.location += Vector((0, 0, 0.055))
+
+# --- SECTION 17 – Create spout_nozzle ---
+spout_nozzle = add_cone("spout_nozzle", 0.010, 0.010)
+align_axis_to_vector(spout_nozzle, 'Z', (0, 0, 1))
+spout_nozzle.location = (0, 0, 0)
+spout_nozzle.location += Vector((0, 0, 0.100))
+
+# --- SECTION 18 – Assemble spout_assembly ---
+spout_assembly = boolean_union([spout_body, spout_nozzle], "spout_assembly")
+
+# --- SECTION 19 – Create power_cord ---
+power_cord = add_cylinder("power_cord", 0.0025, 0.500)
+align_axis_to_vector(power_cord, 'Z', (0, 1, 0))
+power_cord.location = (0, 0, 0)
+power_cord.location += Vector((0.125, 0, 0.0075))

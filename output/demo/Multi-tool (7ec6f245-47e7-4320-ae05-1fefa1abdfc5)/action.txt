@@ -1,0 +1,101 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_blade_steel; diffuse_color = (0.7,0.7,0.8,1.0).
+Define material mat_handle_g10; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_saw_steel; diffuse_color = (0.6,0.6,0.7,1.0).
+Define material mat_scissor_steel; diffuse_color = (0.75,0.75,0.85,1.0).
+Define material mat_tool_steel; diffuse_color = (0.65,0.65,0.75,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Handle Group: Left Scale, Right Scale, Liners, and Pivot  ---
+Create primitive cylinder with diameter 0.025 m and height 0.120 m and name it handle_scale_L.
+Rotate handle_scale_L so its +Z axis aligns +Z (world).
+Align handle_scale_L.center to (-0.0125, 0, 0).
+Create primitive cylinder with diameter 0.025 m and height 0.120 m and name it handle_scale_R.
+Rotate handle_scale_R so its +Z axis aligns +Z (world).
+Align handle_scale_R.center to (0.0125, 0, 0).
+Create primitive cylinder with diameter 0.024 m and height 0.118 m and name it handle_liner_L.
+Rotate handle_liner_L so its +Z axis aligns +Z (world).
+Align handle_liner_L.center to (-0.0125, 0, 0).
+Create primitive cylinder with diameter 0.024 m and height 0.118 m and name it handle_liner_R.
+Rotate handle_liner_R so its +Z axis aligns +Z (world).
+Align handle_liner_R.center to (0.0125, 0, 0).
+Create primitive cylinder with diameter 0.005 m and height 0.125 m and name it pivot_pin.
+Rotate pivot_pin so its +Z axis aligns +Z (world).
+Align pivot_pin.center to (0,0,0).
+Boolean-union handle_liner_L with handle_scale_L.
+Boolean-union handle_liner_R with handle_scale_R.
+Boolean-union handle_scale_L with handle_scale_R.
+Boolean-union pivot_pin with handle_scale_L.
+Align(XY) handle_main.center to (0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Tool Knife: Blade and Tang  ---
+Create primitive cylinder with diameter 0.004 m and height 0.03 m and name it knife_tang.
+Rotate knife_tang so its +Z axis aligns +Z (world).
+Align knife_tang.center to (0.01, 0, 0).
+Create extruded shape with leaf profile, length 0.08 m, width 0.02 m, thickness 0.002 m and name it knife_blade.
+Rotate knife_blade so its +Z axis aligns +Z (world).
+Align knife_blade.center to (0.04, 0, 0).
+Boolean-union knife_tang with knife_blade.
+Align(Z) tool_knife.bottom_face to handle_scale_R.top_face.
+Then offset(0.0125, 0, 0.005).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Tool Scissors: Blades and Pivot  ---
+Create extruded shape with curved blade profile, length 0.06 m, width 0.01 m, thickness 0.0015 m and name it scissor_blade_A.
+Rotate scissor_blade_A so its +Z axis aligns +Z (world).
+Align scissor_blade_A.center to (-0.03, 0.01, 0).
+Create extruded shape with curved blade profile, length 0.06 m, width 0.01 m, thickness 0.0015 m and name it scissor_blade_B.
+Rotate scissor_blade_B so its +Z axis aligns +Z (world).
+Align scissor_blade_B.center to (-0.03, -0.01, 0).
+Create primitive cylinder with diameter 0.003 m and height 0.02 m and name it scissor_pivot.
+Rotate scissor_pivot so its +Z axis aligns +Z (world).
+Align scissor_pivot.center to (-0.03, 0, 0).
+Boolean-union scissor_blade_A with scissor_pivot.
+Boolean-union scissor_blade_B with scissor_pivot.
+Align(Z) tool_scissors.bottom_face to handle_scale_L.top_face.
+Then offset(-0.0125, 0, 0.005).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Tool Opener: Body and Hook  ---
+Create extruded shape with L-shape profile, length 0.05 m, width 0.015 m, thickness 0.002 m and name it opener_body.
+Rotate opener_body so its +Z axis aligns +Z (world).
+Align opener_body.center to (0.025, 0, 0).
+Create primitive cylinder with diameter 0.005 m and height 0.01 m and name it opener_hook.
+Rotate opener_hook so its +Z axis aligns +Z (world).
+Align opener_hook.center to (0.05, 0, 0).
+Boolean-union opener_body with opener_hook.
+Align(Z) tool_opener.bottom_face to handle_scale_R.top_face.
+Then offset(0.0125, 0, 0.005).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Tool Saw: Blade and Handle  ---
+Create extruded shape with rectangular blade with teeth profile, length 0.07 m, width 0.01 m, thickness 0.001 m and name it saw_blade.
+Rotate saw_blade so its +Z axis aligns +Z (world).
+Align saw_blade.center to (-0.035, 0, 0).
+Create extruded shape with ergonomic grip profile, length 0.03 m, width 0.02 m, thickness 0.002 m and name it saw_handle.
+Rotate saw_handle so its +Z axis aligns +Z (world).
+Align saw_handle.center to (-0.015, 0, 0).
+Boolean-union saw_blade with saw_handle.
+Align(Z) tool_saw.bottom_face to handle_scale_L.top_face.
+Then offset(-0.0125, 0, 0.005).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+All stages complete.

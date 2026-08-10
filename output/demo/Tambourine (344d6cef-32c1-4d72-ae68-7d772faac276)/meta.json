@@ -1,0 +1,44 @@
+{
+  "id": "344d6cef-32c1-4d72-ae68-7d772faac276",
+  "name": "Tambourine",
+  "instruction": "Design a tambourine with a circular frame and multiple jingles.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a tambourine.",
+        "The tambourine features a circular frame.",
+        "The jingles are evenly distributed around the frame."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the jingles is appropriate relative to the frame."
+      ],
+      "Texture and surface detail": [
+        "The jingles have a shiny metallic surface."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The jingles are positioned correctly around the frame.",
+        "The frame is circular and maintains its shape."
+      ],
+      "Object distance and contact": [
+        "The jingles do not overlap with each other.",
+        "There is adequate spacing between the jingles and the frame."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the tambourine are accurately represented.",
+        "The design adheres to the instruction of having multiple jingles."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

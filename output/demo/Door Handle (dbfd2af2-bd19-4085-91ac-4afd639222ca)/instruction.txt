@@ -1,0 +1,1 @@
+Let's create a door handle. The handle should be a lever style, with a cylindrical base attached to the door. The lever itself extends outwards and then curves slightly downwards. The base should have a circular plate with screws visible. Add a keyhole below the handle.

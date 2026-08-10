@@ -1,0 +1,281 @@
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align, target_vector):
+    """Aligns a specific axis of an object to a target vector."""
+    # Get current rotation
+    rot = obj.rotation_euler.copy()
+    
+    # We need to find a rotation that maps the object's local axis to the target world vector.
+    # Since we are building primitives, we can often just set the rotation directly if we know the initial state.
+    # However, for generic helper:
+    
+    # Normalize target
+    target = target_vector.normalized()
+    
+    # Define the object's local axis vectors
+    if axis_to_align == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis_to_align == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis_to_align == 'Z':
+        local_axis = Vector((0, 0, 1))
+    else:
+        return
+
+    # Calculate rotation matrix to align local_axis to target
+    # We need an up-vector to define the roll. Default to Z if possible, else Y.
+    up = Vector((0, 0, 1))
+    if abs(local_axis.dot(up)) > 0.99:
+        up = Vector((0, 1, 0))
+    
+    # Construct rotation
+    rot_mat = local_axis.rotation_difference(target).to_matrix().to_4x4()
+    
+    # Apply to object
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = local_axis.rotation_difference(target)
+
+def align_face_to_face(obj_a, face_axis_a, obj_b, face_axis_b):
+    """
+    Aligns face of obj_a to face of obj_b.
+    face_axis: 'X', '-X', 'Y', '-Y', 'Z', '-Z'
+    """
+    # Get bounding box centers and extents
+    def get_face_center(obj, axis):
+        # Local axis vector
+        if axis == 'X': la = Vector((1,0,0))
+        elif axis == '-X': la = Vector((-1,0,0))
+        elif axis == 'Y': la = Vector((0,1,0))
+        elif axis == '-Y': la = Vector((0,-1,0))
+        elif axis == 'Z': la = Vector((0,0,1))
+        elif axis == '-Z': la = Vector((0,0,-1))
+        
+        # World direction of this local axis
+        world_dir = la @ obj.matrix_world.to_3x3()
+        
+        # Center of the object
+        center = obj.matrix_world.translation
+        
+        # Extent in that direction
+        # We need the half-extent in the world direction
+        # Simple approximation: project half-size onto world direction
+        # But since objects might be rotated, we use the bounding box logic or just transform the corner.
+        # Easier: Get the corner in local space, transform to world.
+        
+        # Local corner corresponding to positive axis
+        half_size = obj.dimensions / 2
+        if axis == 'X': local_corner = Vector((half_size[0], 0, 0))
+        elif axis == '-X': local_corner = Vector((-half_size[0], 0, 0))
+        elif axis == 'Y': local_corner = Vector((0, half_size[1], 0))
+        elif axis == '-Y': local_corner = Vector((0, -half_size[1], 0))
+        elif axis == 'Z': local_corner = Vector((0, 0, half_size[2]))
+        elif axis == '-Z': local_corner = Vector((0, 0, -half_size[2]))
+        
+        world_corner = obj.matrix_world @ local_corner
+        return world_corner
+
+    center_a = get_face_center(obj_a, face_axis_a)
+    center_b = get_face_center(obj_b, face_axis_b)
+    
+    # Calculate offset
+    offset = center_b - center_a
+    
+    # Apply offset to obj_a
+    obj_a.location += offset
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.matrix_world.translation
+    
+    def face_center_world(self, axis):
+        # Returns the center of the face defined by the axis
+        half_size = self.obj.dimensions / 2
+        if axis == 'X': local_pt = Vector((half_size[0], 0, 0))
+        elif axis == '-X': local_pt = Vector((-half_size[0], 0, 0))
+        elif axis == 'Y': local_pt = Vector((0, half_size[1], 0))
+        elif axis == '-Y': local_pt = Vector((0, -half_size[1], 0))
+        elif axis == 'Z': local_pt = Vector((0, 0, half_size[2]))
+        elif axis == '-Z': local_pt = Vector((0, 0, -half_size[2]))
+        else:
+            local_pt = Vector((0,0,0))
+            
+        return self.obj.matrix_world @ local_pt
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+cover_mat = make_material("cover_mat", (0.15, 0.12, 0.10, 1.0))
+paper_mat = make_material("paper_mat", (0.95, 0.95, 0.90, 1.0))
+spiral_mat = make_material("spiral_mat", (0.20, 0.20, 0.20, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create cover group ---
+
+# Create cover_front
+# Size: 0.216x0.279x0.0015
+# Anchor to world origin (0,0,0)
+# Offset: (0, 0, 0.0015)
+# Orientation: +Z aligns +Z (default for cube is Z up, so no rotation needed if we assume standard creation)
+cover_front = add_cube("cover_front", (0.216, 0.279, 0.0015), (0, 0, 0), (0, 0, 0), cover_mat)
+cover_front.location += Vector((0, 0, 0.0015))
+
+# Create cover_back
+# Size: 0.216x0.279x0.0015
+# Anchor to world origin (0,0,0)
+# Offset: (0, 0, -0.0015)
+cover_back = add_cube("cover_back", (0.216, 0.279, 0.0015), (0, 0, 0), (0, 0, 0), cover_mat)
+cover_back.location += Vector((0, 0, -0.0015))
+
+# --- SECTION 2 – Create pages group ---
+
+pages = []
+for i in range(100):
+    idx = i + 1
+    # Size: 0.210x0.273x0.00015
+    # Anchor: world origin
+    # Offset: (0.003, 0, 0.000075 + i*0.00015)
+    loc_z = 0.000075 + i * 0.00015
+    loc = (0.003, 0, loc_z)
+    
+    page = add_cube(f"page_{idx}", (0.210, 0.273, 0.00015), (0, 0, 0), (0, 0, 0), paper_mat)
+    page.location += Vector(loc)
+    pages.append(page)
+
+# --- SECTION 3 – Create spiral group ---
+
+coils = []
+for i in range(10):
+    idx = i + 1
+    # Cylinder: diameter 0.006 (radius 0.003), length 0.0273
+    # Orientation: +Z aligns +Y (world)
+    # Anchor: world origin
+    # Offset: (-0.010, -0.1265 + i*0.0175, 0.0075)
+    
+    # Create cylinder along Z by default
+    cyl = add_cylinder(f"coil_{idx}", 0.003, 0.0273, (0, 0, 0), (0, 0, 0), spiral_mat)
+    
+    # Rotate so +Z aligns +Y
+    # Rotation of -90 degrees around X axis maps Z to Y
+    cyl.rotation_euler = (-math.radians(90), 0, 0)
+    
+    # Apply offset
+    loc_y = -0.1265 + i * 0.0175
+    loc = (-0.010, loc_y, 0.0075)
+    cyl.location += Vector(loc)
+    
+    coils.append(cyl)
+
+# --- SECTION 4 – Assemble final sketchbook ---
+
+# Align cover_front.-Z_face to cover_back.+Z_face
+# cover_back is at Z = -0.0015. Its +Z face is at Z = -0.0015 + 0.0015/2 = -0.00075
+# cover_front is at Z = 0.0015. Its -Z face is at Z = 0.0015 - 0.0015/2 = 0.00075
+# Wait, the instruction says "Align cover_front.-Z_face to cover_back.+Z_face".
+# This usually implies they should touch or be coincident.
+# Let's use the helper.
+
+align_face_to_face(cover_front, '-Z', cover_back, '+Z')
+
+# Align pages_block.-Z_face to cover_front.+Z_face
+# We treat pages as a group. We need to align the bottom of the pages to the top of the front cover.
+# Since we can't easily pass a list to the simple helper, we calculate the target position.
+# Get the +Z face center of cover_front
+loc_front_top = cover_front.matrix_world @ Vector((0, 0, cover_front.dimensions[2]/2))
+
+# Get the -Z face center of the pages block (the first page, page_1, is at the bottom of the stack in Z? 
+# Let's check the Z offsets.
+# page_1 (i=0) Z offset: 0.000075. Center Z: 0.000075. Half height: 0.000075. Bottom Z: 0. Top Z: 0.00015.
+# page_100 (i=99) Z offset: 0.000075 + 99*0.00015 = 0.014925. Center Z: 0.014925. Half height: 0.000075. Bottom Z: 0.01485. Top Z: 0.015.
+# The stack goes from Z=0 to Z=0.015.
+# So the "-Z_face" of the pages block is the bottom of page_1.
+# We want to align this bottom face to the top face of cover_front.
+
+# Current bottom of pages block (page_1)
+page_1 = pages[0]
+loc_pages_bottom = page_1.matrix_world @ Vector((0, 0, -page_1.dimensions[2]/2))
+
+# Calculate offset to move pages so their bottom touches cover_front top
+offset_pages = loc_front_top - loc_pages_bottom
+for p in pages:
+    p.location += offset_pages
+
+# Align spiral_binding.-Z_face to cover_front.+Z_face
+# "spiral_binding" refers to the group of coils.
+# We need to align the "bottom" of the spiral binding to the top of the front cover.
+# The coils are cylinders rotated to lie along Y. Their "length" is along Y. Their "radius" is along X and Z.
+# The instruction says "spiral_binding.-Z_face". This implies the coils have a Z extent.
+# The coils are centered at Z=0.0075. Radius is 0.003.
+# So the -Z face of a coil is at Z = 0.0075 - 0.003 = 0.0045.
+# The +Z face of cover_front is at Z = loc_front_top.z.
+
+# Let's align the first coil (or the group center) to match.
+# Let's take the -Z face of the first coil.
+coil_1 = coils[0]
+loc_coil_bottom = coil_1.matrix_world @ Vector((0, 0, -coil_1.dimensions[2]/2)) # dimensions[2] is depth (Z) for unrotated, but it's rotated.
+# Wait, `dimensions` are always axis-aligned bounding box.
+# For a cylinder rotated 90 deg around X, the Z dimension is the diameter (0.006).
+# So half Z is 0.003.
+# The center of the coil is at Z=0.0075.
+# So the -Z face is at 0.0075 - 0.003 = 0.0045.
+
+# We want to align this to cover_front top.
+offset_spiral = loc_front_top - loc_coil_bottom
+for c in coils:
+    c.location += offset_spiral
+
+# Then move spiral_binding by offset(0, 0, 0) -> No change.
+
+# Final cleanup: Ensure all objects are selected and we can see them if needed, but script ends here.

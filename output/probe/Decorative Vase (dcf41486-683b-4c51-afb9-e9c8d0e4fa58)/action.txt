@@ -1,0 +1,41 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material ceramic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create vase_base  ---
+Create primitive cylinder with radius 0.110 m and height 0.020 m and name it vase_base.
+Rotate vase_base so its +Z axis aligns +Z (world).
+Anchor vase_base to world origin.
+Then move by offset(0,0,0.010).
+
+---  SECTION 2 – Create vase_body  ---
+Create primitive cylinder with radius 0.100 m and height 0.300 m and name it vase_body.
+Rotate vase_body so its +Z axis aligns +Z (world).
+Anchor vase_body to world origin.
+Then move by offset(0,0,0.150).
+
+---  SECTION 3 – Create vase_rim  ---
+Create primitive torus with major radius 0.070 m and minor radius 0.0025 m and name it vase_rim.
+Rotate vase_rim so its +Z axis aligns +Z (world).
+Anchor vase_rim to world origin.
+Then move by offset(0,0,0.300).
+
+---  SECTION 4 – Assemble Vase  ---
+Boolean-union vase_body, vase_base, and vase_rim; keep vase_body.
+Rename vase_body to vase.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

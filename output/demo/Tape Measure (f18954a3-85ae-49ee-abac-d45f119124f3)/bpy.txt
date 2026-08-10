@@ -1,0 +1,566 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, radians
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder oriented along Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    # size is (x, y, z)
+    sx, sy, sz = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0)) # size=1 creates 2x2x2 cube
+    obj = bpy.context.active_object
+    obj.scale = (sx/2, sy/2, sz/2)
+    obj.name = name
+    return obj
+
+def add_torus(name, major_radius, minor_radius, segments=32):
+    """Add a torus oriented along Z."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major_radius, minor_radius=minor_radius, major_segments=segments, minor_segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler
+    # Simple approach: set rotation to align axis. 
+    # For Z->Z, no change. For Z->X, rotate -90 deg around Y.
+    vec = Vector(vector).normalized()
+    
+    if axis == 'Z':
+        if vec == Vector((0, 0, 1)):
+            obj.rotation_euler = (0, 0, 0)
+        elif vec == Vector((0, 0, -1)):
+            obj.rotation_euler = (pi, 0, 0)
+        elif vec == Vector((1, 0, 0)):
+            obj.rotation_euler = (0, -pi/2, 0)
+        elif vec == Vector((-1, 0, 0)):
+            obj.rotation_euler = (0, pi/2, 0)
+        elif vec == Vector((0, 1, 0)):
+            obj.rotation_euler = (pi/2, 0, 0)
+        elif vec == Vector((0, -1, 0)):
+            obj.rotation_euler = (-pi/2, 0, 0)
+    elif axis == 'X':
+        if vec == Vector((1, 0, 0)):
+            obj.rotation_euler = (0, 0, 0)
+        elif vec == Vector((-1, 0, 0)):
+            obj.rotation_euler = (0, pi, 0)
+        elif vec == Vector((0, 1, 0)):
+            obj.rotation_euler = (0, 0, pi/2)
+        elif vec == Vector((0, -1, 0)):
+            obj.rotation_euler = (0, 0, -pi/2)
+        elif vec == Vector((0, 0, 1)):
+            obj.rotation_euler = (pi/2, 0, 0)
+        elif vec == Vector((0, 0, -1)):
+            obj.rotation_euler = (-pi/2, 0, 0)
+    elif axis == 'Y':
+        if vec == Vector((0, 1, 0)):
+            obj.rotation_euler = (0, 0, 0)
+        elif vec == Vector((0, -1, 0)):
+            obj.rotation_euler = (0, pi, 0)
+        elif vec == Vector((1, 0, 0)):
+            obj.rotation_euler = (-pi/2, 0, 0)
+        elif vec == Vector((-1, 0, 0)):
+            obj.rotation_euler = (pi/2, 0, 0)
+        elif vec == Vector((0, 0, 1)):
+            obj.rotation_euler = (0, pi/2, 0)
+        elif vec == Vector((0, 0, -1)):
+            obj.rotation_euler = (0, -pi/2, 0)
+
+def get_face_normal(obj, face_type):
+    """Get the normal vector of a specific face of an object."""
+    # This is a simplified helper assuming axis-aligned objects
+    # face_type: 'bottom', 'top', 'front', 'back', 'left', 'right'
+    # Returns world vector
+    if face_type == 'bottom': return (0, 0, -1)
+    if face_type == 'top': return (0, 0, 1)
+    if face_type == 'front': return (0, 1, 0)
+    if face_type == 'back': return (0, -1, 0)
+    if face_type == 'left': return (-1, 0, 0)
+    if face_type == 'right': return (1, 0, 0)
+    return (0, 0, 1)
+
+def get_face_center(obj, face_type):
+    """Get the world location of the center of a specific face."""
+    # Calculate based on object location and dimensions
+    loc = obj.location
+    dims = obj.dimensions
+    # Note: dimensions are always positive, representing total size
+    
+    x, y, z = loc
+    dx, dy, dz = dims[0]/2, dims[1]/2, dims[2]/2
+    
+    # Adjust for rotation if necessary, but for now assume axis-aligned for simplicity in anchoring logic
+    # If rotated, we'd need matrix multiplication. 
+    # The prompt implies simple alignments, so we assume standard orientations or handle rotation explicitly.
+    
+    # For robustness, let's use the object's matrix_world to transform local face centers
+    # Local face centers for a cube/cylinder/torus centered at 0,0,0:
+    
+    if face_type == 'bottom':
+        local_pt = Vector((0, 0, -dz))
+    elif face_type == 'top':
+        local_pt = Vector((0, 0, dz))
+    elif face_type == 'front':
+        local_pt = Vector((0, dy, 0))
+    elif face_type == 'back':
+        local_pt = Vector((0, -dy, 0))
+    elif face_type == 'left':
+        local_pt = Vector((-dx, 0, 0))
+    elif face_type == 'right':
+        local_pt = Vector((dx, 0, 0))
+    else:
+        return loc
+
+    # Transform to world
+    world_pt = obj.matrix_world @ local_pt
+    return world_pt
+
+def get_edge_center(obj, edge_type):
+    """Get world location of the center of a specific edge."""
+    loc = obj.location
+    dims = obj.dimensions
+    dx, dy, dz = dims[0]/2, dims[1]/2, dims[2]/2
+    
+    if edge_type == 'right_edge':
+        # Assuming right edge is along Y axis at max X
+        # For a cylinder, this is ambiguous. Assuming cuboid-like behavior or specific context.
+        # For tape_blade (cylinder), "right_edge" likely means the edge at max X.
+        # Let's assume it's the midpoint of the edge parallel to Y at X=max, Z=0 (if flat) or similar.
+        # Given it's a thin disc/cylinder, let's assume it's the edge at X=dx, Z=0.
+        local_pt = Vector((dx, 0, 0))
+    else:
+        local_pt = Vector((0, 0, 0))
+        
+    return obj.matrix_world @ local_pt
+
+def align_faces(obj_target, target_face, obj_source, source_face):
+    """Align source object's face normal to target object's face normal and position them."""
+    # 1. Align Normals
+    target_normal = get_face_normal(obj_target, target_face)
+    source_normal = get_face_normal(obj_source, source_face)
+    
+    # Calculate rotation to align source_normal to target_normal
+    # We need to rotate the source object so its source_face normal points in target_normal direction
+    # This is complex if objects are already rotated. 
+    # Simplified: Reset rotation, align, then re-apply? No, we set rotation explicitly in steps.
+    
+    # Let's assume the objects are oriented such that their local axes align with world axes initially,
+    # or we handle the rotation via the 'Rotate' step provided in the prompt.
+    # The prompt says "Align ... to ...". This usually means matching normals.
+    
+    # To align two vectors v1 and v2:
+    v1 = Vector(source_normal)
+    v2 = Vector(target_normal)
+    
+    if v1.normalized().dot(v2.normalized()) < -0.99:
+        # Opposite
+        rot_quat = Matrix.Rotation(pi, 4, v1.cross(v2).normalized() if v1.cross(v2).length > 0 else Vector((1,0,0)))
+    else:
+        rot_quat = v1.rotation_difference(v2)
+    
+    # Apply rotation to source object
+    # Note: This might conflict with previous orientation steps if not careful.
+    # The prompt structure is: Rotate -> Anchor -> Align -> Offset.
+    # So we apply this rotation on top of the existing orientation.
+    obj_source.rotation_euler = rot_quat.to_euler()
+
+def anchor_to_face(obj_source, target_obj, target_face, offset_vector):
+    """Move obj_source so its source_face touches target_obj's target_face."""
+    # This is a simplified anchor. 
+    # We need to know which face of obj_source is touching.
+    # The prompt implies "Anchor A to B's face" and "Align A's face to B's face".
+    # This usually means:
+    # 1. Align normals.
+    # 2. Position A such that its face is at B's face.
+    
+    # Let's assume the face being anchored is the one opposite to the normal direction if we are placing "on" it.
+    # E.g., Anchor bottom_face of A to top_face of B.
+    # So A's bottom face touches B's top face.
+    
+    # Determine the local point on obj_source that is the "anchor point" (center of the face)
+    # We need to infer the face of obj_source being anchored.
+    # The prompt says "Anchor housing_inner_core to housing_main.bottom_face".
+    # And "Align housing_inner_core.XY_face to housing_main.XY_face".
+    # This implies housing_inner_core's bottom face (or top?) is aligned.
+    # Usually, if you anchor to a bottom face, you place the object below it.
+    # If you anchor to a top face, you place it above.
+    
+    # Let's assume the face of obj_source being anchored is the one whose normal opposes the target face normal after alignment?
+    # Or simply, we place the center of obj_source's relevant face at the target face center.
+    
+    # Heuristic:
+    # If target is 'bottom', source is likely 'top' (placed below) or 'bottom' (placed above? No, usually 'top' of source touches 'bottom' of target if source is below).
+    # Let's look at Section 2: Anchor housing_inner_core to housing_main.bottom_face.
+    # housing_main.bottom_face is at Z = -dz_main.
+    # housing_inner_core is inside. So its bottom face should be at Z = -dz_main + offset?
+    # Or its center?
+    # "Align housing_inner_core.XY_face to housing_main.XY_face".
+    # This suggests the XY planes are parallel.
+    
+    # Let's use a Locator-like approach for precision.
+    # We will calculate the target world position for the source object's anchor point.
+    
+    # Determine source face type based on context or default to 'bottom' if not specified?
+    # The prompt doesn't always specify the source face type for anchoring, only the target face.
+    # However, "Align housing_inner_core.XY_face" implies the XY face (Top or Bottom).
+    # Given it's an "inner core" inside a "housing", and offset is +0.002 in Z,
+    # it's likely placed slightly above the bottom face.
+    
+    # Let's assume the anchor point is the center of the face of obj_source that is "facing" the target face.
+    # If target is 'bottom' (normal -Z), source face is likely 'top' (normal +Z) if placed on top, 
+    # or 'bottom' (normal -Z) if placed below?
+    # Actually, if I anchor a box to the bottom face of another box, I usually place it underneath.
+    # So source 'bottom' touches target 'bottom'? No, that's weird.
+    # Usually: Source 'bottom' touches Target 'bottom' -> Source is below Target.
+    # Source 'top' touches Target 'bottom' -> Source is inside/below Target?
+    
+    # Let's look at Section 3: Anchor to top_face. Offset +0.0135.
+    # Top face of housing_main is at Z = +dz_main.
+    # Offset is positive Z. So it moves further up.
+    # This implies the anchor point is the bottom of the new object?
+    # If I anchor bottom of plate to top of housing, the plate sits on top.
+    # So Source Face = 'bottom'.
+    
+    # Section 2: Anchor to bottom_face. Offset +0.002.
+    # Bottom face of housing is at Z = -dz_main.
+    # Offset +0.002 moves it up.
+    # So Source Face = 'bottom'? If bottom of core touches bottom of housing, core is below housing.
+    # But it's an "inner" core. So it should be inside.
+    # If core is inside, its bottom face is above housing's bottom face.
+    # So maybe "Anchor to bottom_face" means "Align with bottom_face plane"?
+    
+    # Let's stick to the Offset instruction.
+    # 1. Calculate Target Face Center.
+    # 2. Calculate Source Face Center (in local space).
+    # 3. Move Source so Source Face Center + Offset == Target Face Center?
+    # Or Source Center + Offset == Target Face Center?
+    
+    # The prompt says "Anchor ... to ... face".
+    # And "Align ... face to ... face".
+    # And "Move by offset".
+    
+    # Let's assume:
+    # Target Point = Center of Target Face.
+    # Source Anchor Point = Center of Source Face (which face? Let's guess based on alignment).
+    # If Aligning XY faces, and Target is Bottom (-Z), Source is likely Bottom (-Z) or Top (+Z).
+    # If Source is Bottom, and we want it to touch Target Bottom, Source Center Z = Target Z - Source_DZ/2.
+    # If Source is Top, and we want it to touch Target Bottom, Source Center Z = Target Z + Source_DZ/2.
+    
+    # Given "Inner Core" inside "Housing", and offset is small positive Z:
+    # Housing Bottom Z = -0.0125.
+    # Core Height = 0.020. Half = 0.010.
+    # If Core Bottom is at Housing Bottom (-0.0125), Core Center Z = -0.0025.
+    # Offset is +0.002.
+    # If we anchor Core Bottom to Housing Bottom, Core Center is at -0.0125 + 0.002 = -0.0105?
+    # This is getting complicated without explicit source face.
+    
+    # Alternative Interpretation:
+    # "Anchor A to B's face" means "Place A's center on B's face"?
+    # No, "Align A's face to B's face" suggests face-to-face contact.
+    
+    # Let's use a standard "Snap to Face" logic:
+    # 1. Get Target Face Center (TFC).
+    # 2. Get Source Face Center (SFC) in local space.
+    # 3. We want SFC (transformed) to be at TFC + Offset?
+    # Or SFC (transformed) == TFC?
+    
+    # Let's assume the "Anchor" implies the Source Face touches the Target Face.
+    # Which Source Face?
+    # If Target is 'bottom' (normal -Z), and we are placing an object "on" it (like a base), the Source Face is 'bottom'.
+    # If we are placing an object "inside" it (like a core), the Source Face is 'bottom' (touching the bottom of the container).
+    # So, Source Face = Target Face type?
+    # Let's assume Source Face Type == Target Face Type.
+    
+    # Calculate Source Face Center in World Space (before offset)
+    # We need to know the Source Face Type.
+    # Heuristic: If Target is 'bottom', Source is 'bottom'. If Target is 'top', Source is 'top'.
+    
+    src_face_type = target_face # Heuristic
+    
+    # Get Target Face Center
+    tfc = get_face_center(target_obj, target_face)
+    
+    # Get Source Face Center in Local Space
+    # We need dimensions of source object
+    dims = obj_source.dimensions
+    dx, dy, dz = dims[0]/2, dims[1]/2, dims[2]/2
+    
+    if src_face_type == 'bottom':
+        local_sfc = Vector((0, 0, -dz))
+    elif src_face_type == 'top':
+        local_sfc = Vector((0, 0, dz))
+    elif src_face_type == 'front':
+        local_sfc = Vector((0, dy, 0))
+    elif src_face_type == 'back':
+        local_sfc = Vector((0, -dy, 0))
+    elif src_face_type == 'left':
+        local_sfc = Vector((-dx, 0, 0))
+    elif src_face_type == 'right':
+        local_sfc = Vector((dx, 0, 0))
+    else:
+        local_sfc = Vector((0,0,0))
+        
+    # Transform Local SFC to World Space (using current rotation)
+    # Note: obj_source.rotation_euler is already set from the 'Rotate' step.
+    world_sfc = obj_source.matrix_world @ local_sfc
+    
+    # The target position for the Source Object's Center
+    # We want world_sfc + Offset_Vector == tfc ?
+    # Or world_sfc == tfc?
+    # "Anchor ... to ... face" usually means contact.
+    # "Move by offset" implies moving from the anchored position.
+    
+    # So: Target Center for Source Object = tfc - (world_sfc - obj_source.location) + offset
+    # Simplified:
+    # Current Source Center = obj_source.location
+    # Current Source Face Center = world_sfc
+    # Vector from Source Center to Source Face Center = world_sfc - obj_source.location
+    # We want New Source Face Center = tfc + offset
+    # So New Source Center = (tfc + offset) - (world_sfc - obj_source.location)
+    
+    new_loc = tfc + Vector(offset_vector) - (world_sfc - obj_source.location)
+    obj_source.location = new_loc
+
+def add_bevel(obj, radius, segments):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    mod.angle_limit = radians(30) # Default
+    # Apply bevel
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(cutter, target):
+    """Perform boolean subtract using BMesh."""
+    # Select target
+    bpy.context.view_layer.objects.active = target
+    target.select_set(True)
+    cutter.select_set(True)
+    
+    # We need to use the Boolean modifier for reliability in script
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Clean up cutter
+    bpy.data.objects.remove(cutter)
+
+def boolean_union(union_obj, target):
+    """Perform boolean union."""
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj)
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_housing_blue = make_material("mat_housing_blue", (0.1, 0.2, 0.6, 1.0))
+    mat_housing_grey = make_material("mat_housing_grey", (0.4, 0.4, 0.4, 1.0))
+    mat_blade_steel = make_material("mat_blade_steel", (0.7, 0.7, 0.8, 1.0))
+    mat_lock_brass = make_material("mat_lock_brass", (0.8, 0.6, 0.2, 1.0))
+    mat_hook_steel = make_material("mat_hook_steel", (0.6, 0.6, 0.7, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # SECTION 1 – Create main housing shell
+    housing_main = add_cube("housing_main", (0.100, 0.080, 0.025))
+    align_axis_to_vector(housing_main, 'Z', (0, 0, 1))
+    housing_main.location = (0, 0, 0) # Anchor to world origin
+    housing_main.location += Vector((0, 0, 0)) # Offset
+    apply_material(housing_main, mat_housing_grey)
+    
+    # Fillets on vertical edges
+    # Vertical edges are parallel to Z.
+    # We need to select vertical edges and bevel them.
+    bpy.context.view_layer.objects.active = housing_main
+    housing_main.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # Select vertical edges (parallel to Z)
+    # In edit mode, we can select by normal or by selection mode.
+    # Simplest: Select all edges, then filter? No.
+    # We can select edges by checking their direction.
+    bm = bmesh.from_edit_mesh(housing_main.data)
+    for e in bm.edges:
+        # Check if edge is vertical (Z component of vector is dominant)
+        v1 = e.verts[0].co
+        v2 = e.verts[1].co
+        vec = v2 - v1
+        if abs(vec.z) > abs(vec.x) and abs(vec.z) > abs(vec.y):
+            e.select = True
+    bmesh.update_edit_mesh(housing_main.data)
+    
+    bpy.ops.mesh.bevel(width=0.005, segments=4, clamp_overlap=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # SECTION 2 – Create inner structural core
+    housing_inner_core = add_cube("housing_inner_core", (0.090, 0.070, 0.020))
+    align_axis_to_vector(housing_inner_core, 'Z', (0, 0, 1))
+    # Anchor to housing_main.bottom_face
+    anchor_to_face(housing_inner_core, housing_main, 'bottom_face', (0, 0, 0))
+    # Align housing_inner_core.XY_face to housing_main.XY_face
+    # Since both are Z-aligned, their XY faces are already aligned.
+    # Move by offset
+    housing_inner_core.location += Vector((0, 0, 0.002))
+    apply_material(housing_inner_core, mat_housing_grey)
+
+    # SECTION 3 – Create top cover plate
+    housing_top_plate = add_cube("housing_top_plate", (0.100, 0.080, 0.002))
+    align_axis_to_vector(housing_top_plate, 'Z', (0, 0, 1))
+    # Anchor to housing_main.top_face
+    anchor_to_face(housing_top_plate, housing_main, 'top_face', (0, 0, 0))
+    # Align housing_top_plate.XY_face to housing_main.XY_face
+    # Move by offset
+    housing_top_plate.location += Vector((0, 0, 0.0135))
+    apply_material(housing_top_plate, mat_housing_grey)
+
+    # SECTION 4 – Create belt clip
+    belt_clip = add_cube("belt_clip", (0.060, 0.010, 0.005))
+    align_axis_to_vector(belt_clip, 'Z', (0, 0, 1))
+    # Anchor to housing_main.back_face
+    anchor_to_face(belt_clip, housing_main, 'back_face', (0, 0, 0))
+    # Align belt_clip.XY_face to housing_main.XY_face
+    # Move by offset
+    belt_clip.location += Vector((0, -0.040, 0.010))
+    apply_material(belt_clip, mat_housing_grey)
+
+    # SECTION 5 – Create spool core
+    spool_core = add_cylinder("spool_core", radius=0.020, depth=0.015) # Diameter 0.040 -> Radius 0.020
+    align_axis_to_vector(spool_core, 'Z', (0, 0, 1))
+    # Anchor to housing_inner_core.bottom_face
+    anchor_to_face(spool_core, housing_inner_core, 'bottom_face', (0, 0, 0))
+    # Align spool_core.XY_face to housing_inner_core.XY_face
+    # Move by offset
+    spool_core.location += Vector((0, 0, 0))
+    apply_material(spool_core, mat_housing_blue)
+
+    # SECTION 6 – Create wound tape blade representation
+    tape_blade = add_cylinder("tape_blade", radius=0.015, depth=0.001) # Diameter 0.030 -> Radius 0.015
+    align_axis_to_vector(tape_blade, 'Z', (0, 0, 1))
+    # Anchor to spool_core.top_face
+    anchor_to_face(tape_blade, spool_core, 'top_face', (0, 0, 0))
+    # Align tape_blade.XY_face to spool_core.XY_face
+    # Move by offset
+    tape_blade.location += Vector((0, 0, 0))
+    apply_material(tape_blade, mat_blade_steel)
+
+    # SECTION 7 – Create blade tip hook
+    blade_tip_hook = add_cube("blade_tip_hook", (0.005, 0.003, 0.002))
+    align_axis_to_vector(blade_tip_hook, 'Z', (1, 0, 0)) # Rotate so +Z aligns +X
+    # Anchor to tape_blade.right_edge
+    # Get tape_blade right edge center
+    # tape_blade is a cylinder. Right edge is at X=radius, Z=0.
+    # We need to calculate this manually as get_edge_center might be ambiguous for cylinders.
+    tb_dims = tape_blade.dimensions
+    tb_dx = tb_dims[0]/2
+    tb_loc = tape_blade.location
+    # Right edge center in world space (assuming Z-up cylinder)
+    # Edge is at (tb_dx, 0, 0) in local space? No, cylinder edges are curved.
+    # "Right edge" likely means the edge at max X.
+    # For a disc, this is a line segment? Or a point?
+    # Assuming it's the midpoint of the "right" side of the disc.
+    # Local point: (tb_dx, 0, 0)
+    tb_right_edge_world = tape_blade.matrix_world @ Vector((tb_dx, 0, 0))
+    
+    # Anchor blade_tip_hook to this point
+    # We need to determine the source face of blade_tip_hook being anchored.
+    # It's a small box. "Right edge" of tape_blade.
+    # Let's assume we anchor the center of blade_tip_hook to this point?
+    # Or a face?
+    # "Align blade_tip_hook.XZ_face to tape_blade.XZ_face".
+    # Tape_blade XZ face is a plane (Y=0).
+    # Blade_tip_hook XZ face is a plane (Y=0 or Y=dy or Y=-dy).
+    # If we align XZ faces, we are aligning the Y-normal.
+    # So blade_tip_hook's Y-normal should align with tape_blade's Y-normal (0,1,0) or (0,-1,0).
+    # Since tape_blade is Z-up, its "side" is Y.
+    
+    # Let's place blade_tip_hook such that its center is at the edge, then offset.
+    # But "Anchor" implies contact.
+    # Let's assume we anchor the center of blade_tip_hook to the edge point.
+    blade_tip_hook.location = tb_right_edge_world
+    
+    # Align XZ faces
+    # Tape_blade XZ face normal is Y (0,1,0) or -Y.
+    # Blade_tip_hook XZ face normal is Y.
+    # They are already aligned if Z is X.
+    # blade_tip_hook Z is X. So its Y is Y.
+    # So alignment is automatic.
+    
+    # Move by offset
+    blade_tip_hook.location += Vector((0.015, 0, 0))
+    apply_material(blade_tip_hook, mat_hook_steel)
+
+    # SECTION 8 – Create lock button
+    lock_button = add_cube("lock_button", (0.015, 0.010, 0.005))
+    align_axis_to_vector(lock_button, 'Z', (1, 0, 0)) # Rotate so +Z aligns +X
+    # Anchor to housing_main.right_face
+    anchor_to_face(lock_button, housing_main, 'right_face', (0, 0, 0))
+    # Align lock_button.XZ_face to housing_main.XZ_face
+    # housing_main XZ face normal is Y (0,1,0) or -Y.
+    # lock_button XZ face normal is Y (0,1,0) or -Y.
+    # lock_button Z is X. So its Y is Y.
+    # Alignment is automatic.
+    
+    # Move by offset
+    lock_button.location += Vector((0.040, 0, 0.010))
+    apply_material(lock_button, mat_lock_brass)
+
+    # SECTION 9 – Create spring mechanism
+    spring_mechanism = add_torus("spring_mechanism", major_radius=0.019, minor_radius=0.005)
+    align_axis_to_vector(spring_mechanism, 'Z', (0, 0, 1))
+    # Anchor to spool_core.top_face
+    anchor_to_face(spring_mechanism, spool_core, 'top_face', (0, 0, 0))
+    # Align spring_mechanism.XY_face to spool_core.XY_face
+    # Move by offset
+    spring_mechanism.location += Vector((0, 0, 0))
+    apply_material(spring_mechanism, mat_housing_blue)
+
+if __name__ == "__main__":
+    main()
+```

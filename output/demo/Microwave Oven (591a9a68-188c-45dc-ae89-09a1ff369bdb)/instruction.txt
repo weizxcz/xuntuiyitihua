@@ -1,0 +1,1 @@
+Create a 3D model of a microwave oven. The body is rectangular with a door on the front that has a transparent window. The control panel is on the right side of the door, featuring a numeric keypad and a few buttons. Inside, there is a turntable.

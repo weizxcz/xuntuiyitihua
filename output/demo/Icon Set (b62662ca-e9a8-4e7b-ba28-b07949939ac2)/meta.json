@@ -1,0 +1,52 @@
+{
+  "id": "b62662ca-e9a8-4e7b-ba28-b07949939ac2",
+  "name": "Icon Set",
+  "instruction": "Generate a set of 3D icons representing common office tools like a pen, notepad, and calculator.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pen is elongated and cylindrical.",
+        "The notepad is rectangular with a flat surface.",
+        "The calculator is rectangular with buttons on the surface."
+      ],
+      "Color representation": [
+        "The pen may have a variety of colors for the body and ink.",
+        "The notepad is typically white or light-colored.",
+        "The calculator is usually black or gray."
+      ],
+      "Size": [
+        "The pen is approximately 14cm in length.",
+        "The notepad is approximately 10cm x 15cm.",
+        "The calculator is approximately 10cm x 15cm."
+      ],
+      "Proportion": [
+        "The length of the pen is proportionate to its diameter.",
+        "The notepad's thickness is reasonable for a stack of paper.",
+        "The buttons on the calculator are proportionate to the overall size."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pen stands upright or is positioned at an angle.",
+        "The notepad is laid flat on a surface.",
+        "The calculator is positioned flat with buttons facing up."
+      ],
+      "Object distance and contact": [
+        "The pen does not overlap with the notepad.",
+        "The notepad is not touching the calculator.",
+        "All objects are spaced evenly to avoid clutter."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified office tools are represented.",
+        "The design adheres to common representations of each tool."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

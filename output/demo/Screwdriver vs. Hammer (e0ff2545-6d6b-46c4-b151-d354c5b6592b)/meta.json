@@ -1,0 +1,53 @@
+{
+  "id": "e0ff2545-6d6b-46c4-b151-d354c5b6592b",
+  "name": "Screwdriver vs. Hammer",
+  "instruction": "Design a 3D model of both a screwdriver and a hammer. The screwdriver should have a long, thin shaft with a flat or Phillips head. The hammer should have a handle and a head with a flat striking surface on one side and a claw on the other. Compare the two tools in terms of their shapes and uses.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The screwdriver has a long, thin shaft.",
+        "The screwdriver head is either flat or Phillips.",
+        "The hammer has a handle that is proportionate to its head.",
+        "The hammer head has a flat striking surface on one side.",
+        "The hammer head features a claw on the opposite side."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The screwdriver shaft length is appropriate for typical use.",
+        "The hammer handle length is suitable for effective striking."
+      ],
+      "Proportion": [
+        "The screwdriver head is proportionate to the shaft.",
+        "The hammer head is proportionate to the handle."
+      ],
+      "Texture and surface detail": [
+        "The screwdriver shaft has a smooth metallic texture.",
+        "The screwdriver handle may have a rubberized grip.",
+        "The hammer handle may have a textured surface for grip.",
+        "The hammer head has a polished metallic surface."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The screwdriver head is positioned correctly at the end of the shaft.",
+        "The hammer head is securely attached to the handle.",
+        "The claw of the hammer is oriented correctly for functionality."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the screwdriver head and shaft.",
+        "The hammer head does not detach from the handle.",
+        "The claw is positioned at a reasonable distance from the striking surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both tools are accurately represented as per the instructions.",
+        "The screwdriver and hammer are distinct and identifiable."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

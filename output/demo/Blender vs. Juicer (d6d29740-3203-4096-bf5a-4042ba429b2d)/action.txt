@@ -1,0 +1,109 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_blender_base; diffuse_color = (0.784, 0.784, 0.784, 1).
+Define material mat_blender_container; diffuse_color = (0.863, 0.863, 0.863, 0.502).
+Define material mat_blender_lid; diffuse_color = (1, 1, 1, 1).
+Define material mat_blender_motor; diffuse_color = (0.196, 0.196, 0.196, 1).
+Define material mat_juicer_base; diffuse_color = (0.784, 0.784, 0.784, 1).
+Define material mat_juicer_container; diffuse_color = (0.863, 0.863, 0.863, 0.502).
+Define material mat_juicer_pulp; diffuse_color = (0.941, 0.941, 0.941, 1).
+Define material mat_juicer_spout; diffuse_color = (1, 1, 1, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create blender base  ---
+Create primitive cylinder with radius 0.075 m and height 0.1 m and name it blender_base.
+Rotate blender_base so its +Z axis aligns +Z (world).
+Move blender_base to pos=(0,0,0).
+Apply material mat_blender_base to blender_base.
+Stage 1 complete.
+
+---  SECTION 2 – Create blender motor  ---
+Create primitive cylinder with radius 0.06 m and height 0.05 m and name it blender_motor.
+Rotate blender_motor so its +Z axis aligns +Z (world).
+Align blender_motor.bottom_face to blender_base.top_face.
+Then move by offset(0,0,0.025).
+Apply material mat_blender_motor to blender_motor.
+Stage 2 complete.
+
+---  SECTION 3 – Create blender container  ---
+Create primitive cylinder with radius 0.06 m and height 0.25 m and name it blender_container.
+Rotate blender_container so its +Z axis aligns +Z (world).
+Align blender_container.bottom_face to blender_motor.top_face.
+Then move by offset(0,0,0.025).
+Apply material mat_blender_container to blender_container.
+Stage 3 complete.
+
+---  SECTION 4 – Create blender lid  ---
+Create primitive cylinder with radius 0.065 m and height 0.02 m and name it blender_lid.
+Rotate blender_lid so its +Z axis aligns +Z (world).
+Align blender_lid.bottom_face to blender_container.top_face.
+Then move by offset(0,0,0.01).
+Apply material mat_blender_lid to blender_lid.
+Stage 4 complete.
+
+---  SECTION 5 – Create blender blades  ---
+Create primitive cylinder with radius 0.05 m and height 0.01 m and name it blender_blades.
+Rotate blender_blades so its +Z axis aligns +Z (world).
+Align blender_blades.top_face to blender_container.bottom_face.
+Then move by offset(0,0,-0.005).
+Apply material mat_blender_motor to blender_blades.
+Stage 5 complete.
+
+---  SECTION 6 – Create juicer base  ---
+Create primitive cylinder with radius 0.075 m and height 0.1 m and name it juicer_base.
+Rotate juicer_base so its +Z axis aligns +Z (world).
+Move juicer_base to pos=(0.25,0,0).
+Apply material mat_juicer_base to juicer_base.
+Stage 6 complete.
+
+---  SECTION 7 – Create juicer container  ---
+Create primitive cylinder with radius 0.06 m and height 0.2 m and name it juicer_container.
+Rotate juicer_container so its +Z axis aligns +Z (world).
+Align juicer_container.bottom_face to juicer_base.top_face.
+Then move by offset(0,0,0.05).
+Apply material mat_juicer_container to juicer_container.
+Stage 7 complete.
+
+---  SECTION 8 – Create juicer spout  ---
+Create primitive cylinder with radius 0.015 m and height 0.1 m and name it juicer_spout.
+Rotate juicer_spout so its +Z axis aligns +Z (world).
+Align juicer_spout.bottom_face to juicer_container.top_face.
+Then move by offset(0.04,0,0.05).
+Apply material mat_juicer_spout to juicer_spout.
+Stage 8 complete.
+
+---  SECTION 9 – Create juicer pulp  ---
+Create primitive cylinder with radius 0.04 m and height 0.15 m and name it juicer_pulp.
+Rotate juicer_pulp so its +Z axis aligns +Z (world).
+Align juicer_pulp.bottom_face to juicer_base.top_face.
+Then move by offset(-0.05,0,0.075).
+Apply material mat_juicer_pulp to juicer_pulp.
+Stage 9 complete.
+
+---  SECTION 10 – Assemble Blender Group  ---
+Boolean-union blender_base, blender_motor, blender_container, blender_lid, blender_blades to form blender_group.
+Assembly guideline satisfied.
+Stage 10 complete.
+
+---  SECTION 11 – Assemble Juicer Group  ---
+Boolean-union juicer_base, juicer_container, juicer_spout, juicer_pulp to form juicer_group.
+Assembly guideline satisfied.
+Stage 11 complete.
+
+---  SECTION 12 – Assemble Root Composite  ---
+Boolean-union blender_group, juicer_group to form root.
+Assembly guideline satisfied.
+Stage 12 complete.
+
+All stages complete.

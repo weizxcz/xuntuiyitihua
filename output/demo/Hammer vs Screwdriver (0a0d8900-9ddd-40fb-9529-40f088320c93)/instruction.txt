@@ -1,0 +1,1 @@
+Compare a 3D model of a hammer with a screwdriver. The hammer should have a handle and a flat head. The screwdriver should have a handle and a flat blade. Place them side by side for comparison.

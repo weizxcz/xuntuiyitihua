@@ -1,0 +1,1 @@
+Design a 3D model of a raincoat. It should have a hood, long sleeves, and a front zipper. The raincoat should be knee-length and have pockets on the front. The overall design should be simple and functional for rainy weather.

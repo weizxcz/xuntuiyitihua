@@ -1,0 +1,49 @@
+{
+  "id": "3261cfdc-eb62-4af3-9749-4313cbdefb15",
+  "name": "Cat Collar",
+  "instruction": "Can you make a 3D model of a cat collar? It should be a simple band with a buckle and a small tag attached.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cat collar.",
+        "The collar is designed as a simple band.",
+        "The buckle is present and functional.",
+        "A small tag is attached to the collar."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The collar band is proportionate to the buckle.",
+        "The tag size is appropriate in relation to the collar."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The collar band is circular and fits around a cat's neck.",
+        "The buckle is positioned on one side of the collar.",
+        "The tag hangs freely from the collar without obstruction."
+      ],
+      "Object distance and contact": [
+        "The buckle is securely attached to the collar band.",
+        "The tag is attached without interfering with the buckle's function.",
+        "There is no overlap between the tag and the collar band."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the request for a simple band with a buckle and tag.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,30 @@
+-- MATERIAL LIBRARY --
+mat_house_body | diffuse_color=(0.85,0.85,0.85,1.0)
+mat_house_roof | diffuse_color=(0.6,0.2,0.2,1.0)
+mat_house_door | diffuse_color=(0.4,0.2,0.1,1.0)
+mat_house_window | diffuse_color=(0.2,0.4,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| house_icon | Composite of base, roof, door, and windows forming a stylized house icon | assembly_order=[base_group], [roof_group], [door_group], [window_group] |
+
+Layer 1 – Primary Structure (Base & Roof)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_group | Composite union of the main rectangular body and the triangular roof prism | assembly_order=[base_body], [roof_prism] |
+| base_body | Rectangular cuboid representing the main house structure | size=0.6×0.5×0.4 (W×H×D); mat=mat_house_body; create_method=primitive; pos=(0, 0.25, 0); orientation=axis:+Z |
+| roof_prism | Triangular prism forming the pitched roof | size=0.7×0.3×0.4 (W×H×D); mat=mat_house_roof; create_method=primitive; Align(Z) roof_prism.bottom_face to base_body.top_face; offset(0, 0.15, 0); orientation=axis:+Z |
+
+Layer 2 – Secondary Details (Door & Windows)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_group | Composite of the main door and a small doorknob | assembly_order=[door_panel], [doorknob] |
+| door_panel | Rectangular cuboid representing the front door | size=0.2×0.35×0.02 (W×H×D); mat=mat_house_door; create_method=primitive; Align(XY) door_panel.back_face to base_body.front_face; offset(0, -0.15, 0.21); orientation=axis:+Z |
+| doorknob | Small sphere representing the doorknob | size=Ø0.02; mat=mat_house_body; create_method=primitive; Align(XY) doorknob.center to door_panel.right_face; offset(0.08, -0.05, 0.01); orientation=axis:+Z |
+| window_group | Composite of two side-by-side windows | assembly_order=[window_left], [window_right] |
+| window_left | Rectangular cuboid representing the left window | size=0.15×0.15×0.02 (W×H×D); mat=mat_house_window; create_method=primitive; Align(XY) window_left.back_face to base_body.front_face; offset(-0.15, 0.15, 0.21); orientation=axis:+Z |
+| window_right | Rectangular cuboid representing the right window | size=0.15×0.15×0.02 (W×H×D); mat=mat_house_window; create_method=primitive; Align(XY) window_right.back_face to base_body.front_face; offset(0.15, 0.15, 0.21); orientation=axis:+Z |
+# ----------  END_GRAPH  ----------

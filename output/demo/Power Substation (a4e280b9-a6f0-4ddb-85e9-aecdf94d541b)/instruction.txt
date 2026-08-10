@@ -1,0 +1,1 @@
+Hello! I need a 3D model of a power substation. The substation should include transformers, circuit breakers, and busbars. There should be high-voltage transmission lines entering and exiting the substation. The layout should be realistic and functional for distributing electricity.

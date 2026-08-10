@@ -1,0 +1,29 @@
+-- MATERIAL LIBRARY --
+chocolate_dark | diffuse_color=(0.31,0.16,0.08,1.0)
+chocolate_milk | diffuse_color=(0.55,0.35,0.20,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of chocolate_base + chocolate_segments | assembly_order=[chocolate_base], [chocolate_segments] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| chocolate_base | Rectangular prism 0.100×0.050×0.020 m (W×H×T) | Align(XY) chocolate_base.center to root.center; Align(Z) chocolate_base.bottom_face to root.bottom_face; orientation=axis:+Z; mat=chocolate_dark; create_method=primitive |
+
+Layer 2 – Segments
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| chocolate_segments | Composite of 8 individual chocolate pieces | assembly_order=[seg_0_0, seg_0_1, seg_0_2, seg_0_3, seg_1_0, seg_1_1, seg_1_2, seg_1_3] |
+| seg_0_0 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_0_0.center to Avg(chocolate_base.left_face, chocolate_base.bottom_face); Align(Z) seg_0_0.bottom_face to chocolate_base.top_face; offset(-0.037, -0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_0_1 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_0_1.center to Avg(chocolate_base.right_face, chocolate_base.bottom_face); Align(Z) seg_0_1.bottom_face to chocolate_base.top_face; offset(0.037, -0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_0_2 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_0_2.center to Avg(chocolate_base.left_face, chocolate_base.top_face); Align(Z) seg_0_2.bottom_face to chocolate_base.top_face; offset(-0.037, 0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_0_3 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_0_3.center to Avg(chocolate_base.right_face, chocolate_base.top_face); Align(Z) seg_0_3.bottom_face to chocolate_base.top_face; offset(0.037, 0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_1_0 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_1_0.center to Avg(chocolate_base.left_face, chocolate_base.bottom_face); Align(Z) seg_1_0.bottom_face to chocolate_base.top_face; offset(-0.037, -0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_1_1 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_1_1.center to Avg(chocolate_base.right_face, chocolate_base.bottom_face); Align(Z) seg_1_1.bottom_face to chocolate_base.top_face; offset(0.037, -0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_1_2 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_1_2.center to Avg(chocolate_base.left_face, chocolate_base.top_face); Align(Z) seg_1_2.bottom_face to chocolate_base.top_face; offset(-0.037, 0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+| seg_1_3 | Rectangular prism 0.024×0.024×0.018 m (W×H×T) | Align(XY) seg_1_3.center to Avg(chocolate_base.right_face, chocolate_base.top_face); Align(Z) seg_1_3.bottom_face to chocolate_base.top_face; offset(0.037, 0.012, 0.001); orientation=axis:+Z; mat=chocolate_milk; create_method=primitive |
+# ----------  END_GRAPH  ----------

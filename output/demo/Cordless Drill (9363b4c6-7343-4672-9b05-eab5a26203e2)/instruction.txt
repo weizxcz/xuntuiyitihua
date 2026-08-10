@@ -1,0 +1,1 @@
+Design a cordless drill with a rechargeable battery pack at the base, a trigger for variable speed control, and a chuck for holding different drill bits. Include a built-in LED light near the chuck to illuminate the work area.

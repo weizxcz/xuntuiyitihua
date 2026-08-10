@@ -1,0 +1,49 @@
+{
+  "id": "a67e206a-7c90-4eab-9ebe-22b778c499bd",
+  "name": "USB Drive",
+  "instruction": "Create a 3D model of a USB drive with a retractable connector.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a USB drive.",
+        "The USB drive has a rectangular body.",
+        "The connector is retractable."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The dimensions of the USB drive should be proportionate to standard USB drives.",
+        "The length of the USB drive is approximately 5-7 cm.",
+        "The width of the USB drive is approximately 2-3 cm."
+      ],
+      "Proportion": [
+        "The connector is proportionate to the body of the USB drive.",
+        "The retractable mechanism is appropriately sized for the USB drive."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The connector is positioned correctly to retract into the body.",
+        "The USB drive maintains a balanced structure when the connector is extended.",
+        "The retractable mechanism is integrated within the body without protruding."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the connector and the body when retracted.",
+        "The connector fits snugly into the body when not in use.",
+        "The mechanism allows for smooth extension and retraction of the connector."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The USB drive accurately features a retractable connector as specified.",
+        "All specified attributes are represented without deviation."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,62 @@
+{
+  "id": "b40c7f15-e573-446c-8546-e3368c624da5",
+  "name": "Living Room Layout",
+  "instruction": "Let's design a living room layout. Place a sectional sofa in an L-shape against one corner. In front of the sofa, add a rectangular coffee table. Position a TV stand with a flat-screen TV opposite the sofa. Add a floor lamp next to the sofa and a bookshelf against one wall. Place a rug under the coffee table, extending to the front legs of the sofa. Add a small plant on the coffee table and a larger plant in one corner of the room.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The sectional sofa is in an L-shape.",
+        "The coffee table is rectangular.",
+        "The TV stand is rectangular.",
+        "The floor lamp has a vertical structure.",
+        "The bookshelf is vertical and rectangular.",
+        "The rug is rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The coffee table is proportionate to the sectional sofa.",
+        "The floor lamp is proportionate to the sectional sofa.",
+        "The bookshelf is proportionate to the wall.",
+        "The rug is proportionate to the coffee table and sofa."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The sectional sofa is positioned in a corner for optimal space usage.",
+        "The coffee table is centered in front of the sofa.",
+        "The TV stand is directly opposite the sofa for viewing.",
+        "The floor lamp is placed next to the sofa for accessibility.",
+        "The bookshelf is against a wall, maximizing floor space.",
+        "The rug is placed under the coffee table and extends to the front legs of the sofa.",
+        "The small plant is placed on the coffee table.",
+        "The larger plant is placed in a corner of the room."
+      ],
+      "Object distance and contact": [
+        "The coffee table is at a suitable distance from the sofa.",
+        "The TV stand is at a suitable distance from the sofa.",
+        "The floor lamp does not obstruct the sofa.",
+        "The bookshelf does not obstruct movement in the room.",
+        "The rug does not interfere with the placement of the sofa or coffee table.",
+        "The small plant is securely placed on the coffee table.",
+        "The larger plant is positioned in a corner without hindrance."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified furniture items are accurately represented.",
+        "The layout follows the described arrangement.",
+        "The rug placement is as instructed, under the coffee table."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

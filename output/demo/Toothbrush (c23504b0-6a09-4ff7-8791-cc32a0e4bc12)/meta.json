@@ -1,0 +1,46 @@
+{
+  "id": "c23504b0-6a09-4ff7-8791-cc32a0e4bc12",
+  "name": "Toothbrush",
+  "instruction": "Can you create a 3D model of a toothbrush? It should have a straight handle and a rectangular head with evenly spaced bristles.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a toothbrush.",
+        "The handle is straight.",
+        "The head of the toothbrush is rectangular.",
+        "The bristles are evenly spaced."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The handle proportionate to the head.",
+        "The bristles evenly arranged on the toothbrush head."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is correctly aligned with the head.",
+        "The bristles are positioned on the head without overlap."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the handle and the head.",
+        "The bristles are firmly attached to the head."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the straight handle and rectangular head requirement."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,48 @@
+{
+  "id": "daf946fb-76d5-4d20-894e-43a879dee51d",
+  "name": "Piano",
+  "instruction": "Design a 3D model of a grand piano. The body should be large and curved, with a lid that can be opened. Add a keyboard with black and white keys. Include three pedals at the bottom.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a grand piano.",
+        "The body of the piano is large and curved.",
+        "The lid of the piano is designed to be opened.",
+        "The keyboard is rectangular and positioned horizontally."
+      ],
+      "Color representation": [
+        "The piano body is typically represented in a polished black or wood finish.",
+        "The keys are accurately depicted in black and white."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The keyboard is proportionate to the body"
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The lid is correctly positioned to open without obstruction.",
+        "The keyboard is properly aligned with the body of the piano.",
+        "The pedals are placed at the base and are accessible."
+      ],
+      "Object distance and contact": [
+        "The keyboard does not overlap with the body.",
+        "The pedals are positioned directly beneath the keyboard.",
+        "The lid opens without interfering with the keyboard."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "The design adheres closely to the provided instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

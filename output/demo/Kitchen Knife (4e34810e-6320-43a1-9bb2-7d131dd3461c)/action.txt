@@ -1,0 +1,52 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material blade_steel; diffuse_color = (0.706, 0.725, 0.745, 1).
+Define material handle_grip; diffuse_color = (0.118, 0.118, 0.118, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create blade group  ---
+Create primitive cuboid with size 0.200×0.040×0.003 m and name it blade_blank.
+Rotate blade_blank so its +Z axis aligns +Z (world).
+Anchor blade_blank to world origin.
+Then move by offset(0, 0, 0).
+
+Create primitive prism with size 0.200×0.020×0.003 m and name it bevel_left.
+Rotate bevel_left so its +Z axis aligns +Z (world).
+Align bevel_left.right_face to blade_blank.left_face.
+Then move by offset(0, 0, 0).
+Boolean-subtract bevel_left from blade_blank; discard bevel_left.
+
+Create primitive prism with size 0.200×0.020×0.003 m and name it bevel_right.
+Rotate bevel_right so its +Z axis aligns +Z (world).
+Align bevel_right.left_face to blade_blank.right_face.
+Then move by offset(0, 0, 0).
+Boolean-subtract bevel_right from blade_blank; discard bevel_right.
+
+Stage 1 complete.
+
+---  SECTION 2 – Create handle group  ---
+Create primitive cylinder with radius 0.0125 m and length 0.120 m and name it handle_base.
+Rotate handle_base so its +Z axis aligns +X (world).
+Align handle_base.right_face to blade_blank.left_face.
+Then move by offset(-0.005, 0, 0).
+
+Create primitive complex_curve with size 0.120×0.025×0.025 m and name it handle_contour.
+Rotate handle_contour so its +Z axis aligns +X (world).
+Align handle_contour.center to handle_base.center.
+Then move by offset(0, 0, 0).
+Boolean-subtract handle_contour from handle_base; discard handle_contour.
+
+Stage 2 complete.
+
+All stages complete.

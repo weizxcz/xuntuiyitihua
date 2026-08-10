@@ -1,0 +1,1 @@
+Let's design a cargo elevator. Start with a rectangular platform, 8 feet by 10 feet. Add railings on all sides, with a gate on one side that can open and close. Include a control panel on the gate side, with buttons for up, down, and emergency stop. The elevator should have a pulley system at the top.

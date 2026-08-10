@@ -1,0 +1,1 @@
+Design a piano keyboard with 88 keys. The keys should be evenly spaced and clearly defined, with the black keys slightly elevated above the white keys. The keyboard should have a sleek and modern appearance, with a simple control panel on one side. Ensure the keys are aligned perfectly for a professional look.

@@ -1,0 +1,44 @@
+{
+  "id": "a413fce4-34ef-4a93-9941-5c2ab9b1b1fb",
+  "name": "Wallpaper Pattern",
+  "instruction": "Create a 3D model of a wallpaper pattern. The pattern should consist of repeating geometric shapes arranged in a symmetrical manner. Use a combination of circles, triangles, and squares.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pattern consists of repeating geometric shapes.",
+        "The geometric shapes include circles, triangles, and squares.",
+        "The arrangement of shapes is symmetrical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The shapes in the pattern are proportionate to the entire pattern."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The shapes should be evenly spaced to create a cohesive pattern.",
+        "The arrangement should allow for seamless repetition."
+      ],
+      "Object distance and contact": [
+        "There should be no overlapping of shapes.",
+        "The edges of the shapes should align properly for a continuous pattern."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified geometric shapes are included in the design.",
+        "The symmetrical arrangement is accurately represented."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

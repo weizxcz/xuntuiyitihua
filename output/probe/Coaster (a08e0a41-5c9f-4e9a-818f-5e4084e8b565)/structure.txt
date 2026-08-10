@@ -1,0 +1,23 @@
+-- MATERIAL LIBRARY --
+mat_cork | diffuse_color=(0.6, 0.5, 0.3, 1.0)
+mat_rubber | diffuse_color=(0.1, 0.1, 0.1, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| coaster_root | Composite of coaster_base + coaster_pattern | assembly_order=[coaster_base], [coaster_pattern] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| coaster_base | Cylinder Ø0.102×0.005 m (4 inches diameter, 5mm thickness) | pos=(0,0,0); orientation=axis:+Z; mat=mat_cork; create_method=primitive |
+| coaster_pattern | Composite of rubber_ring + rubber_center | assembly_order=[rubber_ring], [rubber_center] |
+
+Layer 2 – Details
+| ID | Description | Key attributes / placement |
+| --- | --- | --- |
+| rubber_ring | Torus Ø0.102×0.002 m (outer diameter 4 inches, tube radius 1mm) | Align(Z) rubber_ring.center to coaster_base.center; offset(0,0,0.001); orientation=axis:+Z; mat=mat_rubber; create_method=primitive |
+| rubber_center | Cylinder Ø0.050×0.002 m (2 inches diameter, 2mm thickness) | Align(Z) rubber_center.center to coaster_base.center; offset(0,0,0.001); orientation=axis:+Z; mat=mat_rubber; create_method=primitive |
+# ----------  END_GRAPH  ----------

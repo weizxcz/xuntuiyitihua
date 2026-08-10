@@ -1,0 +1,34 @@
+-- MATERIAL LIBRARY --
+mat_black_plastic | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_glass_screen | diffuse_color=(0.1,0.1,0.15,0.3)
+mat_led_backlight | diffuse_color=(0.9,0.9,0.9,1.0)
+mat_stand_base | diffuse_color=(0.08,0.08,0.08,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| monitor_root | Composite assembly of the entire desktop monitor | assembly_order=[stand_group], [screen_group] |
+
+Layer 1 – Primary Structure (Screen Assembly)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| screen_group | Composite of the display panel and bezel frame | assembly_order=[panel_unit], [bezel_frame] |
+| panel_unit | Composite of the LCD glass and LED backlight | assembly_order=[led_backlight], [glass_screen] |
+| led_backlight | Flat rectangular prism serving as the light source | size=0.531×0.300×0.002 m; pos=(0,0,-0.001); mat=mat_led_backlight; create_method=primitive |
+| glass_screen | Flat rectangular prism representing the display surface | size=0.531×0.300×0.002 m; pos=(0,0,0); mat=mat_glass_screen; create_method=primitive |
+| bezel_frame | Composite frame surrounding the screen panel | assembly_order=[frame_top], [frame_bottom], [frame_left], [frame_right] |
+| frame_top | Top bezel strip | size=0.531×0.015×0.005 m; pos=(0,0.157,0.002); mat=mat_black_plastic; create_method=primitive |
+| frame_bottom | Bottom bezel strip (slightly thicker for branding/logo area) | size=0.531×0.020×0.005 m; pos=(0,-0.160,0.002); mat=mat_black_plastic; create_method=primitive |
+| frame_left | Left bezel strip | size=0.015×0.300×0.005 m; pos=(-0.273,0,0.002); mat=mat_black_plastic; create_method=primitive |
+| frame_right | Right bezel strip | size=0.015×0.300×0.005 m; pos=(0.273,0,0.002); mat=mat_black_plastic; create_method=primitive |
+
+Layer 2 – Support Structure (Stand)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| stand_group | Composite of the monitor stand base and neck | assembly_order=[stand_neck], [stand_base] |
+| stand_neck | Cylindrical or tapered support connecting base to monitor | size=0.040×0.150×0.040 m (diameter×height); pos=(0,-0.15,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| stand_base | Flat elliptical or rectangular base for stability | size=0.120×0.080×0.005 m; pos=(0,-0.225,0); orientation=axis:+Z; mat=mat_stand_base; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

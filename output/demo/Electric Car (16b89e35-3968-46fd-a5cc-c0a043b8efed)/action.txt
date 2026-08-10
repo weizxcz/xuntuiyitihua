@@ -1,0 +1,87 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material car_body_paint; diffuse_color = (0.15,0.15,0.2,1.0).
+Define material charging_port_plastic; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material chrome_trim; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material glass; diffuse_color = (0.2,0.3,0.4,0.3).
+Define material metal_chassis; diffuse_color = (0.3,0.3,0.3,1.0).
+Define material rubber_tire; diffuse_color = (0.05,0.05,0.05,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create chassis base  ---
+Create primitive cuboid with size 1.8×4.8×0.15 m and name it chassis_base.
+Rotate chassis_base so its +Z axis aligns +Z (world).
+Align chassis_base.XY_face to car_root.XY_face.
+Align chassis_base.-Z_face to car_root.-Z_face.
+Stage 1 complete.
+
+---  SECTION 2 – Create body shell  ---
+Create primitive cuboid with size 1.9×4.9×0.8 m and name it body_shell.
+Rotate body_shell so its +Z axis aligns +Z (world).
+Align body_shell.XY_face to chassis_base.XY_face.
+Align body_shell.-Z_face to chassis_base.+Z_face.
+Stage 2 complete.
+
+---  SECTION 3 – Create cabin cutter and subtract cabin volume  ---
+Create primitive cuboid with size 1.5×2.5×0.65 m and name it cabin_cutter.
+Rotate cabin_cutter so its +Z axis aligns +Z (world).
+Align cabin_cutter.XY_face to body_shell.XY_face.
+Align cabin_cutter.-Z_face to body_shell.-Z_face.
+Boolean-subtract cabin_cutter from body_shell; discard cabin_cutter.
+Stage 3 complete.
+
+---  SECTION 4 – Create front left wheel  ---
+Create primitive cylinder with diameter 0.35 m and height 0.25 m and name it wheel_FL.
+Rotate wheel_FL so its +Z axis aligns +X (world).
+Align wheel_FL.XY_face to chassis_base.XY_face.
+Then move by offset(-0.8, 1.8, -0.3).
+Stage 4 complete.
+
+---  SECTION 5 – Create front right wheel  ---
+Create primitive cylinder with diameter 0.35 m and height 0.25 m and name it wheel_FR.
+Rotate wheel_FR so its +Z axis aligns +X (world).
+Align wheel_FR.XY_face to chassis_base.XY_face.
+Then move by offset(0.8, 1.8, -0.3).
+Stage 5 complete.
+
+---  SECTION 6 – Create rear left wheel  ---
+Create primitive cylinder with diameter 0.35 m and height 0.25 m and name it wheel_RL.
+Rotate wheel_RL so its +Z axis aligns +X (world).
+Align wheel_RL.XY_face to chassis_base.XY_face.
+Then move by offset(-0.8, -1.8, -0.3).
+Stage 6 complete.
+
+---  SECTION 7 – Create rear right wheel  ---
+Create primitive cylinder with diameter 0.35 m and height 0.25 m and name it wheel_RR.
+Rotate wheel_RR so its +Z axis aligns +X (world).
+Align wheel_RR.XY_face to chassis_base.XY_face.
+Then move by offset(0.8, -1.8, -0.3).
+Stage 7 complete.
+
+---  SECTION 8 – Create front grille  ---
+Create primitive cuboid with size 1.2×0.4×0.05 m and name it front_grille.
+Rotate front_grille so its +Z axis aligns +X (world).
+Align front_grille.XY_face to body_shell.+X_face.
+Align front_grille.-Z_face to body_shell.-Z_face.
+Stage 8 complete.
+
+---  SECTION 9 – Create charging port  ---
+Create primitive cuboid with size 0.2×0.15×0.05 m and name it charging_port.
+Rotate charging_port so its +Z axis aligns +Y (world).
+Align charging_port.XY_face to body_shell.-Y_face.
+Align charging_port.-Z_face to body_shell.-Z_face.
+Then move by offset(0, 0, 0.1).
+Stage 9 complete.
+
+All stages complete.

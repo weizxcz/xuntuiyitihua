@@ -1,0 +1,76 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material mat_black_rubber; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_chrome; diffuse_color = (0.9,0.9,0.95,1.0).
+Define material mat_red_paint; diffuse_color = (0.8,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Deck Plate  ---
+Create primitive cuboid with size 0.15×0.05×0.005 m and name it deck_main.
+Rotate deck_main so its +Z axis aligns +Z (world).
+Anchor deck_main to world origin (0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create Steering Column  ---
+Create primitive cylinder with diameter 0.02 m and length 0.4 m and name it stem_tube.
+Rotate stem_tube so its +Z axis aligns +Z (world).
+Align stem_tube.XY_face to deck_main.XY_face.
+Then move by offset(0, 0.15, 0.0025).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create Handlebar Assembly  ---
+Create primitive cylinder with diameter 0.02 m and length 0.05 m and name it handlebar_stem.
+Rotate handlebar_stem so its +Z axis aligns +Z (world).
+Align handlebar_stem.XY_face to stem_tube.XY_face.
+Then move by offset(0, 0, 0.2).
+
+Create primitive cylinder with diameter 0.02 m and length 0.4 m and name it handlebar_bar.
+Rotate handlebar_bar so its +Z axis aligns +X (world).
+Align handlebar_bar.XZ_face to handlebar_stem.XZ_face.
+Then move by offset(0, 0, 0.025).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create Front Wheel and Axle  ---
+Create primitive cylinder with diameter 0.01 m and length 0.1 m and name it axle_front.
+Rotate axle_front so its +Z axis aligns +X (world).
+Align axle_front.XY_face to stem_tube.XY_face.
+Then move by offset(0, 0.4, 0).
+
+Create primitive cylinder with diameter 0.02 m and length 0.08 m and name it wheel_front.
+Rotate wheel_front so its +Z axis aligns +X (world).
+Align wheel_front.XY_face to axle_front.XY_face.
+Then move by offset(0, 0.4, 0.045).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create Rear Wheel and Axle  ---
+Create primitive cylinder with diameter 0.01 m and length 0.1 m and name it axle_rear.
+Rotate axle_rear so its +Z axis aligns +X (world).
+Align axle_rear.XY_face to deck_main.XY_face.
+Then move by offset(0, -0.2, 0.0025).
+
+Create primitive cylinder with diameter 0.02 m and length 0.08 m and name it wheel_rear.
+Rotate wheel_rear so its +Z axis aligns +X (world).
+Align wheel_rear.XY_face to axle_rear.XY_face.
+Then move by offset(0, -0.2, 0.045).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Final Assembly  ---
+Boolean-union deck_main, stem_tube, handlebar_stem, handlebar_bar, axle_front, wheel_front, axle_rear, wheel_rear into scooter_root.
+All stages complete.

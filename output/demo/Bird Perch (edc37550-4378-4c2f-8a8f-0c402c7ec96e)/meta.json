@@ -1,0 +1,44 @@
+{
+  "id": "edc37550-4378-4c2f-8a8f-0c402c7ec96e",
+  "name": "Bird Perch",
+  "instruction": "Let's work on a bird perch. The perch should be a straight rod, about 1 foot long. It should have a small base at each end to attach to a cage. Ensure the rod is smooth and even in thickness. The design should be simple and functional, with no additional features or decorations.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a straight rod.",
+        "There are small bases at each end of the rod."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size of the feet is 1 foot long"
+      ],
+      "Proportion": [
+        "The base is proportionate to the perch"
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The rod is positioned horizontally when mounted.",
+        "The bases are correctly aligned with the ends of the rod."
+      ],
+      "Object distance and contact": [
+        "The bases are securely attached to the rod.",
+        "There is no gap between the rod and the bases."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The rod meets the length requirement of 1 foot.",
+        "The bases are present at both ends of the rod."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

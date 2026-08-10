@@ -1,0 +1,489 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube, scale it, set location/rotation, and assign material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler, material=None):
+    """Add a cylinder."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_disc(name, radius, thickness, location, rotation_euler, material=None):
+    """Add a disc (short cylinder)."""
+    return add_cylinder(name, radius, thickness, location, rotation_euler, material)
+
+def add_cone(name, radius_top, radius_bottom, height, location, rotation_euler, material=None):
+    """Add a cone."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=height, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_uvsphere(name, radius, location, rotation_euler, material=None):
+    """Add a UV Sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_text_object(name, text, size, location, rotation_euler, material=None):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.scale = (size, size, size)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # This is a simplified helper; for strict alignment we often just set rotation_euler directly
+    # based on the desired orientation.
+    pass
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        """Return the world-space center of the object's bounding box."""
+        bm = bmesh.new()
+        bm.from_mesh(self.obj.data)
+        bm.transform(self.obj.matrix_world)
+        center = average([v.co for v in bm.verts])
+        bm.free()
+        del bm
+        return center
+
+    def face_center_world(self, face_normal_axis='Z', face_side='min'):
+        """
+        Return the world-space center of a specific face.
+        face_normal_axis: 'X', 'Y', or 'Z'
+        face_side: 'min' or 'max'
+        """
+        bm = bmesh.new()
+        bm.from_mesh(self.obj.data)
+        bm.transform(self.obj.matrix_world)
+        
+        # Find faces with normal aligned to axis
+        candidates = []
+        for f in bm.faces:
+            if abs(f.normal[0] - (1 if face_normal_axis=='X' else 0)) < 0.1 and abs(f.normal[1] - (1 if face_normal_axis=='Y' else 0)) < 0.1 and abs(f.normal[2] - (1 if face_normal_axis=='Z' else 0)) < 0.1:
+                candidates.append(f)
+            elif abs(f.normal[0] - (-1 if face_normal_axis=='X' else 0)) < 0.1 and abs(f.normal[1] - (-1 if face_normal_axis=='Y' else 0)) < 0.1 and abs(f.normal[2] - (-1 if face_normal_axis=='Z' else 0)) < 0.1:
+                candidates.append(f)
+        
+        if not candidates:
+            # Fallback: use bounding box min/max
+            bbox = self.obj.bound_box
+            # bbox is in local space, need to transform? 
+            # Actually bound_box is in local space. Let's use world space vertices for robustness.
+            verts = [v.co for v in bm.verts]
+            if not verts:
+                return Vector((0,0,0))
+            
+            axis_idx = 0 if face_normal_axis == 'X' else (1 if face_normal_axis == 'Y' else 2)
+            vals = [v[axis_idx] for v in verts]
+            target_val = min(vals) if face_side == 'min' else max(vals)
+            
+            # Find verts close to this value
+            close_verts = [v for v in verts if abs(v[axis_idx] - target_val) < 0.0001]
+            if close_verts:
+                return average(close_verts)
+            return Vector((0,0,0))
+
+        # If we found faces, pick the one that matches the side
+        # Calculate face centers in world space
+        face_centers = []
+        for f in candidates:
+            fc = average([v.co for v in f.verts])
+            face_centers.append(fc)
+        
+        if not face_centers:
+            return Vector((0,0,0))
+            
+        axis_idx = 0 if face_normal_axis == 'X' else (1 if face_normal_axis == 'Y' else 2)
+        
+        if face_side == 'min':
+            return min(face_centers, key=lambda c: c[axis_idx])
+        else:
+            return max(face_centers, key=lambda c: c[axis_idx])
+
+    def radial_point_world(self, axis='Z', side='max'):
+        """Return a point on the radial edge."""
+        # Simplified: return center + radius in direction
+        center = self.center_world()
+        # This is complex for arbitrary shapes, assuming simple primitives for now
+        # For this script, we rely on bounding box logic or specific face logic
+        return center
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using modifier."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup cutter if desired, or keep it. Usually keep for debugging or remove.
+    # Let's remove the cutter object to keep scene clean
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_objects, keep_name):
+    """
+    Perform boolean union on a list of objects.
+    Keeps the object named keep_name as the result.
+    """
+    if not union_objects:
+        return
+    
+    base_name = keep_name
+    base_obj = bpy.data.objects[base_name]
+    bpy.context.view_layer.objects.active = base_obj
+    
+    # We need to union all other objects into base_obj
+    # Blender's boolean union modifier works by adding a target object.
+    # We can chain them or add them one by one.
+    # To avoid modifier stack issues, we can apply them sequentially.
+    
+    for obj_name in union_objects:
+        if obj_name == base_name:
+            continue
+        other_obj = bpy.data.objects[obj_name]
+        
+        # Add boolean union modifier to base
+        mod = base_obj.modifiers.new(name=f"BooleanUnion_{obj_name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other_obj
+        
+        # Apply
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove the other object
+        bpy.data.objects.remove(other_obj, do_unlink=True)
+
+# --- Main Script ---
+
+# 1. Scene Reset & Units
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+bpy.context.scene.unit_settings.scale_length = 1
+
+# 2. Materials
+mat_clear_plastic = make_material("mat_clear_plastic", (240/255, 240/255, 240/255, 0.3))
+mat_paper_blue = make_material("mat_paper_blue", (100/255, 149/255, 237/255, 1.0))
+mat_paper_green = make_material("mat_paper_green", (144/255, 238/255, 144/255, 1.0))
+mat_paper_orange = make_material("mat_paper_orange", (255/255, 165/255, 0/255, 1.0))
+mat_paper_pink = make_material("mat_paper_pink", (255/255, 192/255, 203/255, 1.0))
+mat_paper_yellow = make_material("mat_paper_yellow", (255/255, 255/255, 0/255, 1.0))
+
+# --- SECTION 1 – Create Holder Base Plate ---
+# Create primitive cuboid with size 0.080×0.080×0.005 m and name it holder_base.
+# Rotate holder_base so its +Z axis aligns +Z (world).
+# Anchor holder_base to world origin.
+# Then move by offset(0,0,0).
+holder_base = add_cube("holder_base", (0.080, 0.080, 0.005), (0, 0, 0), (0, 0, 0), mat_clear_plastic)
+
+# --- SECTION 2 – Create Holder Back Panel ---
+# Create primitive cuboid with size 0.080×0.120×0.002 m and name it holder_back.
+# Rotate holder_back so its +Z axis aligns +Z (world).
+# Align holder_back.bottom_face to holder_base.top_face.
+# Then move by offset(0,0,0.002).
+holder_back = add_cube("holder_back", (0.080, 0.120, 0.002), (0, 0, 0), (0, 0, 0), mat_clear_plastic)
+
+# Align holder_back.bottom_face to holder_base.top_face
+loc_base = Locator(holder_base)
+loc_back = Locator(holder_back)
+
+center_base = loc_base.center_world()
+center_back = loc_back.center_world()
+
+# Holder base top face Z
+# Base size: 0.08, 0.08, 0.005. Center Z is 0.0025. Top Z is 0.005.
+# Back size: 0.08, 0.12, 0.002. Center Z is 0.001. Bottom Z is -0.001.
+# We want Back Bottom Z == Base Top Z.
+# Current Back Center Z = 0.
+# Target Back Center Z = Base Top Z + (Back Height / 2) = 0.005 + 0.001 = 0.006.
+# Current Back Center Z is 0. So move Z by 0.006.
+
+# Let's calculate precisely using locators
+base_top_z = loc_base.face_center_world('Z', 'max')[2]
+back_bottom_z = loc_back.face_center_world('Z', 'min')[2] # This is currently 0 because object is at 0,0,0
+
+# We need to move holder_back so its bottom face is at base_top_z
+# Current bottom face Z is -0.001 (half height).
+# Target bottom face Z is base_top_z.
+# Offset Z = base_top_z - (-0.001) = base_top_z + 0.001.
+
+offset_z = base_top_z - (-0.002/2) # -0.002/2 is -0.001
+holder_back.location.z += offset_z
+
+# Then move by offset(0,0,0.002)
+holder_back.location.z += 0.002
+
+# --- SECTION 3 – Create Holder Left Wall ---
+# Create primitive cuboid with size 0.002×0.120×0.080 m and name it holder_left.
+# Rotate holder_left so its +Z axis aligns +Z (world).
+# Align holder_left.right_face to holder_back.left_face.
+# Then move by offset(0,0,0).
+holder_left = add_cube("holder_left", (0.002, 0.120, 0.080), (0, 0, 0), (0, 0, 0), mat_clear_plastic)
+
+loc_left = Locator(holder_left)
+loc_back = Locator(holder_back)
+
+# Back Left Face X
+back_left_x = loc_back.face_center_world('X', 'min')[0]
+# Left Right Face X
+# Left size: 0.002, 0.120, 0.080. Center X is 0. Right X is 0.001.
+# We want Left Right X == Back Left X.
+# Current Left Right X is 0.001.
+# Offset X = back_left_x - 0.001.
+
+offset_x = back_left_x - (0.002/2)
+holder_left.location.x += offset_x
+
+# --- SECTION 4 – Create Holder Right Wall ---
+# Create primitive cuboid with size 0.002×0.120×0.080 m and name it holder_right.
+# Rotate holder_right so its +Z axis aligns +Z (world).
+# Align holder_right.left_face to holder_back.right_face.
+# Then move by offset(0,0,0).
+holder_right = add_cube("holder_right", (0.002, 0.120, 0.080), (0, 0, 0), (0, 0, 0), mat_clear_plastic)
+
+loc_right = Locator(holder_right)
+loc_back = Locator(holder_back)
+
+# Back Right Face X
+back_right_x = loc_back.face_center_world('X', 'max')[0]
+# Right Left Face X
+# Right size: 0.002, 0.120, 0.080. Center X is 0. Left X is -0.001.
+# We want Right Left X == Back Right X.
+# Current Right Left X is -0.001.
+# Offset X = back_right_x - (-0.001).
+
+offset_x = back_right_x - (-0.002/2)
+holder_right.location.x += offset_x
+
+# --- SECTION 5 – Create Holder Top Lip ---
+# Create primitive cuboid with size 0.080×0.002×0.002 m and name it holder_top.
+# Rotate holder_top so its +Z axis aligns +Z (world).
+# Align holder_top.bottom_face to holder_back.top_face.
+# Then move by offset(0,0,0).
+holder_top = add_cube("holder_top", (0.080, 0.002, 0.002), (0, 0, 0), (0, 0, 0), mat_clear_plastic)
+
+loc_top = Locator(holder_top)
+loc_back = Locator(holder_back)
+
+# Back Top Face Z
+back_top_z = loc_back.face_center_world('Z', 'max')[2]
+# Top Bottom Face Z
+# Top size: 0.080, 0.002, 0.002. Center Z is 0. Bottom Z is -0.001.
+# We want Top Bottom Z == Back Top Z.
+# Current Top Bottom Z is -0.001.
+# Offset Z = back_top_z - (-0.001).
+
+offset_z = back_top_z - (-0.002/2)
+holder_top.location.z += offset_z
+
+# --- SECTION 6 – Assemble Holder Union ---
+# Boolean-union holder_base, holder_back, holder_left, holder_right, and holder_top; keep holder_base.
+# Rename the resulting object to holder_union.
+boolean_union(["holder_back", "holder_left", "holder_right", "holder_top"], "holder_base")
+holder_base.name = "holder_union"
+
+# --- SECTION 7 – Create Yellow Note Sheet ---
+# Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_yellow.
+# Rotate note_yellow so its +Z axis aligns +Z (world).
+# Align note_yellow.bottom_face to holder_base.top_face.
+# Then move by offset(0,0,0.005).
+note_yellow = add_cube("note_yellow", (0.076, 0.076, 0.0001), (0, 0, 0), (0, 0, 0), mat_paper_yellow)
+
+loc_yellow = Locator(note_yellow)
+loc_base_union = Locator(holder_union) # holder_base is now holder_union
+
+# Holder Union Top Face Z
+# Since it's a union, the top face might be complex. 
+# However, the highest point should be determined by the highest component.
+# holder_back top Z was ~0.006 + 0.001 = 0.007?
+# Let's use the locator to find the max Z of the union.
+union_top_z = loc_base_union.face_center_world('Z', 'max')[2]
+
+# Note Yellow Bottom Face Z
+# Note size: 0.0001. Center Z is 0. Bottom Z is -0.00005.
+# We want Note Bottom Z == Union Top Z.
+# Current Note Bottom Z is -0.00005.
+# Offset Z = union_top_z - (-0.00005).
+
+offset_z = union_top_z - (-0.0001/2)
+note_yellow.location.z += offset_z
+
+# Then move by offset(0,0,0.005)
+note_yellow.location.z += 0.005
+
+# --- SECTION 8 – Create Pink Note Sheet ---
+# Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_pink.
+# Rotate note_pink so its +Z axis aligns +Z (world).
+# Align note_pink.bottom_face to note_yellow.top_face.
+# Then move by offset(0,0,0.0001).
+note_pink = add_cube("note_pink", (0.076, 0.076, 0.0001), (0, 0, 0), (0, 0, 0), mat_paper_pink)
+
+loc_pink = Locator(note_pink)
+loc_yellow = Locator(note_yellow)
+
+# Note Yellow Top Face Z
+yellow_top_z = loc_yellow.face_center_world('Z', 'max')[2]
+
+# Note Pink Bottom Face Z
+# Note size: 0.0001. Center Z is 0. Bottom Z is -0.00005.
+# We want Note Pink Bottom Z == Note Yellow Top Z.
+# Current Note Pink Bottom Z is -0.00005.
+# Offset Z = yellow_top_z - (-0.00005).
+
+offset_z = yellow_top_z - (-0.0001/2)
+note_pink.location.z += offset_z
+
+# Then move by offset(0,0,0.0001)
+note_pink.location.z += 0.0001
+
+# --- SECTION 9 – Create Blue Note Sheet ---
+# Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_blue.
+# Rotate note_blue so its +Z axis aligns +Z (world).
+# Align note_blue.bottom_face to note_pink.top_face.
+# Then move by offset(0,0,0.0001).
+note_blue = add_cube("note_blue", (0.076, 0.076, 0.0001), (0, 0, 0), (0, 0, 0), mat_paper_blue)
+
+loc_blue = Locator(note_blue)
+loc_pink = Locator(note_pink)
+
+# Note Pink Top Face Z
+pink_top_z = loc_pink.face_center_world('Z', 'max')[2]
+
+# Note Blue Bottom Face Z
+# Note size: 0.0001. Center Z is 0. Bottom Z is -0.00005.
+# We want Note Blue Bottom Z == Note Pink Top Z.
+# Current Note Blue Bottom Z is -0.00005.
+# Offset Z = pink_top_z - (-0.00005).
+
+offset_z = pink_top_z - (-0.0001/2)
+note_blue.location.z += offset_z
+
+# Then move by offset(0,0,0.0001)
+note_blue.location.z += 0.0001
+
+# --- SECTION 10 – Create Green Note Sheet ---
+# Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_green.
+# Rotate note_green so its +Z axis aligns +Z (world).
+# Align note_green.bottom_face to note_blue.top_face.
+# Then move by offset(0,0,0.0001).
+note_green = add_cube("note_green", (0.076, 0.076, 0.0001), (0, 0, 0), (0, 0, 0), mat_paper_green)
+
+loc_green = Locator(note_green)
+loc_blue = Locator(note_blue)
+
+# Note Blue Top Face Z
+blue_top_z = loc_blue.face_center_world('Z', 'max')[2]
+
+# Note Green Bottom Face Z
+# Note size: 0.0001. Center Z is 0. Bottom Z is -0.00005.
+# We want Note Green Bottom Z == Note Blue Top Z.
+# Current Note Green Bottom Z is -0.00005.
+# Offset Z = blue_top_z - (-0.00005).
+
+offset_z = blue_top_z - (-0.0001/2)
+note_green.location.z += offset_z
+
+# Then move by offset(0,0,0.0001)
+note_green.location.z += 0.0001
+
+# --- SECTION 11 – Create Orange Note Sheet ---
+# Create primitive cuboid with size 0.076×0.076×0.0001 m and name it note_orange.
+# Rotate note_orange so its +Z axis aligns +Z (world).
+# Align note_orange.bottom_face to note_green.top_face.
+# Then move by offset(0,0,0.0001).
+note_orange = add_cube("note_orange", (0.076, 0.076, 0.0001), (0, 0, 0), (0, 0, 0), mat_paper_orange)
+
+loc_orange = Locator(note_orange)
+loc_green = Locator(note_green)
+
+# Note Green Top Face Z
+green_top_z = loc_green.face_center_world('Z', 'max')[2]
+
+# Note Orange Bottom Face Z
+# Note size: 0.0001. Center Z is 0. Bottom Z is -0.00005.
+# We want Note Orange Bottom Z == Note Green Top Z.
+# Current Note Orange Bottom Z is -0.00005.
+# Offset Z = green_top_z - (-0.00005).
+
+offset_z = green_top_z - (-0.0001/2)
+note_orange.location.z += offset_z
+
+# Then move by offset(0,0,0.0001)
+note_orange.location.z += 0.0001
+
+# --- SECTION 12 – Assemble Note Stack ---
+# Boolean-union note_yellow, note_pink, note_blue, note_green, and note_orange; keep note_yellow.
+# Rename the resulting object to notes_stack.
+boolean_union(["note_pink", "note_blue", "note_green", "note_orange"], "note_yellow")
+note_yellow.name = "notes_stack"
+
+# --- SECTION 13 – Final Assembly ---
+# Boolean-union holder_union and notes_stack; keep holder_union.
+# Rename the resulting object to final_product.
+boolean_union(["notes_stack"], "holder_union")
+holder_union.name = "final_product"

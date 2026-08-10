@@ -1,0 +1,34 @@
+-- MATERIAL LIBRARY --
+fabric_curtain | diffuse_color=(0.85,0.85,0.90,1.0)
+metal_rod | diffuse_color=(0.70,0.70,0.75,1.0)
+wood_trim | diffuse_color=(0.60,0.40,0.20,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| curtain_assembly | Composite of rod + fabric panels + trim | assembly_order=[rod_group], [fabric_group], [trim_group] |
+
+Layer 1 – Primary Structure (Rod)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rod_main | Cylinder Ø0.025×2.0 m (metal curtain rod) | pos=(0, 0, 2.5); orientation=axis:+X; mat=metal_rod; create_method=primitive |
+| rod_bracket_L | Cube 0.05×0.05×0.1 m (left wall mount) | pos=(-1.0, 0, 2.5); orientation=axis:+Z; mat=metal_rod; create_method=primitive |
+| rod_bracket_R | Cube 0.05×0.05×0.1 m (right wall mount) | pos=(1.0, 0, 2.5); orientation=axis:+Z; mat=metal_rod; create_method=primitive |
+
+Layer 2 – Secondary Structure (Fabric Panels)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| fabric_left | Plane 0.9×2.4 m (left curtain panel) | pos=(-0.5, 0.05, 1.3); orientation=axis:+Z; mat=fabric_curtain; create_method=primitive |
+| fabric_right | Plane 0.9×2.4 m (right curtain panel) | pos=(0.5, 0.05, 1.3); orientation=axis:+Z; mat=fabric_curtain; create_method=primitive |
+
+Layer 3 – Details (Trim & Hardware)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| trim_top_L | Cube 0.9×0.05×0.05 m (left rod finial/trim) | pos=(-0.5, 0, 2.52); orientation=axis:+Z; mat=wood_trim; create_method=primitive |
+| trim_top_R | Cube 0.9×0.05×0.05 m (right rod finial/trim) | pos=(0.5, 0, 2.52); orientation=axis:+Z; mat=wood_trim; create_method=primitive |
+| hem_bottom_L | Cube 0.9×0.05×0.05 m (left bottom weight) | pos=(-0.5, 0, 0.12); orientation=axis:+Z; mat=wood_trim; create_method=primitive |
+| hem_bottom_R | Cube 0.9×0.05×0.05 m (right bottom weight) | pos=(0.5, 0, 0.12); orientation=axis:+Z; mat=wood_trim; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

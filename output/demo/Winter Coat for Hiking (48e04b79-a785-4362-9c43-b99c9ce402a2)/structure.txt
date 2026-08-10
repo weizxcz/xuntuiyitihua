@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+fabric_main | diffuse_color=(0.15,0.15,0.20,1.0)
+fabric_lining | diffuse_color=(0.85,0.85,0.90,1.0)
+zipper_metal | diffuse_color=(0.60,0.60,0.65,1.0)
+zipper_pull | diffuse_color=(0.20,0.20,0.20,1.0)
+button_plastic | diffuse_color=(0.10,0.10,0.10,1.0)
+drawstring_cord | diffuse_color=(0.10,0.10,0.10,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coat_root | Composite of shell, lining, and hardware | assembly_order=[shell_group, lining_group, hardware_group] |
+
+Layer 1 – Primary Structure (Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shell_body | Main torso panel (front and back connected) | size=0.6×1.2×0.02 m (W×H×T); mat=fabric_main; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Front and back panels approximated as rounded rectangles. Front panel: W=0.3, H=0.6. Back panel: W=0.3, H=0.6. Offset back panel by Y=0.01 m. Extrude thickness t=0.002 m along +Z. Caps enabled. |
+| shell_hood | Hood attached to back top | size=0.4×0.3×0.2 m; mat=fabric_main; create_method=boolean_subtract; constraint=Align(Z) shell_hood.bottom_face to shell_body.top_face; orientation=axis:+Z; create_method=boolean_subtract; tool_id=hood_cutter; target_id=shell_body_top; constraint=depth 0.1 m |
+| shell_cuffs | Left and Right cuffs | size=0.15×0.1×0.05 m; mat=fabric_main; create_method=primitive; constraint=Align(XY) shell_cuffs.center to shell_body.side_at(0°); offset(0,0.5,0); orientation=axis:+Z |
+| shell_drawstring | Waist drawstring | size=0.005×0.6×0.002 m; mat=drawstring_cord; create_method=primitive; constraint=Align(Z) shell_drawstring.center to shell_body.center; offset(0,0,0.01); orientation=axis:+Z |
+
+Layer 2 – Lining & Insulation
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lining_body | Inner lining panel | size=0.58×1.18×0.005 m; mat=fabric_lining; create_method=primitive; constraint=Align(XY) lining_body.center to shell_body.center; offset(0,0,-0.001); orientation=axis:+Z |
+
+Layer 3 – Hardware & Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| zipper_main | Main zipper track | size=0.01×1.0×0.005 m; mat=zipper_metal; create_method=primitive; constraint=Align(XY) zipper_main.center to shell_body.center; offset(0,0,0.015); orientation=axis:+Z |
+| zipper_pull | Zipper pull tab | size=0.02×0.01×0.005 m; mat=zipper_pull; create_method=primitive; constraint=Align(XY) zipper_pull.center to zipper_main.top; offset(0,0,0.005); orientation=axis:+Z |
+| flap_protect | Buttoned flap over zipper | size=0.1×0.8×0.003 m; mat=fabric_main; create_method=primitive; constraint=Align(XY) flap_protect.center to shell_body.center; offset(0,0,0.02); orientation=axis:+Z |
+| button_flap | Button on flap | size=0.01×0.01×0.005 m; mat=button_plastic; create_method=primitive; constraint=Align(XY) button_flap.center to flap_protect.bottom; offset(0,0,0.005); orientation=axis:+Z |
+| pocket_left | Left chest pocket | size=0.15×0.15×0.005 m; mat=fabric_main; create_method=primitive; constraint=Align(XY) pocket_left.center to shell_body.front; offset(0.1,0.2,0.01); orientation=axis:+Z |
+| pocket_right | Right chest pocket | size=0.15×0.15×0.005 m; mat=fabric_main; create_method=primitive; constraint=Align(XY) pocket_right.center to shell_body.front; offset(-0.1,0.2,0.01); orientation=axis:+Z |
+| pocket_lower_left | Left lower pocket | size=0.2×0.15×0.005 m; mat=fabric_main; create_method=primitive; constraint=Align(XY) pocket_lower_left.center to shell_body.front; offset(0.15,-0.2,0.01); orientation=axis:+Z |
+| pocket_lower_right | Right lower pocket | size=0.2×0.15×0.005 m; mat=fabric_main; create_method=primitive; constraint=Align(XY) pocket_lower_right.center to shell_body.front; offset(-0.15,-0.2,0.01); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

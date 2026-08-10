@@ -1,0 +1,318 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, depth, segments=32):
+    """Add a flat cylinder (disc) aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    # size is a tuple (x, y, z)
+    sx, sy, sz = size
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0)) # size=1 gives 2x2x2 cube
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (sx / 2, sy / 2, sz / 2)
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    """Add a cone aligned to Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=16):
+    """Add a UV sphere centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width, segments=2):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def boolean_subtract(target, cutter, keep_target=True):
+    """Perform boolean subtract using BMesh."""
+    # Ensure target is active for context if needed, but we'll use BMesh directly for robustness
+    # We need to apply the cutter's transform to the target's space or vice versa.
+    # Simplest robust way: Add Boolean Modifier to target.
+    
+    # Apply target transform first to avoid issues
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    
+    # Add modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    
+    # Create a temporary object for the cutter if it doesn't exist as a mesh object in scene
+    # But here we assume cutter is a valid object.
+    # We need to link the cutter to the modifier's object field
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Cleanup cutter if desired, but instructions say "keep body" usually implies keeping the target.
+    # We don't delete the cutter unless specified, but for clean scene we might want to.
+    # The prompt says "Boolean-union connector to body; keep body." -> implies body remains.
+    # We will leave the cutter in scene unless it's a temporary helper.
+    # For this script, we will leave cutters in scene to preserve history if needed, 
+    # but typically boolean operations consume the cutter.
+    
+    return target
+
+def boolean_union(target, cutter, keep_target=True):
+    """Perform boolean union using BMesh."""
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    return target
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Current axis vectors
+    axis_map = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    if axis not in axis_map:
+        return
+        
+    current_axis = axis_map[axis]
+    target_vec = Vector(vector).normalized()
+    
+    # Calculate rotation
+    rot_quat = current_axis.rotation_between(target_vec)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def get_face_center(obj, face_index):
+    """Get the world center of a specific face."""
+    # Ensure object is in world space
+    mat = obj.matrix_world
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(mat)
+    
+    # Find the face. Assuming faces are indexed 0..N-1.
+    # Note: Face indices can change after operations. 
+    # For a simple cube, we can infer based on normal or position.
+    # However, for robustness, let's find the face with the max/min coordinate along an axis.
+    
+    # This helper is tricky without knowing the face index beforehand.
+    # Alternative: Use Locators.
+    bm.free()
+    return None
+
+class Locator:
+    def __init__(self, obj, name_prefix="loc"):
+        self.obj = obj
+        self.name = f"{name_prefix}_{obj.name}"
+        # Create a dummy object to act as locator
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=0.001, location=(0,0,0))
+        self.loc_obj = bpy.context.active_object
+        self.loc_obj.name = self.name
+        self.loc_obj.hide_viewport = True
+        self.loc_obj.hide_render = True
+        
+    def center_world(self):
+        """Return world location of object center."""
+        return self.loc_obj.matrix_world.to_translation()
+    
+    def face_center_world(self, face_normal_axis='Z', direction=1):
+        """
+        Return world location of the center of the face perpendicular to face_normal_axis.
+        direction: 1 for positive axis, -1 for negative.
+        """
+        # Calculate offset from center to face
+        # We need the object's dimensions in world space
+        # Since we apply transforms, local dimensions are reliable.
+        loc = self.loc_obj.matrix_world.to_translation()
+        
+        # Get half extents
+        half_x = self.obj.dimensions.x / 2
+        half_y = self.obj.dimensions.y / 2
+        half_z = self.obj.dimensions.z / 2
+        
+        offset = Vector((0, 0, 0))
+        if face_normal_axis == 'X':
+            offset.x = half_x * direction
+        elif face_normal_axis == 'Y':
+            offset.y = half_y * direction
+        elif face_normal_axis == 'Z':
+            offset.z = half_z * direction
+            
+        # Rotate offset by object rotation
+        offset = self.loc_obj.matrix_world.to_3x3() @ offset
+        
+        return loc + offset
+
+    def radial_point_world(self, axis='Z', angle=0):
+        """Return world location of a point on the radial edge."""
+        # Not strictly needed for cuboid alignment but good for cylinders
+        return self.center_world()
+
+def align_faces(obj_source, axis_source, dir_source, obj_target, axis_target, dir_target):
+    """
+    Align a face of obj_source to a face of obj_target.
+    axis: 'X', 'Y', or 'Z'
+    dir: 1 (positive) or -1 (negative)
+    """
+    loc_src = Locator(obj_source, "loc_src")
+    loc_tgt = Locator(obj_target, "loc_tgt")
+    
+    src_center = loc_src.face_center_world(axis_source, dir_source)
+    tgt_center = loc_tgt.face_center_world(axis_target, dir_target)
+    
+    # Calculate offset needed to move src so its face aligns with tgt's face
+    offset = tgt_center - src_center
+    
+    # Apply offset to source object
+    obj_source.location += offset
+
+def align_bottom_to_top(obj_bottom, obj_top):
+    """
+    Align the bottom face of obj_bottom to the top face of obj_top.
+    Assuming Z is up.
+    """
+    align_faces(obj_bottom, 'Z', -1, obj_top, 'Z', 1)
+
+def align_center_to_center(obj_source, obj_target):
+    """Align center of source to center of target."""
+    loc_src = Locator(obj_source, "loc_src")
+    loc_tgt = Locator(obj_target, "loc_tgt")
+    
+    src_center = loc_src.center_world()
+    tgt_center = loc_tgt.center_world()
+    
+    offset = tgt_center - src_center
+    obj_source.location += offset
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    # Set units to metres
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_body = make_material("mat_body", (0.15, 0.15, 0.15, 1.0))
+    mat_cap = make_material("mat_cap", (0.8, 0.8, 0.8, 1.0))
+    mat_connector = make_material("mat_connector", (0.9, 0.8, 0.3, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create body_group (body + connector) ---
+    
+    # Create body
+    body = add_cube("body", (0.060, 0.020, 0.005))
+    body.active_material = mat_body
+    
+    # Rotate body so +Z aligns +Z (already default, but explicit)
+    align_axis_to_vector(body, 'Z', (0, 0, 1))
+    
+    # Anchor body to world origin
+    body.location = (0, 0, 0)
+    
+    # Offset (0,0,0)
+    body.location += Vector((0, 0, 0))
+    
+    # Create connector
+    connector = add_cube("connector", (0.012, 0.029, 0.004))
+    connector.active_material = mat_connector
+    
+    # Rotate connector so +Z aligns +Z
+    align_axis_to_vector(connector, 'Z', (0, 0, 1))
+    
+    # Align connector.bottom_face to body.top_face
+    # Body top face is at +Z relative to body center.
+    # Connector bottom face is at -Z relative to connector center.
+    align_bottom_to_top(connector, body)
+    
+    # Offset (0, 0, 0.0025)
+    connector.location += Vector((0, 0, 0.0025))
+    
+    # Boolean-union connector to body; keep body
+    boolean_union(body, connector, keep_target=True)
+    
+    # Clean up connector object if it's no longer needed as a separate mesh
+    # The union operation merges geometry into body.
+    # We can delete the connector mesh data or the object.
+    # To keep scene clean, we delete the connector object.
+    bpy.data.objects.remove(connector, do_unlink=True)
+
+    # --- SECTION 2 – Create cap_group (cap) ---
+    
+    # Create cap
+    cap = add_cube("cap", (0.060, 0.020, 0.005))
+    cap.active_material = mat_cap
+    
+    # Rotate cap so +Z aligns +Z
+    align_axis_to_vector(cap, 'Z', (0, 0, 1))
+    
+    # Align cap.bottom_face to body.top_face
+    align_bottom_to_top(cap, body)
+    
+    # Offset (0, 0, 0.005)
+    cap.location += Vector((0, 0, 0.005))
+
+    # --- SECTION 3 – Assemble usb_drive ---
+    
+    # Boolean-union cap to body; keep body
+    boolean_union(body, cap, keep_target=True)
+    
+    # Clean up cap object
+    bpy.data.objects.remove(cap, do_unlink=True)
+    
+    # Assign material to final body if not already done (it was assigned before union)
+    # The union operation keeps the material of the target (body).
+    
+    # Select the final object for visibility
+    bpy.context.view_layer.objects.active = body
+    bpy.ops.object.select_all(action='DESELECT')
+    body.select_set(True)
+
+if __name__ == "__main__":
+    main()
+```

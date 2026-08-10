@@ -1,0 +1,1 @@
+Create a 3D model of a USB flash drive. It should have a rectangular body with a removable cap.

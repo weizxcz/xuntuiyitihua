@@ -1,0 +1,18 @@
+-- MATERIAL LIBRARY --
+fabric_cotton | diffuse_color=(0.95, 0.95, 0.92, 1.0)
+foam_memory | diffuse_color=(0.90, 0.90, 0.88, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pillow_root | Composite assembly of the pillow structure | assembly_order=[foam_core], [fabric_shell]; constraint=soft_body_physics_enabled; mat=-> |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| foam_core | Memory foam core providing structural support and contouring | Align(XYZ) foam_core.center to pillow_root.center; size=0.65×0.45×0.12 m; mat=foam_memory; create_method=primitive; constraint=rounded_edges_radius=0.05 m; orientation=axis:+Z |
+| fabric_shell | Outer fabric casing containing the foam core | Align(XYZ) fabric_shell.center to pillow_root.center; size=0.68×0.48×0.13 m; mat=fabric_cotton; create_method=primitive; constraint=boolean_subtract(foam_core); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

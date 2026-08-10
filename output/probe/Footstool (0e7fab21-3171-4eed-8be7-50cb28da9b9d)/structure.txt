@@ -1,0 +1,20 @@
+-- MATERIAL LIBRARY --
+mat_wood_dark | diffuse_color=(0.25,0.15,0.10,1.0)
+mat_wood_light | diffuse_color=(0.80,0.70,0.50,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| footstool_root | Composite assembly of the entire footstool | A. Composite of seat_panel + 4x leg; assembly_order=[seat_panel], [legs]; mat=- |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| seat_panel | Square wooden seat top | cylinder Ø0.40×0.04 m (approximated as cube for sharp corners); Align(XY) seat_panel.center to footstool_root.center; offset(0,0,0.02); orientation=axis:+Z; mat=mat_wood_light; create_method=primitive; constraint=width=0.40m, depth=0.40m, height=0.04m |
+| leg_fl | Front-Left Leg | cylinder Ø0.04×0.30 m; Align(XY) leg_fl.center to seat_panel.bottom_face; offset(0.15, -0.15, 0); orientation=axis:-Z; mat=mat_wood_dark; create_method=primitive |
+| leg_fr | Front-Right Leg | cylinder Ø0.04×0.30 m; Align(XY) leg_fr.center to seat_panel.bottom_face; offset(-0.15, -0.15, 0); orientation=axis:-Z; mat=mat_wood_dark; create_method=primitive |
+| leg_bl | Back-Left Leg | cylinder Ø0.04×0.30 m; Align(XY) leg_bl.center to seat_panel.bottom_face; offset(0.15, 0.15, 0); orientation=axis:-Z; mat=mat_wood_dark; create_method=primitive |
+| leg_br | Back-Right Leg | cylinder Ø0.04×0.30 m; Align(XY) leg_br.center to seat_panel.bottom_face; offset(-0.15, 0.15, 0); orientation=axis:-Z; mat=mat_wood_dark; create_method=primitive |
+# ----------  END_GRAPH  ----------

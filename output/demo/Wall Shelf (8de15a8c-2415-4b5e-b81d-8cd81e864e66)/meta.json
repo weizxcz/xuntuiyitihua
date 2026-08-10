@@ -1,0 +1,49 @@
+{
+  "id": "8de15a8c-2415-4b5e-b81d-8cd81e864e66",
+  "name": "Wall Shelf",
+  "instruction": "Create a wall shelf that doubles as a decorative piece. The shelf should be 36 inches long and 8 inches deep. Include brackets for mounting on the wall. The design should be minimalistic, with clean lines and no additional embellishments.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a wall shelf.",
+        "The shelf is rectangular in shape.",
+        "The shelf has clean, straight edges."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The length of the shelf is 36 inches.",
+        "The depth of the shelf is 8 inches."
+      ],
+      "Proportion": [
+        "The proportions of the shelf are balanced for its intended use.",
+        "The brackets are appropriately sized to support the shelf."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The shelf is mounted parallel to the wall.",
+        "The brackets are positioned at both ends of the shelf for stability.",
+        "The shelf is adequately spaced from the wall to allow for mounting."
+      ],
+      "Object distance and contact": [
+        "The shelf does not overlap with the wall.",
+        "The brackets are securely attached to the wall.",
+        "There is no gap between the shelf and the brackets."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified dimensions are accurately represented.",
+        "The design is minimalistic with no additional embellishments.",
+        "Brackets for wall mounting are included."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

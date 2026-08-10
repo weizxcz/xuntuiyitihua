@@ -1,0 +1,46 @@
+{
+  "id": "54d254d4-9146-4581-81fe-d37478f71913",
+  "name": "Building Blocks Set",
+  "instruction": "Design a set of building blocks that allows for creative play. The set should include various shapes like cubes, cylinders, and pyramids, and be arranged in a way that encourages imaginative construction. Emphasize the versatility and fun of the building blocks.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The set includes cubes.",
+        "The set includes cylinders.",
+        "The set includes pyramids.",
+        "Additional shapes may enhance creativity."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The set of the building blocks are propotionate to the entire."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "Blocks should be designed to stack securely.",
+        "Shapes should interlock or fit together in multiple ways.",
+        "The arrangement should allow for stable structures."
+      ],
+      "Object distance and contact": [
+        "Blocks should not be too large to hinder manipulation.",
+        "There should be enough space between blocks for creative placement."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified shapes are included in the design.",
+        "The arrangement encourages imaginative construction."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

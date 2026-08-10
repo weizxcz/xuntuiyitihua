@@ -1,0 +1,47 @@
+-- MATERIAL LIBRARY --
+fabric_black | diffuse_color=(0.05,0.05,0.05,1.0)
+fabric_olive | diffuse_color=(0.2,0.3,0.15,1.0)
+metal_silver | diffuse_color=(0.8,0.8,0.8,1.0)
+plastic_black | diffuse_color=(0.1,0.1,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bag_root | Composite of body, pockets, and strap | A. |
+
+Layer 1 – Primary Structure (Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_main | Composite of front_panel, back_panel, bottom_panel, side_panels | A. |
+| front_panel | Flat cuboid 0.40×0.50×0.02 m | Align(XY) front_panel.center to bag_root.center; offset(0, 0.21, 0); orientation=axis:+Z; mat=fabric_olive; create_method=primitive |
+| back_panel | Flat cuboid 0.40×0.50×0.02 m | Align(XY) back_panel.center to bag_root.center; offset(0, -0.21, 0); orientation=axis:+Z; mat=fabric_olive; create_method=primitive |
+| bottom_panel | Flat cuboid 0.40×0.42×0.02 m | Align(XY) bottom_panel.center to bag_root.center; offset(0, 0, -0.21); orientation=axis:+Y; mat=fabric_olive; create_method=primitive |
+| side_panel_L | Flat cuboid 0.42×0.50×0.02 m | Align(XY) side_panel_L.center to bag_root.center; offset(-0.21, 0, 0); orientation=axis:+X; mat=fabric_olive; create_method=primitive |
+| side_panel_R | Flat cuboid 0.42×0.50×0.02 m | Align(XY) side_panel_R.center to bag_root.center; offset(0.21, 0, 0); orientation=axis:-X; mat=fabric_olive; create_method=primitive |
+| body_shell | Composite union of front_panel, back_panel, bottom_panel, side_panel_L, side_panel_R | (1) execute 'front_panel, back_panel, bottom_panel, side_panel_L, side_panel_R': orientation=axis:+Z; offset(0,0,0) |
+
+Layer 2 – Compartments & Pockets
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| main_compartment | Hollowed body_main | Align(XYZ) main_compartment.center to body_main.center; orientation=axis:+Z; mat=-; create_method=boolean_subtract; constraint=depth 0.40 m |
+| front_pocket | Flat cuboid 0.30×0.20×0.01 m | Align(XY) front_pocket.center to front_panel.center; offset(0, 0.1, 0.015); orientation=axis:+Z; mat=fabric_black; create_method=primitive |
+| side_pocket_L | Cylinder Ø0.10×0.30 m | Align(XY) side_pocket_L.center to side_panel_L.center; offset(-0.05, 0, 0); orientation=axis:+X; mat=fabric_black; create_method=primitive |
+| side_pocket_R | Cylinder Ø0.10×0.30 m | Align(XY) side_pocket_R.center to side_panel_R.center; offset(0.05, 0, 0); orientation=axis:-X; mat=fabric_black; create_method=primitive |
+
+Layer 3 – Hardware & Straps
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shoulder_strap | Flat cuboid 0.05×0.80×0.01 m | Align(XY) shoulder_strap.center to bag_root.center; offset(0, 0, 0.25); orientation=axis:+Z; mat=plastic_black; create_method=primitive |
+| strap_buckle_L | Cuboid 0.02×0.02×0.02 m | Align(XY) strap_buckle_L.center to shoulder_strap.left_face; offset(-0.01, 0, 0); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| strap_buckle_R | Cuboid 0.02×0.02×0.02 m | Align(XY) strap_buckle_R.center to shoulder_strap.right_face; offset(0.01, 0, 0); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| zipper_main | Torus Ø0.40×0.01 m | Align(XY) zipper_main.center to bag_root.center; offset(0, 0, 0.25); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| zipper_front | Torus Ø0.30×0.01 m | Align(XY) zipper_front.center to front_pocket.center; offset(0, 0, 0.015); orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+
+Layer 4 – Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bag_assembled | Composite union of body_shell, main_compartment, front_pocket, side_pocket_L, side_pocket_R, shoulder_strap, strap_buckle_L, strap_buckle_R, zipper_main, zipper_front | (1) execute 'body_shell': Align(XYZ) bag_assembled.center to bag_root.center; orientation=axis:+Z; mat=-; (2) execute 'main_compartment': Align(XYZ) main_compartment.center to body_shell.center; orientation=axis:+Z; mat=-; (3) execute 'front_pocket': Align(XY) front_pocket.center to body_shell.front_panel.center; offset(0, 0, 0.01); orientation=axis:+Z; mat=-; (4) execute 'side_pocket_L': Align(XY) side_pocket_L.center to body_shell.side_panel_L.center; offset(-0.05, 0, 0); orientation=axis:+X; mat=-; (5) execute 'side_pocket_R': Align(XY) side_pocket_R.center to body_shell.side_panel_R.center; offset(0.05, 0, 0); orientation=axis:-X; mat=-; (6) execute 'shoulder_strap': Align(XY) shoulder_strap.center to bag_root.center; offset(0, 0, 0.25); orientation=axis:+Z; mat=-; (7) execute 'strap_buckle_L': Align(XY) strap_buckle_L.center to shoulder_strap.left_face; offset(-0.01, 0, 0); orientation=axis:+Z; mat=-; (8) execute 'strap_buckle_R': Align(XY) strap_buckle_R.center to shoulder_strap.right_face; offset(0.01, 0, 0); orientation=axis:+Z; mat=-; (9) execute 'zipper_main': Align(XY) zipper_main.center to bag_root.center; offset(0, 0, 0.25); orientation=axis:+Z; mat=-; (10) execute 'zipper_front': Align(XY) zipper_front.center to front_pocket.center; offset(0, 0, 0.015); orientation=axis:+Z; mat=- |
+
+# ----------  END_GRAPH  ----------

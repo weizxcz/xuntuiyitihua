@@ -1,0 +1,63 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_paper_white; diffuse_color = (0.941, 0.941, 0.941, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create folder base (U-shape)  ---
+Create primitive cuboid with size 0.210×0.297×0.005 m and name it folder_base_body.
+Rotate folder_base_body so its +Z axis aligns +Z (world).
+Anchor folder_base_body to world origin.
+Then move by offset(0,0,0).
+Create plane_cutter and name it folder_base_cut_1 with size 0.001×0.297×0.010 m; orientation=axis:+X.
+Anchor folder_base_cut_1 to folder_base_body.left_face.
+Then move by offset(-0.070, 0, 0).
+Boolean-subtract folder_base_cut_1 from folder_base_body; discard folder_base_cut_1.
+Create plane_cutter and name it folder_base_cut_2 with size 0.001×0.297×0.010 m; orientation=axis:+X.
+Anchor folder_base_cut_2 to folder_base_body.right_face.
+Then move by offset(0.070, 0, 0).
+Boolean-subtract folder_base_cut_2 from folder_base_body; discard folder_base_cut_2.
+Create plane_cutter and name it folder_base_cut_3 with size 0.070×0.001×0.010 m; orientation=axis:+Y.
+Anchor folder_base_cut_3 to folder_base_body.bottom_face.
+Then move by offset(0, -0.1485, 0).
+Boolean-subtract folder_base_cut_3 from folder_base_body; discard folder_base_cut_3.
+Create plane_cutter and name it folder_base_cut_4 with size 0.070×0.001×0.010 m; orientation=axis:+Y.
+Anchor folder_base_cut_4 to folder_base_body.bottom_face.
+Then move by offset(0, 0.1485, 0).
+Boolean-subtract folder_base_cut_4 from folder_base_body; discard folder_base_cut_4.
+Rotate folder_base_body so its +Z axis aligns +Z (world).
+Anchor folder_base_body to world origin.
+Then move by offset(0,0,0).
+Bevel folder_base_body.edges with radius 0.001 m, segments 4.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create divider 1  ---
+Create primitive cuboid with size 0.060×0.280×0.005 m and name it divider_1.
+Rotate divider_1 so its +Z axis aligns +Z (world).
+Anchor divider_1 to folder_base_body.section_1.top_face.
+Align divider_1.bottom_face to folder_base_body.section_1.top_face.
+Then offset(0,0,0.002).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create divider 2  ---
+Create primitive cuboid with size 0.060×0.280×0.005 m and name it divider_2.
+Rotate divider_2 so its +Z axis aligns +Z (world).
+Anchor divider_2 to folder_base_body.section_2.top_face.
+Align divider_2.bottom_face to folder_base_body.section_2.top_face.
+Then offset(0,0,0.002).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

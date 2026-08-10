@@ -1,0 +1,47 @@
+{
+  "id": "286fe896-37c0-4a59-b392-4cdc8cb367a8",
+  "name": "Cat Bed vs. Dog Bed",
+  "instruction": "Compare a 3D model of a cat bed and a dog bed. The cat bed should be smaller and circular, while the dog bed should be larger and rectangular.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The cat bed is circular in shape.",
+        "The dog bed is rectangular in shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportions of the cat bed are suitable for a cat's size.",
+        "The proportions of the dog bed are suitable for a dog's size."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cat bed is positioned appropriately for a smaller animal.",
+        "The dog bed is positioned appropriately for a larger animal.",
+        "The circular shape of the cat bed allows for easy access.",
+        "The rectangular shape of the dog bed provides ample space."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the cat bed and the dog bed.",
+        "The cat bed is distinct and separate from the dog bed."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The cat bed is accurately represented as smaller and circular.",
+        "The dog bed is accurately represented as larger and rectangular.",
+        "The comparison between the two beds is clear and distinct."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

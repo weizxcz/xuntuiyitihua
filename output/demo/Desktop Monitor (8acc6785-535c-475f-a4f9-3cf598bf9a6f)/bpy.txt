@@ -1,0 +1,391 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder aligned to Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = (0, 0, 0) # Z-up default
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=1) # size=1 means 1m edge
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = (0, 0, 0)
+    return obj
+
+def align_face_to_face(obj_source, obj_target, axis='Z', direction=1):
+    """
+    Aligns the specified face of obj_source to the corresponding face of obj_target.
+    axis: 'X', 'Y', or 'Z'
+    direction: 1 for positive face, -1 for negative face.
+    """
+    # Ensure objects are in world space
+    bpy.context.view_layer.update()
+    
+    # Get bounding box centers and extents
+    # We need to find the face center. 
+    # Simplified approach: Align centers based on face positions.
+    
+    # Transform to world
+    src_world = obj_source.matrix_world
+    tgt_world = obj_target.matrix_world
+    
+    # Get local extents
+    src_ext = obj_source.dimensions
+    tgt_ext = obj_target.dimensions
+    
+    # Calculate face positions in local space relative to center
+    # Positive face is at +extent/2, Negative at -extent/2
+    src_face_local = (src_ext[axis] / 2) * direction
+    tgt_face_local = (tgt_ext[axis] / 2) * direction
+    
+    # Convert to world
+    # Vector from center to face in local space
+    src_face_vec_local = Vector([1,1,1])
+    src_face_vec_local[axis] = src_face_local
+    src_face_world = src_world @ src_face_vec_local
+    
+    tgt_face_vec_local = Vector([1,1,1])
+    tgt_face_vec_local[axis] = tgt_face_local
+    tgt_face_world = tgt_world @ tgt_face_vec_local
+    
+    # Calculate offset needed to move src_face_world to tgt_face_world
+    offset = tgt_face_world - src_face_world
+    
+    # Apply offset to object location
+    obj_source.location += offset
+
+def align_face_to_face_with_offset(obj_source, obj_target, axis='Z', direction=1, offset_vec=Vector((0,0,0))):
+    """Aligns face and then applies additional offset."""
+    align_face_to_face(obj_source, obj_target, axis, direction)
+    obj_source.location += offset_vec
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        self.update()
+        
+    def update(self):
+        self.center_world = self.obj.matrix_world.to_translation()
+        # Calculate face centers based on dimensions
+        dims = self.obj.dimensions
+        mat = self.obj.matrix_world
+        # Z-face centers
+        self.z_face_pos = mat @ Vector((0, 0, dims[2]/2))
+        self.z_face_neg = mat @ Vector((0, 0, -dims[2]/2))
+        # Y-face centers
+        self.y_face_pos = mat @ Vector((0, dims[1]/2, 0))
+        self.y_face_neg = mat @ Vector((0, -dims[1]/2, 0))
+        # X-face centers
+        self.x_face_pos = mat @ Vector((dims[0]/2, 0, 0))
+        self.x_face_neg = mat @ Vector((-dims[0]/2, 0, 0))
+
+    def center_world(self):
+        return self.obj.matrix_world.to_translation()
+
+    def z_face_world(self, positive=True):
+        if positive:
+            return self.z_face_pos
+        return self.z_face_neg
+
+    def y_face_world(self, positive=True):
+        if positive:
+            return self.y_face_pos
+        return self.y_face_neg
+
+    def x_face_world(self, positive=True):
+        if positive:
+            return self.x_face_pos
+        return self.x_face_neg
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_black_plastic = make_material("mat_black_plastic", (0.05, 0.05, 0.05, 1.0))
+mat_glass_screen = make_material("mat_glass_screen", (0.1, 0.1, 0.15, 0.3))
+mat_led_backlight = make_material("mat_led_backlight", (0.9, 0.9, 0.9, 1.0))
+mat_stand_base = make_material("mat_stand_base", (0.08, 0.08, 0.08, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Stand Base ---
+# Create primitive cuboid with size 0.120×0.080×0.005 m and name it stand_base.
+stand_base = add_cube("stand_base", (0.120, 0.080, 0.005))
+stand_base.data.materials.append(mat_stand_base)
+
+# Rotate stand_base so its +Z axis aligns +Z (world).
+# Default cube is Z-up, so no rotation needed.
+
+# Anchor stand_base to world origin.
+stand_base.location = (0, 0, 0)
+
+# Then move by offset(0, -0.225, 0).
+stand_base.location += Vector((0, -0.225, 0))
+
+# --- SECTION 2 – Create Stand Neck ---
+# Create primitive cylinder with diameter 0.040 m and height 0.150 m and name it stand_neck.
+stand_neck = add_cylinder("stand_neck", radius=0.020, depth=0.150)
+stand_neck.data.materials.append(mat_stand_base)
+
+# Rotate stand_neck so its +Z axis aligns +Z (world).
+# Default cylinder is Z-up, so no rotation needed.
+
+# Anchor stand_neck to world origin.
+stand_neck.location = (0, 0, 0)
+
+# Then move by offset(0, -0.15, 0).
+stand_neck.location += Vector((0, -0.15, 0))
+
+# --- SECTION 3 – Assemble Stand Group ---
+# Align stand_neck.Z_face to stand_base.Z_face.
+# stand_base is at Z=0, height 0.005. Top face is at Z=0.0025.
+# stand_neck is at Z=0, height 0.150. Bottom face is at Z=-0.075.
+# We want stand_neck bottom to touch stand_base top.
+# However, the instruction says "Align stand_neck.Z_face to stand_base.Z_face".
+# Usually implies positive faces or matching orientation.
+# Let's interpret "Z_face" as the positive Z face for both, or aligning the bottom of neck to top of base.
+# Given the offset in Stage 2 (-0.15 Y), and Stage 3 offset (0,0,0.0025), it seems we are stacking vertically.
+# Let's align stand_neck's negative Z face (bottom) to stand_base's positive Z face (top).
+# But the prompt says "Z_face". Let's assume positive Z face alignment for simplicity unless specified.
+# Actually, looking at coordinates:
+# Stand Base center: (0, -0.225, 0). Top Z: 0.0025.
+# Stand Neck center: (0, -0.15, 0). Bottom Z: -0.075.
+# If we align Neck Bottom (-0.075) to Base Top (0.0025), we need to move Neck up by 0.0775.
+# The instruction says "Align stand_neck.Z_face to stand_base.Z_face".
+# If we align positive Z faces: Neck Top (0.075) to Base Top (0.0025). Move Neck down by 0.0725.
+# Let's look at the offset: "Then move by offset(0, 0, 0.0025)".
+# This suggests a small adjustment after alignment.
+# Let's use the helper to align the positive Z face of neck to positive Z face of base.
+# Then apply offset.
+
+# To be safe and robust, let's use the Locator class for precise face alignment.
+loc_base = Locator(stand_base)
+loc_neck = Locator(stand_neck)
+
+# Align stand_neck positive Z face to stand_base positive Z face
+# This aligns the tops.
+align_face_to_face(stand_neck, stand_base, axis='Z', direction=1)
+
+# Then move by offset(0, 0, 0.0025).
+stand_neck.location += Vector((0, 0, 0.0025))
+
+# --- SECTION 4 – Create LED Backlight ---
+# Create primitive cuboid with size 0.531×0.300×0.002 m and name it led_backlight.
+led_backlight = add_cube("led_backlight", (0.531, 0.300, 0.002))
+led_backlight.data.materials.append(mat_led_backlight)
+
+# Rotate led_backlight so its +Z axis aligns +Z (world).
+# Default is Z-up.
+
+# Anchor led_backlight to world origin.
+led_backlight.location = (0, 0, 0)
+
+# Then move by offset(0, 0, -0.001).
+led_backlight.location += Vector((0, 0, -0.001))
+
+# --- SECTION 5 – Create Glass Screen ---
+# Create primitive cuboid with size 0.531×0.300×0.002 m and name it glass_screen.
+glass_screen = add_cube("glass_screen", (0.531, 0.300, 0.002))
+glass_screen.data.materials.append(mat_glass_screen)
+
+# Rotate glass_screen so its +Z axis aligns +Z (world).
+# Default is Z-up.
+
+# Anchor glass_screen to world origin.
+glass_screen.location = (0, 0, 0)
+
+# Then move by offset(0, 0, 0).
+# No change.
+
+# --- SECTION 6 – Assemble Panel Unit ---
+# Align glass_screen.Z_face to led_backlight.Z_face.
+# Align positive Z faces.
+align_face_to_face(glass_screen, led_backlight, axis='Z', direction=1)
+
+# Then move by offset(0, 0, 0.001).
+glass_screen.location += Vector((0, 0, 0.001))
+
+# --- SECTION 7 – Create Top Bezel ---
+# Create primitive cuboid with size 0.531×0.015×0.005 m and name it frame_top.
+frame_top = add_cube("frame_top", (0.531, 0.015, 0.005))
+frame_top.data.materials.append(mat_black_plastic)
+
+# Rotate frame_top so its +Z axis aligns +Z (world).
+# Default is Z-up.
+
+# Anchor frame_top to world origin.
+frame_top.location = (0, 0, 0)
+
+# Then move by offset(0, 0.157, 0.002).
+frame_top.location += Vector((0, 0.157, 0.002))
+
+# --- SECTION 8 – Create Bottom Bezel ---
+# Create primitive cuboid with size 0.531×0.020×0.005 m and name it frame_bottom.
+frame_bottom = add_cube("frame_bottom", (0.531, 0.020, 0.005))
+frame_bottom.data.materials.append(mat_black_plastic)
+
+# Rotate frame_bottom so its +Z axis aligns +Z (world).
+# Default is Z-up.
+
+# Anchor frame_bottom to world origin.
+frame_bottom.location = (0, 0, 0)
+
+# Then move by offset(0, -0.160, 0.002).
+frame_bottom.location += Vector((0, -0.160, 0.002))
+
+# --- SECTION 9 – Create Left Bezel ---
+# Create primitive cuboid with size 0.015×0.300×0.005 m and name it frame_left.
+frame_left = add_cube("frame_left", (0.015, 0.300, 0.005))
+frame_left.data.materials.append(mat_black_plastic)
+
+# Rotate frame_left so its +Z axis aligns +Z (world).
+# Default is Z-up.
+
+# Anchor frame_left to world origin.
+frame_left.location = (0, 0, 0)
+
+# Then move by offset(-0.273, 0, 0.002).
+frame_left.location += Vector((-0.273, 0, 0.002))
+
+# --- SECTION 10 – Create Right Bezel ---
+# Create primitive cuboid with size 0.015×0.300×0.005 m and name it frame_right.
+frame_right = add_cube("frame_right", (0.015, 0.300, 0.005))
+frame_right.data.materials.append(mat_black_plastic)
+
+# Rotate frame_right so its +Z axis aligns +Z (world).
+# Default is Z-up.
+
+# Anchor frame_right to world origin.
+frame_right.location = (0, 0, 0)
+
+# Then move by offset(0.273, 0, 0.002).
+frame_right.location += Vector((0.273, 0, 0.002))
+
+# --- SECTION 11 – Assemble Bezel Frame ---
+# Align frame_top.Z_face to glass_screen.Z_face.
+align_face_to_face(frame_top, glass_screen, axis='Z', direction=1)
+# Then move by offset(0, 0, 0).
+
+# Align frame_bottom.Z_face to glass_screen.Z_face.
+align_face_to_face(frame_bottom, glass_screen, axis='Z', direction=1)
+# Then move by offset(0, 0, 0).
+
+# Align frame_left.Z_face to glass_screen.Z_face.
+align_face_to_face(frame_left, glass_screen, axis='Z', direction=1)
+# Then move by offset(0, 0, 0).
+
+# Align frame_right.Z_face to glass_screen.Z_face.
+align_face_to_face(frame_right, glass_screen, axis='Z', direction=1)
+# Then move by offset(0, 0, 0).
+
+# --- SECTION 12 – Assemble Screen Group ---
+# Note: The prompt mentions "panel_unit" and "bezel_frame" as groups.
+# In Blender, we don't have explicit groups in the script logic unless we use collections or parent objects.
+# However, the alignment instructions refer to these groups as if they are single objects.
+# Since we are building a hierarchy, we should parent them.
+# Let's create empty objects to represent these groups for alignment purposes, or just align the last added component.
+# The prompt says "Align panel_unit.Z_face to bezel_frame.Z_face".
+# panel_unit consists of led_backlight and glass_screen.
+# bezel_frame consists of frame_top, frame_bottom, frame_left, frame_right.
+# The last aligned face in panel_unit is glass_screen (positive Z).
+# The last aligned face in bezel_frame is frame_right (positive Z).
+# But logically, the bezel frame surrounds the panel.
+# The alignment "Z_face" likely refers to the front face of the assembly.
+# Since all components in the panel and bezel are aligned to the same Z plane (glass_screen Z face),
+# their positive Z faces are already aligned.
+# So this step might just be a sanity check or ensuring they are in the same collection/parent.
+# Let's create parent objects to represent these groups.
+
+# Create Panel Group
+panel_unit = bpy.data.objects.new("panel_unit", None)
+panel_unit.location = (0,0,0)
+bpy.context.collection.objects.link(panel_unit)
+panel_unit.children.link(led_backlight)
+panel_unit.children.link(glass_screen)
+
+# Create Bezel Frame Group
+bezel_frame = bpy.data.objects.new("bezel_frame", None)
+bezel_frame.location = (0,0,0)
+bpy.context.collection.objects.link(bezel_frame)
+bezel_frame.children.link(frame_top)
+bezel_frame.children.link(frame_bottom)
+bezel_frame.children.link(frame_left)
+bezel_frame.children.link(frame_right)
+
+# Align panel_unit.Z_face to bezel_frame.Z_face
+# Since they are already aligned component-wise, we just ensure their origins are consistent if needed.
+# The instruction says "Align ... Z_face".
+# Let's align the positive Z face of the panel_unit (glass_screen) to the positive Z face of the bezel_frame (frame_right).
+# They are already aligned, so this is a no-op in terms of translation, but ensures logical consistency.
+align_face_to_face(panel_unit, bezel_frame, axis='Z', direction=1)
+# Then move by offset(0, 0, 0).
+
+# --- SECTION 13 – Assemble Monitor Root ---
+# Align screen_group.Z_face to stand_neck.Z_face.
+# "screen_group" likely refers to the entire monitor assembly including the stand neck?
+# Or maybe "panel_unit" + "bezel_frame" + "stand_neck"?
+# The prompt says "Align screen_group.Z_face to stand_neck.Z_face".
+# This is ambiguous. Let's assume "screen_group" is the combination of panel_unit and bezel_frame.
+# Let's create a screen_group object.
+screen_group = bpy.data.objects.new("screen_group", None)
+screen_group.location = (0,0,0)
+bpy.context.collection.objects.link(screen_group)
+screen_group.children.link(panel_unit)
+screen_group.children.link(bezel_frame)
+
+# Align screen_group.Z_face to stand_neck.Z_face
+# stand_neck is the vertical support.
+# screen_group is the monitor head.
+# We want to attach the monitor head to the top of the stand neck.
+# stand_neck positive Z face is the top.
+# screen_group positive Z face is the front/top of the monitor.
+# This alignment might be confusing. Usually, you align the bottom of the screen group to the top of the neck.
+# Let's align the negative Z face of screen_group to the positive Z face of stand_neck.
+# But the prompt says "Z_face" which usually implies positive.
+# Let's stick to the literal instruction: Align positive Z face of screen_group to positive Z face of stand_neck.
+# Then move by offset(0, 0, 0.075).
+
+align_face_to_face(screen_group, stand_neck, axis='Z', direction=1)
+# Then move by offset(0, 0, 0.075).
+screen_group.location += Vector((0, 0, 0.075))
+
+# Finalize
+bpy.context.view_layer.update()
+```

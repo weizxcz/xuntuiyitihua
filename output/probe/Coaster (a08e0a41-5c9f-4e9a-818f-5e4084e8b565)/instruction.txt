@@ -1,0 +1,1 @@
+Design a coaster with a circular shape, 4 inches in diameter, and a simple pattern.

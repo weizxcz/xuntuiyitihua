@@ -1,0 +1,1 @@
+Design a winter jacket. It should have a hood, a front zipper, and pockets on both sides. The jacket should be long enough to cover the hips.

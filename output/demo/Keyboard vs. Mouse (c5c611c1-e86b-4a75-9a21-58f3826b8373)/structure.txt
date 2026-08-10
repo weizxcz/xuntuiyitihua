@@ -1,0 +1,105 @@
+-- MATERIAL LIBRARY --
+key_cap | diffuse_color=(240,240,240,255)
+mouse_body | diffuse_color=(200,200,200,255)
+pcb | diffuse_color=(30,120,30,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| desk_surface | Flat work surface | size=1.2×0.6×0.02; pos=(0,0,0); orientation=axis:+Z; mat=wood; create_method=primitive |
+
+Layer 1 – Primary Structure (Keyboard)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| kb_base | Keyboard chassis | size=0.44×0.14×0.004; pos=(-0.3, 0.15, 0.022); orientation=axis:+Z; mat=plastic_black; create_method=primitive |
+| kb_top_plate | Top plate with key cutouts | size=0.43×0.13×0.003; pos=(-0.3, 0.15, 0.026); orientation=axis:+Z; mat=metal_silver; create_method=boolean_subtract |
+| kb_pcb | Printed Circuit Board | size=0.42×0.12×0.002; pos=(-0.3, 0.15, 0.025); orientation=axis:+Z; mat=pcb; create_method=primitive |
+
+Layer 2 – Keyboard Components (Keys)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| key_1_1 | Keycap Row 1, Col 1 | size=0.015×0.015×0.004; pos=(-0.48, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_2 | Keycap Row 1, Col 2 | size=0.015×0.015×0.004; pos=(-0.46, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_3 | Keycap Row 1, Col 3 | size=0.015×0.015×0.004; pos=(-0.44, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_4 | Keycap Row 1, Col 4 | size=0.015×0.015×0.004; pos=(-0.42, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_5 | Keycap Row 1, Col 5 | size=0.015×0.015×0.004; pos=(-0.40, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_6 | Keycap Row 1, Col 6 | size=0.015×0.015×0.004; pos=(-0.38, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_7 | Keycap Row 1, Col 7 | size=0.015×0.015×0.004; pos=(-0.36, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_8 | Keycap Row 1, Col 8 | size=0.015×0.015×0.004; pos=(-0.34, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_9 | Keycap Row 1, Col 9 | size=0.015×0.015×0.004; pos=(-0.32, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_10 | Keycap Row 1, Col 10 | size=0.015×0.015×0.004; pos=(-0.30, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_11 | Keycap Row 1, Col 11 | size=0.015×0.015×0.004; pos=(-0.28, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_12 | Keycap Row 1, Col 12 | size=0.015×0.015×0.004; pos=(-0.26, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_13 | Keycap Row 1, Col 13 | size=0.015×0.015×0.004; pos=(-0.24, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_14 | Keycap Row 1, Col 14 | size=0.015×0.015×0.004; pos=(-0.22, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_15 | Keycap Row 1, Col 15 | size=0.015×0.015×0.004; pos=(-0.20, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_16 | Keycap Row 1, Col 16 | size=0.015×0.015×0.004; pos=(-0.18, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_17 | Keycap Row 1, Col 17 | size=0.015×0.015×0.004; pos=(-0.16, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_18 | Keycap Row 1, Col 18 | size=0.015×0.015×0.004; pos=(-0.14, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_19 | Keycap Row 1, Col 19 | size=0.015×0.015×0.004; pos=(-0.12, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_1_20 | Keycap Row 1, Col 20 | size=0.015×0.015×0.004; pos=(-0.10, 0.19, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_1 | Keycap Row 2, Col 1 | size=0.015×0.015×0.004; pos=(-0.48, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_2 | Keycap Row 2, Col 2 | size=0.015×0.015×0.004; pos=(-0.46, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_3 | Keycap Row 2, Col 3 | size=0.015×0.015×0.004; pos=(-0.44, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_4 | Keycap Row 2, Col 4 | size=0.015×0.015×0.004; pos=(-0.42, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_5 | Keycap Row 2, Col 5 | size=0.015×0.015×0.004; pos=(-0.40, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_6 | Keycap Row 2, Col 6 | size=0.015×0.015×0.004; pos=(-0.38, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_7 | Keycap Row 2, Col 7 | size=0.015×0.015×0.004; pos=(-0.36, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_8 | Keycap Row 2, Col 8 | size=0.015×0.015×0.004; pos=(-0.34, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_9 | Keycap Row 2, Col 9 | size=0.015×0.015×0.004; pos=(-0.32, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_10 | Keycap Row 2, Col 10 | size=0.015×0.015×0.004; pos=(-0.30, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_11 | Keycap Row 2, Col 11 | size=0.015×0.015×0.004; pos=(-0.28, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_12 | Keycap Row 2, Col 12 | size=0.015×0.015×0.004; pos=(-0.26, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_13 | Keycap Row 2, Col 13 | size=0.015×0.015×0.004; pos=(-0.24, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_14 | Keycap Row 2, Col 14 | size=0.015×0.015×0.004; pos=(-0.22, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_15 | Keycap Row 2, Col 15 | size=0.015×0.015×0.004; pos=(-0.20, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_16 | Keycap Row 2, Col 16 | size=0.015×0.015×0.004; pos=(-0.18, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_17 | Keycap Row 2, Col 17 | size=0.015×0.015×0.004; pos=(-0.16, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_18 | Keycap Row 2, Col 18 | size=0.015×0.015×0.004; pos=(-0.14, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_19 | Keycap Row 2, Col 19 | size=0.015×0.015×0.004; pos=(-0.12, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_2_20 | Keycap Row 2, Col 20 | size=0.015×0.015×0.004; pos=(-0.10, 0.17, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_1 | Keycap Row 3, Col 1 | size=0.015×0.015×0.004; pos=(-0.48, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_2 | Keycap Row 3, Col 2 | size=0.015×0.015×0.004; pos=(-0.46, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_3 | Keycap Row 3, Col 3 | size=0.015×0.015×0.004; pos=(-0.44, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_4 | Keycap Row 3, Col 4 | size=0.015×0.015×0.004; pos=(-0.42, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_5 | Keycap Row 3, Col 5 | size=0.015×0.015×0.004; pos=(-0.40, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_6 | Keycap Row 3, Col 6 | size=0.015×0.015×0.004; pos=(-0.38, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_7 | Keycap Row 3, Col 7 | size=0.015×0.015×0.004; pos=(-0.36, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_8 | Keycap Row 3, Col 8 | size=0.015×0.015×0.004; pos=(-0.34, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_9 | Keycap Row 3, Col 9 | size=0.015×0.015×0.004; pos=(-0.32, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_10 | Keycap Row 3, Col 10 | size=0.015×0.015×0.004; pos=(-0.30, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_11 | Keycap Row 3, Col 11 | size=0.015×0.015×0.004; pos=(-0.28, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_12 | Keycap Row 3, Col 12 | size=0.015×0.015×0.004; pos=(-0.26, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_13 | Keycap Row 3, Col 13 | size=0.015×0.015×0.004; pos=(-0.24, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_14 | Keycap Row 3, Col 14 | size=0.015×0.015×0.004; pos=(-0.22, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_15 | Keycap Row 3, Col 15 | size=0.015×0.015×0.004; pos=(-0.20, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_16 | Keycap Row 3, Col 16 | size=0.015×0.015×0.004; pos=(-0.18, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_17 | Keycap Row 3, Col 17 | size=0.015×0.015×0.004; pos=(-0.16, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_18 | Keycap Row 3, Col 18 | size=0.015×0.015×0.004; pos=(-0.14, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_19 | Keycap Row 3, Col 19 | size=0.015×0.015×0.004; pos=(-0.12, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_3_20 | Keycap Row 3, Col 20 | size=0.015×0.015×0.004; pos=(-0.10, 0.15, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_1 | Keycap Row 4, Col 1 | size=0.015×0.015×0.004; pos=(-0.48, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_2 | Keycap Row 4, Col 2 | size=0.015×0.015×0.004; pos=(-0.46, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_3 | Keycap Row 4, Col 3 | size=0.015×0.015×0.004; pos=(-0.44, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_4 | Keycap Row 4, Col 4 | size=0.015×0.015×0.004; pos=(-0.42, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_5 | Keycap Row 4, Col 5 | size=0.015×0.015×0.004; pos=(-0.40, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_6 | Keycap Row 4, Col 6 | size=0.015×0.015×0.004; pos=(-0.38, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_7 | Keycap Row 4, Col 7 | size=0.015×0.015×0.004; pos=(-0.36, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_8 | Keycap Row 4, Col 8 | size=0.015×0.015×0.004; pos=(-0.34, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_9 | Keycap Row 4, Col 9 | size=0.015×0.015×0.004; pos=(-0.32, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_10 | Keycap Row 4, Col 10 | size=0.015×0.015×0.004; pos=(-0.30, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_11 | Keycap Row 4, Col 11 | size=0.015×0.015×0.004; pos=(-0.28, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_12 | Keycap Row 4, Col 12 | size=0.015×0.015×0.004; pos=(-0.26, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_13 | Keycap Row 4, Col 13 | size=0.015×0.015×0.004; pos=(-0.24, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_14 | Keycap Row 4, Col 14 | size=0.015×0.015×0.004; pos=(-0.22, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_15 | Keycap Row 4, Col 15 | size=0.015×0.015×0.004; pos=(-0.20, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_16 | Keycap Row 4, Col 16 | size=0.015×0.015×0.004; pos=(-0.18, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_17 | Keycap Row 4, Col 17 | size=0.015×0.015×0.004; pos=(-0.16, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_18 | Keycap Row 4, Col 18 | size=0.015×0.015×0.004; pos=(-0.14, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_19 | Keycap Row 4, Col 19 | size=0.015×0.015×0.004; pos=(-0.12, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_4_20 | Keycap Row 4, Col 20 | size=0.015×0.015×0.004; pos=(-0.10, 0.13, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_5_1 | Keycap Row 5, Col 1 | size=0.015×0.015×0.004; pos=(-0.48, 0.11, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_5_2 | Keycap Row 5, Col 2 | size=0.015×0.015×0.004; pos=(-0.46, 0.11, 0.030); orientation=axis:+Z; mat=key_cap; create_method=primitive |
+| key_5_3 | Keycap Row 5, Col 3 | size

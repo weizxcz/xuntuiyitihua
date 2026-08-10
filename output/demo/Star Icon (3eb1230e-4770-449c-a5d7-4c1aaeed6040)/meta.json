@@ -1,0 +1,42 @@
+{
+  "id": "3eb1230e-4770-449c-a5d7-4c1aaeed6040",
+  "name": "Star Icon",
+  "instruction": "Create a star icon that can be used in a logo. It should be a five-pointed star, evenly proportioned.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a five-pointed star.",
+        "The star is evenly proportioned."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The star is designed in a two-dimensional plane suitable for logos.",
+        "The points of the star are evenly spaced."
+      ],
+      "Object distance and contact": [
+        "There are no overlapping elements within the star design."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The star is created as a five-pointed shape.",
+        "The star is evenly proportioned as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

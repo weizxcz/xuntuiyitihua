@@ -1,0 +1,44 @@
+{
+  "id": "608fbe0f-c227-4980-820a-916c4c8e90a3",
+  "name": "Pen",
+  "instruction": "Create a 3D model of a pen. It should have a cylindrical body and a pointed tip.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pen.",
+        "The pen has a cylindrical body.",
+        "The tip of the pen is pointed."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The tip is proportionate to the body."
+      ],
+      "Texture and surface detail": [
+        "The tip should have a glossy finish to represent a writing point."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical body is correctly oriented.",
+        "The pointed tip is positioned at one end of the body."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the body and the tip.",
+        "The tip is seamlessly integrated into the body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The model adheres to the instruction of having a cylindrical body and a pointed tip."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

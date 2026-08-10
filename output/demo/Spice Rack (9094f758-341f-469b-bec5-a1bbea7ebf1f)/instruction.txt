@@ -1,0 +1,6 @@
+Design a spice rack that can be mounted on a kitchen wall. 
+
+1. It should have three tiers.
+2. Each tier should include a rail to prevent the spice jars from falling.
+3. Include mounting brackets on the back.
+4. Ensure the tiers are wide enough to hold standard spice jars.

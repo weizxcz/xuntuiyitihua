@@ -1,0 +1,223 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube and apply transforms."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_z_to_vector(obj, target_vector):
+    """Align object's local Z axis to a target world vector."""
+    # Get current world rotation
+    rot_mat = obj.matrix_world.to_quaternion()
+    
+    # Target direction
+    target_dir = target_vector.normalized()
+    # Up vector (arbitrary, but needs to be non-parallel)
+    up = Vector((0, 0, 1))
+    if abs(target_dir.dot(up)) > 0.99:
+        up = Vector((1, 0, 0))
+        
+    # Calculate rotation matrix to align Z to target_dir
+    # We want to rotate the object so its local Z (0,0,1) points to target_dir
+    # Current local Z in world is rot_mat * (0,0,1)
+    
+    # Simple approach: Set rotation using quaternion from current up to target up?
+    # No, we want to align the object's Z axis.
+    
+    # Let's use a temporary object to calculate the rotation
+    temp = bpy.context.view_layer.objects.active
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0,0,0))
+    temp_obj = bpy.context.active_object
+    temp_obj.name = "_temp_align"
+    
+    # Align temp object Z to target
+    temp_obj.rotation_mode = 'QUATERNION'
+    temp_obj.rotation_quaternion = target_dir.to_track_quat('Z', 'Y') # Align Z to target, Y is up-ish
+    
+    # Get the rotation delta
+    # Actually, simpler: Just set the object's rotation directly if we know the target axis.
+    # But for generic helper:
+    
+    # Calculate quaternion that rotates (0,0,1) to target_dir
+    q = Vector((0,0,1)).rotation_difference(target_dir)
+    
+    # Apply this rotation to the object's current rotation
+    # obj.rotation_quaternion = q * obj.rotation_quaternion # Order matters
+    
+    # Let's just set the rotation euler based on the quaternion
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = q
+    
+    bpy.ops.object.select_all(action='DESELECT')
+    temp_obj.select_set(True)
+    bpy.context.view_layer.objects.active = temp_obj
+    bpy.ops.object.delete()
+    return obj
+
+def align_z_to_world_z(obj):
+    """Align object's local Z axis to world Z."""
+    return align_z_to_vector(obj, Vector((0, 0, 1)))
+
+def align_z_to_world_x(obj):
+    """Align object's local Z axis to world X."""
+    return align_z_to_vector(obj, Vector((1, 0, 0)))
+
+def align_z_to_world_y(obj):
+    """Align object's local Z axis to world Y."""
+    return align_z_to_vector(obj, Vector((0, 1, 0)))
+
+def align_z_to_negative_z(obj):
+    """Align object's local Z axis to negative world Z."""
+    return align_z_to_vector(obj, Vector((0, 0, -1)))
+
+def align_z_to_negative_x(obj):
+    """Align object's local Z axis to negative world X."""
+    return align_z_to_vector(obj, Vector((-1, 0, 0)))
+
+def align_z_to_negative_y(obj):
+    """Align object's local Z axis to negative world Y."""
+    return align_z_to_vector(obj, Vector((0, -1, 0)))
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for block in bpy.data.meshes:
+    if block.users == 0:
+        bpy.data.meshes.remove(block)
+for block in bpy.data.materials:
+    if block.users == 0:
+        bpy.data.materials.remove(block)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_fabric_exterior = make_material("fabric_exterior", (0.8, 0.2, 0.2, 1.0))
+mat_fabric_interior = make_material("fabric_interior", (0.9, 0.9, 0.9, 1.0))
+mat_zipper_track = make_material("zipper_track", (0.5, 0.5, 0.5, 1.0))
+mat_zipper_pull = make_material("zipper_pull", (0.8, 0.8, 0.8, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create exterior shell front and back panels
+
+# Create front_panel
+front_panel = add_cube("front_panel", (0.200, 0.150, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_exterior)
+align_z_to_world_z(front_panel)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+front_panel.location = (0, 0, 0)
+
+# Create back_panel
+back_panel = add_cube("back_panel", (0.200, 0.150, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_exterior)
+align_z_to_world_z(back_panel)
+# Anchor to world origin
+# Offset (0,0,0)
+back_panel.location = (0, 0, 0)
+
+# SECTION 2 – Create exterior shell bottom panel
+
+# Create bottom_panel
+bottom_panel = add_cube("bottom_panel", (0.200, 0.100, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_exterior)
+align_z_to_world_z(bottom_panel)
+# Anchor to world origin
+# Offset (0,0,0)
+bottom_panel.location = (0, 0, 0)
+
+# SECTION 3 – Create exterior shell side gusset
+
+# Create side_gusset
+side_gusset = add_cube("side_gusset", (0.100, 0.150, 0.002), (0, 0, 0), (0, 0, 0), mat_fabric_exterior)
+align_z_to_world_z(side_gusset)
+# Anchor to world origin
+# Offset (0,0,0)
+side_gusset.location = (0, 0, 0)
+
+# SECTION 4 – Create interior lining front and back panels
+
+# Create front_lining
+front_lining = add_cube("front_lining", (0.190, 0.140, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_interior)
+align_z_to_world_z(front_lining)
+# Anchor to world origin
+# Offset (0,0,0)
+front_lining.location = (0, 0, 0)
+
+# Create back_lining
+back_lining = add_cube("back_lining", (0.190, 0.140, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_interior)
+align_z_to_world_z(back_lining)
+# Anchor to world origin
+# Offset (0,0,0)
+back_lining.location = (0, 0, 0)
+
+# SECTION 5 – Create interior lining bottom panel
+
+# Create bottom_lining
+bottom_lining = add_cube("bottom_lining", (0.190, 0.090, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_interior)
+align_z_to_world_z(bottom_lining)
+# Anchor to world origin
+# Offset (0,0,0)
+bottom_lining.location = (0, 0, 0)
+
+# SECTION 6 – Create zipper track
+
+# Create zipper_track
+zipper_track = add_cube("zipper_track", (0.200, 0.010, 0.005), (0, 0, 0), (0, 0, 0), mat_zipper_track)
+align_z_to_world_x(zipper_track)
+# Anchor to world origin
+# Offset (0,0,0.075)
+zipper_track.location = (0, 0, 0.075)
+
+# SECTION 7 – Create zipper pull
+
+# Create zipper_pull
+zipper_pull = add_cube("zipper_pull", (0.020, 0.010, 0.002), (0, 0, 0), (0, 0, 0), mat_zipper_pull)
+align_z_to_world_z(zipper_pull)
+# Anchor to world origin
+# Offset (0.100,0,0.075)
+zipper_pull.location = (0.100, 0, 0.075)
+
+# SECTION 8 – Create internal divider A
+
+# Create divider_A
+divider_A = add_cube("divider_A", (0.190, 0.140, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_interior)
+align_z_to_world_z(divider_A)
+# Anchor to world origin
+# Offset (0,0,0)
+divider_A.location = (0, 0, 0)
+
+# SECTION 9 – Create internal divider B
+
+# Create divider_B
+divider_B = add_cube("divider_B", (0.190, 0.140, 0.001), (0, 0, 0), (0, 0, 0), mat_fabric_interior)
+align_z_to_world_z(divider_B)
+# Anchor to world origin
+# Offset (0,0,0)
+divider_B.location = (0, 0, 0)
+```

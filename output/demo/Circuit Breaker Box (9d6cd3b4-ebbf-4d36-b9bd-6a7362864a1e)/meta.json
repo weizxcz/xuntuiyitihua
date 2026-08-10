@@ -1,0 +1,45 @@
+{
+  "id": "9d6cd3b4-ebbf-4d36-b9bd-6a7362864a1e",
+  "name": "Circuit Breaker Box",
+  "instruction": "Could you create a basic 3D model of a circuit breaker box?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the model is a circuit breaker box.",
+        "The circuit breaker box has a rectangular shape.",
+        "The front panel is flat and vertical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The dimensions of the circuit breaker box should reflect a standard size, typically around 30cm in height, 20cm in width, and 10cm in depth."
+      ],
+      "Proportion": [
+        "The proportions of the box should be realistic and functional for housing circuit breakers."
+      ],
+      "Texture and surface detail": [
+        "The surface of the circuit breaker box should have a smooth finish.",
+        "There may be subtle details like ventilation slots or labels."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The box should have depth, height, and width accurately represented.",
+        "The internal structure should allow for the placement of circuit breakers."
+      ],
+      "Object distance and contact": [
+        "The front panel should be flush with the sides of the box.",
+        "There should be no gaps between the front panel and the box."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The model accurately represents a circuit breaker box as requested.",
+        "All specified attributes are included in the model."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

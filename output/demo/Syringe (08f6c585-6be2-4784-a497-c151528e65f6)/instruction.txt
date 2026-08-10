@@ -1,0 +1,1 @@
+Design a medical syringe. It should have a cylindrical barrel, a plunger, and a needle. Include measurement markings on the barrel.

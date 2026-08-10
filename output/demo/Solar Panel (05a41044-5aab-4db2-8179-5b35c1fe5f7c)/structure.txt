@@ -1,0 +1,49 @@
+-- MATERIAL LIBRARY --
+aluminum_frame | diffuse_color=(180,180,180,1)
+backsheet | diffuse_color=(30,30,30,1)
+junction_box | diffuse_color=(20,20,20,1)
+junction_box_lid | diffuse_color=(20,20,20,1)
+junction_box_connector | diffuse_color=(100,100,100,1)
+junction_box_wire | diffuse_color=(200,50,50,1)
+junction_box_wire_black | diffuse_color=(20,20,20,1)
+glass_cover | diffuse_color=(100,200,200,0.3)
+grid_busbar | diffuse_color=(150,150,150,1)
+photovoltaic_cell | diffuse_color=(20,20,80,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| solar_panel | Composite of frame + cells + junction box | assembly_order=[frame_group, cells_group, junction_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_group | Composite of frame rails | assembly_order=[frame_top, frame_bottom, frame_left, frame_right] |
+| cells_group | Composite of photovoltaic cells | assembly_order=[cells_array] |
+| junction_group | Composite of junction box and wires | assembly_order=[junction_box_body, junction_box_lid, junction_box_connector, junction_box_wire, junction_box_wire_black] |
+
+Layer 2 – Frame Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_top | Top frame rail | cylinder Ø0.040×1.600 m; orientation=axis:+Z; mat=aluminum_frame; create_method=primitive |
+| frame_bottom | Bottom frame rail | cylinder Ø0.040×1.600 m; orientation=axis:+Z; mat=aluminum_frame; create_method=primitive |
+| frame_left | Left frame rail | cylinder Ø0.040×1.000 m; orientation=axis:+X; mat=aluminum_frame; create_method=primitive |
+| frame_right | Right frame rail | cylinder Ø0.040×1.000 m; orientation=axis:+X; mat=aluminum_frame; create_method=primitive |
+
+Layer 3 – Cell Array
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cells_array | Grid of photovoltaic cells | pattern=grid(rows:6, cols:10, x_spacing:0.15, y_spacing:0.15, start_offset:(-0.75, -0.45)); mat=photovoltaic_cell; create_method=primitive |
+
+Layer 4 – Junction Box Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| junction_box_body | Junction box body | cube 0.080×0.060×0.030 m; orientation=axis:+Z; mat=junction_box; create_method=primitive |
+| junction_box_lid | Junction box lid | cube 0.080×0.060×0.005 m; orientation=axis:+Z; mat=junction_box_lid; create_method=primitive |
+| junction_box_connector | Junction box connector | cylinder Ø0.020×0.010 m; orientation=axis:+Z; mat=junction_box_connector; create_method=primitive |
+| junction_box_wire | Positive wire | cylinder Ø0.005×0.100 m; orientation=axis:+Z; mat=junction_box_wire; create_method=primitive |
+| junction_box_wire_black | Negative wire | cylinder Ø0.005×0.100 m; orientation=axis:+Z; mat=junction_box_wire_black; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

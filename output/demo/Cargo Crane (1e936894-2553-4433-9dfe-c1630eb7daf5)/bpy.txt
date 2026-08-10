@@ -1,0 +1,436 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units_metres():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Roughness'].default_value = 0.8
+    return mat
+
+def add_primitive(name, primitive_type, dimensions, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    bpy.ops.object.select_all(action='DESELECT')
+    if primitive_type == 'CUBE':
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        obj = bpy.context.active_object
+        obj.scale = (dimensions[0]/2, dimensions[1]/2, dimensions[2]/2)
+    elif primitive_type == 'CYLINDER':
+        # dimensions: (diameter, height)
+        radius = dimensions[0] / 2
+        height = dimensions[1]
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location)
+        obj = bpy.context.active_object
+    elif primitive_type == 'UVSPHERE':
+        # dimensions: (radius, segments) - simplified for sphere/hemi
+        radius = dimensions[0]
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+        obj = bpy.context.active_object
+    else:
+        raise ValueError(f"Unsupported primitive type: {primitive_type}")
+    
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def align_face_to_face(obj_source, obj_target, axis='Z'):
+    """
+    Align the XY face (normal to Z) of obj_source to the XY face of obj_target.
+    Assumes both are oriented with Z up initially.
+    Moves obj_source so its bottom Z matches target's bottom Z.
+    """
+    # Get bounding box centers and extents
+    src_min = obj_source.matrix_world @ Vector((0,0,0)) # Simplified: assume origin at center
+    # Actually, for primitives added at origin, local (0,0,0) is center.
+    # We need to move the object so its bottom aligns with target's bottom.
+    
+    # Calculate world positions of bottoms
+    # Since we rotate then align, let's work in local space relative to world after rotation
+    
+    # Get world matrix
+    src_mat = obj_source.matrix_world
+    tgt_mat = obj_target.matrix_world
+    
+    # Get bottom Z in world space
+    # For a cylinder/cube centered at 0,0,0 with height H, bottom is at -H/2 in local Z
+    # We need to know the half-height.
+    
+    def get_bottom_z(obj):
+        # Get bounding box
+        bbox = [obj.matrix_world @ v for v in obj.bound_box]
+        z_coords = [v.z for v in bbox]
+        return min(z_coords)
+
+    src_bottom_z = get_bottom_z(obj_source)
+    tgt_bottom_z = get_bottom_z(obj_target)
+    
+    # Offset required
+    offset_z = tgt_bottom_z - src_bottom_z
+    
+    # Apply offset
+    obj_source.location.z += offset_z
+    
+    # Align X and Y centers
+    src_center = obj_source.location
+    tgt_center = obj_target.location
+    
+    obj_source.location.x = tgt_center.x
+    obj_source.location.y = tgt_center.y
+
+def align_face_to_face_offset(obj_source, obj_target, offset_vector):
+    """
+    Align obj_source face to obj_target face, then apply offset.
+    Offset is in reference local axes (assumed aligned with world after rotation).
+    """
+    align_face_to_face(obj_source, obj_target)
+    obj_source.location += offset_vector
+
+def boolean_union(objects_to_union, result_name):
+    """
+    Perform boolean union on a list of objects.
+    Returns the resulting object.
+    """
+    if not objects_to_union:
+        return None
+    
+    # Select all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objects_to_union:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+    
+    # Apply modifiers if any (clean up)
+    for obj in objects_to_union:
+        for mod in obj.modifiers:
+            if mod.type == 'BOOLEAN':
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    # Join them
+    bpy.ops.object.join()
+    
+    result = bpy.context.active_object
+    result.name = result_name
+    return result
+
+def boolean_subtract(base_obj, cutter_obj, result_name=None):
+    """
+    Subtract cutter_obj from base_obj using boolean modifier.
+    """
+    # Ensure base is active
+    bpy.context.view_layer.objects.active = base_obj
+    base_obj.select_set(True)
+    cutter_obj.select_set(False)
+    
+    # Add boolean modifier to base
+    mod = base_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    
+    if result_name:
+        base_obj.name = result_name
+        
+    return base_obj
+
+def orient_z_to_vector(obj, vector):
+    """Rotate object so its local Z axis aligns with the given world vector."""
+    # Current Z
+    current_z = Vector((0, 0, 1))
+    target_z = vector.normalized()
+    
+    # Calculate rotation
+    rot_quat = current_z.rotation_difference(target_z)
+    
+    # Apply rotation
+    obj.rotation_euler = rot_quat.to_euler()
+
+def orient_z_to_x(obj):
+    """Rotate object so its local Z axis aligns with world +X."""
+    orient_z_to_vector(obj, Vector((1, 0, 0)))
+
+def orient_z_to_y(obj):
+    """Rotate object so its local Z axis aligns with world +Y."""
+    orient_z_to_vector(obj, Vector((0, 1, 0)))
+
+def orient_z_to_z(obj):
+    """Rotate object so its local Z axis aligns with world +Z."""
+    orient_z_to_vector(obj, Vector((0, 0, 1)))
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_concrete_dark = make_material("concrete_dark", (0.4, 0.4, 0.4))
+mat_steel_blue = make_material("steel_blue", (0.2, 0.3, 0.6))
+mat_steel_grey = make_material("steel_grey", (0.5, 0.5, 0.5))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: base_footprint ---
+base_footprint = add_primitive("base_footprint", "CYLINDER", (2.0, 0.3), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(base_footprint)
+# Align to (0,0) - already there
+# Offset (0,0,0) - already there
+base_footprint.data.materials.append(mat_concrete_dark)
+
+# --- SECTION 2: counterweight_block ---
+counterweight_block = add_primitive("counterweight_block", "CUBE", (1.5, 1.0, 0.8), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(counterweight_block)
+align_face_to_face_offset(counterweight_block, base_footprint, Vector((0, -1.2, 0.4)))
+counterweight_block.data.materials.append(mat_concrete_dark)
+
+# --- SECTION 3: main_pylon_base ---
+main_pylon_base = add_primitive("main_pylon_base", "CYLINDER", (0.8, 0.5), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(main_pylon_base)
+align_face_to_face_offset(main_pylon_base, base_footprint, Vector((0, 0, 0.4)))
+main_pylon_base.data.materials.append(mat_steel_grey)
+
+# --- SECTION 4: slewing_ring ---
+slewing_ring = add_primitive("slewing_ring", "CYLINDER", (1.2, 0.1), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(slewing_ring)
+align_face_to_face_offset(slewing_ring, main_pylon_base, Vector((0, 0, 0.75)))
+slewing_ring.data.materials.append(mat_steel_grey)
+
+# --- SECTION 5: pylon_tower ---
+pylon_tower = add_primitive("pylon_tower", "CYLINDER", (0.6, 8.0), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(pylon_tower)
+align_face_to_face_offset(pylon_tower, main_pylon_base, Vector((0, 0, 0.8)))
+pylon_tower.data.materials.append(mat_steel_grey)
+
+# --- SECTION 6: jib_arm ---
+jib_arm = add_primitive("jib_arm", "CYLINDER", (0.4, 6.0), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_x(jib_arm)
+# Align jib_arm.XY_face (which is now perpendicular to X) to pylon_tower.XY_face (perpendicular to Z)
+# This implies aligning the axes. 
+# The instruction says: "Align jib_arm.XY_face to pylon_tower.XY_face".
+# Since jib_arm is rotated Z->X, its "XY face" is the circular face at one end of the cylinder.
+# pylon_tower's "XY face" is the top/bottom circular face.
+# We need to align the position of the jib_arm's circular face to the pylon_tower's circular face.
+# Specifically, the "XY_face" of a cylinder aligned to X is the face at X = +radius or -radius.
+# Let's assume we align the center of the jib_arm's circular face to the center of the pylon_tower's top face.
+
+# Helper to align specific faces when orientation differs
+def align_cylinder_face_to_cylinder_face(cyl_source, cyl_target, source_face_axis='X', target_face_axis='Z'):
+    """
+    Aligns the circular face of cyl_source (along source_face_axis) to the circular face of cyl_target (along target_face_axis).
+    Assumes both are cylinders.
+    """
+    # Get world matrix
+    src_mat = cyl_source.matrix_world
+    tgt_mat = cyl_target.matrix_world
+    
+    # Determine which face to align. 
+    # For simplicity, we align the face at +local_axis.
+    # Source face normal in world space
+    if source_face_axis == 'X':
+        src_normal = src_mat @ Vector((1, 0, 0))
+        src_offset_local = cyl_source.scale[0] * 0.5 # Radius
+    elif source_face_axis == 'Y':
+        src_normal = src_mat @ Vector((0, 1, 0))
+        src_offset_local = cyl_source.scale[0] * 0.5
+    else: # Z
+        src_normal = src_mat @ Vector((0, 0, 1))
+        src_offset_local = cyl_source.scale[0] * 0.5
+        
+    # Target face normal and position
+    if target_face_axis == 'X':
+        tgt_normal = tgt_mat @ Vector((1, 0, 0))
+        tgt_center_world = tgt_mat @ Vector((0,0,0)) + tgt_normal * (cyl_target.scale[0] * 0.5) # Approx
+    elif target_face_axis == 'Y':
+        tgt_normal = tgt_mat @ Vector((0, 1, 0))
+        tgt_center_world = tgt_mat @ Vector((0,0,0)) + tgt_normal * (cyl_target.scale[0] * 0.5)
+    else: # Z
+        tgt_normal = tgt_mat @ Vector((0, 0, 1))
+        tgt_center_world = tgt_mat @ Vector((0,0,0)) + tgt_normal * (cyl_target.scale[2] * 0.5) # Height/2
+
+    # We want the source face center to be at tgt_center_world
+    # Source face center in local space is (offset_local, 0, 0) if X
+    # In world space: src_mat @ Vector((offset_local, 0, 0))
+    
+    # Calculate required translation
+    # Current source face center
+    src_face_center_local = Vector((src_offset_local, 0, 0)) if source_face_axis == 'X' else \
+                            Vector((0, src_offset_local, 0)) if source_face_axis == 'Y' else \
+                            Vector((0, 0, src_offset_local))
+    
+    src_face_center_world = src_mat @ src_face_center_local
+    
+    # Desired location for source object center
+    # tgt_center_world - (src_mat @ src_face_center_local - src_mat @ (0,0,0))
+    # tgt_center_world - src_face_center_world + src_mat @ (0,0,0)
+    
+    src_center_world_current = src_mat @ Vector((0,0,0))
+    
+    new_center_world = tgt_center_world - (src_face_center_world - src_center_world_current)
+    
+    # Apply translation
+    translation = new_center_world - src_center_world_current
+    cyl_source.location += translation
+
+align_cylinder_face_to_cylinder_face(jib_arm, pylon_tower, source_face_axis='X', target_face_axis='Z')
+# Then move by offset(0,0,8.3)
+# Note: The offset is in reference local axes. Since jib_arm is rotated Z->X, its local Z is world X.
+# So offset(0,0,8.3) means move 8.3 along local Z (world X).
+jib_arm.location += jib_arm.matrix_world @ Vector((0, 0, 8.3))
+jib_arm.data.materials.append(mat_steel_grey)
+
+# --- SECTION 7: jib_cable ---
+jib_cable = add_primitive("jib_cable", "CYLINDER", (0.05, 5.0), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_x(jib_cable)
+align_cylinder_face_to_cylinder_face(jib_cable, pylon_tower, source_face_axis='X', target_face_axis='Z')
+jib_cable.location += jib_cable.matrix_world @ Vector((0, 0, 8.3))
+jib_cable.data.materials.append(mat_steel_blue)
+
+# --- SECTION 8: hook_block ---
+hook_block = add_primitive("hook_block", "CUBE", (0.3, 0.3, 0.3), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(hook_block)
+# Align hook_block.XY_face to jib_arm.XY_face
+# jib_arm is Z->X. Its "XY face" is the circular face at the end.
+# hook_block is Z->Z. Its "XY face" is the top/bottom.
+# This alignment is tricky because the faces are perpendicular.
+# "Align hook_block.XY_face to jib_arm.XY_face" likely means align the position of the hook_block's bottom to the jib_arm's end face center.
+# Let's assume we align the center of hook_block's bottom (Z-) to the center of jib_arm's end face (X+).
+
+def align_cube_face_to_cylinder_face(cube_obj, cyl_obj, cube_face_axis='Z', cyl_face_axis='X'):
+    """Aligns a cube face to a cylinder face."""
+    # Get world matrices
+    cube_mat = cube_obj.matrix_world
+    cyl_mat = cyl_obj.matrix_world
+    
+    # Cylinder face center
+    if cyl_face_axis == 'X':
+        cyl_face_normal = cyl_mat @ Vector((1, 0, 0))
+        cyl_face_offset = cyl_obj.scale[0] * 0.5
+    elif cyl_face_axis == 'Y':
+        cyl_face_normal = cyl_mat @ Vector((0, 1, 0))
+        cyl_face_offset = cyl_obj.scale[0] * 0.5
+    else:
+        cyl_face_normal = cyl_mat @ Vector((0, 0, 1))
+        cyl_face_offset = cyl_obj.scale[2] * 0.5
+        
+    cyl_face_center_world = cyl_mat @ Vector((0,0,0)) + cyl_face_normal * cyl_face_offset
+    
+    # Cube face center
+    if cube_face_axis == 'Z':
+        cube_face_normal = cube_mat @ Vector((0, 0, -1)) # Bottom
+        cube_face_offset = cube_obj.scale[2] * 0.5
+    elif cube_face_axis == 'Y':
+        cube_face_normal = cube_mat @ Vector((0, -1, 0))
+        cube_face_offset = cube_obj.scale[1] * 0.5
+    else:
+        cube_face_normal = cube_mat @ Vector((-1, 0, 0))
+        cube_face_offset = cube_obj.scale[0] * 0.5
+        
+    cube_face_center_local = Vector((0, 0, -cube_face_offset)) if cube_face_axis == 'Z' else \
+                             Vector((0, -cube_face_offset, 0)) if cube_face_axis == 'Y' else \
+                             Vector((-cube_face_offset, 0, 0))
+                             
+    cube_face_center_world_current = cube_mat @ cube_face_center_local
+    cube_center_world_current = cube_mat @ Vector((0,0,0))
+    
+    # Target cube center
+    new_cube_center = cyl_face_center_world - (cube_face_center_world_current - cube_center_world_current)
+    
+    cube_obj.location += new_cube_center - cube_center_world_current
+
+align_cube_face_to_cylinder_face(hook_block, jib_arm, cube_face_axis='Z', cyl_face_axis='X')
+# Offset(3.0, 0, 0) in local axes. Local Z is world X.
+# So move 3.0 along local Z (world X).
+hook_block.location += hook_block.matrix_world @ Vector((3.0, 0, 0))
+hook_block.data.materials.append(mat_steel_grey)
+
+# --- SECTION 9: hook_cable ---
+hook_cable = add_primitive("hook_cable", "CYLINDER", (0.02, 0.5), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(hook_cable)
+# Align hook_cable.XY_face to hook_block.XY_face
+# hook_block is Z->Z. hook_cable is Z->Z.
+align_face_to_face_offset(hook_cable, hook_block, Vector((0, 0, 0.3)))
+hook_cable.data.materials.append(mat_steel_blue)
+
+# --- SECTION 10: hook ---
+hook = add_primitive("hook", "CYLINDER", (0.1, 0.2), location=(0,0,0), rotation=(0,0,0))
+orient_z_to_z(hook)
+# Align hook.XY_face to hook_block.XY_face
+align_face_to_face_offset(hook, hook_block, Vector((0, 0, -0.3)))
+hook.data.materials.append(mat_steel_grey)
+
+# --- SECTION 11: Assemble base_plate ---
+# Boolean-union base_footprint, counterweight_block, and central_hub to create base_plate.
+# Note: central_hub is not created yet. This is a dependency issue in the prompt.
+# "Stage 11 complete" implies we should create it now or assume it exists.
+# However, Stage 12 creates central_hub.
+# I will create central_hub first to satisfy the dependency, or create a temporary one.
+# Given the strict stage order, I will create central_hub here temporarily or reorder.
+# Let's create central_hub now as a temporary object to perform the union, then delete it?
+# No, the prompt says "Assemble base_plate ... to create base_plate".
+# And "Assemble central_hub ... to create central_hub".
+# I will create central_hub first.
+
+# --- SECTION 12: Assemble central_hub (Moved up for dependency) ---
+central_hub = boolean_union([main_pylon_base, slewing_ring, pylon_tower], "central_hub")
+central_hub.data.materials.append(mat_steel_grey)
+
+# --- SECTION 11: Assemble base_plate (Revisited) ---
+base_plate = boolean_union([base_footprint, counterweight_block, central_hub], "base_plate")
+base_plate.data.materials.append(mat_concrete_dark)
+
+# --- SECTION 13: Assemble jib_assembly ---
+jib_assembly = boolean_union([jib_arm, jib_cable, hook_block, hook_cable, hook], "jib_assembly")
+jib_assembly.data.materials.append(mat_steel_grey)
+
+# Cleanup: Remove original parts if they are now part of the assembly
+# The boolean_union function joins them, so the original objects are gone/replaced.
+# However, central_hub was created from main_pylon_base etc.
+# base_plate was created from base_footprint, counterweight_block, central_hub.
+# jib_assembly was created from jib_arm, jib_cable, hook_block, hook_cable, hook.
+
+# The objects base_footprint, counterweight_block, main_pylon_base, slewing_ring, pylon_tower, 
+# jib_arm, jib_cable, hook_block, hook_cable, hook are now part of base_plate or jib_assembly.
+# central_hub is part of base_plate.
+
+# We should ensure the scene only contains the final assemblies if desired, 
+# but the prompt doesn't explicitly say to delete the intermediates.
+# However, boolean_union joins them, so the original objects are removed from the scene 
+# (bpy.ops.object.join removes the source objects from the collection).
+# So base_plate, central_hub, and jib_assembly are the remaining objects.
+# Wait, central_hub is part of base_plate. So central_hub object is gone.
+# base_plate is the union.
+# jib_assembly is the union.
+
+# Final objects: base_plate, jib_assembly.
+```

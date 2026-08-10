@@ -1,0 +1,1 @@
+Design a 3D model comparing a dining table and a coffee table. The dining table should be rectangular with four legs and enough space for six chairs. The coffee table should be lower and smaller, with a rectangular shape and four legs. Position them side by side.

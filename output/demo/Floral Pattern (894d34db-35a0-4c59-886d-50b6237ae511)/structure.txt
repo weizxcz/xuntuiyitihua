@@ -1,0 +1,27 @@
+-- MATERIAL LIBRARY --
+flower_petal | diffuse_color=(1.0,0.8,0.8,1.0)
+flower_stamen | diffuse_color=(1.0,0.9,0.0,1.0)
+pattern_background | diffuse_color=(0.9,0.9,0.9,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of pattern_background + floral_array | assembly_order=[pattern_background], [floral_array] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pattern_background | Flat square panel 1.0×1.0×0.01 m | pos=(0,0,0); orientation=axis:+Z; mat=pattern_background; create_method=primitive(cube); constraint=1.0x1.0x0.01 |
+| floral_array | Composite of 4 flower instances arranged in a 2x2 grid | assembly_order=[flower_0_0], [flower_0_1], [flower_1_0], [flower_1_1]; pattern=grid(rows:2, cols:2, x_spacing:0.5, y_spacing:0.5, start_offset:(-0.25,-0.25)) |
+
+Layer 2 – Floral Components (Template for Pattern)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| flower_template | Composite of petal_ring + stamen_core | assembly_order=[petal_ring], [stamen_core] |
+| petal_ring | Composite of 5 petals arranged radially | assembly_order=[petal_0], [petal_1], [petal_2], [petal_3], [petal_4]; pattern=polar(count:5, radius:0.05, start_angle:0°, angle_step:72°) |
+| petal_0 | Single petal shape approx 0.04×0.02×0.002 m | Align(XY) petal_0.center to flower_template.center; orientation=axis:+Z; mat=flower_petal; create_method=extrude_from_sketch; constraint=BMesh sketch: Heart-like petal outline on XY plane, width 0.04m, height 0.02m, thickness 0.002m. Extrude along +Z. |
+| stamen_core | Small cylinder Ø0.01×0.005 m | Align(XY) stamen_core.center to flower_template.center; Align(Z) stamen_core.bottom_face to flower_template.bottom_face; orientation=axis:+Z; mat=flower_stamen; create_method=primitive(cylinder); constraint=Ø0.01x0.005 |
+
+# ----------  END_GRAPH  ----------

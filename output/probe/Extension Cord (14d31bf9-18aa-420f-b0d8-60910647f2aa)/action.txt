@@ -1,0 +1,135 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material cable_jacket; diffuse_color = (0.94, 0.94, 0.94, 1).
+Define material cord_wire; diffuse_color = (0.39, 0.39, 0.39, 1).
+Define material outlet_body; diffuse_color = (0.96, 0.96, 0.96, 1).
+Define material outlet_shutter; diffuse_color = (0.20, 0.20, 0.20, 1).
+Define material plug_housing; diffuse_color = (0.96, 0.96, 0.96, 1).
+Define material plug_prong; diffuse_color = (0.71, 0.71, 0.71, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Cable Coil Loops  ---
+Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it cable_loop_1.
+Rotate cable_loop_1 so its +Z axis aligns +Z (world).
+Align cable_loop_1.center to root.center.
+Then move by offset(0, 0, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it cable_loop_2.
+Rotate cable_loop_2 so its +Z axis aligns +Z (world).
+Align cable_loop_2.center to root.center.
+Then move by offset(0.045, 0, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it cable_loop_3.
+Rotate cable_loop_3 so its +Z axis aligns +Z (world).
+Align cable_loop_3.center to root.center.
+Then move by offset(0.090, 0, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it cable_loop_4.
+Rotate cable_loop_4 so its +Z axis aligns +Z (world).
+Align cable_loop_4.center to root.center.
+Then move by offset(0.135, 0, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it cable_loop_5.
+Rotate cable_loop_5 so its +Z axis aligns +Z (world).
+Align cable_loop_5.center to root.center.
+Then move by offset(0.180, 0, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Power Strip Body  ---
+Create primitive cube with size 0.300×0.050×0.020 m and name it strip_body.
+Rotate strip_body so its +Z axis aligns +Z (world).
+Align strip_body.center to root.center.
+Then move by offset(0.225, 0, 0).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Outlet 1 Components  ---
+Create primitive cube with size 0.040×0.040×0.015 m and name it socket_housing_1.
+Rotate socket_housing_1 so its +Z axis aligns +Z (world).
+Align socket_housing_1.center to strip_body.top_face.
+Then move by offset(-0.100, 0, 0.0175).
+
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it shutter_1a.
+Rotate shutter_1a so its +Z axis aligns +X (world).
+Align shutter_1a.center to socket_housing_1.front_face.
+Then move by offset(-0.008, 0, 0.0075).
+
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it shutter_1b.
+Rotate shutter_1b so its +Z axis aligns +X (world).
+Align shutter_1b.center to socket_housing_1.front_face.
+Then move by offset(0.008, 0, 0.0075).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Outlet 2 Components  ---
+Create primitive cube with size 0.040×0.040×0.015 m and name it socket_housing_2.
+Rotate socket_housing_2 so its +Z axis aligns +Z (world).
+Align socket_housing_2.center to strip_body.top_face.
+Then move by offset(0, 0, 0.0175).
+
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it shutter_2a.
+Rotate shutter_2a so its +Z axis aligns +X (world).
+Align shutter_2a.center to socket_housing_2.front_face.
+Then move by offset(-0.008, 0, 0.0075).
+
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it shutter_2b.
+Rotate shutter_2b so its +Z axis aligns +X (world).
+Align shutter_2b.center to socket_housing_2.front_face.
+Then move by offset(0.008, 0, 0.0075).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Outlet 3 Components  ---
+Create primitive cube with size 0.040×0.040×0.015 m and name it socket_housing_3.
+Rotate socket_housing_3 so its +Z axis aligns +Z (world).
+Align socket_housing_3.center to strip_body.top_face.
+Then move by offset(0.100, 0, 0.0175).
+
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it shutter_3a.
+Rotate shutter_3a so its +Z axis aligns +X (world).
+Align shutter_3a.center to socket_housing_3.front_face.
+Then move by offset(-0.008, 0, 0.0075).
+
+Create primitive cylinder with diameter 0.005 m and height 0.002 m and name it shutter_3b.
+Rotate shutter_3b so its +Z axis aligns +X (world).
+Align shutter_3b.center to socket_housing_3.front_face.
+Then move by offset(0.008, 0, 0.0075).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Plug Head Components  ---
+Create primitive cube with size 0.050×0.040×0.030 m and name it plug_body.
+Rotate plug_body so its +Z axis aligns +Z (world).
+Align plug_body.center to root.center.
+Then move by offset(-0.025, 0, 0).
+
+Create primitive cylinder with diameter 0.004 m and height 0.020 m and name it prong_1.
+Rotate prong_1 so its +Z axis aligns -Z (world).
+Align prong_1.center to plug_body.back_face.
+Then move by offset(-0.010, 0, 0).
+
+Create primitive cylinder with diameter 0.004 m and height 0.020 m and name it prong_2.
+Rotate prong_2 so its +Z axis aligns -Z (world).
+Align prong_2.center to plug_body.back_face.
+Then move by offset(0.010, 0, 0).
+
+Create primitive cylinder with diameter 0.004 m and height 0.020 m and name it prong_3.
+Rotate prong_3 so its +Z axis aligns -Z (world).
+Align prong_3.center to plug_body.back_face.
+Then move by offset(0, 0.015, 0).
+
+Stage 6 complete.
+
+All stages complete.

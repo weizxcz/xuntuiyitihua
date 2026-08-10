@@ -1,0 +1,45 @@
+{
+  "id": "cce79469-0b94-4c3f-933e-0ab5f2d893a2",
+  "name": "Paint Palette",
+  "instruction": "Design a paint palette with a rectangular shape and multiple wells for holding different colors of paint. The palette should have a thumb hole for easy handling and a flat surface for mixing colors. Include a brush holder along one edge of the palette.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a paint palette.",
+        "The palette has a rectangular shape.",
+        "The palette features multiple wells for holding different colors of paint."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hole should not overlap the palette."
+      ],
+      "Texture and surface detail": [
+        "The palette has a flat surface for mixing colors."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The wells are evenly spaced on the palette.",
+        "The thumb hole is positioned for ergonomic handling.",
+        "The brush holder is securely attached along one edge."
+      ],
+      "Object distance and contact": [
+        "The wells do not overlap with the thumb hole.",
+        "The brush holder is accessible without interfering with the wells."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes all requested features without deviation."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

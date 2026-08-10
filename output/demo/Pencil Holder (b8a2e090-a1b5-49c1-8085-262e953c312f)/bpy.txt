@@ -1,0 +1,231 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    # size is expected as (x, y, z) dimensions
+    half_size = [s/2 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0,0,0)) # size=1 creates a cube of side 1
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='Z', target_vector=(0,0,1)):
+    """Aligns an object's local axis to a target world vector."""
+    axis_map = {'X': (1,0,0), 'Y': (0,1,0), 'Z': (0,0,1)}
+    local_axis = Vector(axis_map[axis_to_align])
+    target = Vector(target_vector).normalized()
+    
+    # Calculate rotation
+    if local_axis.dot(target) > 0.9999:
+        rot_quat = Matrix.Identity(3).to_quaternion()
+    else:
+        rot_quat = local_axis.rotation_difference(target)
+    
+    obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_subtract(cutter, target, name_suffix="_cut"):
+    """Performs a boolean subtraction using the modifier stack."""
+    # Ensure target is active for modifier addition if needed, but we'll add to target
+    target.select_set(True)
+    cutter.select_set(True)
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name=f"{target.name}_bool_sub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    return target
+
+def boolean_union(base, other, name_suffix="_union"):
+    """Performs a boolean union."""
+    base.select_set(True)
+    other.select_set(True)
+    bpy.context.view_layer.objects.active = base
+    
+    mod = base.modifiers.new(name=f"{base.name}_bool_union", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(other, do_unlink=True)
+    return base
+
+def add_bevel(obj, width, segments=5):
+    """Adds a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.location.copy()
+    
+    def face_center_world(self, face_index=0):
+        # Approximate bottom face center for aligned primitives
+        # For a cylinder/cube aligned to Z, bottom face is at -height/2
+        if self.obj.type == 'MESH':
+            # Get bounding box min Z
+            min_z = self.obj.bound_box[0][2]
+            # Transform to world
+            world_min_z = self.obj.matrix_world[3][2] + min_z * self.obj.scale[2] # Simplified
+            # Better: use data vertices
+            verts = self.obj.data.vertices
+            # Find vertex with min local Z
+            min_v = min(verts, key=lambda v: v.co.z)
+            world_pos = min_v.co @ self.obj.matrix_world
+            return world_pos
+        return self.center_world()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_acrylic = make_material("mat_acrylic", (0.9, 0.9, 0.95, 0.3))
+mat_white_paint = make_material("mat_white_paint", (0.95, 0.95, 0.95, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Root Holder Anchor ---
+# Create an Empty helper (cube display) and name it root_holder.
+bpy.ops.object.empty_add(type='CUBE', location=(0,0,0))
+root_holder = bpy.context.active_object
+root_holder.name = "root_holder"
+
+# Rotate root_holder so its axis aligns +Z (world).
+# Empty cubes are already aligned, but we ensure it.
+align_axis_to_vector(root_holder, 'Z', (0,0,1))
+
+# Move root_holder to (0,0,0).
+root_holder.location = (0,0,0)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create Outer Cylindrical Shell ---
+# Create primitive cylinder with size Ø0.102×0.152 m and name it base_cylinder.
+# Diameter 0.102 -> Radius 0.051. Height 0.152.
+base_cylinder = add_cylinder("base_cylinder", radius=0.051, depth=0.152)
+
+# Rotate base_cylinder so its +Z axis aligns +Z (world).
+align_axis_to_vector(base_cylinder, 'Z', (0,0,1))
+
+# Anchor base_cylinder to root_holder.center.
+# Align base_cylinder.bottom_face to root_holder.bottom_face.
+# Since both are at (0,0,0) and aligned, we just need to ensure vertical alignment.
+# The prompt implies anchoring position and aligning faces.
+# Since root_holder is at 0,0,0 and has no size defined for "bottom", we assume root_holder is a point anchor.
+# "Align base_cylinder.bottom_face to root_holder.bottom_face"
+# If root_holder is an empty, it has no bottom face. We interpret this as centering the cylinder on the holder.
+# However, strictly: "Anchor ... to root_holder.center" -> location match.
+# "Align ... bottom_face" -> If root_holder is just a point, this is redundant or implies Z=0 is the bottom.
+# Let's place the cylinder such that its bottom is at Z=0 (root_holder location).
+# Cylinder default center is mid-height. So we shift it up by half height.
+base_cylinder.location = (0, 0, 0.152 / 2)
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create First Divider Cutter ---
+# Create primitive cuboid with size 0.005×0.102×0.152 m and name it cutter_div_1.
+cutter_div_1 = add_cube("cutter_div_1", (0.005, 0.102, 0.152))
+
+# Rotate cutter_div_1 so its +Z axis aligns +Z (world).
+align_axis_to_vector(cutter_div_1, 'Z', (0,0,1))
+
+# Anchor cutter_div_1 to root_holder.center.
+# Align cutter_div_1.center to root_holder.center.
+# Then move by offset(0.025, 0, 0).
+# root_holder center is (0,0,0).
+# Align center to root_holder center -> location (0,0,0).
+cutter_div_1.location = (0, 0, 0)
+
+# Move by offset(0.025, 0, 0).
+cutter_div_1.location.x += 0.025
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create Second Divider Cutter ---
+# Create primitive cuboid with size 0.005×0.102×0.152 m and name it cutter_div_2.
+cutter_div_2 = add_cube("cutter_div_2", (0.005, 0.102, 0.152))
+
+# Rotate cutter_div_2 so its +Z axis aligns +Z (world).
+align_axis_to_vector(cutter_div_2, 'Z', (0,0,1))
+
+# Anchor cutter_div_2 to root_holder.center.
+# Align cutter_div_2.center to root_holder.center.
+cutter_div_2.location = (0, 0, 0)
+
+# Then move by offset(0.025, 0, 0).
+cutter_div_2.location.x += 0.025
+
+# Rotate cutter_div_2 so its local +Z axis achieves orientation=axis:+Z, rotated 120° relative to cutter_div_1.
+# cutter_div_1 is at 0 deg rotation around Z.
+# cutter_div_2 needs to be rotated 120 degrees around Z relative to cutter_div_1.
+# Since both are centered at origin, we rotate cutter_div_2 by 120 degrees around Z.
+cutter_div_2.rotation_euler.z = math.radians(120)
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Boolean Subtraction for Dividers ---
+# Boolean-subtract cutter_div_1 from base_cylinder; discard cutter_div_1.
+boolean_subtract(cutter_div_1, base_cylinder)
+
+# Boolean-subtract cutter_div_2 from base_cylinder; discard cutter_div_2.
+boolean_subtract(cutter_div_2, base_cylinder)
+
+# Stage 5 complete.

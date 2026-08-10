@@ -1,0 +1,43 @@
+{
+  "id": "fb082bdb-4786-4cba-9409-ee68756c271a",
+  "name": "Piano Keyboard",
+  "instruction": "Design a piano keyboard with 88 keys. The keys should be evenly spaced and clearly defined, with the black keys slightly elevated above the white keys. The keyboard should have a sleek and modern appearance, with a simple control panel on one side. Ensure the keys are aligned perfectly for a professional look.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a piano keyboard.",
+        "The keyboard features 88 keys."
+      ],
+      "Color representation": [
+        "The keys are white and black."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The keys are proportionate to the keyboard."
+      ],
+      "Texture and surface detail": [
+        "The keyboard has a sleek and modern appearance."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The black keys are positioned correctly above the white keys.",
+        "The control panel is appropriately placed on one side of the keyboard."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the black and white keys.",
+        "The keys are spaced adequately to allow for comfortable playing."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the keyboard are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

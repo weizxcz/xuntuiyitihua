@@ -1,0 +1,1 @@
+Design a fire exit sign. The sign should be rectangular with the words "FIRE EXIT" prominently displayed in the center. Include a running figure and an arrow pointing to the left. Ensure the text and symbols are clearly visible.

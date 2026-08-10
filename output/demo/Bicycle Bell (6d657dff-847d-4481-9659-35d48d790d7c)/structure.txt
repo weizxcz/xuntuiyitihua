@@ -1,0 +1,20 @@
+-- MATERIAL LIBRARY --
+bell_dome | diffuse_color=(255,215,0,1)
+clamp_base | diffuse_color=(50,50,50,1)
+lever | diffuse_color=(200,200,200,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bicycle_bell | Composite of bell_dome + lever + clamp_base; assembled into a functional bicycle bell unit | assembly_order=[bell_dome], [lever], [clamp_base] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bell_dome | Hemisphere dome Ø0.0508×0.0254 m (radius R=0.0254 m) | Align(XY) bell_dome.center to bicycle_bell.center; Align(Z) bell_dome.bottom_face to bicycle_bell.bottom_face; orientation=axis:+Z; mat=bell_dome; create_method=boolean_subtract; constraint=full_sphere Ø0.0508 m + plane_cutter at Z=0; tool_id=-; target_id=- |
+| lever | Small lever arm approx 0.015×0.005×0.002 m (L×W×H) | Align(XY) lever.center to bell_dome.side_at(0°); Align(Z) lever.bottom_face to bell_dome.side_at(0°); offset(0.0254, 0, 0); orientation=axis:+Z; mat=lever; create_method=primitive; constraint=cube 0.015×0.005×0.002 m; tool_id=-; target_id=- |
+| clamp_base | Cylindrical clamp base Ø0.040×0.010 m (D×H) | Align(XY) clamp_base.center to bicycle_bell.center; Align(Z) clamp_base.top_face to bell_dome.bottom_face; offset(0, 0, -0.005); orientation=axis:+Z; mat=clamp_base; create_method=primitive; constraint=cylinder Ø0.040×0.010 m; tool_id=-; target_id=- |
+
+# ----------  END_GRAPH  ----------

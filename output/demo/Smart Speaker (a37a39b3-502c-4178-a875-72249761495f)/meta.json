@@ -1,0 +1,44 @@
+{
+  "id": "a37a39b3-502c-4178-a875-72249761495f",
+  "name": "Smart Speaker",
+  "instruction": "Could you design a smart speaker with a sleek, cylindrical shape? Ensure it has a minimalistic design with a touch-sensitive top surface for controls.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a smart speaker.",
+        "The shape of the speaker is cylindrical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height and width of the cylindrical shape are balanced for stability and aesthetics."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical shape allows for 360-degree sound distribution.",
+        "The touch-sensitive surface is easily accessible from the top."
+      ],
+      "Object distance and contact": [
+        "The bottom of the speaker is stable and does not wobble.",
+        "The touch-sensitive area is flush with the top surface for a seamless look."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects a smart speaker with a cylindrical shape.",
+        "The minimalistic design is successfully implemented.",
+        "The touch-sensitive top surface is included as specified."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

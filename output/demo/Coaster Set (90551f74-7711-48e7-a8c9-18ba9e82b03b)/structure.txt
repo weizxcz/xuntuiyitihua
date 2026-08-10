@@ -1,0 +1,19 @@
+-- MATERIAL LIBRARY --
+mat_acrylic | diffuse_color=(0.9, 0.9, 0.95, 0.3)
+mat_cork | diffuse_color=(0.6, 0.4, 0.2, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_set | Composite assembly of 4 coasters arranged in a square grid | assembly_order=[coaster_group]; constraint=grid_layout(4, 0.12m spacing) |
+
+Layer 1 – Primary Structure (Coaster Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| coaster_group | Template for a single coaster unit | assembly_order=[coaster_base, coaster_top]; pattern=grid(rows:2, cols:2, x_spacing:0.12, y_spacing:0.12, start_offset:(-0.06, -0.06)) |
+| coaster_base | Cylindrical cork base Ø0.08×0.005 m | Align(XY) coaster_base.center to coaster_group.center; Align(Z) coaster_base.bottom_face to coaster_group.bottom_face; mat=mat_cork; create_method=primitive(cylinder); size=Ø0.08×0.005 |
+| coaster_top | Cylindrical acrylic top Ø0.07×0.003 m | Align(XY) coaster_top.center to coaster_base.center; Align(Z) coaster_top.bottom_face to coaster_base.top_face; offset(0,0,0.002); mat=mat_acrylic; create_method=primitive(cylinder); size=Ø0.07×0.003 |
+
+# ----------  END_GRAPH  ----------

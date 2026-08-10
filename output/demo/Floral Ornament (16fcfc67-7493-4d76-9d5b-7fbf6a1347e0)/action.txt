@@ -1,0 +1,85 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material leaf_green; diffuse_color = (0.15,0.45,0.15,1.0).
+Define material petal_pink; diffuse_color = (0.95,0.65,0.75,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create petals group  ---
+Create primitive cuboid with size 0.050×0.020×0.002 m and name it petal_0.
+Rotate petal_0 so its +Z axis aligns +Z (world).
+Align petal_0.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.050×0.020×0.002 m and name it petal_1.
+Rotate petal_1 so its +Z axis aligns +Z (world).
+Align petal_1.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.050×0.020×0.002 m and name it petal_2.
+Rotate petal_2 so its +Z axis aligns +Z (world).
+Align petal_2.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.050×0.020×0.002 m and name it petal_3.
+Rotate petal_3 so its +Z axis aligns +Z (world).
+Align petal_3.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.050×0.020×0.002 m and name it petal_4.
+Rotate petal_4 so its +Z axis aligns +Z (world).
+Align petal_4.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+For i in 0…4:
+  Rotate petal_i so its local +Z axis aligns +Z (world).
+  Align petal_i.XY_face to floral_orament.XY_face.
+  Then position at polar(i·72°; dr=0.025).
+
+Boolean-union petal_0, petal_1, petal_2, petal_3, petal_4; keep petal_0.
+Rename petal_0 to petals_group.
+
+Stage 1 complete.
+
+---  SECTION 2 – Create leaves group  ---
+Create primitive cuboid with size 0.040×0.015×0.001 m and name it leaf_0.
+Rotate leaf_0 so its +Z axis aligns +Z (world).
+Align leaf_0.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.040×0.015×0.001 m and name it leaf_1.
+Rotate leaf_1 so its +Z axis aligns +Z (world).
+Align leaf_1.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.040×0.015×0.001 m and name it leaf_2.
+Rotate leaf_2 so its +Z axis aligns +Z (world).
+Align leaf_2.XY_face to floral_orament.XY_face.
+Then move by offset(0,0,0).
+
+For i in 0…2:
+  Rotate leaf_i so its local +Z axis aligns +Z (world).
+  Align leaf_i.XY_face to floral_orament.XY_face.
+  Then position at polar(i·120° + 36°; dr=0.020).
+
+Boolean-union leaf_0, leaf_1, leaf_2; keep leaf_0.
+Rename leaf_0 to leaves_group.
+
+Stage 2 complete.
+
+---  SECTION 3 – Assemble floral ornament  ---
+Boolean-union petals_group, leaves_group; keep petals_group.
+Rename petals_group to floral_orament.
+
+Assembly guideline satisfied.
+All stages complete.

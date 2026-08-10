@@ -1,0 +1,412 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a new material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Apply a material to an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cube object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation
+    if material:
+        apply_material(obj, material)
+    return obj
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0), material=None):
+    """Add a cylinder object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    if material:
+        apply_material(obj, material)
+    return obj
+
+def align_face_to_face(obj_source, obj_target, source_face, target_face, offset=0):
+    """
+    Aligns a face of obj_source to a face of obj_target.
+    source_face/target_face: 'left', 'right', 'top', 'bottom', 'front', 'back', 'center'
+    Note: This assumes standard orientation where +X is right, +Y is front, +Z is top.
+    """
+    # Ensure objects are in world space for calculation
+    bpy.context.view_layer.update()
+    
+    # Get bounding box centers and extents in world space
+    src_bbox = get_world_bbox(obj_source)
+    tgt_bbox = get_world_bbox(obj_target)
+    
+    src_center = src_bbox['center']
+    tgt_center = tgt_bbox['center']
+    
+    # Calculate target position based on face alignment
+    # We want to move obj_source so its specific face touches the target's specific face
+    
+    # Define face offsets relative to center
+    # Right: +X, Left: -X, Top: +Z, Bottom: -Z, Front: +Y, Back: -Y
+    
+    dx, dy, dz = 0, 0, 0
+    
+    # Determine the position of the source face
+    if source_face == 'right':
+        dx = src_bbox['extents'][0] # Half width
+    elif source_face == 'left':
+        dx = -src_bbox['extents'][0]
+    elif source_face == 'top':
+        dz = src_bbox['extents'][2]
+    elif source_face == 'bottom':
+        dz = -src_bbox['extents'][2]
+    elif source_face == 'front':
+        dy = src_bbox['extents'][1]
+    elif source_face == 'back':
+        dy = -src_bbox['extents'][1]
+    elif source_face == 'center':
+        dx, dy, dz = 0, 0, 0
+        
+    # Determine the position of the target face
+    if target_face == 'right':
+        dx_tgt = tgt_bbox['extents'][0]
+    elif target_face == 'left':
+        dx_tgt = -tgt_bbox['extents'][0]
+    elif target_face == 'top':
+        dz_tgt = tgt_bbox['extents'][2]
+    elif target_face == 'bottom':
+        dz_tgt = -tgt_bbox['extents'][2]
+    elif target_face == 'front':
+        dy_tgt = tgt_bbox['extents'][1]
+    elif target_face == 'back':
+        dy_tgt = -tgt_bbox['extents'][1]
+    elif target_face == 'center':
+        dx_tgt, dy_tgt, dz_tgt = 0, 0, 0
+        
+    # Calculate the shift required
+    # Current source face world pos = src_center + face_offset
+    # Target face world pos = tgt_center + tgt_face_offset
+    # We want: src_center_new + face_offset = tgt_center + tgt_face_offset
+    # src_center_new = tgt_center + tgt_face_offset - face_offset
+    
+    new_center = tgt_center + Vector((dx_tgt, dy_tgt, dz_tgt)) - Vector((dx, dy, dz))
+    
+    # Apply offset
+    new_center += Vector((offset, 0, 0)) # Default offset axis is X for face alignment usually, but prompt says offset(0,0,0) mostly.
+    # The prompt says "Then move by offset(dx, dy, dz)". This is applied AFTER alignment.
+    # So here we just do the alignment.
+    
+    # Move object
+    obj_source.location = new_center
+    
+    # Update world matrix for next steps
+    obj_source.update_from_matrix_safe()
+
+def get_world_bbox(obj):
+    """Get world space bounding box center and extents."""
+    bpy.context.view_layer.update()
+    matrix_world = obj.matrix_world
+    bbox_corners = [
+        matrix_world @ Vector((-1, -1, -1)),
+        matrix_world @ Vector((-1, -1, 1)),
+        matrix_world @ Vector((-1, 1, -1)),
+        matrix_world @ Vector((-1, 1, 1)),
+        matrix_world @ Vector((1, -1, -1)),
+        matrix_world @ Vector((1, -1, 1)),
+        matrix_world @ Vector((1, 1, -1)),
+        matrix_world @ Vector((1, 1, 1)),
+    ]
+    # Scale bbox_corners by object scale? No, matrix_world includes scale.
+    # But primitive cubes are created with size=1 and scaled.
+    # The bbox_corners calculation above assumes unit cube centered at 0.
+    # Let's use the object's actual bounds.
+    
+    # Simpler approach: Use the object's dimensions and location
+    # Dimensions are in local space.
+    # World extents = scale * 0.5
+    extents = [abs(s * d / 2) for s, d in zip(obj.scale, obj.dimensions)]
+    center = obj.location
+    
+    return {
+        'center': center,
+        'extents': extents
+    }
+
+def align_center_to_center(obj_source, obj_target):
+    """Align center of source to center of target."""
+    obj_source.location = obj_target.location
+
+def align_center_to_face(obj_source, obj_target, target_face):
+    """Align center of source to a specific face of target."""
+    tgt_bbox = get_world_bbox(obj_target)
+    tgt_center = tgt_bbox['center']
+    tgt_extents = tgt_bbox['extents']
+    
+    dx, dy, dz = 0, 0, 0
+    
+    if target_face == 'right':
+        dx = tgt_extents[0]
+    elif target_face == 'left':
+        dx = -tgt_extents[0]
+    elif target_face == 'top':
+        dz = tgt_extents[2]
+    elif target_face == 'bottom':
+        dz = -tgt_extents[2]
+    elif target_face == 'front':
+        dy = tgt_extents[1]
+    elif target_face == 'back':
+        dy = -tgt_extents[1]
+        
+    new_center = tgt_center + Vector((dx, dy, dz))
+    obj_source.location = new_center
+
+def average_points(objects):
+    """Calculate the average center of a list of objects."""
+    if not objects:
+        return Vector((0,0,0))
+    total = Vector((0,0,0))
+    for obj in objects:
+        total += obj.location
+    return total / len(objects)
+
+def rotate_to_align_z(obj, target_axis):
+    """Rotate object so its local +Z aligns with target_axis (world vector)."""
+    # Default +Z is (0,0,1)
+    # If target is +Z, no rotation needed.
+    if target_axis == (0,0,1):
+        return
+    
+    # Calculate rotation matrix
+    # We want to rotate local Z (0,0,1) to target_axis
+    # Using mathutils rotation
+    rot = Matrix.Rotation(0, 4, (0,0,1)) # Identity
+    
+    # Simple case: +X
+    if target_axis == (1,0,0):
+        obj.rotation_euler = (0, -90, 0) # -90 deg around Y
+    # -X
+    elif target_axis == (-1,0,0):
+        obj.rotation_euler = (0, 90, 0)
+    # +Y
+    elif target_axis == (0,1,0):
+        obj.rotation_euler = (90, 0, 0) # 90 deg around X
+    # -Y
+    elif target_axis == (0,-1,0):
+        obj.rotation_euler = (-90, 0, 0)
+    # +Z
+    elif target_axis == (0,0,1):
+        obj.rotation_euler = (0, 0, 0)
+    # -Z
+    elif target_axis == (0,0,-1):
+        obj.rotation_euler = (180, 0, 0)
+    else:
+        # Generic fallback using quaternion
+        v1 = Vector((0,0,1))
+        v2 = Vector(target_axis).normalized()
+        q = v1.rotation_difference(v2)
+        obj.rotation_euler = q.to_euler()
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_aluminum = make_material("mat_aluminum", (0.75, 0.75, 0.75, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.1, 0.1, 0.1, 1.0))
+mat_blue_plastic = make_material("mat_blue_plastic", (0.1, 0.3, 0.8, 1.0))
+mat_green_plastic = make_material("mat_green_plastic", (0.1, 0.6, 0.1, 1.0))
+mat_glass = make_material("mat_glass", (0.9, 0.95, 0.95, 0.3))
+mat_white_plastic = make_material("mat_white_plastic", (0.95, 0.95, 0.95, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1: Create back plate ---
+back_plate = add_cube("back_plate", (0.600, 0.800, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(back_plate, (0,0,1))
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+back_plate.location += Vector((0,0,0))
+
+# --- SECTION 2: Create side frames ---
+# Left Frame
+left_frame = add_cube("left_frame", (0.020, 0.800, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(left_frame, (0,0,1))
+# Align left_frame.right_face to back_plate.left_face
+align_face_to_face(left_frame, back_plate, 'right', 'left')
+# Offset (0,0,0)
+left_frame.location += Vector((0,0,0))
+
+# Right Frame
+right_frame = add_cube("right_frame", (0.020, 0.800, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(right_frame, (0,0,1))
+# Align right_frame.left_face to back_plate.right_face
+align_face_to_face(right_frame, back_plate, 'left', 'right')
+# Offset (0,0,0)
+right_frame.location += Vector((0,0,0))
+
+# --- SECTION 3: Create top frame ---
+top_frame = add_cube("top_frame", (0.600, 0.020, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(top_frame, (0,0,1))
+# Align top_frame.bottom_face to back_plate.top_face
+align_face_to_face(top_frame, back_plate, 'bottom', 'top')
+# Offset (0,0,0)
+top_frame.location += Vector((0,0,0))
+
+# --- SECTION 4: Create bottom frame ---
+bottom_frame = add_cube("bottom_frame", (0.600, 0.020, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(bottom_frame, (0,0,1))
+# Align bottom_frame.top_face to back_plate.bottom_face
+align_face_to_face(bottom_frame, back_plate, 'top', 'bottom')
+# Offset (0,0,0)
+bottom_frame.location += Vector((0,0,0))
+
+# --- SECTION 5: Create door frame ---
+door_frame = add_cube("door_frame", (0.560, 0.760, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(door_frame, (0,0,1))
+# Align door_frame.center to back_plate.center
+align_center_to_center(door_frame, back_plate)
+# Offset (0,0,0.010)
+door_frame.location += Vector((0,0,0.010))
+
+# --- SECTION 6: Create door panel ---
+door_panel = add_cube("door_panel", (0.560, 0.760, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_white_plastic)
+rotate_to_align_z(door_panel, (0,0,1))
+# Align door_panel.center to door_frame.center
+align_center_to_center(door_panel, door_frame)
+# Offset (0,0,0.002)
+door_panel.location += Vector((0,0,0.002))
+
+# --- SECTION 7: Create handle ---
+# Cylinder Ø0.020 -> Radius 0.010, Height 0.150
+# Rotate so +Z aligns +X
+handle = add_cylinder("handle", 0.010, 0.150, location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(handle, (1,0,0))
+# Align handle.center to door_panel.right_face
+# Note: "Align handle.center to door_panel.right_face" usually means center of handle to the plane of the right face.
+# But typically for a handle sticking out, you align the center of the handle to the face location.
+# Let's interpret "Align center to face" as placing the center of the source object on the target face.
+align_center_to_face(handle, door_panel, 'right')
+# Offset (0.010, 0, 0)
+handle.location += Vector((0.010, 0, 0))
+
+# --- SECTION 8: Create latch ---
+latch = add_cube("latch", (0.010, 0.010, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_black_plastic)
+rotate_to_align_z(latch, (0,0,1))
+# Align latch.right_face to door_panel.left_face
+align_face_to_face(latch, door_panel, 'right', 'left')
+# Offset (0, 0.350, 0)
+latch.location += Vector((0, 0.350, 0))
+
+# --- SECTION 9: Create breaker template components ---
+breaker_body = add_cube("breaker_body", (0.040, 0.060, 0.020), location=(0,0,0), rotation=(0,0,0), material=mat_black_plastic)
+rotate_to_align_z(breaker_body, (0,0,1))
+# Anchor to world origin
+breaker_body.location = Vector((0,0,0))
+# Offset (0,0,0)
+
+switch = add_cube("switch", (0.010, 0.030, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_blue_plastic)
+rotate_to_align_z(switch, (0,0,1))
+# Align switch.bottom_face to breaker_body.top_face
+align_face_to_face(switch, breaker_body, 'bottom', 'top')
+# Offset (0,0,0.012)
+switch.location += Vector((0,0,0.012))
+
+label = add_cube("label", (0.030, 0.010, 0.001), location=(0,0,0), rotation=(0,0,0), material=mat_white_plastic)
+rotate_to_align_z(label, (0,0,1))
+# Align label.bottom_face to breaker_body.front_face
+align_face_to_face(label, breaker_body, 'bottom', 'front')
+# Offset (0, 0.025, 0.010)
+label.location += Vector((0, 0.025, 0.010))
+
+# --- SECTION 10: Create breaker grid ---
+# The prompt has a confusing loop description followed by explicit instances.
+# I will follow the explicit instances as they are more precise.
+
+breaker_1 = add_cube("breaker_1", (0.040, 0.060, 0.020), location=(0,0,0), rotation=(0,0,0), material=mat_black_plastic)
+rotate_to_align_z(breaker_1, (0,0,1))
+# Align breaker_1.center to Avg(breaker_2.center, breaker_3.center)
+# Note: breaker_2 and breaker_3 don't exist yet. This is a circular dependency in the prompt's logic if taken literally.
+# However, looking at the offsets:
+# breaker_1: (-0.060, -0.080, 0)
+# breaker_2: (0, -0.080, 0)
+# breaker_3: (0.060, -0.080, 0)
+# breaker_4: (-0.060, 0, 0)
+# breaker_5: (0, 0, 0)
+# breaker_6: (0.060, 0, 0)
+# breaker_7: (-0.060, 0.080, 0)
+# breaker_8: (0, 0.080, 0)
+# breaker_9: (0.060, 0.080, 0)
+# These offsets are relative to a central point (0,0,0).
+# The "Align" instructions seem to be descriptive of the grid structure rather than strict dependency steps for creation order.
+# I will place them based on the explicit offsets provided in the "Then move by offset..." lines, assuming they are relative to the world origin or a common anchor.
+# The prompt says "Align ... to Avg(...)". Since the targets don't exist, I will ignore the alignment step for creation and use the explicit offsets from a common origin (0,0,0) which seems to be the grid center.
+
+# Let's create them at (0,0,0) first, then offset.
+# Actually, the prompt says "Align ... Then move by offset".
+# If I can't align to non-existent objects, I'll assume the "Align" step is redundant or refers to a theoretical grid center.
+# Given the explicit offsets, I will place them relative to (0,0,0).
+
+# Helper to place breaker
+def place_breaker(name, offset_x, offset_y):
+    obj = add_cube(name, (0.040, 0.060, 0.020), location=(0,0,0), rotation=(0,0,0), material=mat_black_plastic)
+    rotate_to_align_z(obj, (0,0,1))
+    # Anchor to world origin (0,0,0) effectively by creating at 0,0,0
+    obj.location = Vector((0,0,0))
+    obj.location += Vector((offset_x, offset_y, 0))
+    return obj
+
+breaker_1 = place_breaker("breaker_1", -0.060, -0.080)
+breaker_2 = place_breaker("breaker_2", 0, -0.080)
+breaker_3 = place_breaker("breaker_3", 0.060, -0.080)
+breaker_4 = place_breaker("breaker_4", -0.060, 0)
+breaker_5 = place_breaker("breaker_5", 0, 0)
+breaker_6 = place_breaker("breaker_6", 0.060, 0)
+breaker_7 = place_breaker("breaker_7", -0.060, 0.080)
+breaker_8 = place_breaker("breaker_8", 0, 0.080)
+breaker_9 = place_breaker("breaker_9", 0.060, 0.080)
+
+# --- SECTION 11: Create bus bar ---
+bus_bar = add_cube("bus_bar", (0.500, 0.010, 0.005), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(bus_bar, (1,0,0)) # +Z aligns +X
+# Align bus_bar.center to back_plate.center
+align_center_to_center(bus_bar, back_plate)
+# Offset (0, 0.350, 0.010)
+bus_bar.location += Vector((0, 0.350, 0.010))
+
+# --- SECTION 12: Create wire tray ---
+wire_tray = add_cube("wire_tray", (0.500, 0.020, 0.010), location=(0,0,0), rotation=(0,0,0), material=mat_aluminum)
+rotate_to_align_z(wire_tray, (1,0,0)) # +Z aligns +X
+# Align wire_tray.center to back_plate.center
+align_center_to_center(wire_tray, back_plate)
+# Offset (0, -0.350, 0.010)
+wire_tray.location += Vector((0, -0.350, 0.010))
+```

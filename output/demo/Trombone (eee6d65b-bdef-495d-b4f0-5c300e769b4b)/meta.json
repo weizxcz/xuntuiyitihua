@@ -1,0 +1,51 @@
+{
+  "id": "eee6d65b-bdef-495d-b4f0-5c300e769b4b",
+  "name": "Trombone",
+  "instruction": "Let's create a 3D model of a trombone. Start with the long, cylindrical slide that is U-shaped. Attach the bell section, which is a flared tube, to one end of the slide. Include the mouthpiece at the other end of the slide.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a trombone.",
+        "The slide is long and cylindrical.",
+        "The slide has a U-shaped configuration.",
+        "The bell section is a flared tube.",
+        "The mouthpiece is attached at the opposite end of the slide."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The bell section is larger in diameter compared to the slide.",
+        "The mouthpiece is smaller than the bell section."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The U-shaped slide is correctly oriented.",
+        "The bell section is properly attached to one end of the slide.",
+        "The mouthpiece is securely attached at the opposite end.",
+        "The overall structure maintains balance and stability."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the slide and the bell section.",
+        "The mouthpiece fits snugly at the end of the slide.",
+        "The slide does not overlap with the bell section."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components of the trombone are accurately represented.",
+        "The U-shape of the slide is correctly implemented.",
+        "The bell section and mouthpiece are positioned as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

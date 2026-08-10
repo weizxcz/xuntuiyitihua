@@ -1,0 +1,1 @@
+Design a set of sticky notes. Each note should be square-shaped and come in different colors. They should be stacked neatly in a small, clear plastic holder.

@@ -1,0 +1,46 @@
+{
+  "id": "9f93c2ad-c2b1-490b-84bd-c3a29ee0369d",
+  "name": "Kitchen Spoon",
+  "instruction": "Create a kitchen spoon. The handle is straight and about 8 inches long. The bowl is oval-shaped and 2 inches wide.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a kitchen spoon.",
+        "The handle is straight.",
+        "The bowl is oval-shaped."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The length of the handle is approximately 8 inches.",
+        "The width of the bowl is 2 inches."
+      ],
+      "Proportion": [
+        "The length of the handle is proportionate to the size of the bowl."
+      ],
+      "Texture and surface detail": [
+        "The handle may have a smooth finish for comfort.",
+        "The bowl may have a polished surface for easy cleaning."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handle is correctly aligned with the bowl.",
+        "The bowl is positioned at the end of the handle."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the handle and the bowl.",
+        "The bowl is securely attached to the handle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,123 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material board_green; diffuse_color = (0.1, 0.4, 0.1, 1).
+Define material copper_gold; diffuse_color = (0.8, 0.6, 0.2, 1).
+Define material ic_black; diffuse_color = (0.1, 0.1, 0.1, 1).
+Define material resistor_beige; diffuse_color = (0.8, 0.7, 0.5, 1).
+Define material capacitor_blue; diffuse_color = (0.1, 0.2, 0.6, 1).
+Define material led_red; diffuse_color = (0.9, 0.1, 0.1, 1).
+Define material led_green; diffuse_color = (0.1, 0.9, 0.1, 1).
+Define material connector_black; diffuse_color = (0.15, 0.15, 0.15, 1).
+Define material connector_gold; diffuse_color = (0.9, 0.7, 0.3, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base PCB substrate  ---
+Create primitive cuboid with size 0.100×0.080×0.002 m and name it pcb_base.
+Rotate pcb_base so its +Z axis aligns +Z (world).
+Anchor pcb_base to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create copper trace layer  ---
+Create primitive cuboid with size 0.098×0.078×0.0001 m and name it pcb_copper_layer.
+Rotate pcb_copper_layer so its +Z axis aligns +Z (world).
+Align pcb_copper_layer.bottom_face to pcb_base.top_face.
+Then move by offset(0,0,0.0001).
+Stage 2 complete.
+
+---  SECTION 3 – Place IC 1 (DIP-8)  ---
+Create primitive cuboid with size 0.010×0.004×0.002 m and name it ic_1.
+Rotate ic_1 so its +Z axis aligns +Z (world).
+Align ic_1.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(0.02, 0.02, 0.001).
+Stage 3 complete.
+
+---  SECTION 4 – Place IC 2 (SOP-16)  ---
+Create primitive cuboid with size 0.010×0.006×0.002 m and name it ic_2.
+Rotate ic_2 so its +Z axis aligns +Z (world).
+Align ic_2.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(-0.02, 0.02, 0.001).
+Stage 4 complete.
+
+---  SECTION 5 – Place Resistor 1  ---
+Create primitive cylinder with radius 0.0015 m and height 0.010 m and name it res_1.
+Rotate res_1 so its +Z axis aligns +Z (world).
+Align res_1.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(0.02, -0.02, 0.0015).
+Stage 5 complete.
+
+---  SECTION 6 – Place Resistor 2  ---
+Create primitive cylinder with radius 0.0015 m and height 0.010 m and name it res_2.
+Rotate res_2 so its +Z axis aligns +Z (world).
+Align res_2.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(-0.02, -0.02, 0.0015).
+Stage 6 complete.
+
+---  SECTION 7 – Place Capacitor 1  ---
+Create primitive cylinder with radius 0.0025 m and height 0.002 m and name it cap_1.
+Rotate cap_1 so its +Z axis aligns +Z (world).
+Align cap_1.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(0.04, 0.02, 0.001).
+Stage 7 complete.
+
+---  SECTION 8 – Place Capacitor 2  ---
+Create primitive cylinder with radius 0.003 m and height 0.010 m and name it cap_2.
+Rotate cap_2 so its +Z axis aligns +Z (world).
+Align cap_2.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(-0.04, 0.02, 0.005).
+Stage 8 complete.
+
+---  SECTION 9 – Place LED 1  ---
+Create primitive cylinder with radius 0.0025 m and height 0.004 m and name it led_1.
+Rotate led_1 so its +Z axis aligns +Z (world).
+Align led_1.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(0.04, -0.02, 0.002).
+Stage 9 complete.
+
+---  SECTION 10 – Place LED 2  ---
+Create primitive cylinder with radius 0.0025 m and height 0.004 m and name it led_2.
+Rotate led_2 so its +Z axis aligns +Z (world).
+Align led_2.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(-0.04, -0.02, 0.002).
+Stage 10 complete.
+
+---  SECTION 11 – Place USB Connector  ---
+Create primitive cuboid with size 0.020×0.010×0.005 m and name it conn_1.
+Rotate conn_1 so its +Z axis aligns +Z (world).
+Align conn_1.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(0.05, 0, 0.0025).
+Stage 11 complete.
+
+---  SECTION 12 – Place Header Pin Block  ---
+Create primitive cuboid with size 0.020×0.010×0.005 m and name it conn_2.
+Rotate conn_2 so its +Z axis aligns +Z (world).
+Align conn_2.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(-0.05, 0, 0.0025).
+Stage 12 complete.
+
+---  SECTION 13 – Place USB Connector Pins  ---
+Create primitive cuboid with size 0.018×0.008×0.001 m and name it conn_pins_1.
+Rotate conn_pins_1 so its +Z axis aligns +Z (world).
+Align conn_pins_1.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(0.05, 0, 0.0025).
+Stage 13 complete.
+
+---  SECTION 14 – Place Header Pin Block Pins  ---
+Create primitive cuboid with size 0.018×0.008×0.001 m and name it conn_pins_2.
+Rotate conn_pins_2 so its +Z axis aligns +Z (world).
+Align conn_pins_2.bottom_face to pcb_copper_layer.top_face.
+Then move by offset(-0.05, 0, 0.0025).
+Stage 14 complete.
+
+All stages complete.

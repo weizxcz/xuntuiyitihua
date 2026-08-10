@@ -1,0 +1,301 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for col in bpy.data.collections:
+        col.objects.clear()
+
+def set_units_metres():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+def make_material(name, diffuse_color):
+    """Create a new material with the given name and diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive_cube(name, size, location, rotation_euler, material=None):
+    """Add a cube with specified size (dimensions), location, rotation, and material."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def add_primitive_cylinder(name, radius, height, location, rotation_euler, material=None):
+    """Add a cylinder with specified radius, height, location, rotation, and material."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_object_face_to_object_face(source_obj, target_obj, source_face_axis, target_face_axis):
+    """
+    Aligns a specific face of the source object to a specific face of the target object.
+    source_face_axis: 'X', 'Y', or 'Z' (positive direction of the face normal)
+    target_face_axis: 'X', 'Y', or 'Z' (positive direction of the face normal)
+    
+    This aligns the source face to touch the target face.
+    E.g., source.top_face (Z+) to target.bottom_face (Z-) means source is above target.
+    """
+    # Get world matrices
+    src_mat = source_obj.matrix_world
+    tgt_mat = target_obj.matrix_world
+    
+    # Get centers
+    src_center = src_mat.to_translation()
+    tgt_center = tgt_mat.to_translation()
+    
+    # Get face normals in world space
+    # Note: For axis-aligned objects, this is straightforward.
+    # We assume objects are axis-aligned for this specific helper logic.
+    
+    # Define face centers in local space
+    # Cube: half extents are scale * 0.5
+    src_half = source_obj.scale
+    tgt_half = target_obj.scale
+    
+    # Calculate target position for source center
+    # We want the source face to be at the same world coordinate as the target face
+    
+    # Helper to get face center world pos
+    def get_face_center(obj, axis):
+        half = obj.scale
+        local_offset = Vector((0,0,0))
+        if axis == 'X': local_offset.x = half[0]
+        elif axis == 'Y': local_offset.y = half[1]
+        elif axis == 'Z': local_offset.z = half[2]
+        return obj.matrix_world @ local_offset
+
+    src_face_world = get_face_center(source_obj, source_face_axis)
+    tgt_face_world = get_face_center(target_obj, target_face_axis)
+    
+    # Vector from source face to target face
+    diff = tgt_face_world - src_face_world
+    
+    # Move source object by this difference
+    source_obj.location += diff
+
+def align_object_center_to_object_center(source_obj, target_obj):
+    """Aligns the center of source object to the center of target object."""
+    tgt_center = target_obj.matrix_world.to_translation()
+    src_center = source_obj.matrix_world.to_translation()
+    source_obj.location += (tgt_center - src_center)
+
+def apply_boolean_subtract(target_obj, cutter_obj):
+    """
+    Applies a boolean subtract modifier.
+    target_obj is the object being cut.
+    cutter_obj is the object doing the cutting.
+    """
+    # Add modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def align_object_face_to_object_face_offset(source_obj, target_obj, source_face_axis, target_face_axis, offset_vector):
+    """
+    Aligns source face to target face, then applies an offset.
+    """
+    align_object_face_to_object_face(source_obj, target_obj, source_face_axis, target_face_axis)
+    source_obj.location += offset_vector
+
+def align_object_face_to_object_face_offset_center(source_obj, target_obj, source_face_axis, target_face_axis, offset_vector):
+    """
+    Aligns source face to target face, then applies an offset.
+    Assumes center-to-center alignment along other axes if needed, 
+    but primarily focuses on the face alignment and offset.
+    """
+    align_object_face_to_object_face(source_obj, target_obj, source_face_axis, target_face_axis)
+    source_obj.location += offset_vector
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_body = make_material("mat_body", (0.85, 0.85, 0.85, 1.0))
+mat_mouthpiece = make_material("mat_mouthpiece", (0.1, 0.1, 0.1, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create body shell ---
+# Create primitive cuboid with size 0.120×0.040×0.020 m and name it body_shell.
+body_shell = add_primitive_cube("body_shell", (0.120, 0.040, 0.020), (0, 0, 0), (0, 0, 0), mat_body)
+
+# Rotate body_shell so its +Z axis aligns +Z (world).
+# Already aligned by default with (0,0,0) rotation.
+
+# Anchor body_shell to world origin.
+body_shell.location = (0, 0, 0)
+
+# Then move by offset(0,0,0).
+body_shell.location += Vector((0, 0, 0))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create reed plate ---
+# Create primitive cuboid with size 0.120×0.038×0.002 m and name it reed_plate.
+reed_plate = add_primitive_cube("reed_plate", (0.120, 0.038, 0.002), (0, 0, 0), (0, 0, 0), mat_body)
+
+# Rotate reed_plate so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Align reed_plate.top_face to body_shell.bottom_face.
+# body_shell.bottom_face is at Z = -0.010 (half height)
+# reed_plate.top_face is at Z = +0.001 (half height)
+# We want reed_plate.top_face to touch body_shell.bottom_face.
+# So reed_plate.top_face Z should be -0.010.
+# Current reed_plate top face Z is 0.001.
+# Target Z is -0.010.
+# Diff = -0.010 - 0.001 = -0.011.
+# However, the helper align_object_face_to_object_face handles this logic.
+align_object_face_to_object_face(reed_plate, body_shell, 'Z', 'Z') 
+# Note: align_object_face_to_object_face aligns source face to target face.
+# source_face_axis='Z' means top face (normal +Z).
+# target_face_axis='Z' means top face (normal +Z).
+# This aligns reed_plate TOP to body_shell TOP.
+# We want reed_plate TOP to body_shell BOTTOM.
+# body_shell bottom face normal is -Z.
+# So we should align reed_plate 'Z' (top) to body_shell '-Z' (bottom)?
+# Let's refine the helper or use manual calculation for clarity.
+
+# Manual calculation for precision:
+# body_shell center: (0,0,0). Bottom face Z: -0.010.
+# reed_plate center: (0,0,0). Top face Z: +0.001.
+# We want reed_plate top face Z to be -0.010.
+# So reed_plate center Z should be -0.010 - 0.001 = -0.011.
+reed_plate.location = (0, 0, -0.011)
+
+# Then move by offset(0,0,-0.001).
+reed_plate.location += Vector((0, 0, -0.001))
+# Final reed_plate location: (0, 0, -0.012)
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create hole cutters ---
+# Define offsets
+dx_values = {
+    1: 0.045,
+    2: 0.035,
+    3: 0.025,
+    4: 0.015,
+    5: 0.005,
+    6: -0.005,
+    7: -0.015,
+    8: -0.025,
+    9: -0.035,
+    10: -0.045
+}
+
+hole_cutters = []
+
+for i in range(1, 11):
+    # Create primitive cylinder with radius 0.003 m and height 0.020 m and name it hole_i.
+    hole_name = f"hole_{i}_cutter"
+    hole = add_primitive_cylinder(hole_name, 0.003, 0.020, (0, 0, 0), (0, 0, 0), None)
+    
+    # Rotate hole_i so its +Z axis aligns +Z (world).
+    # Already aligned.
+    
+    # Align hole_i.center to body_shell.center.
+    align_object_center_to_object_center(hole, body_shell)
+    
+    # Then move by offset(dx,0,0)
+    dx = dx_values[i]
+    hole.location += Vector((dx, 0, 0))
+    
+    hole_cutters.append(hole)
+
+# Boolean-subtract each hole from body_shell
+for hole in hole_cutters:
+    apply_boolean_subtract(body_shell, hole)
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create mouthpiece base ---
+# Create primitive cuboid with size 0.030×0.040×0.020 m and name it mouthpiece_base.
+mouthpiece_base = add_primitive_cube("mouthpiece_base", (0.030, 0.040, 0.020), (0, 0, 0), (0, 0, 0), mat_mouthpiece)
+
+# Rotate mouthpiece_base so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Align mouthpiece_base.right_face to body_shell.left_face.
+# body_shell left face (X-) is at X = -0.060.
+# mouthpiece_base right face (X+) is at X = +0.015 (half width).
+# We want mouthpiece_base right face to touch body_shell left face.
+# So mouthpiece_base right face X should be -0.060.
+# Current mouthpiece_base right face X is 0.015.
+# Target X is -0.060.
+# Diff = -0.060 - 0.015 = -0.075.
+# So mouthpiece_base center X should be -0.060 - 0.015 = -0.075.
+mouthpiece_base.location = (-0.075, 0, 0)
+
+# Then move by offset(-0.015,0,0).
+mouthpiece_base.location += Vector((-0.015, 0, 0))
+# Final mouthpiece_base location: (-0.090, 0, 0)
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Create mouthpiece grip ---
+# Create primitive cuboid with size 0.010×0.040×0.020 m and name it mouthpiece_grip.
+mouthpiece_grip = add_primitive_cube("mouthpiece_grip", (0.010, 0.040, 0.020), (0, 0, 0), (0, 0, 0), mat_mouthpiece)
+
+# Rotate mouthpiece_grip so its +Z axis aligns +Z (world).
+# Already aligned.
+
+# Align mouthpiece_grip.right_face to mouthpiece_base.left_face.
+# mouthpiece_base left face (X-) is at X = -0.090 - 0.015 = -0.105.
+# mouthpiece_grip right face (X+) is at X = +0.005 (half width).
+# We want mouthpiece_grip right face to touch mouthpiece_base left face.
+# So mouthpiece_grip right face X should be -0.105.
+# Current mouthpiece_grip right face X is 0.005.
+# Target X is -0.105.
+# Diff = -0.105 - 0.005 = -0.110.
+# So mouthpiece_grip center X should be -0.105 - 0.005 = -0.110.
+mouthpiece_grip.location = (-0.110, 0, 0)
+
+# Then move by offset(-0.005,0,0).
+mouthpiece_grip.location += Vector((-0.005, 0, 0))
+# Final mouthpiece_grip location: (-0.115, 0, 0)
+
+# Stage 5 complete.
+
+# All stages complete.
+```

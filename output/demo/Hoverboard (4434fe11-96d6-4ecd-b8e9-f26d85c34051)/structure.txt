@@ -1,0 +1,39 @@
+-- MATERIAL LIBRARY --
+led_blue | diffuse_color=(0,0,1,1)
+led_red | diffuse_color=(1,0,0,1)
+plastic_black | diffuse_color=(0.05,0.05,0.05,1)
+plastic_grey | diffuse_color=(0.5,0.5,0.5,1)
+rubber_black | diffuse_color=(0.1,0.1,0.1,1)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hoverboard_root | Composite assembly of the entire hoverboard unit | assembly_order=[deck_group, wheel_group, light_group]; mat=plastic_grey; create_method=union |
+
+Layer 1 – Primary Structure (Deck)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| deck_main | Main standing platform | size=0.12×0.40×0.02; pos=(0,0,0.05); orientation=axis:+Z; mat=plastic_grey; create_method=cube; constraint=rounded_edges_r=0.01 |
+| deck_grip | Anti-slip surface layer | size=0.11×0.38×0.002; pos=(0,0,0.061); orientation=axis:+Z; mat=plastic_black; create_method=cube; constraint=friction_texture |
+
+Layer 2 – Wheel Assembly (Left & Right)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| wheel_assembly_L | Left wheel unit | assembly_order=[wheel_L, motor_L]; pos=(-0.15,0,0.05); orientation=axis:+Z; mat=rubber_black; create_method=union |
+| wheel_assembly_R | Right wheel unit | assembly_order=[wheel_R, motor_R]; pos=(0.15,0,0.05); orientation=axis:+Z; mat=rubber_black; create_method=union |
+| wheel_L | Left tire | size=0.08×0.08×0.08; pos=(-0.15,0,0.01); orientation=axis:+X; mat=rubber_black; create_method=cylinder; constraint=toroidal_tread |
+| wheel_R | Right tire | size=0.08×0.08×0.08; pos=(0.15,0,0.01); orientation=axis:+X; mat=rubber_black; create_method=cylinder; constraint=toroidal_tread |
+| motor_L | Left hub motor | size=0.06×0.06×0.06; pos=(-0.15,0,0.01); orientation=axis:+X; mat=plastic_black; create_method=cylinder; constraint=internal_gearbox |
+| motor_R | Right hub motor | size=0.06×0.06×0.06; pos=(0.15,0,0.01); orientation=axis:+X; mat=plastic_black; create_method=cylinder; constraint=internal_gearbox |
+
+Layer 3 – Lighting System
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| light_front_L | Front left LED | size=0.01×0.01×0.01; pos=(-0.05,0.18,0.02); orientation=axis:+Y; mat=led_blue; create_method=sphere; constraint=diffuser_lens |
+| light_front_R | Front right LED | size=0.01×0.01×0.01; pos=(0.05,0.18,0.02); orientation=axis:+Y; mat=led_blue; create_method=sphere; constraint=diffuser_lens |
+| light_back_L | Back left LED | size=0.01×0.01×0.01; pos=(-0.05,-0.18,0.02); orientation=axis:-Y; mat=led_red; create_method=sphere; constraint=diffuser_lens |
+| light_back_R | Back right LED | size=0.01×0.01×0.01; pos=(0.05,-0.18,0.02); orientation=axis:-Y; mat=led_red; create_method=sphere; constraint=diffuser_lens |
+
+# ----------  END_GRAPH  ----------

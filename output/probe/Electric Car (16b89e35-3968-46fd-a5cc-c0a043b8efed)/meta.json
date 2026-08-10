@@ -1,0 +1,48 @@
+{
+  "id": "16b89e35-3968-46fd-a5cc-c0a043b8efed",
+  "name": "Electric Car",
+  "instruction": "Create an electric car with four wheels, a sleek body, and a charging port. The car should have a streamlined shape and a front grille.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an electric car.",
+        "The car has a sleek body.",
+        "The shape of the car is streamlined.",
+        "The car features a front grille.",
+        "The car has four wheels."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The wheels are proportionate to the body of the car.",
+        "The front grille is appropriately sized for the car's design."
+      ],
+      "Texture and surface detail": [
+        "The surface of the car is smooth to reflect a sleek design."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The four wheels are positioned correctly for stability.",
+        "The streamlined shape allows for aerodynamic efficiency.",
+        "The front grille is integrated into the front of the car."
+      ],
+      "Object distance and contact": [
+        "The wheels do not overlap with the body of the car.",
+        "The charging port is accessible and properly positioned."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

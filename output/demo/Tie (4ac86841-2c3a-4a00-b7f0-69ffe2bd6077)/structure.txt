@@ -1,0 +1,33 @@
+-- MATERIAL LIBRARY --
+fabric_dark_blue | diffuse_color=(0.05,0.10,0.25,1.0)
+fabric_lining | diffuse_color=(0.90,0.90,0.90,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tie_root | Composite assembly of the tie body, lining, and knot | assembly_order=[tie_body, tie_lining, tie_knot] |
+
+Layer 1 – Primary Structure (The Blade)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tie_body | Composite of the main blade geometry | assembly_order=[blade_main, blade_tip] |
+| blade_main | Main rectangular section of the tie blade | size=0.080×0.350×0.002; mat=fabric_dark_blue; create_method=primitive; pos=(0, 0, 0); orientation=axis:+Z |
+| blade_tip | Tapered tip of the tie blade | size=0.080×0.120×0.002; mat=fabric_dark_blue; create_method=primitive; pos=(0, -0.235, 0); orientation=axis:+Z; constraint=bevel_tip |
+
+Layer 2 – Secondary Structure (Lining)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tie_lining | Lining fabric for the back of the tie | assembly_order=[lining_main, lining_tip] |
+| lining_main | Main lining section | size=0.076×0.340×0.001; mat=fabric_lining; create_method=primitive; pos=(0, 0, 0); orientation=axis:+Z; constraint=align_to_blade_main |
+| lining_tip | Tapered lining tip | size=0.076×0.110×0.001; mat=fabric_lining; create_method=primitive; pos=(0, -0.230, 0); orientation=axis:+Z; constraint=align_to_blade_tip |
+
+Layer 3 – Tertiary Structure (Knot & Drape)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tie_knot | The knot structure (Four-in-Hand) | assembly_order=[knot_body, knot_drape] |
+| knot_body | The main knot volume | size=0.060×0.060×0.060; mat=fabric_dark_blue; create_method=primitive; pos=(0, 0.150, 0); orientation=axis:+Z; constraint=align_to_collar |
+| knot_drape | The hanging end of the tie after the knot | size=0.080×0.200×0.002; mat=fabric_dark_blue; create_method=primitive; pos=(0, 0.050, 0); orientation=axis:+Z; constraint=align_to_knot_body |
+
+# ----------  END_GRAPH  ----------

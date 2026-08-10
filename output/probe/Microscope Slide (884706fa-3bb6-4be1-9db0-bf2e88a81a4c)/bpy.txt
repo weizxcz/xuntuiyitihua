@@ -1,0 +1,651 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for collection in bpy.data.collections:
+        collection.objects.clear()
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Alpha'].default_value = diffuse_color[3]
+    bsdf.inputs['Specular IOR Level'].default_value = 0.5
+    return mat
+
+def assign_material(obj, mat):
+    """Assign material to object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive."""
+    # size is a tuple (x, y, z)
+    half_size = [s/2 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = half_size
+    return obj
+
+def align_face_to_face(obj_source, obj_target, source_face_normal, target_face_normal, offset=0):
+    """
+    Aligns a face of obj_source to a face of obj_target.
+    source_face_normal: Vector in local space of source object representing the face normal (e.g., (0,0,1) for +Z face)
+    target_face_normal: Vector in local space of target object representing the face normal (e.g., (0,0,1) for +Z face)
+    Note: This helper assumes simple axis-aligned faces for the specific use cases in this script.
+    """
+    # Get world transforms
+    src_mat = obj_source.matrix_world
+    tgt_mat = obj_target.matrix_world
+    
+    # Calculate target world position for the source face
+    # We want the source face to touch the target face.
+    # Distance from source center to source face along normal
+    # For a cube of size S, distance is S/2. For cylinder, it's depth/2.
+    
+    # Determine bounding box to find face position accurately
+    src_bbox = obj_source.bound_box
+    tgt_bbox = obj_target.bound_box
+    
+    # Project bbox corners onto the face normal to find min/max distance
+    def get_face_dist(bbox, normal):
+        max_d = -float('inf')
+        for corner in bbox:
+            v = Vector(corner)
+            d = v.dot(normal)
+            if d > max_d:
+                max_d = d
+        return max_d
+
+    # Local face distances
+    src_face_dist_local = get_face_dist(src_bbox, source_face_normal)
+    tgt_face_dist_local = get_face_dist(tgt_bbox, target_face_normal)
+    
+    # Convert to world space
+    src_face_normal_world = src_mat.to_3x3() @ source_face_normal
+    tgt_face_normal_world = tgt_mat.to_3x3() @ target_face_normal
+    
+    # We want to move obj_source so its face touches obj_target's face.
+    # The target face world position is:
+    tgt_face_center_world = tgt_mat.translation + (tgt_mat.to_3x3() @ Vector((0,0,0))) # Center
+    # Actually, simpler: The face plane equation.
+    # Let's use a locator approach for robustness.
+    
+    # Create a temporary locator at the target face center
+    # Target face center in world space
+    # Find the corner of the target bbox that is furthest in the direction of target_face_normal
+    tgt_face_world_pos = Vector((0,0,0))
+    max_d = -float('inf')
+    for corner in tgt_bbox:
+        v = Vector(corner)
+        # Transform corner to world
+        w_corner = tgt_mat @ v
+        # Project onto target face normal
+        d = w_corner.dot(tgt_face_normal_world)
+        if d > max_d:
+            max_d = d
+            tgt_face_world_pos = w_corner
+            
+    # The source face needs to be at tgt_face_world_pos - offset * tgt_face_normal_world
+    # But we also need to orient the source object.
+    
+    # Orientation: Align source local normal to target world normal
+    # Current source local normal in world
+    current_src_normal_world = src_mat.to_3x3() @ source_face_normal
+    
+    # Rotation needed to align current_src_normal_world to tgt_face_normal_world
+    rot_quat = current_src_normal_world.rotation_difference(tgt_face_normal_world)
+    
+    # Apply rotation to source object
+    obj_source.rotation_euler = rot_quat.to_euler()
+    obj_source.update_from_matrix() # Update matrix after rotation
+    
+    # Recalculate source face position after rotation
+    # We need to place the source object such that its face is at tgt_face_world_pos
+    # Source center to face vector in local space
+    src_center_to_face_local = source_face_normal * src_face_dist_local
+    src_center_to_face_world = obj_source.matrix_world.to_3x3() @ src_center_to_face_local
+    
+    # Target position for source center
+    target_src_center_world = tgt_face_world_pos - src_center_to_face_world - (offset * tgt_face_normal_world)
+    
+    obj_source.location = target_src_center_world
+
+def align_face_to_face_simple(obj_source, obj_target, source_axis, target_axis, offset=0):
+    """
+    Simplified alignment for axis-aligned primitives.
+    source_axis: 'X', 'Y', or 'Z' (positive direction)
+    target_axis: 'X', 'Y', or 'Z' (positive direction)
+    """
+    # Determine normals
+    normals = {
+        'X': Vector((1,0,0)),
+        'Y': Vector((0,1,0)),
+        'Z': Vector((0,0,1)),
+        '-X': Vector((-1,0,0)),
+        '-Y': Vector((0,-1,0)),
+        '-Z': Vector((0,0,-1))
+    }
+    
+    src_norm = normals[source_axis]
+    tgt_norm = normals[target_axis]
+    
+    # Align orientation
+    # We want src_norm (local) to align with tgt_norm (world)
+    # Get current src_norm in world
+    src_mat = obj_source.matrix_world
+    current_src_norm_world = src_mat.to_3x3() @ src_norm
+    
+    # Calculate rotation
+    rot_quat = current_src_norm_world.rotation_difference(tgt_norm)
+    obj_source.rotation_euler = rot_quat.to_euler()
+    obj_source.update_from_matrix()
+    
+    # Calculate positions
+    # Get bounding box extents
+    src_bbox = obj_source.bound_box
+    tgt_bbox = obj_target.bound_box
+    
+    # Find max extent in the normal direction for both
+    def get_max_extent(bbox, normal):
+        max_d = -float('inf')
+        for corner in bbox:
+            v = Vector(corner)
+            d = v.dot(normal)
+            if d > max_d:
+                max_d = d
+        return max_d
+
+    src_ext_local = get_max_extent(src_bbox, src_norm)
+    tgt_ext_local = get_max_extent(tgt_bbox, tgt_norm)
+    
+    # Target face world position
+    tgt_mat = obj_target.matrix_world
+    tgt_face_world_pos = Vector((0,0,0))
+    max_d = -float('inf')
+    for corner in tgt_bbox:
+        w_corner = tgt_mat @ Vector(corner)
+        d = w_corner.dot(tgt_norm)
+        if d > max_d:
+            max_d = d
+            tgt_face_world_pos = w_corner
+            
+    # Source face world position should be tgt_face_world_pos - offset * tgt_norm
+    # Source center to face vector in world (after rotation)
+    src_center_to_face_world = obj_source.matrix_world.to_3x3() @ (src_norm * src_ext_local)
+    
+    target_src_center_world = tgt_face_world_pos - src_center_to_face_world - (offset * tgt_norm)
+    obj_source.location = target_src_center_world
+
+def align_face_to_face_opposite(obj_source, obj_target, source_axis, target_axis, offset=0):
+    """
+    Aligns source face to target face where normals are opposite (e.g. source +Z to target -Z).
+    """
+    normals = {
+        'X': Vector((1,0,0)),
+        'Y': Vector((0,1,0)),
+        'Z': Vector((0,0,1)),
+        '-X': Vector((-1,0,0)),
+        '-Y': Vector((0,-1,0)),
+        '-Z': Vector((0,0,-1))
+    }
+    
+    src_norm = normals[source_axis]
+    tgt_norm = normals[target_axis]
+    
+    # Align orientation: src_norm (local) -> tgt_norm (world)
+    src_mat = obj_source.matrix_world
+    current_src_norm_world = src_mat.to_3x3() @ src_norm
+    
+    rot_quat = current_src_norm_world.rotation_difference(tgt_norm)
+    obj_source.rotation_euler = rot_quat.to_euler()
+    obj_source.update_from_matrix()
+    
+    # Positions
+    src_bbox = obj_source.bound_box
+    tgt_bbox = obj_target.bound_box
+    
+    def get_max_extent(bbox, normal):
+        max_d = -float('inf')
+        for corner in bbox:
+            v = Vector(corner)
+            d = v.dot(normal)
+            if d > max_d:
+                max_d = d
+        return max_d
+
+    src_ext_local = get_max_extent(src_bbox, src_norm)
+    
+    tgt_mat = obj_target.matrix_world
+    tgt_face_world_pos = Vector((0,0,0))
+    max_d = -float('inf')
+    for corner in tgt_bbox:
+        w_corner = tgt_mat @ Vector(corner)
+        d = w_corner.dot(tgt_norm)
+        if d > max_d:
+            max_d = d
+            tgt_face_world_pos = w_corner
+            
+    # Source center to face vector in world
+    src_center_to_face_world = obj_source.matrix_world.to_3x3() @ (src_norm * src_ext_local)
+    
+    target_src_center_world = tgt_face_world_pos - src_center_to_face_world - (offset * tgt_norm)
+    obj_source.location = target_src_center_world
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+mat_glass = make_material("glass_clear", (0.9, 0.95, 1.0, 0.1))
+mat_steel = make_material("metal_steel", (0.6, 0.6, 0.65, 1.0))
+mat_organic = make_material("specimen_organic", (0.2, 0.4, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1: Create slide_base (glass_plate) ---
+glass_plate = add_cube("glass_plate", (0.076, 0.026, 0.001), location=(0,0,0), rotation=(0,0,0))
+assign_material(glass_plate, mat_glass)
+# Rotate so +Z aligns +Z (already default)
+glass_plate.location = (0, 0, 0)
+
+# --- SECTION 2: Create slide_base (metal_frame) ---
+
+# Left Rail
+left_rail = add_cylinder("left_rail", radius=0.001, depth=0.076, location=(0,0,0), rotation=(0,0,0))
+assign_material(left_rail, mat_steel)
+# Rotate so +Z aligns +Y
+# Current +Z is (0,0,1). Target +Y is (0,1,0).
+# Rotation around X by -90 degrees (or 270)
+left_rail.rotation_euler = (0, -math.pi/2, 0)
+left_rail.update_from_matrix()
+# Align left_rail.XZ_face (which is now the face whose normal was originally X? No.)
+# Let's trace:
+# Cylinder default: Axis is Z. Caps are at +/- Z. Side is radial.
+# Rotate (0, -90, 0):
+# Local Z (0,0,1) becomes World Y (0,1,0).
+# Local X (1,0,0) becomes World X (1,0,0).
+# Local Y (0,1,0) becomes World Z (0,0,1).
+# So the "XZ_face" terminology in the prompt likely refers to the face defined by the X and Z axes of the *local* object before rotation, or the face normal.
+# "Align left_rail.XZ_face to glass_plate.left_face"
+# glass_plate.left_face: Normal is -X (World -1,0,0).
+# left_rail.XZ_face: In local space, the face with normal X? Or the face containing X and Z axes?
+# Usually "Face" implies the normal.
+# If "XZ_face" means the face whose normal is X (Local X), then after rotation, Local X is World X.
+# So we want to align Local X (World X) to World -X? That would require a 180 rotation.
+# However, the prompt says "Rotate left_rail so its +Z axis aligns +Y". It doesn't mention X.
+# Let's assume "XZ_face" means the face perpendicular to the X axis (Normal X).
+# If we align Normal X to Normal -X, we need to rotate 180 around Y or Z.
+# But wait, "Align ... to ...". Usually means touching.
+# Let's look at the geometry.
+# Glass plate is at 0,0,0. Size 0.076 (X) x 0.026 (Y) x 0.001 (Z).
+# Left face is at X = -0.076/2 = -0.038. Normal is -X.
+# Left rail is a cylinder along Y. Length 0.076.
+# It should be placed at the left edge.
+# If the rail is along Y, its cross section is in XZ plane.
+# To align with the left face (a vertical plane at X=-0.038), the rail should be tangent to it or centered on it?
+# "Align left_rail.XZ_face to glass_plate.left_face"
+# If XZ_face means the face with normal X, and we align it to the left face (normal -X), they are parallel but facing opposite.
+# This implies the rail is placed such that its "left" side (local X-) touches the glass "left" side?
+# Or does it mean the rail's face *is* the left face?
+# Given "offset(0,0,0.0005)", it suggests a small gap or penetration.
+# Let's assume standard "Align Face to Face" logic:
+# Source Face Normal -> Target Face Normal.
+# If Source Face is "XZ_face", it likely means the face defined by the X and Z axes, i.e., Normal is Y? No, that's XY face.
+# Face named by axes it contains: XZ face contains X and Z axes, so Normal is Y.
+# Let's test this hypothesis.
+# If "XZ_face" means Normal Y:
+# Left rail rotated so Local Z is World Y.
+# Local Y is World Z.
+# Local X is World X.
+# So "XZ_face" (Normal Y) is now Normal Z (World Z).
+# Glass plate left face is Normal -X.
+# Aligning Normal Z to Normal -X? That would rotate the rail 90 degrees around something.
+# But the rail is already oriented along Y.
+# This interpretation seems complex.
+
+# Alternative Interpretation:
+# "XZ_face" refers to the face *on* the XZ plane of the object's local space?
+# For a cylinder along Z, the "faces" are the caps (XY plane). The side is the cylindrical surface.
+# Maybe "XZ_face" is a typo for "Side"? Or maybe it refers to the bounding box face?
+# Let's look at the other rails.
+# Right rail: Align right_rail.XZ_face to glass_plate.right_face.
+# Top rail: Align top_rail.YZ_face to glass_plate.top_face.
+# Bottom rail: Align bottom_rail.YZ_face to glass_plate.bottom_face.
+
+# Glass Plate Faces:
+# Left: Normal -X.
+# Right: Normal +X.
+# Top: Normal +Z.
+# Bottom: Normal -Z.
+
+# Left Rail (Cylinder along Y):
+# If we align "XZ_face" to "Left Face" (-X):
+# If "XZ_face" means the face with Normal X (Local X):
+# After rotation (Local Z -> World Y), Local X is World X.
+# So we have a face with Normal World X.
+# We want to align it to Normal World -X.
+# This requires a 180 degree rotation around Y or Z.
+# But the prompt *only* specified rotating +Z to +Y.
+# This implies the alignment step handles the final positioning/orientation if needed, OR the "Align" command implies "Place adjacent to".
+# If I simply place the cylinder such that its side touches the glass plate's side:
+# Glass Left Face is at X = -0.038.
+# Rail is along Y. Its cross section is in XZ.
+# To touch the left face, the rail's X coordinate should be -0.038 - radius (if outside) or -0.038 (if centered on edge?).
+# "Align face to face" usually means the faces are coincident.
+# If the rail's "XZ_face" (Normal X) touches the glass's "Left Face" (Normal -X), they are back-to-back.
+# This would mean the rail is to the *left* of the glass plate.
+# Let's assume "Align Face A to Face B" means:
+# 1. Orient A's normal to match B's normal.
+# 2. Position A so its face is at B's face position.
+# If we do this for Left Rail:
+# Target Normal: -X.
+# Source Normal (Local X): Becomes World X after initial rotation.
+# We need to rotate Source Local X to World -X.
+# Current: Local X -> World X.
+# Rotation needed: 180 deg around Y (or Z).
+# If we rotate 180 around Y:
+# Local Z (was World Y) becomes World -Y.
+# This contradicts "Rotate left_rail so its +Z axis aligns +Y".
+# So the initial rotation is fixed.
+# Therefore, "Align left_rail.XZ_face to glass_plate.left_face" must mean something else.
+# Maybe "XZ_face" means the face *perpendicular* to Y? (i.e. the side of the cylinder if it were along Y? No, cylinder along Y has side normal in XZ plane).
+# Actually, for a cylinder along Y, the "caps" are in the XZ plane.
+# So "XZ_face" likely refers to the CAPS.
+# Normal of Caps is Y (Local Y).
+# After rotation (Local Z -> World Y), Local Y -> World Z.
+# So "XZ_face" (Caps) has Normal World Z.
+# Glass Plate Left Face has Normal -X.
+# Aligning Normal Z to Normal -X?
+# This would require rotating the rail so its caps face -X.
+# But the rail is already oriented along Y.
+# This seems inconsistent.
+
+# Let's try a different interpretation of "XZ_face".
+# In Blender, a cube has faces named by their normal.
+# For a cylinder, it doesn't.
+# Maybe it refers to the bounding box face?
+# Left Rail Bounding Box:
+# Extent in X: Radius. Extent in Y: Length/2. Extent in Z: Radius.
+# Faces of BB:
+# +X, -X, +Y, -Y, +Z, -Z.
+# "XZ_face" is not a standard BB face name.
+# However, "XZ" defines a plane. The face *on* the XZ plane?
+# The caps are on the XZ plane (Local).
+# So "XZ_face" = Caps.
+# If we align Caps (Normal Y) to Left Face (Normal -X):
+# We need to rotate the rail so its Local Y becomes World -X.
+# Current Local Y is World Z.
+# Rotation from World Z to World -X is 90 deg around Y?
+# Z (0,0,1) -> -X (-1,0,0).
+# Rotate -90 around Y:
+# X (1,0,0) -> Z (0,0,1).
+# Z (0,0,1) -> -X (-1,0,0).
+# Y (0,1,0) -> Y (0,1,0).
+# So if we rotate -90 around Y:
+# Local Z (was World Y) -> World Y. (Matches "Rotate +Z to +Y").
+# Local Y (was World Z) -> World -X. (Matches "Align Caps to Left Face").
+# This works perfectly!
+# So "XZ_face" means the face whose normal is the axis perpendicular to the XZ plane, i.e., Y.
+# And "YZ_face" means the face whose normal is the axis perpendicular to the YZ plane, i.e., X.
+
+# Let's verify with Top Rail.
+# Top Rail: Cylinder along X.
+# Rotate so +Z aligns +X.
+# Local Z -> World X.
+# "Align top_rail.YZ_face to glass_plate.top_face".
+# YZ_face means Normal X (Local X).
+# Glass Plate Top Face means Normal Z (World Z).
+# We need to align Local X (Normal X) to World Z (Normal Z).
+# Current orientation:
+# Local Z -> World X.
+# Local X -> ?
+# Rotation from Z to X is -90 around Y?
+# Z (0,0,1) -> X (1,0,0).
+# Rotate -90 around Y:
+# X (1,0,0) -> Z (0,0,1).
+# Y (0,1,0) -> Y (0,1,0).
+# So Local X becomes World Z.
+# This matches!
+# So "YZ_face" (Normal X) aligns to Top Face (Normal Z).
+
+# Conclusion:
+# "XZ_face" = Face with Normal Y.
+# "YZ_face" = Face with Normal X.
+# "XY_face" = Face with Normal Z.
+
+# Implementation:
+# 1. Apply initial rotation.
+# 2. Align the specific face normal to the target face normal.
+# 3. Position the object.
+
+# Left Rail
+# Initial: Local Z -> World Y.
+# Face to align: XZ_face (Normal Y).
+# Target: Left Face (Normal -X).
+# We need Local Y -> World -X.
+# As calculated, Rotation (0, -90, 0) achieves:
+# Local Z -> World Y.
+# Local Y -> World -X.
+# So the initial rotation provided in the prompt *is* the correct orientation for the alignment.
+# We just need to position it.
+
+# Positioning:
+# Align Left Rail's XZ_face (Normal -X) to Glass Plate's Left Face (Normal -X).
+# Glass Left Face is at X = -0.038.
+# Left Rail's XZ_face is its Cap.
+# The Cap is at Local Y = +Length/2 or -Length/2?
+# Cylinder default: Caps at +/- Z.
+# After rotation (0, -90, 0):
+# Local Y is World -X.
+# Local Z is World Y.
+# Local X is World Z.
+# The "XZ_face" (Normal Y) corresponds to the Cap at Local Y = +Depth/2?
+# Wait, Cylinder default axis is Z. Caps are at +/- Z.
+# The face with Normal Y does not exist on a Z-axis cylinder.
+# My previous deduction that "XZ_face" means "Normal Y" was based on the plane definition.
+# But a cylinder along Z has NO face with Normal Y.
+# It has faces with Normal +/- Z (Caps) and a curved surface.
+# So "XZ_face" cannot mean "Normal Y" for a cylinder along Z.
+# It must mean the face *lying in* the XZ plane? That's the Cap (Normal Z).
+# If "XZ_face" means Cap (Normal Z):
+# Left Rail: Local Z -> World Y.
+# So Cap Normal (Local Z) -> World Y.
+# Target: Left Face (Normal -X).
+# Aligning World Y to World -X?
+# This requires rotation.
+# But the prompt said "Rotate left_rail so its +Z axis aligns +Y".
+# If we do that, the Cap Normal is World Y.
+# We cannot align World Y to World -X without further rotation.
+# This contradicts the "Stage by Stage" flow where orientation is fixed first.
+
+# Let's reconsider the "Rail" geometry.
+# Maybe the rail is not a cylinder along its length?
+# "Create primitive cylinder with diameter 0.002 m and length 0.076 m".
+# Length is usually the axis of the cylinder.
+# If the rail is along Y, the cylinder axis is Y.
+# But `add_cylinder` creates along Z.
+# So we rotate Z to Y.
+# So the cylinder is along Y.
+# The "faces" of the cylinder are the ends (Caps).
+# The Caps are in the XZ plane.
+# So "XZ_face" likely refers to the Caps.
+# If we align the Caps to the Left Face:
+# Left Face is a vertical plane (Normal -X).
+# Caps are vertical planes (Normal Y, after rotation Z->Y? No, if Z->Y, the Cap Normal is Y).
+# So Cap Normal is Y.
+# Left Face Normal is -X.
+# They are perpendicular. You can't "align face to face" if they are perpendicular.
+# Unless "Align" means "Place the face *against* the other face"?
+# If I place the Cap (Normal Y) against the Left Face (Normal -X), the Cap is parallel to the YZ plane.
+# The Left Face is parallel to the YZ plane.
+# So they are parallel!
+# Wait.
+# Left Face of Glass Plate:
+# Glass Plate is 0.076 (X) x 0.026 (Y) x 0.001 (Z).
+# Left Face is at X = -0.038.
+# The face lies in the YZ plane.
+# Its Normal is -X.
+# Left Rail Cap:
+# Rail is along Y.
+# Cap lies in the XZ plane?
+# No. If the cylinder axis is Y, the cross section is in the XZ plane.
+# The Cap is a circle in the XZ plane.
+# The Normal to the Cap is Y.
+# So the Cap lies in the XZ plane.
+# The Left Face lies in the YZ plane.
+# These two planes are PERPENDICULAR.
+# You cannot align them.
+
+# There is a contradiction in my geometric interpretation or the prompt's terminology.
+# Let's look at the "Top Rail".
+# Top Rail: Cylinder along X.
+# Cap lies in YZ plane. Normal is X.
+# Glass Plate Top Face: Lies in XY plane. Normal is Z.
+# These are PERPENDICULAR.
+
+# Hypothesis: The "Rails" are not cylinders along their length, but rather the prompt implies the *side* of the cylinder is the face?
+# No, "Align face to face".
+# Hypothesis: The "Rails" are placed such that their *side* touches the glass?
+# If the side touches, the normal of the side (radial) must align with the glass face normal.
+# For Left Rail (along Y):
+# Side normal is in XZ plane.
+# Glass Left Face Normal is -X.
+# So we need the side normal to be -X.
+# This means the rail is positioned at X = -0.038 - R.
+# And the rail is oriented along Y.
+# This works geometrically.
+# But what does "Align left_rail.XZ_face" mean?
+# If "XZ_face" means "The face on the XZ side"?
+# For a cylinder along Y, the "XZ side" is the curved surface.
+# This seems like a stretch for "face".
+
+# Let's try one more interpretation:
+# Maybe the rails are cubes? No, "primitive cylinder".
+# Maybe the "XZ_face" refers to the *Bounding Box* face?
+# Left Rail BB:
+# X: +/- R. Y: +/- L/2. Z: +/- R.
+# Face at X = -R. Normal -X.
+# This face is part of the curved surface.
+# If we align this BB face to the Glass Left Face (Normal -X):
+# They are parallel.
+# This works.
+# So "XZ_face" = The BB face with Normal X (or -X).
+# Why "XZ"? Because the face is in the YZ plane? No, the face at X=const is in the YZ plane.
+# Maybe "XZ_face" is a typo for "YZ_face" (the face in the YZ plane)?
+# If "XZ_face" means "Face in YZ plane" (Normal X):
+# Then for Left Rail, we align Normal X to Normal -X.
+# This requires 180 rotation.
+# But we already rotated Z to Y.
+# If we rotate Z to Y, Local X is World X.
+# So Normal X is World X.
+# We need Normal -X.
+# So we need to flip X.
+# This implies the "Align" step includes a rotation if necessary.
+
+# Let's assume the "Align" function handles the rotation to match normals.
+# And "XZ_face" means the face with Normal X.
+# "YZ_face" means the face with Normal Y.
+# "XY_face" means the face with Normal Z.
+
+# Left Rail:
+# Face: Normal X.
+# Target: Normal -X.
+# Align Normal X to Normal -X.
+# This rotates the object 180 around Y (or Z).
+# But we already rotated Z to Y.
+# If we rotate 180 around Y:
+# Local Z (was World Y) -> World -Y.
+# This breaks the "Z aligns Y" constraint.
+
+# Okay, let's look at the offsets.
+# Offset (0,0,0.0005).
+# This is a small Z offset.
+# This suggests the objects are already roughly in place.
+
+# Let's go with the most robust geometric placement:
+# Left Rail: Cylinder along Y. Radius 0.001. Length 0.076.
+# Position: Centered on the left edge of the glass plate.
+# Glass Left Edge: X = -0.038.
+# Rail Center X: -0.038.
+# Rail Center Y: 0.0 (Center of glass).
+# Rail Center Z: 0.0 (Center of glass).
+# But the rail has thickness.
+# If it's a rail *around* the plate, it should be outside.
+# X = -0.038 - 0.001 = -0.039.
+# Or X = -0.038 + 0.001 = -0.037 (inside).
+# "Align face to face" usually means touching.
+# If the rail's "Left Face" (Normal -X) touches the Glass "Left Face" (Normal -X):
+# The rail is to the left of the glass.
+# Rail Center X = Glass Left X - Rail Radius?
+# No, if the face is the side, the distance from center to face is Radius.
+# So Rail Center X = -0.038 - 0.001 = -0.039.
+# Offset (0,0,0.0005) moves it in Z.
+# This seems plausible.
+
+# How to implement "Align left_rail.XZ_face to glass_plate.left_face" with the code?
+# I will use `align_face_to_face_simple` or `align_face_to_face_opposite`.
+# If "XZ_face" means Normal X:
+# We want to align Local X to World -X.
+# But Local X is currently World X (after Z->Y rotation).
+# So we need to rotate 180 around Y.
+# But this breaks Z->Y.
+# UNLESS the "Rotate" step in the prompt is just the *primary* orientation, and the "Align" step corrects it?
+# No, "Rotate... Align...". Sequential.
+
+# Let's assume "XZ_face" means the face *perpendicular* to the Z axis? (i.e. XY face).
+# No, XZ contains Z.
+
+# Let's try: "XZ_face" = The face defined by the X and Z axes.
+# For a cylinder along Y, the cross section is XZ.
+# The "face" is the Cap.
+# Normal is Y.
+# If we align Cap (Normal Y) to Left Face (Normal -X):
+# We need to rotate Y to -X.
+# Rotation: 90 deg around Z?
+# Y (0,1,0) -> -X (-1,0,0).
+# Rotate 90 around Z:
+# X (1,0,0) -> Y (0,1,0).
+# Y (0,1,0) -> -X (-1,0,0).
+# Z (0,0,1) -> Z (0,0,1).
+# This changes Z to Z.
+# But we need Z to Y.
+# So this doesn't work.
+
+# Final Decision:
+# I will place the rails based on the logical geometry of a microscope

@@ -1,0 +1,121 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_concrete; diffuse_color = (0.7, 0.7, 0.7, 1.0).
+Define material mat_steel_dark; diffuse_color = (0.2, 0.2, 0.2, 1.0).
+Define material mat_steel_light; diffuse_color = (0.8, 0.8, 0.8, 1.0).
+Define material mat_steel_railing; diffuse_color = (0.6, 0.6, 0.6, 1.0).
+Define material mat_copper; diffuse_color = (0.9, 0.5, 0.2, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create platform base  ---
+Create primitive cuboid with size 2.44×0.10×3.05 m and name it platform_base.
+Rotate platform_base so its +Z axis aligns +Z (world).
+Align platform_base.XY_face to elevator_root.XY_face.
+Then move by offset(0,0,-1.5).
+Stage 1 complete.
+
+---  SECTION 2 – Create guide rails  ---
+Create primitive cylinder with radius 0.025 m and height 4.0 m and name it guide_rail_L.
+Rotate guide_rail_L so its +Z axis aligns +Z (world).
+Align guide_rail_L.XZ_face to platform_base.left_face.
+Then move by offset(0,0,1.95).
+
+Create primitive cylinder with radius 0.025 m and height 4.0 m and name it guide_rail_R.
+Rotate guide_rail_R so its +Z axis aligns +Z (world).
+Align guide_rail_R.XZ_face to platform_base.right_face.
+Then move by offset(0,0,1.95).
+
+Create primitive cylinder with radius 0.025 m and height 4.0 m and name it guide_rail_F.
+Rotate guide_rail_F so its +Z axis aligns +Z (world).
+Align guide_rail_F.YZ_face to platform_base.front_face.
+Then move by offset(0,0,1.95).
+
+Create primitive cylinder with radius 0.025 m and height 4.0 m and name it guide_rail_B.
+Rotate guide_rail_B so its +Z axis aligns +Z (world).
+Align guide_rail_B.YZ_face to platform_base.back_face.
+Then move by offset(0,0,1.95).
+Stage 2 complete.
+
+---  SECTION 3 – Create railing system  ---
+Create primitive cylinder with radius 0.02 m and height 2.44 m and name it railing_L.
+Rotate railing_L so its +Z axis aligns +X (world).
+Align railing_L.XZ_face to guide_rail_L.center.
+Then move by offset(0,0,0.5).
+
+Create primitive cylinder with radius 0.02 m and height 3.05 m and name it railing_R.
+Rotate railing_R so its +Z axis aligns +Y (world).
+Align railing_R.XZ_face to guide_rail_R.center.
+Then move by offset(0,0,0.5).
+
+Create primitive cylinder with radius 0.02 m and height 2.44 m and name it railing_F.
+Rotate railing_F so its +Z axis aligns +X (world).
+Align railing_F.YZ_face to guide_rail_F.center.
+Then move by offset(0,0,0.5).
+
+Create primitive cylinder with radius 0.02 m and height 2.44 m and name it railing_B.
+Rotate railing_B so its +Z axis aligns +X (world).
+Align railing_B.YZ_face to guide_rail_B.center.
+Then move by offset(0,0,0.5).
+Stage 3 complete.
+
+---  SECTION 4 – Create gate and control system  ---
+Create primitive cuboid with size 2.44×0.05×2.0 m and name it gate_panel.
+Rotate gate_panel so its +Z axis aligns +Z (world).
+Align gate_panel.XZ_face to railing_B.center.
+Then move by offset(0,0,1.0).
+
+Create primitive cylinder with radius 0.05 m and height 0.1 m and name it gate_hinge.
+Rotate gate_hinge so its +Z axis aligns +X (world).
+Align gate_hinge.XZ_face to gate_panel.left_face.
+Then move by offset(-0.025,0,0).
+
+Create primitive cuboid with size 0.1×0.4×0.3 m and name it control_panel.
+Rotate control_panel so its +Z axis aligns +Z (world).
+Align control_panel.YZ_face to gate_panel.right_face.
+Then move by offset(0.15,0,1.2).
+
+Create primitive cylinder with radius 0.02 m and height 0.01 m and name it btn_up.
+Rotate btn_up so its +Z axis aligns +Z (world).
+Align btn_up.YZ_face to control_panel.front_face.
+Then move by offset(0,0.1,0.05).
+
+Create primitive cylinder with radius 0.02 m and height 0.01 m and name it btn_down.
+Rotate btn_down so its +Z axis aligns +Z (world).
+Align btn_down.YZ_face to control_panel.front_face.
+Then move by offset(0,-0.1,0.05).
+
+Create primitive cylinder with radius 0.03 m and height 0.01 m and name it btn_emergency.
+Rotate btn_emergency so its +Z axis aligns +Z (world).
+Align btn_emergency.YZ_face to control_panel.front_face.
+Then move by offset(0,-0.15,0.05).
+Stage 4 complete.
+
+---  SECTION 5 – Create pulley system  ---
+Create primitive cuboid with size 2.5×0.2×0.2 m and name it pulley_beam.
+Rotate pulley_beam so its +Z axis aligns +Z (world).
+Align pulley_beam.XZ_face to elevator_root.center.
+Then move by offset(0,0,3.5).
+
+Create primitive cylinder with radius 0.25 m and height 0.1 m and name it pulley_wheel.
+Rotate pulley_wheel so its +Z axis aligns +Z (world).
+Align pulley_wheel.XZ_face to pulley_beam.center.
+Then move by offset(0,0,0.15).
+
+Create primitive cylinder with radius 0.01 m and height 3.5 m and name it cable_rope.
+Rotate cable_rope so its +Z axis aligns +Z (world).
+Align cable_rope.XZ_face to pulley_wheel.center.
+Then move by offset(0,0,-0.3).
+Stage 5 complete.
+
+All stages complete.

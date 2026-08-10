@@ -1,0 +1,1 @@
+Let's create a 3D model of a trombone. Start with the long, cylindrical slide that is U-shaped. Attach the bell section, which is a flared tube, to one end of the slide. Include the mouthpiece at the other end of the slide.

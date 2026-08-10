@@ -1,0 +1,314 @@
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_text_object(text, name, size=0.1):
+    obj = bpy.data.objects.new(name, bpy.data.curves.new(name, type='FONT'))
+    obj.data.body = text
+    obj.data.size = size
+    bpy.context.collection.objects.link(obj)
+    return obj
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    bpy.ops.mesh.primitive_circle_add(radius=radius, segments=segments, fill_type='TRIFAN', location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    # size is (x, y, z)
+    half_x, half_y, half_z = size[0]/2, size[1]/2, size[2]/2
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0,0,0)) # size=1 creates 1x1x1 cube
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (half_x*2, half_y*2, half_z*2) # Correct scaling for primitive_cube_add which uses half-size internally in some versions, but standard is total size. 
+    # Actually primitive_cube_add 'size' parameter is the total length of the edge.
+    # Let's re-verify: primitive_cube_add(size=1) creates a cube from -0.5 to 0.5. Total size 1.
+    # So scale should be size.
+    obj.scale = size
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_seg=16, height_seg=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, radius, segments):
+    # Apply bevel modifier
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width_type = 'WIDTH'
+    mod.width = radius
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply modifier to mesh
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def boolean_subtract(cutter_obj, target_obj):
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    # Add boolean modifier to target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union object
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def align_axis_to_vector(obj, axis, vector):
+    """
+    Aligns object's local axis to a world vector.
+    axis: 'X', 'Y', or 'Z'
+    vector: target world direction (normalized)
+    """
+    # Get current rotation
+    rot_euler = obj.rotation_euler.copy()
+    
+    # Create rotation matrix to align axis to vector
+    # We want obj.local_axis to point to vector
+    if axis == 'X':
+        src = Vector((1, 0, 0))
+    elif axis == 'Y':
+        src = Vector((0, 1, 0))
+    elif axis == 'Z':
+        src = Vector((0, 0, 1))
+    else:
+        raise ValueError("Invalid axis")
+        
+    # Calculate rotation
+    rot = src.rotation_difference(vector)
+    
+    # Apply rotation
+    obj.rotation_euler = rot.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.location
+    
+    def face_center_world(self, face_axis='Z'):
+        """
+        Returns the center of the face defined by the axis.
+        face_axis: 'X', 'Y', 'Z' (positive direction face) or '-X', '-Y', '-Z'
+        """
+        loc = self.obj.location
+        size = self.obj.dimensions
+        offset = Vector((0,0,0))
+        
+        if face_axis == 'X':
+            offset.x = size.x / 2
+        elif face_axis == '-X':
+            offset.x = -size.x / 2
+        elif face_axis == 'Y':
+            offset.y = size.y / 2
+        elif face_axis == '-Y':
+            offset.y = -size.y / 2
+        elif face_axis == 'Z':
+            offset.z = size.z / 2
+        elif face_axis == '-Z':
+            offset.z = -size.z / 2
+            
+        # Rotate offset by object's rotation to get world offset
+        offset.rotate(self.obj.rotation_euler)
+        return loc + offset
+
+    def radial_point_world(self, axis='Z', angle=0):
+        """
+        Returns a point on the radial edge of a cylinder/disc aligned with axis.
+        """
+        loc = self.obj.location
+        size = self.obj.dimensions
+        radius = size[axis] / 2 if axis in ['X','Y','Z'] else 0 # Approximation for non-cylinders
+        
+        # This is a simplified radial point for cylinders aligned with Z
+        # For general use, we assume the object is a cylinder/disc aligned with the specified axis
+        # Calculate point in local space
+        if axis == 'Z':
+            local_pt = Vector((radius * math.cos(angle), radius * math.sin(angle), 0))
+        elif axis == 'X':
+            local_pt = Vector((0, radius * math.cos(angle), radius * math.sin(angle)))
+        elif axis == 'Y':
+            local_pt = Vector((radius * math.cos(angle), 0, radius * math.sin(angle)))
+            
+        local_pt.rotate(self.obj.rotation_euler)
+        return loc + local_pt
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_plastic_black = make_material("mat_plastic_black", (0.05, 0.05, 0.05))
+mat_plastic_white = make_material("mat_plastic_white", (0.95, 0.95, 0.95))
+mat_metal_silver = make_material("mat_metal_silver", (0.7, 0.7, 0.75))
+mat_metal_gold = make_material("mat_metal_gold", (1.0, 0.84, 0.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create housing shell
+housing_shell = add_cube("housing_shell", (0.060, 0.020, 0.008))
+housing_shell.rotation_euler = (0, 0, 0) # +Z aligns +Z
+
+# Anchor housing_shell to usb_drive_root.center
+# Assuming usb_drive_root exists or is at origin. If not, we create a dummy or assume origin.
+# The prompt implies usb_drive_root is an existing anchor.
+# If it doesn't exist, we might need to create it or assume it's at (0,0,0).
+# Let's assume it exists. If not, this will fail. 
+# To be safe, let's check if it exists.
+if "usb_drive_root" in bpy.data.objects:
+    anchor_loc = bpy.data.objects["usb_drive_root"].location
+else:
+    # Fallback to origin if anchor doesn't exist
+    anchor_loc = Vector((0,0,0))
+    
+housing_shell.location = anchor_loc
+housing_shell.location += Vector((0,0,0)) # Offset
+
+# Bevel housing_shell.edges
+add_bevel(housing_shell, 0.002, 4)
+
+# SECTION 2 – Create housing cap
+housing_cap = add_cube("housing_cap", (0.010, 0.020, 0.008))
+housing_cap.rotation_euler = (0, 0, 0) # +Z aligns +Z
+
+# Align housing_cap.right_face to housing_shell.left_face
+# Right face of housing_cap is +X face. Left face of housing_shell is -X face.
+# We want housing_cap.right_face to touch housing_shell.left_face.
+# housing_shell.left_face world pos:
+shell_left_face = Locator(housing_shell).face_center_world('-X')
+# housing_cap.right_face world pos should be shell_left_face
+# housing_cap.right_face is at housing_cap.location + (size.x/2, 0, 0) rotated
+# Let's calculate the required location for housing_cap
+# Target for housing_cap center:
+# shell_left_face - (housing_cap.size.x/2, 0, 0) rotated
+cap_half_x = 0.010 / 2
+offset_vec = Vector((-cap_half_x, 0, 0))
+offset_vec.rotate(housing_cap.rotation_euler)
+target_center = shell_left_face - offset_vec
+
+housing_cap.location = target_center
+housing_cap.location += Vector((0,0,0)) # Offset
+
+# SECTION 3 – Create slider body
+slider_body = add_cube("slider_body", (0.040, 0.018, 0.006))
+slider_body.rotation_euler = (0, 0, 0) # +Z aligns +Z
+
+# Anchor slider_body to housing_shell.center
+slider_body.location = Locator(housing_shell).center_world()
+slider_body.location += Vector((0.015, 0, 0)) # Offset
+
+# Bevel slider_body.edges
+add_bevel(slider_body, 0.001, 4)
+
+# SECTION 4 – Create slider groove
+slider_groove = add_cube("slider_groove", (0.038, 0.016, 0.005))
+slider_groove.rotation_euler = (0, 0, 0) # +Z aligns +Z
+
+# Anchor slider_groove to housing_shell.center
+slider_groove.location = Locator(housing_shell).center_world()
+slider_groove.location += Vector((0.015, 0, 0)) # Offset
+
+# Boolean-subtract slider_groove from housing_shell
+boolean_subtract(slider_groove, housing_shell)
+
+# SECTION 5 – Create connector shield
+connector_shield = add_cube("connector_shield", (0.012, 0.045, 0.012))
+# Rotate connector_shield so its +Z axis aligns +X (world)
+align_axis_to_vector(connector_shield, 'Z', Vector((1, 0, 0)))
+
+# Align connector_shield.center to housing_shell.left_face
+# housing_shell.left_face is at -X side
+shell_left_face = Locator(housing_shell).face_center_world('-X')
+connector_shield.location = shell_left_face
+connector_shield.location += Vector((-0.006, 0, 0)) # Offset
+
+# SECTION 6 – Create connector core
+connector_core = add_cube("connector_core", (0.010, 0.035, 0.008))
+# Rotate connector_core so its +Z axis aligns +X (world)
+align_axis_to_vector(connector_core, 'Z', Vector((1, 0, 0)))
+
+# Align connector_core.center to connector_shield.center
+connector_core.location = Locator(connector_shield).center_world()
+connector_core.location += Vector((0, 0, 0)) # Offset
+
+# SECTION 7 – Create connector pins
+
+def create_pin(name, offset_y):
+    pin = add_cylinder(name, 0.0005, 0.005, 16) # Radius 0.0005 (Ø0.001), Depth 0.005
+    # Rotate pin so its +Z axis aligns +X (world)
+    align_axis_to_vector(pin, 'Z', Vector((1, 0, 0)))
+    
+    # Align pin.center to connector_core.left_face
+    # connector_core is rotated +Z to +X.
+    # Its local -X face is now pointing in world -X direction?
+    # Let's check rotation.
+    # Original +Z is (0,0,1). Rotated to (1,0,0).
+    # Original -X is (-1,0,0). Rotated by same rotation matrix.
+    # Rotation matrix aligns Z to X.
+    # Let's use locator to find the face center.
+    # connector_core.left_face usually means -X face in local space.
+    core_left_face = Locator(connector_core).face_center_world('-X')
+    
+    pin.location = core_left_face
+    pin.location += Vector((0, offset_y, 0)) # Offset
+
+create_pin("pin_1", 0.008)
+create_pin("pin_2", 0.002)
+create_pin("pin_3", -0.002)
+create_pin("pin_4", -0.008)

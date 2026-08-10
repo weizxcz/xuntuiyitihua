@@ -1,0 +1,274 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix, Quaternion
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, roughness=0.5, metallic=0.0):
+    """Create a principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    return mat
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (flat cylinder) mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_top, radius2=radius_bottom, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add an UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def get_face_center(obj, face_type='top'):
+    """
+    Get the world location of a specific face center of an object.
+    Assumes standard orientation unless modified.
+    'top' usually refers to +Z face.
+    """
+    # Ensure object is in world space
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    
+    # Select all faces first to clear selection
+    bpy.ops.mesh.select_all(action='SELECT')
+    
+    # Select faces based on normal direction
+    # This is a simplified approach; for robustness, we assume standard axis alignment
+    # For 'top_face', we look for faces with normal close to (0,0,1)
+    
+    # Reset selection
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # We will iterate vertices to find the face with the highest Z in local space,
+    # then transform to world. However, simpler:
+    # If the object is axis-aligned, the top face center is just location + (0,0, height/2)
+    
+    # Let's use the bounding box approach for robustness with arbitrary rotations
+    # But since we control rotation, we can rely on local coordinates transformed to world.
+    
+    # Get local bounds
+    min_b, max_b = obj.bound_box
+    # Local center
+    local_center = Vector((0,0,0))
+    # Local top center (assuming Z is up)
+    local_top_center = Vector((0, 0, max_b[6][2])) # max_b[6] is usually max Z corner
+    
+    # Transform to world
+    world_top_center = obj.matrix_world @ local_top_center
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    obj.select_set(False)
+    
+    return world_top_center
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Current axis vector in world space
+    if axis == 'X':
+        current = Vector((1,0,0))
+    elif axis == 'Y':
+        current = Vector((0,1,0))
+    else: # Z
+        current = Vector((0,0,1))
+        
+    # Calculate rotation
+    rot_quat = current.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_subtract(target, cutter, name_suffix="_cut"):
+    """
+    Perform a boolean subtract operation using the built-in modifier.
+    Returns the modified target object.
+    """
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name=f"{target.name}_bool_sub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    
+    return target
+
+def boolean_union(target, cutter, name_suffix="_union"):
+    """
+    Perform a boolean union operation.
+    Returns the modified target object.
+    """
+    mod = target.modifiers.new(name=f"{target.name}_bool_un", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    
+    return target
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class for locating points in 3D space."""
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.matrix_world.to_translation()
+    
+    def face_center_world(self, face_type='top'):
+        return get_face_center(self.obj, face_type)
+    
+    def radial_point_world(self, angle=0, radius=1):
+        """Get a point on the radial axis (X axis by default) at a given radius."""
+        # Local point
+        local_pt = Vector((radius, 0, 0))
+        return self.obj.matrix_world @ local_pt
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data
+for mesh in bpy.data.meshes:
+    if mesh.users == 0:
+        bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    if mat.users == 0:
+        bpy.data.materials.remove(mat)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_black_plastic = make_material("mat_black_plastic", (0.10, 0.10, 0.10))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create base plate ---
+
+# Create primitive cuboid with size 0.200×0.150×0.010 m and name it base_plate.
+base_plate = add_cube("base_plate", (0.200, 0.150, 0.010), location=(0,0,0), rotation=(0,0,0))
+
+# Rotate base_plate so its +Z axis aligns +Z (world).
+# It is already aligned, but we enforce it.
+align_axis_to_vector(base_plate, 'Z', (0,0,1))
+
+# Anchor base_plate to root.center.
+# "root.center" implies the world origin (0,0,0) as the default root.
+base_plate.location = (0, 0, 0)
+
+# Then move by offset(0, 0, 0).
+base_plate.location += Vector((0, 0, 0))
+
+# Apply material
+if base_plate.data.materials:
+    base_plate.data.materials[0] = mat_black_plastic
+else:
+    base_plate.data.materials.append(mat_black_plastic)
+
+# --- SECTION 2 – Create slot cutters ---
+
+# Helper to create and position a cutter
+def create_cutter(name, size, anchor_obj, anchor_face, offset):
+    cutter = add_cube(name, size, location=(0,0,0), rotation=(0,0,0))
+    
+    # Rotate cutter so its +Z axis aligns +Z (world)
+    align_axis_to_vector(cutter, 'Z', (0,0,1))
+    
+    # Anchor cutter to anchor_obj.anchor_face.center
+    anchor_loc = get_face_center(anchor_obj, anchor_face)
+    cutter.location = anchor_loc
+    
+    # Then move by offset
+    cutter.location += Vector(offset)
+    
+    return cutter
+
+cutter_positions = [
+    ("cutter_01", (0.075, 0.010, 0.010), (-0.075, 0.060, 0.005)),
+    ("cutter_02", (0.075, 0.010, 0.010), (-0.050, 0.060, 0.005)),
+    ("cutter_03", (0.075, 0.010, 0.010), (-0.025, 0.060, 0.005)),
+    ("cutter_04", (0.075, 0.010, 0.010), (0.000, 0.060, 0.005)),
+    ("cutter_05", (0.075, 0.010, 0.010), (0.025, 0.060, 0.005)),
+    ("cutter_06", (0.075, 0.010, 0.010), (0.050, 0.060, 0.005)),
+    ("cutter_07", (0.075, 0.010, 0.010), (-0.075, 0.030, 0.005)),
+    ("cutter_08", (0.075, 0.010, 0.010), (-0.050, 0.030, 0.005)),
+    ("cutter_09", (0.075, 0.010, 0.010), (-0.025, 0.030, 0.005)),
+    ("cutter_10", (0.075, 0.010, 0.010), (0.000, 0.030, 0.005)),
+    ("cutter_11", (0.075, 0.010, 0.010), (0.025, 0.030, 0.005)),
+    ("cutter_12", (0.075, 0.010, 0.010), (0.050, 0.030, 0.005)),
+]
+
+cutters = []
+for name, size, offset in cutter_positions:
+    c = create_cutter(name, size, base_plate, 'top_face', offset)
+    cutters.append(c)
+
+# --- SECTION 3 – Boolean subtract slots ---
+
+# Boolean-subtract each cutter from base_plate
+for cutter in cutters:
+    boolean_subtract(base_plate, cutter)
+
+# --- SECTION 4 – Final Assembly ---
+
+# Align base_unit to root.center.
+# Note: The prompt says "base_unit", but the object created is "base_plate".
+# Assuming "base_unit" refers to the main assembly object "base_plate".
+base_plate.location = (0, 0, 0)
+
+# Assembly guideline satisfied.
+# All stages complete.
+```

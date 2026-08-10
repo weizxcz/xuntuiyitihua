@@ -1,0 +1,50 @@
+{
+  "id": "f111b07b-5078-4226-a9bd-ea7387d8efac",
+  "name": "Garden Layout",
+  "instruction": "Design a 3D model of a garden layout. The garden should include various elements such as flowerbeds, pathways, and a central fountain. Arrange the flowerbeds in a symmetrical pattern, with the pathways connecting different sections of the garden. The central fountain should be the focal point, surrounded by benches and decorative plants. Ensure the overall layout is visually appealing and functional.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The garden includes flowerbeds.",
+        "There are pathways connecting different sections.",
+        "A central fountain is present.",
+        "Benches are arranged around the fountain.",
+        "Decorative plants are placed near the fountain."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the flowerbeds is proportionate to the garden."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "Flowerbeds are positioned to create a balanced look.",
+        "Pathways are wide enough for comfortable walking.",
+        "The fountain is elevated to draw attention.",
+        "Benches are placed at a reasonable distance from the fountain."
+      ],
+      "Object distance and contact": [
+        "There is adequate space between flowerbeds and pathways.",
+        "The fountain is not obstructed by any other elements.",
+        "Benches are positioned to face the fountain."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified elements (flowerbeds, pathways, fountain, benches) are included.",
+        "The symmetrical arrangement of flowerbeds is accurately represented.",
+        "Pathways effectively connect different sections as instructed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

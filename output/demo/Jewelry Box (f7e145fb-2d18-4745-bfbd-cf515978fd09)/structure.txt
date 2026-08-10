@@ -1,0 +1,38 @@
+-- MATERIAL LIBRARY --
+mat_wood_dark | diffuse_color=(0.20,0.10,0.05,1.0)
+mat_wood_light | diffuse_color=(0.60,0.45,0.30,1.0)
+mat_mirror | diffuse_color=(0.80,0.85,0.90,1.0)
+mat_satin_white | diffuse_color=(0.95,0.95,0.92,1.0)
+mat_silk_red | diffuse_color=(0.60,0.05,0.05,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| jewelry_box | Composite of base, lid, and internal fittings | assembly_order=[base_group], [lid_group], [interior_group] |
+
+Layer 1 – Primary Structure (Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_bottom | Solid rectangular block forming the floor | size=0.30×0.20×0.02 m; mat=mat_wood_dark; create_method=primitive(cube); pos=(0,0,0); orientation=axis:+Z |
+| base_sides | Four vertical walls forming the container | composite of 4 cuboids; mat=mat_wood_dark; create_method=boolean_subtract(base_bottom, void); pos=(0,0,0.01); orientation=axis:+Z |
+| base_interior_void | Empty space inside the base walls | size=0.28×0.18×0.018 m; mat=-; create_method=primitive(cube); pos=(0,0,0.01); orientation=axis:+Z |
+
+Layer 2 – Primary Structure (Lid)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lid_top | Solid rectangular block forming the roof | size=0.30×0.20×0.02 m; mat=mat_wood_dark; create_method=primitive(cube); pos=(0,0,0.04); orientation=axis:+Z |
+| lid_hinge_mount | Small protrusion on the back edge for hinge attachment | size=0.02×0.02×0.02 m; mat=mat_wood_dark; create_method=primitive(cube); pos=(0,-0.10,0.03); orientation=axis:+Z |
+| lid_mirror_frame | Decorative frame surrounding the mirror | size=0.28×0.18×0.005 m; mat=mat_wood_light; create_method=primitive(cube); pos=(0,0,0.035); orientation=axis:+Z |
+| lid_mirror_surface | Reflective surface embedded in the frame | size=0.26×0.16×0.001 m; mat=mat_mirror; create_method=primitive(cube); pos=(0,0,0.032); orientation=axis:+Z |
+
+Layer 3 – Interior Fittings (Compartments)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| ring_tray | Small shallow tray for rings | size=0.10×0.10×0.005 m; mat=mat_satin_white; create_method=primitive(cube); pos=(-0.05,0,0.005); orientation=axis:+Z |
+| necklace_rail | Long narrow groove for necklaces | size=0.20×0.02×0.005 m; mat=mat_satin_white; create_method=primitive(cube); pos=(0,0.05,0.005); orientation=axis:+Z |
+| earring_holder | Grid of small holes for earrings | size=0.08×0.08×0.005 m; mat=mat_satin_white; create_method=primitive(cube); pos=(0.05,-0.05,0.005); orientation=axis:+Z |
+| velvet_lining | Soft fabric lining the bottom | size=0.28×0.18×0.002 m; mat=mat_silk_red; create_method=primitive(cube); pos=(0,0,0.001); orientation=axis:+Z |
+
+# ----------  END_GRAPH  ----------

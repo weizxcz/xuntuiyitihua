@@ -1,0 +1,170 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_silver_steel; diffuse_color = (0.7,0.7,0.8,1.0).
+Define material mat_translucent_plastic; diffuse_color = (0.9,0.9,0.9,0.3).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Pan  ---
+Create primitive cuboid with size 0.5×0.3×0.02 m and name it base_pan.
+Rotate base_pan so its +Z axis aligns +Z (world).
+Align base_pan.top_face to world.origin.
+Stage 1 complete.
+
+---  SECTION 2 – Create Side Panels  ---
+Create primitive cuboid with size 0.5×0.02×0.3 m and name it side_pan_L.
+Rotate side_pan_L so its +Z axis aligns +Z (world).
+Align side_pan_L.right_face to base_pan.left_face.
+Align side_pan_L.bottom_face to base_pan.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.5×0.02×0.3 m and name it side_pan_R.
+Rotate side_pan_R so its +Z axis aligns +Z (world).
+Align side_pan_R.left_face to base_pan.right_face.
+Align side_pan_R.bottom_face to base_pan.top_face.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create Back Panel  ---
+Create primitive cuboid with size 0.3×0.02×0.3 m and name it back_pan.
+Rotate back_pan so its +Z axis aligns +Z (world).
+Align back_pan.front_face to base_pan.back_face.
+Align back_pan.bottom_face to base_pan.top_face.
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create Front Frame Components  ---
+Create primitive cylinder with Ø0.02×0.3 m and name it front_left_post.
+Rotate front_left_post so its +Z axis aligns +Z (world).
+Align front_left_post.center to base_pan.left_face.
+Align front_left_post.bottom_face to base_pan.top_face.
+Then move by offset(0.01,0,0).
+
+Create primitive cylinder with Ø0.02×0.3 m and name it front_right_post.
+Rotate front_right_post so its +Z axis aligns +Z (world).
+Align front_right_post.center to base_pan.right_face.
+Align front_right_post.bottom_face to base_pan.top_face.
+Then move by offset(-0.01,0,0).
+
+Create primitive cuboid with size 0.3×0.02×0.02 m and name it front_top_bar.
+Rotate front_top_bar so its +Z axis aligns +Z (world).
+Align front_top_bar.center to Avg(front_left_post.center, front_right_post.center).
+Align front_top_bar.bottom_face to front_left_post.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.3×0.02×0.02 m and name it front_bottom_bar.
+Rotate front_bottom_bar so its +Z axis aligns +Z (world).
+Align front_bottom_bar.center to Avg(front_left_post.center, front_right_post.center).
+Align front_bottom_bar.top_face to base_pan.top_face.
+Then move by offset(0,0,0).
+
+Boolean-union front_left_post, front_right_post, front_top_bar, and front_bottom_bar; keep front_left_post.
+Stage 4 complete.
+
+---  SECTION 5 – Create Door Frame Components  ---
+Create primitive cylinder with Ø0.015×0.28 m and name it door_left_bar.
+Rotate door_left_bar so its +Z axis aligns +Z (world).
+Align door_left_bar.center to front_left_post.center.
+Align door_left_bar.bottom_face to front_bottom_bar.top_face.
+Then move by offset(0.015,0,0).
+
+Create primitive cylinder with Ø0.015×0.28 m and name it door_right_bar.
+Rotate door_right_bar so its +Z axis aligns +Z (world).
+Align door_right_bar.center to front_right_post.center.
+Align door_right_bar.bottom_face to front_bottom_bar.top_face.
+Then move by offset(-0.015,0,0).
+
+Create primitive cuboid with size 0.28×0.015×0.015 m and name it door_top_bar.
+Rotate door_top_bar so its +Z axis aligns +Z (world).
+Align door_top_bar.center to Avg(door_left_bar.center, door_right_bar.center).
+Align door_top_bar.bottom_face to door_left_bar.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.28×0.015×0.015 m and name it door_bottom_bar.
+Rotate door_bottom_bar so its +Z axis aligns +Z (world).
+Align door_bottom_bar.center to Avg(door_left_bar.center, door_right_bar.center).
+Align door_bottom_bar.top_face to front_bottom_bar.top_face.
+Then move by offset(0,0,0).
+
+Boolean-union door_left_bar, door_right_bar, door_top_bar, and door_bottom_bar; keep door_left_bar.
+Stage 5 complete.
+
+---  SECTION 6 – Create Door Bars Pattern  ---
+For i in 0…4:
+  Create primitive cylinder with Ø0.01×0.28 m and name it door_bars_i.
+  Rotate door_bars_i so its +Z axis aligns +Z (world).
+  Align door_bars_i.center to Avg(door_left_bar.center, door_right_bar.center).
+  Align door_bars_i.bottom_face to door_bottom_bar.top_face.
+  Then move by offset(-0.1 + i*0.05, 0, 0).
+
+Boolean-union all door_bars_i objects; keep door_bars_0.
+Stage 6 complete.
+
+---  SECTION 7 – Create Latch Mechanism  ---
+Create primitive cuboid with size 0.04×0.02×0.02 m and name it latch_base.
+Rotate latch_base so its +Z axis aligns +Z (world).
+Align latch_base.center to door_right_bar.center.
+Align latch_base.bottom_face to door_bottom_bar.top_face.
+Then move by offset(0.02,0,0).
+
+Create primitive cylinder with Ø0.01×0.03 m and name it latch_hook.
+Rotate latch_hook so its +Z axis aligns +Z (world).
+Align latch_hook.center to latch_base.center.
+Align latch_hook.bottom_face to latch_base.top_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.01 m and name it latch_strike.
+Rotate latch_strike so its +Z axis aligns +Z (world).
+Align latch_strike.center to door_left_bar.center.
+Align latch_strike.bottom_face to door_bottom_bar.top_face.
+Then move by offset(0.02,0,0).
+Stage 7 complete.
+
+---  SECTION 8 – Create Ventilation Holes Pattern  ---
+For r in 0…1 and c in 0…4:
+  Create primitive cylinder with Ø0.02×0.01 m and name it ventilation_holes_r_c.
+  Rotate ventilation_holes_r_c so its +Z axis aligns +X (world).
+  Align ventilation_holes_r_c.center to side_pan_L.center.
+  Align ventilation_holes_r_c.bottom_face to base_pan.top_face.
+  Then move by offset(-0.1 + c*0.05, 0, 0.1 + r*0.05).
+
+Boolean-union all ventilation_holes_r_c objects; keep ventilation_holes_0_0.
+Stage 8 complete.
+
+---  SECTION 9 – Create Handle  ---
+Create primitive cuboid with size 0.1×0.02×0.02 m and name it handle_base.
+Rotate handle_base so its +Z axis aligns +Z (world).
+Align handle_base.center to base_pan.center.
+Align handle_base.bottom_face to base_pan.top_face.
+Then move by offset(0,0,0.15).
+
+Create primitive torus with R=0.05 r=0.01 and name it handle_arch.
+Rotate handle_arch so its +Z axis aligns +Y (world).
+Align handle_arch.center to handle_base.center.
+Align handle_arch.bottom_face to handle_base.top_face.
+Then move by offset(0,0,0).
+Stage 9 complete.
+
+---  SECTION 10 – Create Top Cover  ---
+Create primitive cuboid with size 0.5×0.3×0.02 m and name it top_cover.
+Rotate top_cover so its +Z axis aligns +Z (world).
+Align top_cover.bottom_face to base_pan.top_face.
+Then move by offset(0,0,0.3).
+Stage 10 complete.
+
+---  SECTION 11 – Assemble Carrier Base  ---
+Boolean-union base_pan, side_pan_L, side_pan_R, back_pan, front_left_post, front_right_post, front_top_bar, front_bottom_bar, door_left_bar, door_right_bar, door_top_bar, door_bottom_bar, door_bars_0, latch_base, latch_hook, latch_strike, ventilation_holes_0_0, handle_base, handle_arch, top_cover; keep base_pan.
+Stage 11 complete.
+
+All stages complete.

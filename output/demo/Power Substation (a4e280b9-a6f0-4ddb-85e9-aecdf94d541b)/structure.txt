@@ -1,0 +1,46 @@
+-- MATERIAL LIBRARY --
+concrete_light | diffuse_color=(0.85,0.85,0.85,1.0)
+copper_busbar | diffuse_color=(0.95,0.65,0.25,1.0)
+glass_insulator | diffuse_color=(0.15,0.15,0.15,1.0)
+metal_steel | diffuse_color=(0.6,0.6,0.65,1.0)
+oil_transformer | diffuse_color=(0.1,0.1,0.1,1.0)
+wire_copper | diffuse_color=(0.9,0.6,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Foundation & Site
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| site_pad | Concrete foundation pad 20×15×0.3 m | pos=(0,0,0); orientation=axis:+Z; mat=concrete_light; create_method=primitive; assembly_order=[foundation] |
+
+Layer 1 – Primary Structure (Supports & Enclosures)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| support_grid_A | Steel support structure A (main transformer bay) | pos=(-5,0,0); orientation=axis:+Z; mat=metal_steel; create_method=primitive; assembly_order=[structure] |
+| support_grid_B | Steel support structure B (breaker bay) | pos=(5,0,0); orientation=axis:+Z; mat=metal_steel; create_method=primitive; assembly_order=[structure] |
+| fence_perimeter | Perimeter fence structure | pos=(0,0,0); orientation=axis:+Z; mat=metal_steel; create_method=primitive; assembly_order=[structure] |
+
+Layer 2 – Major Equipment (Transformers & Breakers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| transformer_T1 | Power Transformer Unit 1 | Align(XY) transformer_T1.base to support_grid_A.top_face; offset(0,0,0.5); orientation=axis:+Z; mat=oil_transformer; create_method=primitive; assembly_order=[equipment] |
+| transformer_T2 | Power Transformer Unit 2 | Align(XY) transformer_T2.base to support_grid_A.top_face; offset(2,0,0.5); orientation=axis:+Z; mat=oil_transformer; create_method=primitive; assembly_order=[equipment] |
+| circuit_breaker_CB1 | High Voltage Circuit Breaker 1 | Align(XY) circuit_breaker_CB1.base to support_grid_B.top_face; offset(0,0,0.8); orientation=axis:+Z; mat=metal_steel; create_method=primitive; assembly_order=[equipment] |
+| circuit_breaker_CB2 | High Voltage Circuit Breaker 2 | Align(XY) circuit_breaker_CB2.base to support_grid_B.top_face; offset(1.5,0,0.8); orientation=axis:+Z; mat=metal_steel; create_method=primitive; assembly_order=[equipment] |
+
+Layer 3 – Electrical Distribution (Busbars & Insulators)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| busbar_main_H | Main Horizontal Busbar | Align(XY) busbar_main_H.center to Avg(transformer_T1.top_center, transformer_T2.top_center); offset(0,0,1.5); orientation=axis:+X; mat=copper_busbar; create_method=primitive; assembly_order=[electrical] |
+| insulator_set_T1 | Insulator Set for Transformer 1 | Align(XY) insulator_set_T1.base to transformer_T1.top_face; offset(0,0,0.2); orientation=axis:+Z; mat=glass_insulator; create_method=primitive; assembly_order=[electrical] |
+| insulator_set_T2 | Insulator Set for Transformer 2 | Align(XY) insulator_set_T2.base to transformer_T2.top_face; offset(0,0,0.2); orientation=axis:+Z; mat=glass_insulator; create_method=primitive; assembly_order=[electrical] |
+| insulator_set_CB1 | Insulator Set for Breaker 1 | Align(XY) insulator_set_CB1.base to circuit_breaker_CB1.top_face; offset(0,0,0.3); orientation=axis:+Z; mat=glass_insulator; create_method=primitive; assembly_order=[electrical] |
+
+Layer 4 – Transmission Lines (Entry/Exit)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| line_in_A | Incoming Transmission Line A | Align(XY) line_in_A.end to insulator_set_T1.top_center; offset(0,0,0.5); orientation=axis:+Z; mat=wire_copper; create_method=primitive; assembly_order=[lines] |
+| line_in_B | Incoming Transmission Line B | Align(XY) line_in_B.end to insulator_set_T2.top_center; offset(0,0,0.5); orientation=axis:+Z; mat=wire_copper; create_method=primitive; assembly_order=[lines] |
+| line_out_A | Outgoing Transmission Line A | Align(XY) line_out_A.start to insulator_set_CB1.top_center; offset(0,0,0.5); orientation=axis:+Z; mat=wire_copper; create_method=primitive; assembly_order=[lines] |
+
+# ----------  END_GRAPH  ----------

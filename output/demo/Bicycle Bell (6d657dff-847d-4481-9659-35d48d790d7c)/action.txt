@@ -1,0 +1,50 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material bell_dome; diffuse_color = (1.0, 0.843, 0.0, 1).
+Define material clamp_base; diffuse_color = (0.196, 0.196, 0.196, 1).
+Define material lever; diffuse_color = (0.784, 0.784, 0.784, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create bell_dome  ---
+Create full_sphere and name it bell_dome.
+Rotate bell_dome so its +Z axis aligns +Z (world).
+Create plane_cutter and name it bell_dome_cut with size 0.0508×0.0508×0.0508 m; orientation=axis:+Z.
+Anchor bell_dome_cut to bell_dome.center.
+Then move by offset(0, 0, -0.0254).
+Boolean-subtract bell_dome_cut from bell_dome; keep bell_dome.  // produces hemisphere
+Rotate bell_dome so its curved face points +Z.
+Align bell_dome.center to bicycle_bell.center.
+Align bell_dome.bottom_face to bicycle_bell.bottom_face.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create lever  ---
+Create primitive cuboid with size 0.015×0.005×0.002 m and name it lever.
+Rotate lever so its +Z axis aligns +Z (world).
+Align lever.center to bell_dome.side_at(0°).
+Align lever.bottom_face to bell_dome.side_at(0°).
+Then move by offset(0.0254, 0, 0).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create clamp_base  ---
+Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it clamp_base.
+Rotate clamp_base so its +Z axis aligns +Z (world).
+Align clamp_base.center to bicycle_bell.center.
+Align clamp_base.top_face to bell_dome.bottom_face.
+Then move by offset(0, 0, -0.005).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+All stages complete.

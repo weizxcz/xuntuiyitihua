@@ -1,0 +1,1 @@
+Create an electric generator with a rotor and stator.

@@ -1,0 +1,35 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.75,1.0)
+mat_black_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_copper | diffuse_color=(0.85,0.37,0.2,1.0)
+mat_green_plastic | diffuse_color=(0.1,0.5,0.1,1.0)
+mat_white_plastic | diffuse_color=(0.9,0.9,0.9,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| main_enclosure | Composite of outer shell, inner chassis, and door; forms the main housing | A. Composite of main_shell + inner_chassis + door; <br> assembly_order=[main_shell, inner_chassis, door] |
+
+Layer 1 – Primary Structure (Shell & Chassis)
+| ID | Description | Key attributes / placement |
+| main_shell | Outer rectangular enclosure 0.400×0.300×0.150 m | cylinder Ø0.400×0.150; create_method=boolean_subtract; constraint=box_cut(0.400, 0.300, 0.150); mat=mat_aluminum; pos=(0,0,0); orientation=axis:+Z |
+| inner_chassis | Inner support frame 0.380×0.280×0.140 m | cylinder Ø0.380×0.140; create_method=boolean_subtract; constraint=box_cut(0.380, 0.280, 0.140); mat=mat_aluminum; pos=(0,0,0.005); orientation=axis:+Z; assembly_order=[main_shell] |
+| door | Hinged front cover 0.400×0.300×0.005 m | cube 0.400×0.300×0.005; create_method=primitive; mat=mat_white_plastic; pos=(0,0.152,0); orientation=axis:+Z; assembly_order=[main_shell] |
+
+Layer 2 – Internal Components (Busbars & Breakers)
+| ID | Description | Key attributes / placement |
+| busbar_main | Main power distribution bar 0.350×0.020×0.005 m | cube 0.350×0.020×0.005; create_method=primitive; mat=mat_copper; pos=(0,0,0.05); orientation=axis:+Z; assembly_order=[inner_chassis] |
+| breaker_1 | Single-pole circuit breaker unit 0.050×0.020×0.040 m | cube 0.050×0.020×0.040; create_method=primitive; mat=mat_black_plastic; pos=(-0.15,0,0.07); orientation=axis:+Z; assembly_order=[busbar_main] |
+| breaker_2 | Single-pole circuit breaker unit 0.050×0.020×0.040 m | cube 0.050×0.020×0.040; create_method=primitive; mat=mat_black_plastic; pos=(-0.05,0,0.07); orientation=axis:+Z; assembly_order=[busbar_main] |
+| breaker_3 | Single-pole circuit breaker unit 0.050×0.020×0.040 m | cube 0.050×0.020×0.040; create_method=primitive; mat=mat_black_plastic; pos=(0.05,0,0.07); orientation=axis:+Z; assembly_order=[busbar_main] |
+| breaker_4 | Single-pole circuit breaker unit 0.050×0.020×0.040 m | cube 0.050×0.020×0.040; create_method=primitive; mat=mat_black_plastic; pos=(0.15,0,0.07); orientation=axis:+Z; assembly_order=[busbar_main] |
+
+Layer 3 – Details (Handles & Labels)
+| ID | Description | Key attributes / placement |
+| handle_1 | Toggle handle for breaker 1 0.010×0.005×0.020 m | cube 0.010×0.005×0.020; create_method=primitive; mat=mat_green_plastic; pos=(-0.15,0.015,0.09); orientation=axis:+Z; assembly_order=[breaker_1] |
+| handle_2 | Toggle handle for breaker 2 0.010×0.005×0.020 m | cube 0.010×0.005×0.020; create_method=primitive; mat=mat_green_plastic; pos=(-0.05,0.015,0.09); orientation=axis:+Z; assembly_order=[breaker_2] |
+| handle_3 | Toggle handle for breaker 3 0.010×0.005×0.020 m | cube 0.010×0.005×0.020; create_method=primitive; mat=mat_green_plastic; pos=(0.05,0.015,0.09); orientation=axis:+Z; assembly_order=[breaker_3] |
+| handle_4 | Toggle handle for breaker 4 0.010×0.005×0.020 m | cube 0.010×0.005×0.020; create_method=primitive; mat=mat_green_plastic; pos=(0.15,0.015,0.09); orientation=axis:+Z; assembly_order=[breaker_4] |
+| label_plate | Identification plate 0.100×0.050×0.001 m | cube 0.100×0.050×0.001; create_method=primitive; mat=mat_white_plastic; pos=(0,0.152,0.001); orientation=axis:+Z; assembly_order=[door] |
+# ----------  END_GRAPH  ----------

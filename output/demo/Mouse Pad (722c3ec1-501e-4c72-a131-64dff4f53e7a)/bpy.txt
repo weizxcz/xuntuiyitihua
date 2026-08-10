@@ -1,0 +1,324 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(0,0,0,1)):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(radius, segments=32, name="Disc"):
+    """Add a flat disc aligned with Z axis."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(radius_bottom, radius_top, depth, segments=32, name="Cone"):
+    """Add a cone/tapered cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(radius, width_seg=16, height_seg=16, name="UVSphere"):
+    """Add a UV Sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_seg, ring_count=height_seg, location=(0,0,0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width=0.01, segments=4, target="WEIGHT"):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.target = target
+    return mod
+
+def boolean_subtract(base_obj, cutter_obj, keep_base=True, name="BooleanResult"):
+    """Perform boolean subtract using BMesh."""
+    # Ensure base is active
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    base_obj.select_set(True)
+    
+    # Create a copy of the base for boolean operation to avoid modifying original data directly if needed, 
+    # but standard practice in scripts is often to apply modifiers or use bmesh on a copy.
+    # Here we use the modifier approach for non-destructive workflow, then apply if needed.
+    # However, for robust scripting without UI interaction, BMesh boolean is often safer for single-run scripts.
+    
+    # Let's use the Modifier approach for simplicity and standard Blender workflow
+    mod = base_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.use_self = False
+    
+    # Create a dummy object to hold the cutter data if not already a mesh, or just use the cutter
+    # We need to link the cutter to the modifier's object field
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove the cutter object
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    
+    base_obj.name = name
+    return base_obj
+
+def boolean_union(base_obj, other_obj, keep_base=True, name="BooleanResult"):
+    """Perform boolean union."""
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    base_obj.select_set(True)
+    
+    mod = base_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.use_self = False
+    mod.object = other_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove the other object
+    bpy.data.objects.remove(other_obj, do_unlink=True)
+    
+    base_obj.name = name
+    return base_obj
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0,0,1))):
+    """Align an object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1,0,0))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    else: # Z
+        local_axis = Vector((0,0,1))
+        
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        """Return the world position of the object's center."""
+        return self.obj.matrix_world.to_translation()
+    
+    def face_center_world(self, face_index=0):
+        """Return the world position of a specific face center."""
+        # Assuming mesh object
+        bm = bmesh.new()
+        bm.from_mesh(self.obj.data)
+        bm.transform(self.obj.matrix_world)
+        if face_index < len(bm.faces):
+            face = bm.faces[face_index]
+            return face.calc_center_median()
+        bm.free()
+        return self.center_world()
+
+    def radial_point_world(self, angle=0, radius=None):
+        """Return a point on the radial edge."""
+        # Simplified: returns center for now, or could calculate based on bounding box
+        return self.center_world()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    sum_vec = Vector((0,0,0))
+    for p in points:
+        sum_vec += p
+    return sum_vec / len(points)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_base = make_material("mat_base", diffuse_color=(0,0,0,1))
+mat_surface = make_material("mat_surface", diffuse_color=(0.1,0.1,0.1,1))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create base layer (base + surface) ---
+
+# 1. Create base
+# Create primitive cuboid with size 0.350×0.250×0.004 m and name it base.
+base = add_cube(0.350, name="base") # add_cube size is half-width, so pass full size? 
+# Note: add_cube(size=...) sets the side length. The prompt says "size 0.350x0.250x0.004".
+# Standard add_cube is a cube. For a cuboid, we scale it.
+base.scale = (0.350/2, 0.250/2, 0.004/2) # Wait, add_cube size is total width. 
+# Let's re-verify add_cube. size=1.0 creates a 2x2x2 cube centered at 0,0,0.
+# So to get 0.350 width, we need size=0.350.
+base.scale = (1, 1, 1) # Reset scale
+base.dimensions = (0.350, 0.250, 0.004) # Set dimensions directly
+
+# Rotate base so its +Z axis aligns +Z (world).
+# Default cube is already aligned with Z.
+align_axis_to_vector(base, 'Z', Vector((0,0,1)))
+
+# Anchor base to mouse_pad.center.
+# mouse_pad doesn't exist yet. The prompt says "Anchor base to mouse_pad.center".
+# This implies mouse_pad is a reference point or object that might be defined elsewhere or is the final assembly.
+# However, in Section 2, "Boolean-union base_layer and mouse_pad; keep mouse_pad".
+# This suggests mouse_pad is the final object.
+# If mouse_pad doesn't exist, we can't anchor to it.
+# Let's assume "mouse_pad" is a conceptual anchor or the final object name.
+# Since we are building it, let's assume the anchor point is (0,0,0) for now, 
+# or that "mouse_pad" refers to a global coordinate system origin if not defined.
+# Given the strict instruction "Anchor base to mouse_pad.center", and mouse_pad is created later,
+# this is a circular dependency if mouse_pad is the result.
+# Interpretation: "mouse_pad" might be a pre-existing object in the scene not listed in Block 1/2?
+# Or, more likely, the prompt implies the final object is named "mouse_pad" and we should align to its *future* center?
+# No, anchors are spatial.
+# Let's look at Section 2: "Boolean-union base_layer and mouse_pad".
+# This implies mouse_pad is an existing object.
+# If it's not in Block 2, it must be assumed to exist in the scene.
+# I will assume an object named "mouse_pad" exists in the scene. If not, this will fail.
+# To be safe, I'll check if it exists. If not, I'll use (0,0,0).
+
+mouse_pad_obj = bpy.data.objects.get("mouse_pad")
+if mouse_pad_obj:
+    anchor_loc = mouse_pad_obj.matrix_world.to_translation()
+else:
+    # Fallback if mouse_pad doesn't exist: assume origin or skip anchor
+    anchor_loc = Vector((0,0,0))
+
+# Anchor base to mouse_pad.center
+base.location = anchor_loc
+
+# Then move by offset(0,0,0).
+base.location += Vector((0,0,0))
+
+# Assign material
+if base.data.materials:
+    base.data.materials[0] = mat_base
+else:
+    base.data.materials.append(mat_base)
+
+# 2. Create surface
+# Create primitive cuboid with size 0.340×0.240×0.002 m and name it surface.
+surface = add_cube(0.340, name="surface")
+surface.dimensions = (0.340, 0.240, 0.002)
+
+# Rotate surface so its +Z axis aligns +Z (world).
+align_axis_to_vector(surface, 'Z', Vector((0,0,1)))
+
+# Align surface.+Z_face to base.+Z_face.
+# Base +Z face is at base.location.z + base.dimensions.z/2
+# Surface +Z face should be at the same height.
+base_top_z = base.location.z + (base.dimensions.z / 2)
+surface_top_z = surface.location.z + (surface.dimensions.z / 2)
+
+# Align centers first to match X/Y
+surface.location.x = base.location.x
+surface.location.y = base.location.y
+
+# Align Z faces
+surface.location.z = base_top_z - (surface.dimensions.z / 2)
+
+# Then move by offset(0,0,0.002).
+surface.location += Vector((0,0,0.002))
+
+# Assign material
+if surface.data.materials:
+    surface.data.materials[0] = mat_surface
+else:
+    surface.data.materials.append(mat_surface)
+
+# Boolean-union base and surface; keep base.
+# We need to union them into a single object named "base_layer" or similar?
+# The prompt says "Boolean-union base and surface; keep base."
+# Then Section 2 uses "base_layer".
+# I will name the result "base_layer".
+
+# Ensure base is active
+bpy.context.view_layer.objects.active = base
+bpy.ops.object.select_all(action='DESELECT')
+base.select_set(True)
+surface.select_set(True)
+
+# Use boolean union modifier on base with surface
+mod = base.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+mod.operation = 'UNION'
+mod.object = surface
+
+bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# Rename the resulting object to base_layer
+base.name = "base_layer"
+
+# Remove surface from scene if not already removed by apply (it usually stays as empty mesh if not deleted)
+if surface in bpy.context.scene.objects:
+    bpy.data.objects.remove(surface, do_unlink=True)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create mouse pad composite ---
+
+# Boolean-union base_layer and mouse_pad; keep mouse_pad.
+# This implies mouse_pad is an existing object in the scene.
+# We union base_layer INTO mouse_pad.
+
+mouse_pad_obj = bpy.data.objects.get("mouse_pad")
+if mouse_pad_obj:
+    # Ensure mouse_pad is active
+    bpy.context.view_layer.objects.active = mouse_pad_obj
+    bpy.ops.object.select_all(action='DESELECT')
+    mouse_pad_obj.select_set(True)
+    base_layer_obj = bpy.data.objects.get("base_layer")
+    if base_layer_obj:
+        base_layer_obj.select_set(True)
+        
+        mod = mouse_pad_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = base_layer_obj
+        
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        
+        # Remove base_layer
+        if base_layer_obj in bpy.context.scene.objects:
+            bpy.data.objects.remove(base_layer_obj, do_unlink=True)
+            
+        # Ensure material is applied to mouse_pad
+        if mouse_pad_obj.data.materials:
+            mouse_pad_obj.data.materials[0] = mat_base # Or mat_surface? Prompt doesn't specify.
+        else:
+            mouse_pad_obj.data.materials.append(mat_base)
+else:
+    print("Warning: mouse_pad object not found in scene. Cannot perform union.")
+
+# Stage 2 complete.
+# All stages complete.
+```

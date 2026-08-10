@@ -1,0 +1,46 @@
+{
+  "id": "65bbbe86-99fb-4fb7-8bbf-d96377b77208",
+  "name": "Interior Wall Pattern",
+  "instruction": "Design an interior wall pattern featuring floral motifs. The pattern should be continuous and repeat seamlessly. Use a soft color palette that complements modern interiors. The flowers should be stylized and not overly detailed.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pattern features floral motifs.",
+        "The design is continuous and repeats seamlessly."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pattern aligns with contemporary design principles.",
+        "The design is visually appealing and harmonious."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The floral motifs are arranged in a way that allows for seamless repetition.",
+        "The spacing between motifs is consistent."
+      ],
+      "Object distance and contact": [
+        "The pattern creates a sense of movement across the wall.",
+        "The design does not appear cluttered or chaotic.",
+        "The pattern is suitable for interior wall application.",
+        "The design enhances the overall ambiance of the room."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented in the design.",
+        "The seamless repetition of the pattern is effectively achieved."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,51 @@
+{
+  "id": "1f52d56a-e82a-45e0-9d36-47b2ecc58b37",
+  "name": "Nightstand",
+  "instruction": "Can you create a 3D model of a nightstand with a single drawer and a shelf below it?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a nightstand.",
+        "The nightstand features a rectangular top.",
+        "There is a single drawer located at the front.",
+        "A shelf is positioned below the drawer."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the nightstand should be proportionate to a typical bed height.",
+        "The drawer should be proportionate to the overall size of the nightstand.",
+        "The shelf should not obstruct the drawer's operation."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The drawer is positioned at the front and is easily accessible.",
+        "The shelf is located directly below the drawer.",
+        "The nightstand has a stable base to support the structure.",
+        "The dimensions allow for easy placement beside a bed."
+      ],
+      "Object distance and contact": [
+        "The drawer does not overlap with the shelf.",
+        "There is sufficient clearance between the drawer and the shelf.",
+        "The nightstand stands firmly on the ground without wobbling."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the nightstand are represented.",
+        "The design includes a single drawer and a shelf as requested.",
+        "There are no deviations from the instructions provided."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

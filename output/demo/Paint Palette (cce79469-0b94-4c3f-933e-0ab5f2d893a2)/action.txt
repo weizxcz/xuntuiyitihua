@@ -1,0 +1,68 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_plastic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material mat_wood_brown; diffuse_color = (0.55,0.35,0.15,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create mixing surface  ---
+Create primitive cuboid with size 0.300×0.200×0.010 m and name it mixing_surface.
+Rotate mixing_surface so its +Z axis aligns +Z (world).
+Anchor mixing_surface to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create wells  ---
+Create primitive cylinder with diameter 0.040 m and height 0.005 m and name it well_1.
+Rotate well_1 so its +Z axis aligns +Z (world).
+Anchor well_1 to mixing_surface.bottom_face.
+Then move by offset(-0.10, -0.05, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.005 m and name it well_2.
+Rotate well_2 so its +Z axis aligns +Z (world).
+Anchor well_2 to mixing_surface.bottom_face.
+Then move by offset(0.10, -0.05, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.005 m and name it well_3.
+Rotate well_3 so its +Z axis aligns +Z (world).
+Anchor well_3 to mixing_surface.bottom_face.
+Then move by offset(-0.10, 0.05, 0).
+
+Create primitive cylinder with diameter 0.040 m and height 0.005 m and name it well_4.
+Rotate well_4 so its +Z axis aligns +Z (world).
+Anchor well_4 to mixing_surface.bottom_face.
+Then move by offset(0.10, 0.05, 0).
+
+Boolean-subtract well_1 from mixing_surface; discard well_1.
+Boolean-subtract well_2 from mixing_surface; discard well_2.
+Boolean-subtract well_3 from mixing_surface; discard well_3.
+Boolean-subtract well_4 from mixing_surface; discard well_4.
+Stage 2 complete.
+
+---  SECTION 3 – Create thumb hole cutout  ---
+Create primitive cylinder with diameter 0.025 m and height 0.010 m and name it thumb_hole_cutout.
+Rotate thumb_hole_cutout so its +Z axis aligns +Z (world).
+Anchor thumb_hole_cutout to mixing_surface.bottom_face.
+Then move by offset(0, 0, 0).
+
+Boolean-subtract thumb_hole_cutout from mixing_surface; discard thumb_hole_cutout.
+Stage 3 complete.
+
+---  SECTION 4 – Create brush holder mount  ---
+Create primitive cuboid with size 0.050×0.020×0.015 m and name it brush_holder_mount.
+Rotate brush_holder_mount so its +Z axis aligns +Z (world).
+Anchor brush_holder_mount to mixing_surface.top_face.
+Then move by offset(0.125, 0, 0.0075).
+Stage 4 complete.
+
+All stages complete.

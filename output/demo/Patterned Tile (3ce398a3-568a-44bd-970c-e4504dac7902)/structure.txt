@@ -1,0 +1,24 @@
+-- MATERIAL LIBRARY --
+tile_base | diffuse_color=(0.85,0.85,0.85,1.0)
+tile_pattern | diffuse_color=(0.75,0.75,0.75,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tile_root | Composite of tile_base + tile_pattern | assembly_order=[tile_base], [tile_pattern] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tile_base | Cube 0.305×0.305×0.012 m (12"×12"×0.5") | pos=(0,0,0); orientation=axis:+Z; mat=tile_base; create_method=primitive |
+| tile_pattern | Composite of 4x4 grid of floral motifs | assembly_order=[pattern_grid]; pos=(0,0,0.006); orientation=axis:+Z; mat=tile_pattern; create_method=pattern |
+| pattern_grid | 4x4 Grid of floral motifs | pattern=grid(rows:4, cols:4, x_spacing:0.07625, y_spacing:0.07625, start_offset:(-0.15225,-0.15225)); constraint=tile_base.size; create_method=pattern |
+| floral_motif | Composite of 5 overlapping circles forming a flower | assembly_order=[center_petal], [petal_1], [petal_2], [petal_3], [petal_4]; create_method=boolean_union |
+| center_petal | Cylinder Ø0.025×0.003 m | pos=(0,0,0); orientation=axis:+Z; mat=tile_pattern; create_method=primitive |
+| petal_1 | Cylinder Ø0.025×0.003 m | pos=(0,0.0125,0); orientation=axis:+Z; mat=tile_pattern; create_method=primitive |
+| petal_2 | Cylinder Ø0.025×0.003 m | pos=(0,-0.0125,0); orientation=axis:+Z; mat=tile_pattern; create_method=primitive |
+| petal_3 | Cylinder Ø0.025×0.003 m | pos=(0.0125,0,0); orientation=axis:+Z; mat=tile_pattern; create_method=primitive |
+| petal_4 | Cylinder Ø0.025×0.003 m | pos=(-0.0125,0,0); orientation=axis:+Z; mat=tile_pattern; create_method=primitive |
+# ----------  END_GRAPH  ----------

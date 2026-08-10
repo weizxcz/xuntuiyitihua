@@ -1,0 +1,17 @@
+-- MATERIAL LIBRARY --
+metal_silver | diffuse_color=(0.76,0.76,0.76,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| peace_symbol | Composite union of outer_ring + inner_lines | assembly_order=outer_ring, inner_lines |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+| outer_ring | Torus Ø0.200×0.010 m (Outer Diameter 0.200 m, Tube Radius 0.005 m) | Align(XYZ) outer_ring.center to peace_symbol.center; orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| inner_lines | Composite union of vertical_stem + left_diagonal + right_diagonal | assembly_order=vertical_stem, left_diagonal, right_diagonal |
+| vertical_stem | Cylinder Ø0.010×0.100 m (Diameter 0.010 m, Height 0.100 m) | Align(XYZ) vertical_stem.center to outer_ring.center; orientation=axis:+Z; mat=metal_silver; create_method=primitive |
+| left_diagonal | Cylinder Ø0.010×0.0707 m (Diameter 0.010 m, Length 0.0707 m) | Align(XYZ) left_diagonal.center to outer_ring.center; orientation=axis:+Z; rotation=axis:Z,45°; mat=metal_silver; create_method=primitive |
+| right_diagonal | Cylinder Ø0.010×0.0707 m (Diameter 0.010 m, Length 0.0707 m) | Align(XYZ) right_diagonal.center to outer_ring.center; orientation=axis:+Z; rotation=axis:Z,-45°; mat=metal_silver; create_method=primitive |
+# ----------  END_GRAPH  ----------

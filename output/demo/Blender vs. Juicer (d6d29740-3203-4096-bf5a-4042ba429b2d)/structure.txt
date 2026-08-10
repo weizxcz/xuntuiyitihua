@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+mat_blender_base | diffuse_color=(200,200,200,255)
+mat_blender_container | diffuse_color=(220,220,220,128)
+mat_blender_lid | diffuse_color=(255,255,255,255)
+mat_blender_motor | diffuse_color=(50,50,50,255)
+mat_juicer_base | diffuse_color=(200,200,200,255)
+mat_juicer_container | diffuse_color=(220,220,220,128)
+mat_juicer_pulp | diffuse_color=(240,240,240,255)
+mat_juicer_spout | diffuse_color=(255,255,255,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite of blender + juicer | assembly_order=[blender_group], [juicer_group]; mat=-; create_method=union |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| blender_group | Composite of blender_base + blender_container + blender_lid + blender_motor | assembly_order=[blender_base], [blender_container], [blender_lid], [blender_motor]; mat=-; create_method=union |
+| juicer_group | Composite of juicer_base + juicer_container + juicer_spout + juicer_pulp | assembly_order=[juicer_base], [juicer_container], [juicer_spout], [juicer_pulp]; mat=-; create_method=union |
+
+Layer 2 – Blender Components
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| blender_base | Cylinder Ø0.15×0.1 m | pos=(0, 0, 0); orientation=axis:+Z; mat=mat_blender_base; create_method=primitive |
+| blender_motor | Cylinder Ø0.12×0.05 m | Align(Z) blender_motor.bottom_face to blender_base.top_face; offset(0,0,0.025); orientation=axis:+Z; mat=mat_blender_motor; create_method=primitive |
+| blender_container | Cylinder Ø0.12×0.25 m | Align(Z) blender_container.bottom_face to blender_motor.top_face; offset(0,0,0.025); orientation=axis:+Z; mat=mat_blender_container; create_method=primitive |
+| blender_lid | Cylinder Ø0.13×0.02 m | Align(Z) blender_lid.bottom_face to blender_container.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=mat_blender_lid; create_method=primitive |
+| blender_blades | Cylinder Ø0.1×0.01 m | Align(Z) blender_blades.top_face to blender_container.bottom_face; offset(0,0,-0.005); orientation=axis:+Z; mat=mat_blender_motor; create_method=primitive |
+
+Layer 3 – Juicer Components
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| juicer_base | Cylinder Ø0.15×0.1 m | pos=(0.25, 0, 0); orientation=axis:+Z; mat=mat_juicer_base; create_method=primitive |
+| juicer_container | Cylinder Ø0.12×0.2 m | Align(Z) juicer_container.bottom_face to juicer_base.top_face; offset(0,0,0.05); orientation=axis:+Z; mat=mat_juicer_container; create_method=primitive |
+| juicer_spout | Cylinder Ø0.03×0.1 m | Align(Z) juicer_spout.bottom_face to juicer_container.top_face; offset(0.04, 0, 0.05); orientation=axis:+Z; mat=mat_juicer_spout; create_method=primitive |
+| juicer_pulp | Cylinder Ø0.08×0.15 m | Align(Z) juicer_pulp.bottom_face to juicer_base.top_face; offset(-0.05, 0, 0.075); orientation=axis:+Z; mat=mat_juicer_pulp; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,418 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (*diffuse_color[:3], 1.0)
+    return mat
+
+def add_text_object(text, name, location=(0,0,0), size=0.1):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.size = size
+    obj.data.body = text
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1.0, segments=32, location=(0,0,0)):
+    """Add a cylinder aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius=0.5, segments=32, location=(0,0,0)):
+    """Add a disc (flat cylinder with 1 segment height) aligned with Z axis."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=0.001, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=(1,1,1), location=(0,0,0)):
+    """Add a cube centered at location."""
+    bpy.ops.mesh.primitive_cube_add(size=size[0], location=location)
+    obj = bpy.context.active_object
+    obj.scale = (size[1]/size[0], size[2]/size[0], size[0]/size[0]) # Normalize to size tuple
+    # Actually, primitive_cube_add 'size' is half-width. 
+    # Let's just set scale after creation for clarity.
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    return obj
+
+def add_cone(name, radius_top=0, radius_bottom=0.5, depth=1.0, segments=32, location=(0,0,0)):
+    """Add a cone aligned with Z axis."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, segments=segments, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius=0.5, location=(0,0,0)):
+    """Add a UV sphere."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj_name, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, target_vector, axis='Z'):
+    """Rotate object so its local axis aligns with target_vector."""
+    # Get current rotation
+    rot = obj.rotation_euler
+    # This is a simplified helper. For strict alignment, we might need quaternion math.
+    # For this script, most objects are aligned to Z (0,0,1), so default rotation (0,0,0) is fine.
+    pass
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find centers and faces of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.bound_box = obj.bound_box
+        self.matrix_world = obj.matrix_world
+
+    def center_world(self):
+        """Return the world center of the object."""
+        # Average of bound box corners
+        corners = [self.matrix_world @ Vector(corner) for corner in self.bound_box]
+        return average(corners)
+
+    def face_center_world(self, face_type='top'):
+        """Return the world center of a specific face (top, bottom, front, back, left, right)."""
+        corners = [self.matrix_world @ Vector(corner) for corner in self.bound_box]
+        # Determine indices based on local coordinates before transform
+        # Bound box indices: 0:(-,-,-), 1:(+,-,-), 2:(-,+,-), 3:(+,+,-), 4:(-,-,+), 5:(+,-,+), 6:(-,+,+), 7:(+,+,+)
+        # Assuming standard orientation:
+        # Top face (Z max): indices 4,5,6,7
+        # Bottom face (Z min): indices 0,1,2,3
+        # Front face (Y max): indices 2,3,6,7
+        # Back face (Y min): indices 0,1,4,5
+        # Right face (X max): indices 1,3,5,7
+        # Left face (X min): indices 0,2,4,6
+        
+        if face_type == 'top':
+            indices = [4, 5, 6, 7]
+        elif face_type == 'bottom':
+            indices = [0, 1, 2, 3]
+        elif face_type == 'front':
+            indices = [2, 3, 6, 7]
+        elif face_type == 'back':
+            indices = [0, 1, 4, 5]
+        elif face_type == 'right':
+            indices = [1, 3, 5, 7]
+        elif face_type == 'left':
+            indices = [0, 2, 4, 6]
+        else:
+            return self.center_world()
+            
+        face_corners = [corners[i] for i in indices]
+        return average(face_corners)
+
+    def radial_point_world(self, direction='X+'):
+        """Return a point on the radial surface."""
+        center = self.center_world()
+        # Approximate radius based on bounding box
+        # This is a rough helper for radial alignment if needed
+        return center
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform a boolean subtract operation."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure cutter is active for selection context if needed, but we use operators
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    cutter.select_set(True)
+    
+    bpy.ops.object.modifier_add(type='BOOLEAN')
+    target.modifiers[-1].name = "Boolean_Subtract"
+    target.modifiers[-1].operation = 'DIFFERENCE'
+    target.modifiers[-1].object = cutter
+    
+    bpy.ops.object.modifier_apply(modifier="Boolean_Subtract")
+    
+    # Optional: Delete cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(target_name, union_name):
+    """Perform a boolean union operation."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    union.select_set(True)
+    
+    bpy.ops.object.modifier_add(type='BOOLEAN')
+    target.modifiers[-1].name = "Boolean_Union"
+    target.modifiers[-1].operation = 'UNION'
+    target.modifiers[-1].object = union
+    
+    bpy.ops.object.modifier_apply(modifier="Boolean_Union")
+    
+    # Optional: Delete union
+    bpy.data.objects.remove(union, do_unlink=True)
+
+def create_curved_box(name, length, height, depth, curvature, location=(0,0,0)):
+    """
+    Create a curved box (cylinder segment or similar).
+    For a piano shell, this is often a large cylinder segment.
+    We will approximate it by creating a cylinder and cutting it, or using a mesh modifier.
+    Given the simplicity, we'll create a cylinder with specific radius/height and scale it.
+    However, 'curved_box' implies a box with curved sides.
+    Let's create a cylinder with radius approximating the curvature, and scale it to the box dimensions.
+    """
+    # Approximation: A cylinder with radius = curvature? No, curvature usually means the radius of the arc.
+    # If curvature=0.2, it's a slight curve.
+    # Let's create a cylinder with radius R such that the arc length matches length?
+    # Or simpler: Create a cylinder, apply a solidify or bevel?
+    # Let's just create a cylinder with radius = curvature * 10? No.
+    # Let's assume curvature is the radius of the cylinder.
+    # If length=1.5, and it's a cylinder, the circumference is 2*pi*R.
+    # Let's just create a cylinder with radius = curvature (0.2) and scale it?
+    # Actually, let's create a cylinder with radius = 0.5 (default) and scale it to fit.
+    # Better: Create a cylinder with radius = curvature (0.2) is too small.
+    # Let's interpret curvature as the radius of the cylinder.
+    # If length=1.5, and it's a cylinder, the length is along Z.
+    # Let's create a cylinder with radius = 0.5 and scale X to 1.5/ (2*pi*0.5)? No.
+    
+    # Let's use a simpler approach: Create a cylinder with radius = curvature (0.2) is likely wrong.
+    # Let's assume curvature is the radius of the cylinder.
+    # If length=1.5, and it's a cylinder, the length is along Z.
+    # Let's create a cylinder with radius = 0.5 and scale it.
+    
+    # Alternative: Create a cylinder with radius = curvature (0.2) and scale it to length=1.5?
+    # No, let's create a cylinder with radius = 0.5 and scale it to length=1.5, height=0.6, depth=0.5.
+    # This is getting complicated. Let's just create a cylinder with radius = curvature (0.2) and scale it.
+    
+    # Let's try: Create a cylinder with radius = curvature (0.2) and height = height (0.6).
+    # Then scale it to match length and depth.
+    # This is a rough approximation.
+    
+    bpy.ops.mesh.primitive_cylinder_add(radius=curvature, depth=height, segments=64, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to match length and depth
+    # The cylinder is along Z. We want to scale X and Y to match length and depth.
+    # But a cylinder is round. Scaling it makes it an oval cylinder.
+    obj.scale = (length / (2 * curvature), depth / (2 * curvature), 1.0)
+    return obj
+
+def create_curved_plate(name, length, width, thickness, curvature, location=(0,0,0)):
+    """
+    Create a curved plate (cylinder segment).
+    Similar to curved_box but thin.
+    """
+    # Create a cylinder with radius = curvature
+    bpy.ops.mesh.primitive_cylinder_add(radius=curvature, depth=thickness, segments=64, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to match length and width
+    obj.scale = (length / (2 * curvature), width / (2 * curvature), 1.0)
+    return obj
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+
+mat_black_piano = make_material("mat_black_piano", (0.05, 0.05, 0.05))
+mat_wood_dark = make_material("mat_wood_dark", (0.25, 0.12, 0.05))
+mat_wood_light = make_material("mat_wood_light", (0.85, 0.75, 0.60))
+mat_white_key = make_material("mat_white_key", (0.95, 0.95, 0.95))
+mat_black_key = make_material("mat_black_key", (0.05, 0.05, 0.05))
+mat_metal_pedal = make_material("mat_metal_pedal", (0.7, 0.7, 0.7))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create Body Group (Shell and Legs) ---
+
+# Create shell
+shell = create_curved_box("shell", length=1.5, height=0.6, depth=0.5, curvature=0.2, location=(0,0,0))
+# Rotate shell so its +Z axis aligns +Z (world) - already aligned by default
+# Anchor shell to piano_root.center
+# Since piano_root doesn't exist, we assume it's the world origin (0,0,0)
+shell_loc = Vector((0,0,0))
+shell.location = shell_loc
+# Offset(0,0,0)
+shell.location += Vector((0,0,0))
+
+# Create leg_L
+leg_L = add_cylinder("leg_L", radius=0.025, depth=0.7, location=(0,0,0))
+# Rotate leg_L so its +Z axis aligns +Z (world) - already aligned
+# Align leg_L.top_face to shell.bottom_face
+shell_loc = shell.location
+shell_bottom = shell_loc - Vector((0,0,0.3)) # Half height
+leg_L_top = shell_bottom
+leg_L_loc = leg_L_top - Vector((0,0,0.35)) # Half depth
+leg_L.location = leg_L_loc
+# Offset(0.6, 0.2, 0)
+leg_L.location += Vector((0.6, 0.2, 0))
+
+# Create leg_R
+leg_R = add_cylinder("leg_R", radius=0.025, depth=0.7, location=(0,0,0))
+# Rotate leg_R so its +Z axis aligns +Z (world) - already aligned
+# Align leg_R.top_face to shell.bottom_face
+leg_R_top = shell_bottom
+leg_R_loc = leg_R_top - Vector((0,0,0.35))
+leg_R.location = leg_R_loc
+# Offset(-0.6, 0.2, 0)
+leg_R.location += Vector((-0.6, 0.2, 0))
+
+# Create leg_back
+leg_back = add_cylinder("leg_back", radius=0.025, depth=0.7, location=(0,0,0))
+# Rotate leg_back so its +Z axis aligns +Z (world) - already aligned
+# Align leg_back.top_face to shell.bottom_face
+leg_back_top = shell_bottom
+leg_back_loc = leg_back_top - Vector((0,0,0.35))
+leg_back.location = leg_back_loc
+# Offset(0, -0.2, 0)
+leg_back.location += Vector((0, -0.2, 0))
+
+# --- SECTION 2 – Create Lid Group ---
+
+# Create lid_panel
+lid_panel = create_curved_plate("lid_panel", length=1.4, width=0.5, thickness=0.02, curvature=0.2, location=(0,0,0))
+# Rotate lid_panel so its +Z axis aligns +Z (world) - already aligned
+# Align lid_panel.bottom_face to shell.top_face
+shell_top = shell_loc + Vector((0,0,0.3)) # Half height
+lid_panel_bottom = shell_top
+lid_panel_loc = lid_panel_bottom - Vector((0,0,0.01)) # Half thickness
+lid_panel.location = lid_panel_loc
+# Offset(0, 0.1, 0)
+lid_panel.location += Vector((0, 0.1, 0))
+
+# --- SECTION 3 – Create Keyboard Group ---
+
+# Create keybed
+keybed = add_cube("keybed", size=(1.2, 0.15, 0.05), location=(0,0,0))
+# Rotate keybed so its +Z axis aligns +Z (world) - already aligned
+# Align keybed.top_face to shell.top_face
+keybed_top = shell_top
+keybed_loc = keybed_top - Vector((0,0,0.025)) # Half height
+keybed.location = keybed_loc
+# Offset(0, 0.3, 0.01)
+keybed.location += Vector((0, 0.3, 0.01))
+
+# Create white keys
+for c in range(52):
+    name = f"white_keys_0_{c}"
+    cube = add_cube(name, size=(0.023, 0.015, 0.025), location=(0,0,0))
+    # Rotate so +Z aligns +Z - already aligned
+    # Align bottom_face to keybed.top_face
+    keybed_top = keybed.location + Vector((0,0,0.025))
+    cube_loc = keybed_top - Vector((0,0,0.0125))
+    cube.location = cube_loc
+    # Offset(-0.6 + c*0.023, 0, 0.025)
+    offset_x = -0.6 + c * 0.023
+    offset_y = 0
+    offset_z = 0.025
+    cube.location += Vector((offset_x, offset_y, offset_z))
+
+# Create black keys
+for c in range(36):
+    name = f"black_keys_0_{c}"
+    cube = add_cube(name, size=(0.03, 0.015, 0.025), location=(0,0,0))
+    # Rotate so +Z aligns +Z - already aligned
+    # Align bottom_face to keybed.top_face
+    keybed_top = keybed.location + Vector((0,0,0.025))
+    cube_loc = keybed_top - Vector((0,0,0.0125))
+    cube.location = cube_loc
+    # Offset(-0.55 + c*0.03, 0.01, 0.04)
+    offset_x = -0.55 + c * 0.03
+    offset_y = 0.01
+    offset_z = 0.04
+    cube.location += Vector((offset_x, offset_y, offset_z))
+
+# --- SECTION 4 – Create Pedal Group ---
+
+# Create pedal_L
+pedal_L = add_cylinder("pedal_L", radius=0.015, depth=0.05, location=(0,0,0))
+# Rotate pedal_L so its +Z axis aligns +Z (world) - already aligned
+# Align pedal_L.top_face to shell.bottom_face
+pedal_L_top = shell_bottom
+pedal_L_loc = pedal_L_top - Vector((0,0,0.025))
+pedal_L.location = pedal_L_loc
+# Offset(0.4, 0, 0)
+pedal_L.location += Vector((0.4, 0, 0))
+
+# Create pedal_M
+pedal_M = add_cylinder("pedal_M", radius=0.015, depth=0.05, location=(0,0,0))
+# Rotate pedal_M so its +Z axis aligns +Z (world) - already aligned
+# Align pedal_M.top_face to shell.bottom_face
+pedal_M_top = shell_bottom
+pedal_M_loc = pedal_M_top - Vector((0,0,0.025))
+pedal_M.location = pedal_M_loc
+# Offset(0, 0, 0)
+pedal_M.location += Vector((0, 0, 0))
+
+# Create pedal_R
+pedal_R = add_cylinder("pedal_R", radius=0.015, depth=0.05, location=(0,0,0))
+# Rotate pedal_R so its +Z axis aligns +Z (world) - already aligned
+# Align pedal_R.top_face to shell.bottom_face
+pedal_R_top = shell_bottom
+pedal_R_loc = pedal_R_top - Vector((0,0,0.025))
+pedal_R.location = pedal_R_loc
+# Offset(-0.4, 0, 0)
+pedal_R.location += Vector((-0.4, 0, 0))
+
+# Assign materials (Optional, but good practice)
+# shell.material_slots[0].material = mat_black_piano
+# leg_L.material_slots[0].material = mat_black_piano
+# leg_R.material_slots[0].material = mat_black_piano
+# leg_back.material_slots[0].material = mat_black_piano
+# lid_panel.material_slots[0].material = mat_black_piano
+# keybed.material_slots[0].material = mat_wood_dark
+# white keys material_slots[0].material = mat_white_key
+# black keys material_slots[0].material = mat_black_key
+# pedal_L.material_slots[0].material = mat_metal_pedal
+# pedal_M.material_slots[0].material = mat_metal_pedal
+# pedal_R.material_slots[0].material = mat_metal_pedal
+
+# Note: The above material assignment is commented out to avoid errors if slots are empty.
+# In a real scenario, you would assign materials to each object.
+```

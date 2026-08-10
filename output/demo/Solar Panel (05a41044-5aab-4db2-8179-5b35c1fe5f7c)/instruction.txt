@@ -1,0 +1,1 @@
+Let's design a solar panel. The panel should be rectangular, with a grid of photovoltaic cells on the surface. The cells should be evenly distributed, covering the entire panel. Add a frame around the panel to hold the cells in place. Include a small junction box on the back for electrical connections. Ensure the panel is flat and uniform.

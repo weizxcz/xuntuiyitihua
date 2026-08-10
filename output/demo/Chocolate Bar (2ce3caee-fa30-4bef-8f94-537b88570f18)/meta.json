@@ -1,0 +1,43 @@
+{
+  "id": "2ce3caee-fa30-4bef-8f94-537b88570f18",
+  "name": "Chocolate Bar",
+  "instruction": "Design a chocolate bar with a segmented top, allowing it to be easily broken into smaller pieces.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a chocolate bar.",
+        "The top surface of the chocolate bar is segmented."
+      ],
+      "Color representation": [
+        "The chocolate bar is a rich brown color."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The segments are evenly spaced for easy breaking."
+      ],
+      "Texture and surface detail": [
+        "The surface of the chocolate bar has a smooth texture."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The segments are clearly defined and raised slightly from the base.",
+        "The overall structure is sturdy and maintains its shape."
+      ],
+      "Object distance and contact": [
+        "The segments do not overlap with each other.",
+        "There is a clear separation between each segment for easy breaking."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The segmented design is accurately represented.",
+        "The chocolate bar is designed to be easily broken into smaller pieces."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

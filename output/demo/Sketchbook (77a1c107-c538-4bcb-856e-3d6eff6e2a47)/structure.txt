@@ -1,0 +1,37 @@
+-- MATERIAL LIBRARY --
+cover_mat | diffuse_color=(0.15,0.12,0.10,1.0)
+paper_mat | diffuse_color=(0.95,0.95,0.90,1.0)
+spiral_mat | diffuse_color=(0.20,0.20,0.20,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| sketchbook | Composite of cover + pages + spiral binding | assembly_order=[cover_group, pages_group, spiral_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cover | Rectangular cover board | size=0.216×0.279×0.003 m; pos=(0, 0, 0); orientation=axis:+Z; mat=cover_mat; create_method=primitive(cube) |
+| pages_block | Stack of 100 blank pages | size=0.210×0.273×0.015 m; pos=(0.003, 0, 0.0015); orientation=axis:+Z; mat=paper_mat; create_method=primitive(cube) |
+| spiral_binding | Spiral wire binding | length=0.273 m; diameter=0.006 m; pos=(-0.010, 0, 0.0075); orientation=axis:+Y; mat=spiral_mat; create_method=primitive(cylinder) |
+
+Layer 2 – Detailed Components
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cover_group | Composite of front and back cover | assembly_order=[cover_front, cover_back] |
+| cover_front | Front cover board | size=0.216×0.279×0.0015 m; pos=(0, 0, 0.0015); orientation=axis:+Z; mat=cover_mat; create_method=primitive(cube) |
+| cover_back | Back cover board | size=0.216×0.279×0.0015 m; pos=(0, 0, -0.0015); orientation=axis:+Z; mat=cover_mat; create_method=primitive(cube) |
+| pages_group | Composite of individual pages | assembly_order=[page_1, page_2, ..., page_100] |
+| page_1 | First page | size=0.210×0.273×0.00015 m; pos=(0.003, 0, 0.000075); orientation=axis:+Z; mat=paper_mat; create_method=primitive(cube) |
+| page_2 | Second page | size=0.210×0.273×0.00015 m; pos=(0.003, 0, 0.000225); orientation=axis:+Z; mat=paper_mat; create_method=primitive(cube) |
+| ... | ... | ... |
+| page_100 | Last page | size=0.210×0.273×0.00015 m; pos=(0.003, 0, 0.014925); orientation=axis:+Z; mat=paper_mat; create_method=primitive(cube) |
+| spiral_group | Composite of spiral coils | assembly_order=[coil_1, coil_2, ..., coil_10] |
+| coil_1 | First spiral coil | size=0.006×0.006×0.0273 m; pos=(-0.010, -0.1265, 0.0075); orientation=axis:+Y; mat=spiral_mat; create_method=primitive(cylinder) |
+| coil_2 | Second spiral coil | size=0.006×0.006×0.0273 m; pos=(-0.010, -0.109, 0.0075); orientation=axis:+Y; mat=spiral_mat; create_method=primitive(cylinder) |
+| ... | ... | ... |
+| coil_10 | Tenth spiral coil | size=0.006×0.006×0.0273 m; pos=(-0.010, 0.1265, 0.0075); orientation=axis:+Y; mat=spiral_mat; create_method=primitive(cylinder) |
+
+# ----------  END_GRAPH  ----------

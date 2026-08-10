@@ -1,0 +1,94 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_white; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Hexagon Logo (Logo 1)  ---
+Create primitive triangle with side 0.100 m and name it tri_1.
+Rotate tri_1 so its +Z axis aligns +Z (world).
+Anchor tri_1 to world origin.
+Then move by offset(0, 0.057735, 0).
+
+Create primitive triangle with side 0.100 m and name it tri_2.
+Rotate tri_2 so its +Z axis aligns +Z (world).
+Anchor tri_2 to world origin.
+Then move by offset(0.05, 0.028868, 0).
+
+Create primitive triangle with side 0.100 m and name it tri_3.
+Rotate tri_3 so its +Z axis aligns +Z (world).
+Anchor tri_3 to world origin.
+Then move by offset(0.05, -0.028868, 0).
+
+Create primitive triangle with side 0.100 m and name it tri_4.
+Rotate tri_4 so its +Z axis aligns +Z (world).
+Anchor tri_4 to world origin.
+Then move by offset(0, -0.057735, 0).
+
+Create primitive triangle with side 0.100 m and name it tri_5.
+Rotate tri_5 so its +Z axis aligns +Z (world).
+Anchor tri_5 to world origin.
+Then move by offset(-0.05, -0.028868, 0).
+
+Create primitive triangle with side 0.100 m and name it tri_6.
+Rotate tri_6 so its +Z axis aligns +Z (world).
+Anchor tri_6 to world origin.
+Then move by offset(-0.05, 0.028868, 0).
+
+Boolean-union tri_1, tri_2, tri_3, tri_4, tri_5, tri_6; keep tri_1.
+Rename tri_1 to logo_1.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create Flower Logo (Logo 2)  ---
+Create primitive circle with diameter 0.050 m and name it circ_center.
+Rotate circ_center so its +Z axis aligns +Z (world).
+Anchor circ_center to world origin.
+
+Create primitive circle with diameter 0.050 m and name it circ_1.
+Rotate circ_1 so its +Z axis aligns +Z (world).
+Anchor circ_1 to circ_center.center.
+Then move by offset(0.050, 0, 0).
+
+Create primitive circle with diameter 0.050 m and name it circ_2.
+Rotate circ_2 so its +Z axis aligns +Z (world).
+Anchor circ_2 to circ_center.center.
+Then move by offset(0.025, 0.043301, 0).
+
+Create primitive circle with diameter 0.050 m and name it circ_3.
+Rotate circ_3 so its +Z axis aligns +Z (world).
+Anchor circ_3 to circ_center.center.
+Then move by offset(-0.025, 0.043301, 0).
+
+Create primitive circle with diameter 0.050 m and name it circ_4.
+Rotate circ_4 so its +Z axis aligns +Z (world).
+Anchor circ_4 to circ_center.center.
+Then move by offset(-0.050, 0, 0).
+
+Create primitive circle with diameter 0.050 m and name it circ_5.
+Rotate circ_5 so its +Z axis aligns +Z (world).
+Anchor circ_5 to circ_center.center.
+Then move by offset(-0.025, -0.043301, 0).
+
+Create primitive circle with diameter 0.050 m and name it circ_6.
+Rotate circ_6 so its +Z axis aligns +Z (world).
+Anchor circ_6 to circ_center.center.
+Then move by offset(0.025, -0.043301, 0).
+
+Boolean-union circ_center, circ_1, circ_2, circ_3, circ_4, circ_5, circ_6; keep circ_center.
+Rename circ_center to logo_2.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+All stages complete.

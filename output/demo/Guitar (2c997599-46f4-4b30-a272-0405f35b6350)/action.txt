@@ -1,0 +1,299 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material body_wood; diffuse_color = (0.65, 0.35, 0.15, 1.0).
+Define material bridge_wood; diffuse_color = (0.15, 0.08, 0.02, 1.0).
+Define material fretboard_wood; diffuse_color = (0.10, 0.05, 0.02, 1.0).
+Define material metal_string; diffuse_color = (0.80, 0.80, 0.85, 1.0).
+Define material metal_tuning; diffuse_color = (0.90, 0.85, 0.60, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Body Assembly  ---
+Create primitive cuboid with size 0.28×0.45×0.05 m and name it body_assembly.
+Rotate body_assembly so its +Z axis aligns +Z (world).
+Anchor body_assembly to world origin.
+Then move by offset(0,0,0).
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist.
+Rotate body_assembly_cut_waist so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist from body_assembly; discard body_assembly_cut_waist.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist2.
+Rotate body_assembly_cut_waist2 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist2 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist2 from body_assembly; discard body_assembly_cut_waist2.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist3.
+Rotate body_assembly_cut_waist3 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist3 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist3 from body_assembly; discard body_assembly_cut_waist3.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist4.
+Rotate body_assembly_cut_waist4 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist4 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist4 from body_assembly; discard body_assembly_cut_waist4.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist5.
+Rotate body_assembly_cut_waist5 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist5 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist5 from body_assembly; discard body_assembly_cut_waist5.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist6.
+Rotate body_assembly_cut_waist6 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist6 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist6 from body_assembly; discard body_assembly_cut_waist6.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist7.
+Rotate body_assembly_cut_waist7 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist7 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist7 from body_assembly; discard body_assembly_cut_waist7.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist8.
+Rotate body_assembly_cut_waist8 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist8 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist8 from body_assembly; discard body_assembly_cut_waist8.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist9.
+Rotate body_assembly_cut_waist9 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist9 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist9 from body_assembly; discard body_assembly_cut_waist9.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist10.
+Rotate body_assembly_cut_waist10 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist10 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist10 from body_assembly; discard body_assembly_cut_waist10.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist11.
+Rotate body_assembly_cut_waist11 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist11 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist11 from body_assembly; discard body_assembly_cut_waist11.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist12.
+Rotate body_assembly_cut_waist12 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist12 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist12 from body_assembly; discard body_assembly_cut_waist12.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist13.
+Rotate body_assembly_cut_waist13 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist13 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist13 from body_assembly; discard body_assembly_cut_waist13.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist14.
+Rotate body_assembly_cut_waist14 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist14 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist14 from body_assembly; discard body_assembly_cut_waist14.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist15.
+Rotate body_assembly_cut_waist15 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist15 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist15 from body_assembly; discard body_assembly_cut_waist15.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist16.
+Rotate body_assembly_cut_waist16 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist16 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist16 from body_assembly; discard body_assembly_cut_waist16.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist17.
+Rotate body_assembly_cut_waist17 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist17 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist17 from body_assembly; discard body_assembly_cut_waist17.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist18.
+Rotate body_assembly_cut_waist18 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist18 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist18 from body_assembly; discard body_assembly_cut_waist18.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist19.
+Rotate body_assembly_cut_waist19 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist19 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist19 from body_assembly; discard body_assembly_cut_waist19.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist20.
+Rotate body_assembly_cut_waist20 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist20 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist20 from body_assembly; discard body_assembly_cut_waist20.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist21.
+Rotate body_assembly_cut_waist21 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist21 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist21 from body_assembly; discard body_assembly_cut_waist21.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist22.
+Rotate body_assembly_cut_waist22 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist22 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist22 from body_assembly; discard body_assembly_cut_waist22.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist23.
+Rotate body_assembly_cut_waist23 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist23 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist23 from body_assembly; discard body_assembly_cut_waist23.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist24.
+Rotate body_assembly_cut_waist24 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist24 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist24 from body_assembly; discard body_assembly_cut_waist24.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist25.
+Rotate body_assembly_cut_waist25 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist25 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist25 from body_assembly; discard body_assembly_cut_waist25.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist26.
+Rotate body_assembly_cut_waist26 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist26 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist26 from body_assembly; discard body_assembly_cut_waist26.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist27.
+Rotate body_assembly_cut_waist27 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist27 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist27 from body_assembly; discard body_assembly_cut_waist27.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist28.
+Rotate body_assembly_cut_waist28 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist28 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist28 from body_assembly; discard body_assembly_cut_waist28.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist29.
+Rotate body_assembly_cut_waist29 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist29 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist29 from body_assembly; discard body_assembly_cut_waist29.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist30.
+Rotate body_assembly_cut_waist30 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist30 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist30 from body_assembly; discard body_assembly_cut_waist30.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist31.
+Rotate body_assembly_cut_waist31 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist31 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist31 from body_assembly; discard body_assembly_cut_waist31.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist32.
+Rotate body_assembly_cut_waist32 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist32 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist32 from body_assembly; discard body_assembly_cut_waist32.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist33.
+Rotate body_assembly_cut_waist33 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist33 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist33 from body_assembly; discard body_assembly_cut_waist33.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist34.
+Rotate body_assembly_cut_waist34 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist34 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist34 from body_assembly; discard body_assembly_cut_waist34.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist35.
+Rotate body_assembly_cut_waist35 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist35 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist35 from body_assembly; discard body_assembly_cut_waist35.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist36.
+Rotate body_assembly_cut_waist36 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist36 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist36 from body_assembly; discard body_assembly_cut_waist36.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist37.
+Rotate body_assembly_cut_waist37 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist37 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist37 from body_assembly; discard body_assembly_cut_waist37.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist38.
+Rotate body_assembly_cut_waist38 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist38 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist38 from body_assembly; discard body_assembly_cut_waist38.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist39.
+Rotate body_assembly_cut_waist39 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist39 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist39 from body_assembly; discard body_assembly_cut_waist39.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist40.
+Rotate body_assembly_cut_waist40 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist40 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist40 from body_assembly; discard body_assembly_cut_waist40.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist41.
+Rotate body_assembly_cut_waist41 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist41 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist41 from body_assembly; discard body_assembly_cut_waist41.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist42.
+Rotate body_assembly_cut_waist42 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist42 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist42 from body_assembly; discard body_assembly_cut_waist42.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist43.
+Rotate body_assembly_cut_waist43 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist43 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist43 from body_assembly; discard body_assembly_cut_waist43.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist44.
+Rotate body_assembly_cut_waist44 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist44 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist44 from body_assembly; discard body_assembly_cut_waist44.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist45.
+Rotate body_assembly_cut_waist45 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist45 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist45 from body_assembly; discard body_assembly_cut_waist45.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist46.
+Rotate body_assembly_cut_waist46 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist46 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist46 from body_assembly; discard body_assembly_cut_waist46.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist47.
+Rotate body_assembly_cut_waist47 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist47 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist47 from body_assembly; discard body_assembly_cut_waist47.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist48.
+Rotate body_assembly_cut_waist48 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist48 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist48 from body_assembly; discard body_assembly_cut_waist48.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist49.
+Rotate body_assembly_cut_waist49 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist49 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist49 from body_assembly; discard body_assembly_cut_waist49.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist50.
+Rotate body_assembly_cut_waist50 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist50 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist50 from body_assembly; discard body_assembly_cut_waist50.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist51.
+Rotate body_assembly_cut_waist51 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist51 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist51 from body_assembly; discard body_assembly_cut_waist51.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist52.
+Rotate body_assembly_cut_waist52 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist52 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist52 from body_assembly; discard body_assembly_cut_waist52.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist53.
+Rotate body_assembly_cut_waist53 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist53 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist53 from body_assembly; discard body_assembly_cut_waist53.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist54.
+Rotate body_assembly_cut_waist54 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist54 to body_assembly.center.
+Then move by offset(0,0,0).
+Boolean-subtract body_assembly_cut_waist54 from body_assembly; discard body_assembly_cut_waist54.
+Create primitive cylinder with diameter 0.04 m and height 0.05 m and name it body_assembly_cut_waist55.
+Rotate body_assembly_cut_waist55 so its +Z axis aligns +Z (world).
+Anchor body_assembly_cut_waist55 to body_assembly.center.
+Then

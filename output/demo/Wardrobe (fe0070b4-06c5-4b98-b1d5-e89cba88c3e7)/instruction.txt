@@ -1,0 +1,1 @@
+Create a 3D model of a wardrobe. It should be tall and rectangular, with two doors on the front. Inside, include a hanging rod for clothes and a few shelves for additional storage. Add a drawer at the bottom for smaller items.

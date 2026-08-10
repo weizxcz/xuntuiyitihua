@@ -1,0 +1,1 @@
+Design a drum set with a bass drum, snare drum, and a set of toms. Include a hi-hat and a couple of cymbals. The drums should be mounted on stands, and the bass drum should have a pedal for playing it.

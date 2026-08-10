@@ -1,0 +1,66 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.82, 0.82, 0.85, 1.0).
+Define material mat_black_plastic; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base plate  ---
+Create primitive cuboid with size 0.200×0.100×0.010 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Align base_plate.XY_face to root.XY_face.
+Align base_plate.Z_face to root.Z_face.
+Then move by offset(0, 0, 0).
+
+---  SECTION 2 – Create longitudinal support rails  ---
+Create primitive cuboid with size 0.200×0.005×0.005 m and name it slot_rail_1.
+Rotate slot_rail_1 so its +Z axis aligns +Z (world).
+Align slot_rail_1.XZ_face to base_plate.XZ_face.
+Align slot_rail_1.Z_face to base_plate.Z_face.
+Then move by offset(0, 0.045, 0.005).
+
+Create primitive cuboid with size 0.200×0.005×0.005 m and name it slot_rail_2.
+Rotate slot_rail_2 so its +Z axis aligns +Z (world).
+Align slot_rail_2.XZ_face to base_plate.XZ_face.
+Align slot_rail_2.Z_face to base_plate.Z_face.
+Then move by offset(0, -0.045, 0.005).
+
+Create primitive cuboid with size 0.200×0.005×0.005 m and name it slot_rail_3.
+Rotate slot_rail_3 so its +Z axis aligns +Z (world).
+Align slot_rail_3.XZ_face to base_plate.XZ_face.
+Align slot_rail_3.Z_face to base_plate.Z_face.
+Then move by offset(0, 0, 0.005).
+
+---  SECTION 3 – Create end caps  ---
+Create primitive cuboid with size 0.005×0.100×0.010 m and name it end_cap_L.
+Rotate end_cap_L so its +Z axis aligns +Z (world).
+Align end_cap_L.YZ_face to base_plate.YZ_face.
+Align end_cap_L.X_face to base_plate.X_face.
+Then move by offset(-0.0025, 0, 0).
+
+Create primitive cuboid with size 0.005×0.100×0.010 m and name it end_cap_R.
+Rotate end_cap_R so its +Z axis aligns +Z (world).
+Align end_cap_R.YZ_face to base_plate.YZ_face.
+Align end_cap_R.X_face to base_plate.X_face.
+Then move by offset(0.0025, 0, 0).
+
+---  SECTION 4 – Create slide inserts pattern  ---
+For r in 0…2 and c in 0…3:
+  Create primitive cuboid with size 0.075×0.025×0.002 m and name it slide_insert_r_c.
+  Rotate slide_insert_r_c so its +Z axis aligns +Z (world).
+  Align slide_insert_r_c.XY_face to slot_rail_1.XY_face.
+  Align slide_insert_r_c.Z_face to slot_rail_1.Z_face.
+  Then offset(-0.075 + c·0.050, 0.030 + r·0.030, 0.006).
+
+Stage 4 complete.
+All stages complete.

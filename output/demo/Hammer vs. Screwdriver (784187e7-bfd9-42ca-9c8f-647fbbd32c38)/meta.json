@@ -1,0 +1,50 @@
+{
+  "id": "784187e7-bfd9-42ca-9c8f-647fbbd32c38",
+  "name": "Hammer vs. Screwdriver",
+  "instruction": "Create a 3D model of both a hammer and a screwdriver. The hammer should have a claw end and a flat end, with a handle. The screwdriver should have a flat tip and a handle. Compare the two tools in terms of their shapes and functionalities.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The hammer has a claw end and a flat end.",
+        "The handle of the hammer is cylindrical.",
+        "The screwdriver has a flat tip.",
+        "The handle of the screwdriver is also cylindrical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hammer's head is larger than the handle.",
+        "The screwdriver's tip is smaller than the handle."
+      ],
+      "Texture and surface detail": [
+        "The hammer's head is metallic.",
+        "The screwdriver's tip is metallic."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hammer's claw end and flat end are positioned correctly.",
+        "The handle of the hammer is securely attached to the head.",
+        "The screwdriver's flat tip is aligned with its handle.",
+        "The handle of the screwdriver is properly balanced."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the hammer's head and handle.",
+        "The screwdriver's tip does not overlap with the handle.",
+        "Both tools have distinct separation in their design."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both tools are accurately represented as per the instructions.",
+        "The functionalities of each tool are clearly defined."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

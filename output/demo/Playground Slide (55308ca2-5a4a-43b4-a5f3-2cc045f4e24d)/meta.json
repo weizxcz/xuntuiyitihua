@@ -1,0 +1,47 @@
+{
+  "id": "55308ca2-5a4a-43b4-a5f3-2cc045f4e24d",
+  "name": "Playground Slide",
+  "instruction": "Imagine a playground. I need you to create a 3D model of a slide. The slide should be curved and about 6 feet tall. Don't forget to include the ladder.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a slide.",
+        "The slide has a curved shape.",
+        "The slide is designed to allow for smooth descent."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The slide's height is proportionate to its base.",
+        "The ladder is proportionate to the height of the slide."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The slide is positioned securely on the ground.",
+        "The ladder is correctly aligned with the slide.",
+        "The curve of the slide is appropriately designed for descent."
+      ],
+      "Object distance and contact": [
+        "The base of the slide is stable and does not wobble.",
+        "The ladder connects securely to the slide.",
+        "There is no gap between the slide and the ground."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The slide is accurately represented as curved and 6 feet tall.",
+        "The ladder is included as specified."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

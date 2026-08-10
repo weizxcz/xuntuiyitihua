@@ -1,0 +1,398 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    # Ensure collections are clean
+    for col in bpy.data.collections:
+        col.objects.link(bpy.context.collection)
+
+def set_units_metres():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    bsdf.inputs['Roughness'].default_value = 0.5
+    return mat
+
+def apply_material(obj, mat):
+    """Apply a material to an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube primitive."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder primitive."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_uvsphere(name, radius, location=(0,0,0), rotation=(0,0,0)):
+    """Add a UV sphere primitive."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def align_to_vector(obj, axis='Z', vector=Vector((0,0,1))):
+    """Rotate object so its local axis aligns with the given world vector."""
+    if axis == 'X':
+        local_axis = Vector((1,0,0))
+    elif axis == 'Y':
+        local_axis = Vector((0,1,0))
+    else: # Z
+        local_axis = Vector((0,0,1))
+    
+    # Calculate rotation
+    rot_mat = local_axis.rotation_difference(vector).to_matrix().to_4x4()
+    obj.rotation_euler = rot_mat.to_euler()
+
+def get_face_center(obj, face_type='XY'):
+    """
+    Get the world center of a specific face of an object.
+    face_type: 'XY' (top/+Z), 'XZ' (front/+Y), 'YZ' (right/+X), etc.
+    For simplicity in this script, we assume axis-aligned objects mostly,
+    but we calculate based on bounding box or vertices for robustness.
+    """
+    # Transform vertices to world space
+    verts_world = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    
+    if face_type == 'XY': # Top face (+Z)
+        max_z = max(v[2] for v in verts_world)
+        center_z = [v for v in verts_world if abs(v[2] - max_z) < 1e-5]
+        cx = sum(v[0] for v in center_z) / len(center_z)
+        cy = sum(v[1] for v in center_z) / len(center_z)
+        return Vector((cx, cy, max_z))
+    elif face_type == 'bottom': # Bottom face (-Z)
+        min_z = min(v[2] for v in verts_world)
+        center_z = [v for v in verts_world if abs(v[2] - min_z) < 1e-5]
+        cx = sum(v[0] for v in center_z) / len(center_z)
+        cy = sum(v[1] for v in center_z) / len(center_z)
+        return Vector((cx, cy, min_z))
+    elif face_type == 'center':
+        # Average of all vertices
+        cx = sum(v[0] for v in verts_world) / len(verts_world)
+        cy = sum(v[1] for v in verts_world) / len(verts_world)
+        cz = sum(v[2] for v in verts_world) / len(verts_world)
+        return Vector((cx, cy, cz))
+    elif face_type == 'top': # Same as XY for upright objects
+        return get_face_center(obj, 'XY')
+    elif face_type == 'bottom_face':
+        return get_face_center(obj, 'bottom')
+    elif face_type == 'top_face':
+        return get_face_center(obj, 'XY')
+    elif face_type == 'side_at':
+        # Placeholder for complex side logic, usually handled by offset
+        return Vector((0,0,0))
+    return Vector((0,0,0))
+
+def align_face_to_point(obj, face_type, target_point):
+    """Move object so its face center aligns with target_point."""
+    current_center = get_face_center(obj, face_type)
+    obj.location += (target_point - current_center)
+
+def align_face_to_face(obj_src, src_face, obj_dst, dst_face):
+    """Align src_face to dst_face of dst object."""
+    dst_center = get_face_center(obj_dst, dst_face)
+    align_face_to_point(obj_src, src_face, dst_center)
+
+def align_face_to_object_center(obj_src, src_face, obj_dst):
+    """Align src_face to the center of dst object."""
+    dst_center = get_face_center(obj_dst, 'center')
+    align_face_to_point(obj_src, src_face, dst_center)
+
+def apply_offset(obj, offset_vec):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vec
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using cutter on target."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    """Perform boolean union."""
+    target = bpy.data.objects[target_name]
+    union = bpy.data.objects[union_name]
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union, do_unlink=True)
+
+def add_bevel(obj_name, width=0.01, segments=4):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply immediately for simplicity in this script flow
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_fabric_beige = make_material("fabric_beige", (0.96, 0.92, 0.84, 1.0))
+mat_plastic_black = make_material("plastic_black", (0.1, 0.1, 0.1, 1.0))
+mat_wood_brown = make_material("wood_brown", (0.55, 0.35, 0.2, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create base pad ---
+base_pad = add_cube("base_pad", (0.8, 0.8, 0.05), location=(0,0,0), rotation=(0,0,0))
+apply_material(base_pad, mat_wood_brown)
+# Rotate so +Z aligns +Z (already default)
+# Align base_pad.XY_face to (0,0) -> Center XY to 0,0
+# Align base_pad.bottom_face to (0,0,0)
+# Since it's a cube centered at 0,0,0 with height 0.05, bottom is at -0.025.
+# We need bottom at 0. So move Z by +0.025.
+base_pad.location = Vector((0, 0, 0.025))
+
+# --- SECTION 2 – Create base footprint ---
+base_footprint = add_cube("base_footprint", (0.82, 0.82, 0.01), location=(0,0,0), rotation=(0,0,0))
+apply_material(base_footprint, mat_plastic_black)
+# Rotate so +Z aligns +Z
+# Align base_footprint.XY_face to (0,0) -> Center XY to 0,0
+# Align base_footprint.bottom_face to base_pad.bottom_face
+# base_pad.bottom_face is at Z=0.
+# base_footprint height is 0.01, so its bottom is at -0.005 relative to center.
+# To align bottom to Z=0, center must be at Z=0.005.
+base_footprint.location = Vector((0, 0, 0.005))
+# Then move by offset(0,0,-0.005)
+base_footprint.location = Vector((0, 0, 0.005)) + Vector((0, 0, -0.005))
+# Result: base_footprint center at Z=0, bottom at Z=-0.005.
+# Wait, "Align base_footprint.bottom_face to base_pad.bottom_face" means Z_bottom_footprint = Z_bottom_basepad = 0.
+# So center_footprint = 0.005.
+# Then offset(0,0,-0.005) -> center becomes 0.005 - 0.005 = 0.
+# So final center is 0, bottom is -0.005.
+# This seems correct per instructions.
+
+# --- SECTION 3 – Create post ---
+# Cylinder Ø0.1 -> Radius 0.05, Height 1.2
+post = add_cylinder("post", 0.05, 1.2, location=(0,0,0), rotation=(0,0,0))
+apply_material(post, mat_plastic_black)
+# Rotate so +Z aligns +Z
+# Align post.XY_face to base_pad.center
+# base_pad.center is at (0,0,0.025)
+# post.XY_face (top) needs to be at (0,0,0.025)? No, "Align post.XY_face to base_pad.center" usually means center of the face aligns with the center point of the object.
+# Let's assume it means the center of the post's top face aligns with base_pad's center point.
+# base_pad center point: (0,0,0.025)
+# post top face center needs to be at (0,0,0.025).
+# Post height 1.2, radius 0.05. Center Z relative to top is -0.6.
+# So post center Z = 0.025 - 0.6 = -0.575.
+# But wait, "Align post.bottom_face to base_pad.top_face"
+# base_pad.top_face is at Z = 0.025 + 0.025 = 0.05.
+# So post bottom face must be at Z=0.05.
+# Post center Z = 0.05 + 0.6 = 0.65.
+# Let's re-read carefully:
+# 1. Align post.XY_face to base_pad.center. (XY face usually means the face perpendicular to Z, i.e., Top or Bottom. Given context, likely Top or Bottom. Let's assume Top for now, or maybe it means the center of the XY plane of the post aligns with base_pad center).
+#    If it means "Center of Post aligns with Center of Base Pad in XY", then X=0, Y=0.
+# 2. Align post.bottom_face to base_pad.top_face.
+#    base_pad.top_face Z = 0.05.
+#    post.bottom_face Z = 0.05.
+#    Post height 1.2. Center Z = 0.05 + 0.6 = 0.65.
+#    So post location = (0, 0, 0.65).
+#    Does this satisfy "Align post.XY_face to base_pad.center"?
+#    base_pad.center = (0,0,0.025).
+#    post.XY_face (Top) center = (0,0, 0.65+0.6) = (0,0,1.25).
+#    post.XY_face (Bottom) center = (0,0,0.05).
+#    Neither is (0,0,0.025).
+#    Perhaps "Align post.XY_face" means "Align the center of the post's XY cross-section to base_pad.center".
+#    i.e. Post X,Y = base_pad X,Y = 0,0.
+#    This is the most logical interpretation for a post sitting on a pad.
+post.location = Vector((0, 0, 0.65))
+
+# --- SECTION 4 – Create platform L1 ---
+platform_L1 = add_cube("platform_L1", (0.5, 0.5, 0.03), location=(0,0,0), rotation=(0,0,0))
+apply_material(platform_L1, mat_wood_brown)
+# Rotate so +Z aligns +Z
+# Align platform_L1.XY_face to post.center
+# post.center = (0,0,0.65).
+# So platform_L1 center X,Y = 0,0.
+# Align platform_L1.bottom_face to post.side_at(0°)
+# post.side_at(0°) is ambiguous. Usually side faces.
+# If post is a cylinder, "side_at(0°)" might mean the point on the surface at angle 0 (X=0.05, Y=0).
+# But we are aligning a flat bottom face to a curved side?
+# Or does it mean "Align to the level of the side"?
+# Given "offset(0.25,0,0)" later, it suggests the platform is attached to the side.
+# Let's assume "Align platform_L1.bottom_face to post.side_at(0°)" means the bottom face of the platform is flush with the side of the post at 0 degrees?
+# No, that's geometrically impossible for a flat cube bottom to a cylinder side unless it's a boolean cut or specific placement.
+# Alternative interpretation: "Align platform_L1.bottom_face" (Z-bottom) to the Z-level of "post.side_at(0°)"?
+# post.side_at(0°) is a point on the surface. Z can be anything.
+# Let's look at Stage 5: "Align platform_L2.bottom_face to post.side_at(90°)".
+# This suggests the platforms are attached to the sides of the post.
+# If they are attached to the sides, their "bottom_face" might not be the contact face.
+# However, the instruction says "Align platform_L1.bottom_face to post.side_at(0°)".
+# Maybe it means: The center of platform_L1's bottom face aligns with the point on the post's surface at 0 degrees?
+# Point on post at 0 deg: (0.05, 0, Z_post).
+# If we align bottom face center to this point, the platform hangs below the post?
+# Let's assume the platforms are shelves sticking out.
+# If platform_L1 is a shelf, its bottom face is the underside.
+# If it's attached to the side, maybe the "bottom_face" instruction is a mistake and should be "side face"?
+# But I must follow instructions.
+# Let's assume "post.side_at(0°)" refers to the center of the post at Z-level corresponding to the platform's intended height?
+# No, that's circular.
+# Let's assume "post.side_at(0°)" means the point on the cylinder surface at angle 0, at the same Z as the platform's center?
+# Let's try this:
+# 1. Align platform_L1.XY_face (Center X,Y) to post.center (X,Y). -> X=0, Y=0.
+# 2. Align platform_L1.bottom_face (Z-bottom) to post.side_at(0°).
+#    If "post.side_at(0°)" implies a specific Z, we don't have it.
+#    However, looking at Stage 5: offset(0,0.25,0.4). Stage 6: offset(-0.25,0,0.8).
+#    This suggests Z increases.
+#    Let's assume the platforms are attached at specific heights.
+#    If "post.side_at(0°)" is not a Z-coordinate, maybe it means "Align to the side of the post".
+#    Let's assume the platforms are attached such that their bottom face is at the same Z as the post's center? No.
+#    Let's assume "post.side_at(0°)" means the point (0.05, 0, 0) in local post coords?
+#    If we align platform_L1.bottom_face center to (0.05, 0, 0) in world?
+#    platform_L1 bottom center = (0,0, Z_center - 0.015).
+#    If this equals (0.05, 0, 0), then Z_center = 0.015.
+#    Then offset(0.25, 0, 0) -> X becomes 0.25.
+#    This puts the platform at X=0.25, Z=0.015.
+#    This seems low.
+#    Let's look at Stage 7: box_body on platform_L3.
+#    Let's assume the "side_at" refers to the Z-height of the platform attachment.
+#    Since no Z is given, maybe it defaults to the post's center Z?
+#    Post center Z = 0.65.
+#    Align platform_L1.bottom_face to Z=0.65?
+#    platform_L1 bottom Z = 0.65.
+#    platform_L1 center Z = 0.65 + 0.015 = 0.665.
+#    Then offset(0.25, 0, 0).
+#    This seems plausible.
+#    Let's try: Align bottom face Z to Post Center Z.
+platform_L1.location = Vector((0, 0, 0.665))
+apply_offset(platform_L1, Vector((0.25, 0, 0)))
+
+# --- SECTION 5 – Create platform L2 ---
+platform_L2 = add_cube("platform_L2", (0.5, 0.5, 0.03), location=(0,0,0), rotation=(0,0,0))
+apply_material(platform_L2, mat_wood_brown)
+# Align platform_L2.XY_face to post.center -> X=0, Y=0.
+# Align platform_L2.bottom_face to post.side_at(90°).
+# Assume Z = Post Center Z = 0.65.
+platform_L2.location = Vector((0, 0, 0.665))
+apply_offset(platform_L2, Vector((0, 0.25, 0.4)))
+
+# --- SECTION 6 – Create platform L3 ---
+platform_L3 = add_cube("platform_L3", (0.5, 0.5, 0.03), location=(0,0,0), rotation=(0,0,0))
+apply_material(platform_L3, mat_wood_brown)
+# Align platform_L3.XY_face to post.center -> X=0, Y=0.
+# Align platform_L3.bottom_face to post.side_at(180°).
+# Assume Z = Post Center Z = 0.65.
+platform_L3.location = Vector((0, 0, 0.665))
+apply_offset(platform_L3, Vector((-0.25, 0, 0.8)))
+
+# --- SECTION 7 – Create box body ---
+box_body = add_cube("box_body", (0.3, 0.3, 0.3), location=(0,0,0), rotation=(0,0,0))
+apply_material(box_body, mat_wood_brown)
+# Rotate so +Z aligns +Z
+# Align box_body.XY_face to platform_L3.center
+# platform_L3 center:
+# L3 loc was (0,0,0.665) + (-0.25, 0, 0.8) = (-0.25, 0, 1.465).
+# box_body center X,Y = -0.25, 0.
+# Align box_body.bottom_face to platform_L3.top_face
+# platform_L3 top face Z = 1.465 + 0.015 = 1.48.
+# box_body bottom face Z = 1.48.
+# box_body height 0.3, so center Z = 1.48 + 0.15 = 1.63.
+box_body.location = Vector((-0.25, 0, 1.63))
+# Then move by offset(0,0,0.15)
+box_body.location = Vector((-0.25, 0, 1.63)) + Vector((0, 0, 0.15))
+
+# --- SECTION 8 – Create box roof ---
+box_roof = add_cube("box_roof", (0.32, 0.32, 0.02), location=(0,0,0), rotation=(0,0,0))
+apply_material(box_roof, mat_plastic_black)
+# Rotate so +Z aligns +Z
+# Align box_roof.XY_face to box_body.center
+# box_body center: (-0.25, 0, 1.63 + 0.15) = (-0.25, 0, 1.78).
+# box_roof center X,Y = -0.25, 0.
+# Align box_roof.bottom_face to box_body.top_face
+# box_body top face Z = 1.78 + 0.15 = 1.93.
+# box_roof bottom face Z = 1.93.
+# box_roof height 0.02, so center Z = 1.93 + 0.01 = 1.94.
+box_roof.location = Vector((-0.25, 0, 1.94))
+# Then move by offset(0,0,0.01)
+box_roof.location = Vector((-0.25, 0, 1.94)) + Vector((0, 0, 0.01))
+
+# --- SECTION 9 – Create toy string ---
+toy_string = add_cylinder("toy_string", 0.0025, 0.2, location=(0,0,0), rotation=(0,0,0))
+apply_material(toy_string, mat_fabric_beige)
+# Rotate so +Z aligns +Z
+# Align toy_string.XY_face to platform_L2.center
+# platform_L2 center:
+# L2 loc was (0,0,0.665) + (0, 0.25, 0.4) = (0, 0.25, 1.065).
+# toy_string center X,Y = 0, 0.25.
+# Align toy_string.top_face to platform_L2.bottom_face
+# platform_L2 bottom face Z = 1.065 - 0.015 = 1.05.
+# toy_string top face Z = 1.05.
+# toy_string height 0.2, so center Z = 1.05 - 0.1 = 0.95.
+toy_string.location = Vector((0, 0.25, 0.95))
+# Then move by offset(0.1,0.1,0)
+toy_string.location = Vector((0, 0.25, 0.95)) + Vector((0.1, 0.1, 0))
+
+# --- SECTION 10 – Create toy feather ---
+toy_feather = add_uvsphere("toy_feather", 0.025, location=(0,0,0), rotation=(0,0,0))
+apply_material(toy_feather, mat_fabric_beige)
+# Rotate so +Z aligns +Z
+# Align toy_feather.XY_face to toy_string.center
+# toy_string center: (0.1, 0.35, 0.95).
+# toy_feather center X,Y = 0.1, 0.35.
+# Align toy_feather.top_face to toy_string.bottom_face
+# toy_string bottom face Z = 0.95 - 0.1 = 0.85.
+# toy_feather top face Z = 0.85.
+# toy_feather radius 0.025, so center Z = 0.85 - 0.025 = 0.825.
+toy_feather.location = Vector((0.1, 0.35, 0.825))
+# Then move by offset(0,0,-0.15)
+toy_feather.location = Vector((0.1, 0.35, 0.825)) + Vector((0, 0, -0.15))
+```

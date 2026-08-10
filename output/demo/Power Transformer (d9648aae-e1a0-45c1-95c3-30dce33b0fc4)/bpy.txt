@@ -1,0 +1,293 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete all existing objects."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for col in bpy.data.collections:
+        col.objects.unlink_all()
+        bpy.data.collections.remove(col)
+
+def set_units():
+    """Set scene units to metres."""
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 1.0
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def assign_material(obj, mat):
+    """Assign a material to an object's first material slot."""
+    if len(obj.data.materials) == 0:
+        obj.data.materials.append(mat)
+    else:
+        obj.data.materials[0] = mat
+
+def add_cube(name, size, location, rotation_euler):
+    """Add a cube object with specific size and transform."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to size (cube default is 2x2x2, so divide by 2)
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    obj.select_set(False)
+    return obj
+
+def align_center_to_center(obj_target, obj_source):
+    """Align obj_source center to obj_target center."""
+    # Calculate offset needed
+    offset = obj_target.location - obj_source.location
+    obj_source.location += offset
+
+def align_center_to_face(obj_target, obj_source, face_axis='Z'):
+    """
+    Align obj_source center to obj_target's specific face center.
+    face_axis: 'X', 'Y', or 'Z' (positive direction face) or negative.
+    We assume axis-aligned bounding boxes for simplicity as per prompt hints.
+    """
+    # Get target face center in world space
+    # Since objects are axis aligned, we can calculate this from bounds
+    # Or simpler: use the object's matrix_world to find the face center
+    
+    # Determine the vector to the face
+    # For a cube at origin with scale S, face center is at +/- S/2 along axis
+    # We need to account for rotation.
+    
+    # Get target's matrix
+    mat_t = obj_target.matrix_world
+    mat_s = obj_source.matrix_world
+    
+    # Define local face normal vector
+    if face_axis == 'Z':
+        local_face_vec = Vector((0, 0, 0.5)) # Top face local
+    elif face_axis == '-Z':
+        local_face_vec = Vector((0, 0, -0.5)) # Bottom face local
+    elif face_axis == 'X':
+        local_face_vec = Vector((0.5, 0, 0)) # Right face local
+    elif face_axis == '-X':
+        local_face_vec = Vector((-0.5, 0, 0)) # Left face local
+    elif face_axis == 'Y':
+        local_face_vec = Vector((0, 0.5, 0)) # Front face local
+    elif face_axis == '-Y':
+        local_face_vec = Vector((0, -0.5, 0)) # Back face local
+    else:
+        raise ValueError(f"Unknown face axis: {face_axis}")
+        
+    # Transform local face vector to world space relative to target center
+    # The face center in world space is: TargetLoc + (TargetRot * LocalFaceVec * TargetScale)
+    # Note: Cube scale is applied to the 2x2x2 default. 
+    # The half-extent in world space is scale * 1.0 (since default size is 2, half is 1).
+    
+    # Actually, simpler approach:
+    # Get the world matrix of the target.
+    # The face center is located at the target's location + the rotated half-dimensions.
+    
+    # Get half dimensions in world space
+    # Half dims = scale * 1.0 (because default cube is 2 units wide, so half is 1)
+    half_dims = obj_target.scale
+    
+    # Construct the offset vector in world space
+    # We need to rotate the local axis vector by the target's rotation
+    rot_mat = mat_t.to_3x3()
+    
+    # Determine which axis corresponds to the face
+    # If face_axis is 'Z', we look at the Z component of the scale
+    # And the direction (positive or negative)
+    
+    if face_axis == 'Z':
+        world_offset = rot_mat @ Vector((0, 0, half_dims[2]))
+    elif face_axis == '-Z':
+        world_offset = rot_mat @ Vector((0, 0, -half_dims[2]))
+    elif face_axis == 'X':
+        world_offset = rot_mat @ Vector((half_dims[0], 0, 0))
+    elif face_axis == '-X':
+        world_offset = rot_mat @ Vector((-half_dims[0], 0, 0))
+    elif face_axis == 'Y':
+        world_offset = rot_mat @ Vector((0, half_dims[1], 0))
+    elif face_axis == '-Y':
+        world_offset = rot_mat @ Vector((0, -half_dims[1], 0))
+        
+    target_face_center = obj_target.location + world_offset
+    
+    # Align source center to this point
+    align_center_to_center(obj_target, obj_source)
+    # Now move source to target_face_center
+    # Current source location is target.location. We want it at target_face_center.
+    # So we add the offset.
+    obj_source.location = target_face_center
+
+def apply_offset(obj, offset_vec):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vec
+
+def create_component(name, size, location, rotation, material=None):
+    """Helper to create a cube, set name, transform, and material."""
+    obj = add_cube(name, size, location, rotation)
+    if material:
+        assign_material(obj, material)
+    return obj
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+clear_scene()
+set_units()
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+mat_copper = make_material("copper", (0.87, 0.27, 0.09, 1.0))
+mat_insulation = make_material("insulation", (0.1, 0.1, 0.1, 1.0))
+mat_steel_core = make_material("steel_core", (0.3, 0.3, 0.35, 1.0))
+mat_steel_casing = make_material("steel_casing", (0.4, 0.4, 0.45, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# Default rotation for +Z aligned objects (identity)
+ROT_Z = (0, 0, 0)
+
+# --- SECTION 1: Create core block ---
+core_block = create_component("core_block", (0.4, 0.2, 0.3), (0, 0, 0), ROT_Z, mat_steel_core)
+# Anchor to world origin (already at 0,0,0)
+# Offset (0,0,0)
+# Stage 1 complete
+
+# --- SECTION 2: Create coils and insulation layers ---
+
+# Primary Coil
+primary_coil = create_component("primary_coil", (0.42, 0.22, 0.15), (0, 0, 0), ROT_Z, mat_copper)
+# Align center to core_block.center
+align_center_to_center(core_block, primary_coil)
+# Offset (0,0,0.1)
+apply_offset(primary_coil, (0, 0, 0.1))
+
+# Secondary Coil
+secondary_coil = create_component("secondary_coil", (0.42, 0.22, 0.15), (0, 0, 0), ROT_Z, mat_copper)
+# Align center to core_block.center
+align_center_to_center(core_block, secondary_coil)
+# Offset (0,0,-0.1)
+apply_offset(secondary_coil, (0, 0, -0.1))
+
+# Primary Insulation
+primary_insulation = create_component("primary_insulation", (0.43, 0.23, 0.16), (0, 0, 0), ROT_Z, mat_insulation)
+# Align center to core_block.center
+align_center_to_center(core_block, primary_insulation)
+# Offset (0,0,0.1)
+apply_offset(primary_insulation, (0, 0, 0.1))
+
+# Secondary Insulation
+secondary_insulation = create_component("secondary_insulation", (0.43, 0.23, 0.16), (0, 0, 0), ROT_Z, mat_insulation)
+# Align center to core_block.center
+align_center_to_center(core_block, secondary_insulation)
+# Offset (0,0,-0.1)
+apply_offset(secondary_insulation, (0, 0, -0.1))
+
+# Stage 2 complete
+
+# --- SECTION 3: Create terminal blocks ---
+
+# Primary Terminal
+# Align to primary_coil.top_face (Z+)
+primary_terminal = create_component("primary_terminal", (0.05, 0.05, 0.05), (0, 0, 0), ROT_Z, mat_steel_core)
+align_center_to_face(primary_coil, primary_terminal, 'Z')
+# Offset (0,0,0.025)
+apply_offset(primary_terminal, (0, 0, 0.025))
+
+# Secondary Terminal
+# Align to secondary_coil.top_face (Z+)
+secondary_terminal = create_component("secondary_terminal", (0.05, 0.05, 0.05), (0, 0, 0), ROT_Z, mat_steel_core)
+align_center_to_face(secondary_coil, secondary_terminal, 'Z')
+# Offset (0,0,0.025)
+apply_offset(secondary_terminal, (0, 0, 0.025))
+
+# Stage 3 complete
+
+# --- SECTION 4: Create casing plates and panels ---
+
+# Casing Bottom
+casing_bottom = create_component("casing_bottom", (0.5, 0.3, 0.02), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_center(core_block, casing_bottom)
+apply_offset(casing_bottom, (0, 0, -0.16))
+
+# Casing Top
+casing_top = create_component("casing_top", (0.5, 0.3, 0.02), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_center(core_block, casing_top)
+apply_offset(casing_top, (0, 0, 0.16))
+
+# Casing Left
+casing_left = create_component("casing_left", (0.02, 0.3, 0.34), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_center(core_block, casing_left)
+apply_offset(casing_left, (-0.26, 0, 0))
+
+# Casing Right
+casing_right = create_component("casing_right", (0.02, 0.3, 0.34), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_center(core_block, casing_right)
+apply_offset(casing_right, (0.26, 0, 0))
+
+# Casing Front
+casing_front = create_component("casing_front", (0.5, 0.02, 0.34), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_center(core_block, casing_front)
+apply_offset(casing_front, (0, 0.16, 0))
+
+# Casing Back
+casing_back = create_component("casing_back", (0.5, 0.02, 0.34), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_center(core_block, casing_back)
+apply_offset(casing_back, (0, -0.16, 0))
+
+# Stage 4 complete
+
+# --- SECTION 5: Create cooling fins ---
+
+# Fin Left 1
+# Align to casing_left.left_face (-X)
+fin_left_1 = create_component("fin_left_1", (0.01, 0.2, 0.1), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_face(casing_left, fin_left_1, '-X')
+apply_offset(fin_left_1, (-0.01, 0, 0))
+
+# Fin Left 2
+fin_left_2 = create_component("fin_left_2", (0.01, 0.2, 0.1), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_face(casing_left, fin_left_2, '-X')
+apply_offset(fin_left_2, (-0.01, 0, 0.1))
+
+# Fin Left 3
+fin_left_3 = create_component("fin_left_3", (0.01, 0.2, 0.1), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_face(casing_left, fin_left_3, '-X')
+apply_offset(fin_left_3, (-0.01, 0, -0.1))
+
+# Fin Right 1
+# Align to casing_right.right_face (+X)
+fin_right_1 = create_component("fin_right_1", (0.01, 0.2, 0.1), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_face(casing_right, fin_right_1, 'X')
+apply_offset(fin_right_1, (0.01, 0, 0))
+
+# Fin Right 2
+fin_right_2 = create_component("fin_right_2", (0.01, 0.2, 0.1), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_face(casing_right, fin_right_2, 'X')
+apply_offset(fin_right_2, (0.01, 0, 0.1))
+
+# Fin Right 3
+fin_right_3 = create_component("fin_right_3", (0.01, 0.2, 0.1), (0, 0, 0), ROT_Z, mat_steel_casing)
+align_center_to_face(casing_right, fin_right_3, 'X')
+apply_offset(fin_right_3, (0.01, 0, -0.1))
+
+# Stage 5 complete
+```

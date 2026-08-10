@@ -1,0 +1,50 @@
+{
+  "id": "d2de5d4e-8e5d-46a1-8f71-2870b8604b3b",
+  "name": "Broom",
+  "instruction": "Create a broom suitable for household cleaning. The broom should have a long handle and a head with bristles arranged in a dense pattern. The handle should be easy to grip and the bristles effective for sweeping debris.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a broom.",
+        "The broom has a long handle.",
+        "The broom head is rectangular with bristles.",
+        "The bristles are arranged in a dense pattern."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the handle is proportionate to the broom head.",
+        "The bristles are adequately sized for the broom head."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The broom handle is positioned vertically.",
+        "The broom head is aligned horizontally with the handle.",
+        "The bristles extend downward from the broom head."
+      ],
+      "Object distance and contact": [
+        "The broom head is securely attached to the handle.",
+        "There is no gap between the handle and the broom head.",
+        "The bristles are evenly distributed across the broom head."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The broom is designed for household cleaning as instructed.",
+        "The handle is designed to be easy to grip.",
+        "The bristles are effective for sweeping debris."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

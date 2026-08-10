@@ -1,0 +1,48 @@
+{
+  "id": "2eae9ac0-e492-41a1-a518-2b8872157d85",
+  "name": "Pizza Slice",
+  "instruction": "Create a 3D model of a pizza slice with pepperoni and cheese.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pizza slice.",
+        "The pizza slice has a triangular shape.",
+        "The crust is thicker at the outer edge and tapers towards the point."
+      ],
+      "Color representation": [
+        "The crust is a golden brown color.",
+        "The cheese is a light yellow to golden color.",
+        "The pepperoni is a reddish color."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cheese and pepperoni are proportionate to pizza slice."
+      ],
+      "Texture and surface detail": [
+        "The crust has a rough texture to simulate baked bread.",
+        "The cheese appears melted and slightly glossy.",
+        "The pepperoni has a slightly oily surface."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pizza slice is positioned at an angle to display its triangular shape.",
+        "The toppings are evenly distributed across the surface of the cheese."
+      ],
+      "Object distance and contact": [
+        "The crust is clearly defined and does not overlap with the cheese.",
+        "The pepperoni slices are placed directly on the cheese without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The model accurately represents a pizza slice with pepperoni and cheese.",
+        "All specified toppings are present and correctly depicted."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

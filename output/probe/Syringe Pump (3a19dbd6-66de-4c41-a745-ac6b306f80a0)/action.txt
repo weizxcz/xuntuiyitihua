@@ -1,0 +1,92 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_aluminum; diffuse_color = (0.75,0.75,0.80,1.0).
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.0).
+Define material mat_blue_acrylic; diffuse_color = (0.10,0.30,0.80,0.80).
+Define material mat_glass; diffuse_color = (0.90,0.95,1.00,0.30).
+Define material mat_steel; diffuse_color = (0.60,0.60,0.65,1.0).
+Define material mat_white_plastic; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base plate  ---
+Create primitive cuboid with size 0.200×0.020×0.200 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Align base_plate.XY_face to world origin (0,0,0).
+Then move by offset(0, 0, 0.010).
+Stage 1 complete.
+
+---  SECTION 2 – Create motor assembly  ---
+Create primitive cuboid with size 0.040×0.040×0.050 m and name it stepper_motor.
+Rotate stepper_motor so its +Z axis aligns +Z (world).
+Align stepper_motor.XY_face to base_plate.XY_face.
+Then move by offset(0, -0.050, 0.010).
+
+Create primitive cylinder with Ø0.006×0.150 m and name it lead_screw.
+Rotate lead_screw so its +Z axis aligns +Z (world).
+Align lead_screw.bottom_face to stepper_motor.top_face.
+Then move by offset(0, 0, 0.025).
+
+Create primitive cuboid with size 0.010×0.010×0.010 m and name it nut_block.
+Rotate nut_block so its +Z axis aligns +Z (world).
+Align nut_block.bottom_face to lead_screw.top_face.
+Then move by offset(0, 0, 0.075).
+Stage 2 complete.
+
+---  SECTION 3 – Create display module  ---
+Create primitive cuboid with size 0.120×0.080×0.005 m and name it bezel.
+Rotate bezel so its +Z axis aligns +Z (world).
+Align bezel.XY_face to base_plate.XY_face.
+Then move by offset(0, 0.060, 0.010).
+
+Create primitive cuboid with size 0.100×0.060×0.002 m and name it lcd_screen.
+Rotate lcd_screen so its +Z axis aligns +Z (world).
+Align lcd_screen.XY_face to bezel.XY_face.
+Then move by offset(0, 0, 0.003).
+
+Create primitive cuboid with size 0.120×0.040×0.002 m and name it control_panel.
+Rotate control_panel so its +Z axis aligns +Z (world).
+Align control_panel.XY_face to bezel.XY_face.
+Then move by offset(0, -0.060, 0.005).
+Stage 3 complete.
+
+---  SECTION 4 – Create syringe holder  ---
+Create primitive cuboid with size 0.150×0.020×0.010 m and name it guide_rail.
+Rotate guide_rail so its +Z axis aligns +Z (world).
+Align guide_rail.XY_face to base_plate.XY_face.
+Then move by offset(0.050, 0.020, 0.010).
+
+Create primitive cuboid with size 0.030×0.030×0.010 m and name it syringe_clamp.
+Rotate syringe_clamp so its +Z axis aligns +Z (world).
+Align syringe_clamp.XY_face to guide_rail.XY_face.
+Then move by offset(0, 0, 0.010).
+
+Create primitive cuboid with size 0.020×0.020×0.010 m and name it plunger_pusher.
+Rotate plunger_pusher so its +Z axis aligns +Z (world).
+Align plunger_pusher.XY_face to guide_rail.XY_face.
+Then move by offset(0, -0.020, 0.010).
+Stage 4 complete.
+
+---  SECTION 5 – Create syringe components  ---
+Create primitive cylinder with Ø0.020×0.100 m and name it syringe_barrel.
+Rotate syringe_barrel so its +Z axis aligns +Z (world).
+Align syringe_barrel.XY_face to syringe_clamp.XY_face.
+Then move by offset(0, 0, 0.010).
+
+Create primitive cylinder with Ø0.015×0.080 m and name it syringe_plunger.
+Rotate syringe_plunger so its +Z axis aligns +Z (world).
+Align syringe_plunger.XY_face to syringe_barrel.XY_face.
+Then move by offset(0, 0, 0.050).
+Stage 5 complete.
+
+All stages complete.

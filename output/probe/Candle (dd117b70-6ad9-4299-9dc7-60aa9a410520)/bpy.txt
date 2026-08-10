@@ -1,0 +1,356 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size=1.0):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=size, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    """Add a cone/tapered cylinder mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add an UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_text_object(name, text="Text", size=1.0):
+    """Add a text object."""
+    bpy.ops.object.text_add(align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.data.size = size
+    return obj
+
+def add_bevel(obj, width, segments=2):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    return mod
+
+def align_axis_to_vector(obj, axis='Z', vector=Vector((0, 0, 1))):
+    """Align an object's local axis to a world vector."""
+    axis_map = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    local_axis = axis_map.get(axis, Vector((0, 0, 1)))
+    
+    # Calculate rotation to align local_axis to target vector
+    rot_quat = local_axis.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to find specific points on an object's geometry."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.mesh = obj.data
+        self.verts = self.mesh.vertices
+        self.has_calc = False
+        self._calc_bounds()
+
+    def _calc_bounds(self):
+        """Calculate bounding box and centers."""
+        if not self.verts:
+            self.min = Vector((0,0,0))
+            self.max = Vector((0,0,0))
+            self.center = Vector((0,0,0))
+            return
+
+        # Transform vertices to world space
+        world_verts = [self.obj.matrix_world @ v.co for v in self.verts]
+        
+        self.min = Vector((min(v.x for v in world_verts), min(v.y for v in world_verts), min(v.z for v in world_verts)))
+        self.max = Vector((max(v.x for v in world_verts), max(v.y for v in world_verts), max(v.z for v in world_verts)))
+        self.center = (self.min + self.max) / 2.0
+
+    def center_world(self):
+        """Return the world-space center of the object's bounding box."""
+        return self.center
+
+    def face_center_world(self, face_type='TOP'):
+        """Return the world-space center of a specific face (TOP, BOTTOM, FRONT, BACK, LEFT, RIGHT)."""
+        if face_type == 'TOP':
+            return Vector((self.center.x, self.center.y, self.max.z))
+        elif face_type == 'BOTTOM':
+            return Vector((self.center.x, self.center.y, self.min.z))
+        elif face_type == 'FRONT':
+            return Vector((self.center.x, self.max.y, self.center.z))
+        elif face_type == 'BACK':
+            return Vector((self.center.x, self.min.y, self.center.z))
+        elif face_type == 'RIGHT':
+            return Vector((self.max.x, self.center.y, self.center.z))
+        elif face_type == 'LEFT':
+            return Vector((self.min.x, self.center.y, self.center.z))
+        return self.center
+
+    def radial_point_world(self, direction='X', height_ratio=0.5):
+        """Return a point on the radial surface."""
+        if direction == 'X':
+            return Vector((self.max.x, self.center.y, self.center.z))
+        elif direction == '-X':
+            return Vector((self.min.x, self.center.y, self.center.z))
+        elif direction == 'Y':
+            return Vector((self.center.x, self.max.y, self.center.z))
+        elif direction == '-Y':
+            return Vector((self.center.x, self.min.y, self.center.z))
+        return self.center
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform a boolean subtract operation using the cutter on the target."""
+    # Ensure target is active for modifier application if needed, 
+    # but standard approach: add modifier to target, apply.
+    
+    # Create a new object for the boolean result to keep history clean or just apply
+    # Here we apply the modifier directly to the target for simplicity in script generation
+    
+    # Check if modifier already exists
+    existing_mod = None
+    for mod in target_obj.modifiers:
+        if mod.type == 'BOOLEAN' and mod.object == cutter_obj:
+            existing_mod = mod
+            break
+            
+    if not existing_mod:
+        mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+        mod.operation = 'SUBTRACT'
+        mod.object = cutter_obj
+    else:
+        mod = existing_mod
+        
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Delete cutter after use to clean up
+    # bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    return target_obj
+
+def boolean_union(target_obj, union_obj):
+    """Perform a boolean union operation."""
+    # Add modifier to target
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Optional: Delete union object
+    # bpy.data.objects.remove(union_obj, do_unlink=True)
+    return target_obj
+
+def align_object_to_object(obj, anchor_obj, align_type='CENTER_TO_CENTER'):
+    """Align obj to anchor_obj based on type."""
+    loc_obj = obj.matrix_world.to_translation()
+    loc_anchor = anchor_obj.matrix_world.to_translation()
+    
+    if align_type == 'CENTER_TO_CENTER':
+        offset = loc_anchor - loc_obj
+        obj.location += offset
+    elif align_type == 'BOTTOM_TO_BOTTOM':
+        # Align bottom faces
+        # Assuming standard orientation where Z is up
+        # We need to match the Z coordinate of the bottom face
+        # This is tricky with rotation. 
+        # Simplified: Align centers, then adjust Z based on height difference if needed.
+        # For robustness in this generator, we will use a locator approach for face alignment.
+        pass
+
+def align_face_to_face(obj, anchor_obj, obj_face='BOTTOM', anchor_face='TOP'):
+    """Align a face of obj to a face of anchor_obj."""
+    loc_obj = Locator(obj)
+    loc_anchor = Locator(anchor_obj)
+    
+    # Get world positions of the faces
+    obj_face_pos = loc_obj.face_center_world(obj_face)
+    anchor_face_pos = loc_anchor.face_center_world(anchor_face)
+    
+    # Calculate offset required to move obj_face_pos to anchor_face_pos
+    # We want obj_face_pos + offset = anchor_face_pos
+    offset = anchor_face_pos - obj_face_pos
+    
+    obj.location += offset
+
+def align_center_to_center(obj, anchor_obj):
+    """Align center of obj to center of anchor_obj."""
+    loc_obj = Locator(obj)
+    loc_anchor = Locator(anchor_obj)
+    
+    obj_center = loc_obj.center_world()
+    anchor_center = loc_anchor.center_world()
+    
+    offset = anchor_center - obj_center
+    obj.location += offset
+
+def apply_offset(obj, offset_vector):
+    """Apply an offset vector to the object's location."""
+    obj.location += offset_vector
+
+# ==============================================================================
+# BLOCK 0 – Scene Reset & Units
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1 – Materials
+# ==============================================================================
+
+mat_candle_wax = make_material("candle_wax", (1.00, 1.00, 0.94, 1))
+mat_wick_cotton = make_material("wick_cotton", (0.20, 0.16, 0.12, 1))
+
+# ==============================================================================
+# BLOCK 2 – Stage-by-Stage Operations
+# ==============================================================================
+
+# --- SECTION 1 – Create candle body ---
+
+# Create primitive cylinder
+candle_body = add_cylinder("candle_body", radius=0.040, depth=0.150)
+candle_body.data.materials.append(mat_candle_wax)
+
+# Rotate candle_body so its +Z axis aligns +Z (world)
+# Default cylinder is already aligned to Z, but we ensure it.
+align_axis_to_vector(candle_body, 'Z', Vector((0, 0, 1)))
+
+# Align candle_body.center to candle_root.center
+# Note: candle_root does not exist yet in the scene based on the prompt.
+# The prompt says "Align candle_body.center to candle_root.center".
+# Since candle_root is created in Stage 3, this implies a dependency or a placeholder.
+# However, looking at Stage 3, candle_root is aligned TO candle_body.
+# This suggests candle_root might be a conceptual anchor or created earlier in a missing step.
+# Given the strict instruction "If only anchor object ID is given, use center-to-center anchoring",
+# and candle_root is not created, I must assume candle_root is either:
+# 1. A pre-existing object (not in this script).
+# 2. A typo in the prompt and should be aligned to something else.
+# 3. The prompt implies creating candle_root first? No, Stage 3 creates it.
+#
+# Let's look at Stage 3: "Align candle_root.center to candle_body.center".
+# This implies candle_root is a separate object.
+# If candle_root doesn't exist, I cannot align to it.
+# I will create a placeholder object named "candle_root" at the origin for the sake of the script running,
+# or assume it's an external anchor.
+# To make the script self-contained and runnable, I will create a dummy "candle_root" at (0,0,0) 
+# if it doesn't exist, or just skip the alignment if it's impossible.
+# However, the prompt says "Align candle_body.center to candle_root.center".
+# I will create a dummy candle_root at (0,0,0) to satisfy the anchor requirement.
+
+if "candle_root" not in bpy.data.objects:
+    # Create a dummy root object to serve as an anchor
+    candle_root = add_cube("candle_root", size=0.001) # Tiny cube as anchor
+    candle_root.location = (0, 0, 0)
+else:
+    candle_root = bpy.data.objects["candle_root"]
+
+# Align candle_body.center to candle_root.center
+align_center_to_center(candle_body, candle_root)
+
+# Align candle_body.bottom_face to candle_root.bottom_face
+# Assuming candle_root is at origin and small, its bottom is roughly 0.
+# candle_body bottom is at -0.075 relative to center.
+# We want candle_body.bottom_face Z == candle_root.bottom_face Z
+align_face_to_face(candle_body, candle_root, obj_face='BOTTOM', anchor_face='BOTTOM')
+
+# Then move by offset(0,0,0)
+apply_offset(candle_body, Vector((0, 0, 0)))
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create wick ---
+
+# Create primitive cylinder
+wick = add_cylinder("wick", radius=0.002, depth=0.020)
+wick.data.materials.append(mat_wick_cotton)
+
+# Rotate wick so its +Z axis aligns +Z (world)
+align_axis_to_vector(wick, 'Z', Vector((0, 0, 1)))
+
+# Align wick.center to candle_body.center
+align_center_to_center(wick, candle_body)
+
+# Align wick.bottom_face to candle_body.top_face
+align_face_to_face(wick, candle_body, obj_face='BOTTOM', anchor_face='TOP')
+
+# Then move by offset(0,0,0.002)
+apply_offset(wick, Vector((0, 0, 0.002)))
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Assemble root ---
+
+# Align candle_root.center to candle_body.center
+align_center_to_center(candle_root, candle_body)
+
+# Align candle_root.bottom_face to candle_body.bottom_face
+align_face_to_face(candle_root, candle_body, obj_face='BOTTOM', anchor_face='BOTTOM')
+
+# Align wick.center to candle_body.center
+align_center_to_center(wick, candle_body)
+
+# Align wick.bottom_face to candle_body.top_face
+align_face_to_face(wick, candle_body, obj_face='BOTTOM', anchor_face='TOP')
+
+# Then move by offset(0,0,0.002)
+# Note: The prompt says "Then move by offset(0,0,0.002)" after the alignments.
+# It's ambiguous if this applies to all objects or just the last one.
+# Given "Assembly guideline satisfied", it likely applies to the assembly as a whole or the wick.
+# I will apply it to the wick as it was the last modified object in Stage 2, 
+# and Stage 3 re-aligns it. Applying to all might shift the whole assembly.
+# Let's apply to wick to maintain the "stick out" effect.
+apply_offset(wick, Vector((0, 0, 0.002)))
+
+# Stage 3 complete.
+
+# All stages complete.
+```

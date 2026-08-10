@@ -1,0 +1,354 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with specified diffuse color."""
+    if name in bpy.data.materials:
+        return bpy.data.materials[name]
+    
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    # Set roughness/metallic defaults if needed, but keeping simple for now
+    return mat
+
+def apply_material(obj, mat):
+    """Apply a material to an object's first material slot."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder oriented along Z axis by default."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size) # size is half-width in Blender
+    obj = bpy.context.object
+    obj.name = name
+    return obj
+
+def add_cuboid(name, dimensions):
+    """Add a cuboid (cube scaled) with given dimensions (x, y, z)."""
+    # Blender cube 'size' is half-extent. So we scale by dim/2.
+    # But easier: add cube with size=1, then scale.
+    bpy.ops.mesh.primitive_cube_add(size=1.0)
+    obj = bpy.context.object
+    obj.name = name
+    obj.scale = (dimensions[0]/2, dimensions[1]/2, dimensions[2]/2)
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Rotate object so its local axis aligns with world vector."""
+    # Get current rotation
+    rot = obj.rotation_euler
+    # This is complex to do purely with euler math robustly. 
+    # Instead, we use a temporary empty to orient, or matrix multiplication.
+    # Simple approach for standard axes:
+    
+    # Define target direction
+    target = vector.normalized()
+    
+    # Define current axis direction
+    if axis == 'X':
+        current = Vector((1, 0, 0))
+    elif axis == 'Y':
+        current = Vector((0, 1, 0))
+    elif axis == 'Z':
+        current = Vector((0, 0, 1))
+    else:
+        return
+
+    # Calculate rotation matrix to align current to target
+    # We want to rotate 'current' to 'target'.
+    # Use quaternion rotation
+    q = current.rotation_difference(target)
+    
+    # Apply rotation
+    obj.rotation_euler = q.to_euler()
+
+def get_face_center(obj, face_type):
+    """
+    Calculate the world position of a specific face center.
+    face_type: 'front', 'back', 'top', 'bottom', 'left', 'right'
+    Assumes standard orientation where +Z is up, +Y is front, +X is right.
+    """
+    # Get object matrix
+    mat = obj.matrix_world
+    
+    # Get dimensions
+    dims = obj.dimensions
+    half_dims = dims / 2.0
+    
+    # Local face centers
+    if face_type == 'front': # +Y
+        local_center = Vector((0, half_dims[1], 0))
+    elif face_type == 'back': # -Y
+        local_center = Vector((0, -half_dims[1], 0))
+    elif face_type == 'top': # +Z
+        local_center = Vector((0, 0, half_dims[2]))
+    elif face_type == 'bottom': # -Z
+        local_center = Vector((0, 0, -half_dims[2]))
+    elif face_type == 'right': # +X
+        local_center = Vector((half_dims[0], 0, 0))
+    elif face_type == 'left': # -X
+        local_center = Vector((-half_dims[0], 0, 0))
+    else:
+        return obj.location
+    
+    # Transform to world
+    return mat @ local_center
+
+def align_to_face(obj_target, face_type_target, obj_source, face_type_source):
+    """
+    Align obj_source's face to obj_target's face.
+    This usually means placing obj_source such that its face touches obj_target's face.
+    """
+    target_pos = get_face_center(obj_target, face_type_target)
+    source_pos = get_face_center(obj_source, face_type_source)
+    
+    # Calculate offset needed to move source face to target face
+    # We want source_pos + offset = target_pos
+    offset = target_pos - source_pos
+    
+    # Apply offset to source object
+    obj_source.location += offset
+
+def align_centers(obj_target, obj_source):
+    """Align center of obj_source to center of obj_target."""
+    target_center = obj_target.location
+    source_center = obj_source.location
+    obj_source.location = target_center
+
+def align_center_to_face(obj_target, face_type, obj_source):
+    """
+    Align center of obj_source to a specific face of obj_target.
+    """
+    target_face_pos = get_face_center(obj_target, face_type)
+    obj_source.location = target_face_pos
+
+def add_locator(name, location):
+    """Add a simple empty locator."""
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=location)
+    loc = bpy.context.object
+    loc.name = name
+    return loc
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Clear orphan data (optional but good for clean scripts)
+for mesh in bpy.data.meshes:
+    if mesh.users == 0:
+        bpy.data.meshes.remove(mesh)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_aluminum_silver = make_material("mat_aluminum_silver", (0.75, 0.75, 0.80, 1.0))
+mat_black_plastic = make_material("mat_black_plastic", (0.05, 0.05, 0.05, 1.0))
+mat_black_screen = make_material("mat_black_screen", (0.01, 0.01, 0.02, 1.0))
+mat_blue_led = make_material("mat_blue_led", (0.0, 0.2, 1.0, 1.0))
+mat_glass_translucent = make_material("mat_glass_translucent", (0.9, 0.95, 1.0, 0.1))
+mat_port_gold = make_material("mat_port_gold", (0.8, 0.6, 0.2, 1.0))
+mat_port_black = make_material("mat_port_black", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create screen panel ---
+screen_panel = add_cuboid("screen_panel", (0.600, 0.340, 0.005))
+apply_material(screen_panel, mat_black_screen)
+
+# Rotate so +Z aligns +Z (already default, but explicit)
+align_axis_to_vector(screen_panel, 'Z', Vector((0, 0, 1)))
+
+# Move to pos=(0, 0.170, 0)
+screen_panel.location = (0, 0.170, 0)
+
+# --- SECTION 2 – Create bezel frame ---
+bezel_frame = add_cuboid("bezel_frame", (0.620, 0.360, 0.008))
+apply_material(bezel_frame, mat_aluminum_silver)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(bezel_frame, 'Z', Vector((0, 0, 1)))
+
+# Align bezel_frame.center to screen_panel.center
+align_centers(screen_panel, bezel_frame)
+
+# Align bezel_frame.front_face to screen_panel.front_face
+# Note: The prompt says "Align ... front_face to ... front_face". 
+# Since centers are already aligned, and they are concentric, the front faces are already aligned in Y.
+# However, if there was a slight misalignment, this ensures it.
+align_to_face(screen_panel, 'front', bezel_frame, 'front')
+
+# Then move by offset(0,0,0.002)
+bezel_frame.location += Vector((0, 0, 0.002))
+
+# --- SECTION 3 – Create stand base ---
+stand_base = add_cylinder("stand_base", 0.075, 0.010) # Radius = 0.150/2
+apply_material(stand_base, mat_black_plastic)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(stand_base, 'Z', Vector((0, 0, 1)))
+
+# Move to pos=(0, -0.180, 0)
+stand_base.location = (0, -0.180, 0)
+
+# --- SECTION 4 – Create stand pillar ---
+stand_pillar = add_cylinder("stand_pillar", 0.010, 0.150) # Radius = 0.020/2
+apply_material(stand_pillar, mat_black_plastic)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(stand_pillar, 'Z', Vector((0, 0, 1)))
+
+# Align stand_pillar.center to stand_base.center
+align_centers(stand_base, stand_pillar)
+
+# Align stand_pillar.bottom_face to stand_base.top_face
+align_to_face(stand_base, 'top', stand_pillar, 'bottom')
+
+# Then move by offset(0,0,0.005)
+stand_pillar.location += Vector((0, 0, 0.005))
+
+# --- SECTION 5 – Create stand connector ---
+stand_connector = add_cuboid("stand_connector", (0.040, 0.030, 0.020))
+apply_material(stand_connector, mat_black_plastic)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(stand_connector, 'Z', Vector((0, 0, 1)))
+
+# Align stand_connector.center to stand_pillar.center
+align_centers(stand_pillar, stand_connector)
+
+# Align stand_connector.bottom_face to stand_pillar.top_face
+align_to_face(stand_pillar, 'top', stand_connector, 'bottom')
+
+# Then move by offset(0,0,0.010)
+stand_connector.location += Vector((0, 0, 0.010))
+
+# --- SECTION 6 – Create back panel ---
+back_panel = add_cuboid("back_panel", (0.600, 0.340, 0.005))
+apply_material(back_panel, mat_black_plastic)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(back_panel, 'Z', Vector((0, 0, 1)))
+
+# Align back_panel.center to screen_panel.center
+align_centers(screen_panel, back_panel)
+
+# Align back_panel.back_face to screen_panel.back_face
+align_to_face(screen_panel, 'back', back_panel, 'back')
+
+# Then move by offset(0,0,-0.002)
+back_panel.location += Vector((0, 0, -0.002))
+
+# --- SECTION 7 – Create HDMI port housing ---
+port_housing_hdmi = add_cuboid("port_housing_hdmi", (0.030, 0.015, 0.010))
+apply_material(port_housing_hdmi, mat_port_black)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(port_housing_hdmi, 'Z', Vector((0, 0, 1)))
+
+# Align port_housing_hdmi.center to back_panel.center
+align_centers(back_panel, port_housing_hdmi)
+
+# Align port_housing_hdmi.front_face to back_panel.back_face
+align_to_face(back_panel, 'back', port_housing_hdmi, 'front')
+
+# Then move by offset(-0.150, 0.100, -0.002)
+port_housing_hdmi.location += Vector((-0.150, 0.100, -0.002))
+
+# --- SECTION 8 – Create DisplayPort housing ---
+port_housing_dp = add_cuboid("port_housing_dp", (0.030, 0.015, 0.010))
+apply_material(port_housing_dp, mat_port_black)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(port_housing_dp, 'Z', Vector((0, 0, 1)))
+
+# Align port_housing_dp.center to back_panel.center
+align_centers(back_panel, port_housing_dp)
+
+# Align port_housing_dp.front_face to back_panel.back_face
+align_to_face(back_panel, 'back', port_housing_dp, 'front')
+
+# Then move by offset(-0.150, 0.080, -0.002)
+port_housing_dp.location += Vector((-0.150, 0.080, -0.002))
+
+# --- SECTION 9 – Create USB-A port housing ---
+port_housing_usb = add_cuboid("port_housing_usb", (0.015, 0.010, 0.010))
+apply_material(port_housing_usb, mat_port_black)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(port_housing_usb, 'Z', Vector((0, 0, 1)))
+
+# Align port_housing_usb.center to back_panel.center
+align_centers(back_panel, port_housing_usb)
+
+# Align port_housing_usb.front_face to back_panel.back_face
+align_to_face(back_panel, 'back', port_housing_usb, 'front')
+
+# Then move by offset(-0.150, 0.060, -0.002)
+port_housing_usb.location += Vector((-0.150, 0.060, -0.002))
+
+# --- SECTION 10 – Create power button ---
+button_power = add_cylinder("button_power", 0.005, 0.005) # Radius = 0.010/2
+apply_material(button_power, mat_port_gold)
+
+# Rotate so +Z aligns +X
+align_axis_to_vector(button_power, 'Z', Vector((1, 0, 0)))
+
+# Align button_power.center to bezel_frame.right_face
+align_center_to_face(bezel_frame, 'right', button_power)
+
+# Align button_power.center to bezel_frame.center
+# This overrides the previous alignment. The prompt lists both.
+# "Align button_power.center to bezel_frame.right_face"
+# "Align button_power.center to bezel_frame.center"
+# Usually, if multiple alignments are listed, the last one takes precedence or they are combined.
+# However, aligning center to right_face AND center to center is contradictory unless the object is at the center.
+# Given the context of a power button on the side, aligning to the right face is the physical placement.
+# The second line "Align button_power.center to bezel_frame.center" might imply Y/Z alignment to center.
+# Let's interpret: Align X to right face, Align Y/Z to center.
+
+# Re-align Y and Z to center
+button_power.location.y = bezel_frame.location.y
+button_power.location.z = bezel_frame.location.z
+
+# Then move by offset(0.005, 0, 0)
+button_power.location += Vector((0.005, 0, 0))
+
+# --- SECTION 11 – Create LED indicator ---
+indicator_led = add_cylinder("indicator_led", 0.0025, 0.002) # Radius = 0.005/2
+apply_material(indicator_led, mat_blue_led)
+
+# Rotate so +Z aligns +Z
+align_axis_to_vector(indicator_led, 'Z', Vector((0, 0, 1)))
+
+# Align indicator_led.center to button_power.center
+align_centers(button_power, indicator_led)
+
+# Align indicator_led.center to button_power.center (Redundant)
+
+# Then move by offset(0, 0, 0.003)
+indicator_led.location += Vector((0, 0, 0.003))
+
+print("All stages complete.")
+```

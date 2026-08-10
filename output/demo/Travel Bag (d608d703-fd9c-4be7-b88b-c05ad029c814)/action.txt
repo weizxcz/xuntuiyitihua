@@ -1,0 +1,118 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material fabric_olive; diffuse_color = (0.2,0.3,0.15,1.0).
+Define material metal_silver; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material plastic_black; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Front Panel  ---
+Create primitive cuboid with size 0.40×0.50×0.02 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Anchor front_panel to bag_root.center.
+Then move by offset(0, 0.21, 0).
+
+---  SECTION 2 – Create Back Panel  ---
+Create primitive cuboid with size 0.40×0.50×0.02 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Anchor back_panel to bag_root.center.
+Then move by offset(0, -0.21, 0).
+
+---  SECTION 3 – Create Bottom Panel  ---
+Create primitive cuboid with size 0.40×0.42×0.02 m and name it bottom_panel.
+Rotate bottom_panel so its +Z axis aligns +Y (world).
+Anchor bottom_panel to bag_root.center.
+Then move by offset(0, 0, -0.21).
+
+---  SECTION 4 – Create Left Side Panel  ---
+Create primitive cuboid with size 0.42×0.50×0.02 m and name it side_panel_L.
+Rotate side_panel_L so its +Z axis aligns +X (world).
+Anchor side_panel_L to bag_root.center.
+Then move by offset(-0.21, 0, 0).
+
+---  SECTION 5 – Create Right Side Panel  ---
+Create primitive cuboid with size 0.42×0.50×0.02 m and name it side_panel_R.
+Rotate side_panel_R so its +Z axis aligns -X (world).
+Anchor side_panel_R to bag_root.center.
+Then move by offset(0.21, 0, 0).
+
+---  SECTION 6 – Assemble Body Shell  ---
+Boolean-union front_panel, back_panel, bottom_panel, side_panel_L, side_panel_R and name it body_shell.
+Align(XYZ) body_shell.center to bag_root.center.
+Then move by offset(0, 0, 0).
+
+---  SECTION 7 – Create Main Compartment  ---
+Create primitive cuboid with size 0.40×0.50×0.40 m and name it main_compartment_cut.
+Rotate main_compartment_cut so its +Z axis aligns +Z (world).
+Anchor main_compartment_cut to body_shell.center.
+Then move by offset(0, 0, 0).
+Boolean-subtract main_compartment_cut from body_shell; discard main_compartment_cut.
+Align(XYZ) body_shell.center to bag_root.center.
+Then move by offset(0, 0, 0).
+
+---  SECTION 8 – Create Front Pocket  ---
+Create primitive cuboid with size 0.30×0.20×0.01 m and name it front_pocket.
+Rotate front_pocket so its +Z axis aligns +Z (world).
+Anchor front_pocket to front_panel.center.
+Then move by offset(0, 0.1, 0.015).
+
+---  SECTION 9 – Create Left Side Pocket  ---
+Create primitive cylinder with Ø0.10×0.30 m and name it side_pocket_L.
+Rotate side_pocket_L so its +Z axis aligns +X (world).
+Anchor side_pocket_L to side_panel_L.center.
+Then move by offset(-0.05, 0, 0).
+
+---  SECTION 10 – Create Right Side Pocket  ---
+Create primitive cylinder with Ø0.10×0.30 m and name it side_pocket_R.
+Rotate side_pocket_R so its +Z axis aligns -X (world).
+Anchor side_pocket_R to side_panel_R.center.
+Then move by offset(0.05, 0, 0).
+
+---  SECTION 11 – Create Shoulder Strap  ---
+Create primitive cuboid with size 0.05×0.80×0.01 m and name it shoulder_strap.
+Rotate shoulder_strap so its +Z axis aligns +Z (world).
+Anchor shoulder_strap to bag_root.center.
+Then move by offset(0, 0, 0.25).
+
+---  SECTION 12 – Create Left Strap Buckle  ---
+Create primitive cuboid with size 0.02×0.02×0.02 m and name it strap_buckle_L.
+Rotate strap_buckle_L so its +Z axis aligns +Z (world).
+Anchor strap_buckle_L to shoulder_strap.left_face.
+Then move by offset(-0.01, 0, 0).
+
+---  SECTION 13 – Create Right Strap Buckle  ---
+Create primitive cuboid with size 0.02×0.02×0.02 m and name it strap_buckle_R.
+Rotate strap_buckle_R so its +Z axis aligns +Z (world).
+Anchor strap_buckle_R to shoulder_strap.right_face.
+Then move by offset(0.01, 0, 0).
+
+---  SECTION 14 – Create Main Zipper  ---
+Create primitive torus with Ø0.40×0.01 m and name it zipper_main.
+Rotate zipper_main so its +Z axis aligns +Z (world).
+Anchor zipper_main to bag_root.center.
+Then move by offset(0, 0, 0.25).
+
+---  SECTION 15 – Create Front Zipper  ---
+Create primitive torus with Ø0.30×0.01 m and name it zipper_front.
+Rotate zipper_front so its +Z axis aligns +Z (world).
+Anchor zipper_front to front_pocket.center.
+Then move by offset(0, 0, 0.015).
+
+---  SECTION 16 – Final Assembly  ---
+Boolean-union body_shell, main_compartment, front_pocket, side_pocket_L, side_pocket_R, shoulder_strap, strap_buckle_L, strap_buckle_R, zipper_main, zipper_front and name it bag_assembled.
+Align(XYZ) bag_assembled.center to bag_root.center.
+Then move by offset(0, 0, 0).
+
+Stage 16 complete.
+All stages complete.

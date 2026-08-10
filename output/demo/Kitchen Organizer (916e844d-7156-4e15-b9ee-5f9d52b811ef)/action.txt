@@ -1,0 +1,127 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_polypropylene; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_clear_acrylic; diffuse_color = (0.9,0.9,0.95,0.3).
+Define material mat_cork; diffuse_color = (0.6,0.4,0.2,1.0).
+Define material mat_stainless_steel; diffuse_color = (0.7,0.7,0.75,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base_body  ---
+Create primitive cuboid with size 0.400×0.250×0.015 m and name it base_body.
+Rotate base_body so its +Z axis aligns +Z (world).
+Move base_body to pos=(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create cork_pad  ---
+Create primitive cuboid with size 0.400×0.250×0.003 m and name it cork_pad.
+Rotate cork_pad so its +Z axis aligns +Z (world).
+Anchor cork_pad to base_body.bottom_face.
+Then move by offset(0,0,-0.009).
+Stage 2 complete.
+
+---  SECTION 3 – Create base_plate (Boolean Union)  ---
+Boolean-union base_body and cork_pad; keep base_body.
+Stage 3 complete.
+
+---  SECTION 4 – Create back_panel  ---
+Create primitive cuboid with size 0.400×0.180×0.005 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Move back_panel to pos=(0,0.1225,0.015).
+Stage 4 complete.
+
+---  SECTION 5 – Create left_wall  ---
+Create primitive cuboid with size 0.005×0.180×0.180 m and name it left_wall.
+Rotate left_wall so its +Z axis aligns +Z (world).
+Move left_wall to pos=(-0.1975,0.06,0.015).
+Stage 5 complete.
+
+---  SECTION 6 – Create right_wall  ---
+Create primitive cuboid with size 0.005×0.180×0.180 m and name it right_wall.
+Rotate right_wall so its +Z axis aligns +Z (world).
+Move right_wall to pos=(0.1975,0.06,0.015).
+Stage 6 complete.
+
+---  SECTION 7 – Create middle_wall  ---
+Create primitive cuboid with size 0.005×0.180×0.180 m and name it middle_wall.
+Rotate middle_wall so its +Z axis aligns +Z (world).
+Move middle_wall to pos=(0,0.06,0.015).
+Stage 7 complete.
+
+---  SECTION 8 – Create divider_frame (Boolean Union)  ---
+Boolean-union back_panel, left_wall, right_wall, and middle_wall; keep back_panel.
+Stage 8 complete.
+
+---  SECTION 9 – Create utensil_tray  ---
+Create primitive cuboid with size 0.190×0.180×0.010 m and name it utensil_tray.
+Rotate utensil_tray so its +Z axis aligns +Z (world).
+Move utensil_tray to pos=(-0.095,0.06,0.025).
+Stage 9 complete.
+
+---  SECTION 10 – Create knife_slot_base  ---
+Create primitive cuboid with size 0.190×0.180×0.010 m and name it knife_slot_base.
+Rotate knife_slot_base so its +Z axis aligns +Z (world).
+Move knife_slot_base to pos=(0.095,0.06,0.025).
+Stage 10 complete.
+
+---  SECTION 11 – Create knife_insert  ---
+Create primitive cuboid with size 0.003×0.170×0.150 m and name it knife_insert.
+Rotate knife_insert so its +Z axis aligns +Z (world).
+Move knife_insert to pos=(0.095,0.06,0.095).
+Stage 11 complete.
+
+---  SECTION 12 – Create drawer_box  ---
+Create primitive cuboid with size 0.100×0.150×0.040 m and name it drawer_box.
+Rotate drawer_box so its +Z axis aligns +Z (world).
+Move drawer_box to pos=(0.095,0.06,0.035).
+Stage 12 complete.
+
+---  SECTION 13 – Create drawer_front  ---
+Create primitive cuboid with size 0.100×0.005×0.040 m and name it drawer_front.
+Rotate drawer_front so its +Z axis aligns +Z (world).
+Move drawer_front to pos=(0.095,0.135,0.035).
+Stage 13 complete.
+
+---  SECTION 14 – Create drawer_handle  ---
+Create primitive cylinder with Ø0.008×0.030 m and name it drawer_handle.
+Rotate drawer_handle so its +Z axis aligns +Y (world).
+Move drawer_handle to pos=(0.095,0.140,0.035).
+Stage 14 complete.
+
+---  SECTION 15 – Create drawer_unit (Boolean Union)  ---
+Boolean-union drawer_box, drawer_front, and drawer_handle; keep drawer_box.
+Stage 15 complete.
+
+---  SECTION 16 – Create u_div_1  ---
+Create primitive cuboid with size 0.003×0.170×0.150 m and name it u_div_1.
+Rotate u_div_1 so its +Z axis aligns +Z (world).
+Move u_div_1 to pos=(-0.030,0.06,0.025).
+Stage 16 complete.
+
+---  SECTION 17 – Create u_div_2  ---
+Create primitive cuboid with size 0.003×0.170×0.150 m and name it u_div_2.
+Rotate u_div_2 so its +Z axis aligns +Z (world).
+Move u_div_2 to pos=(-0.160,0.06,0.025).
+Stage 17 complete.
+
+---  SECTION 18 – Create utensil_dividers (Boolean Union)  ---
+Boolean-union u_div_1 and u_div_2; keep u_div_1.
+Stage 18 complete.
+
+---  SECTION 19 – Create drawer_tray  ---
+Create primitive cuboid with size 0.090×0.140×0.002 m and name it drawer_tray.
+Rotate drawer_tray so its +Z axis aligns +Z (world).
+Move drawer_tray to pos=(0.095,0.06,0.001).
+Stage 19 complete.
+
+All stages complete.

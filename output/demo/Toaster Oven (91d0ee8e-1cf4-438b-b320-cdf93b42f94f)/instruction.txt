@@ -1,0 +1,1 @@
+Let's create a 3D model of a toaster oven. Start with a rectangular body that has a front door with a handle. The door should open downwards. Inside, add a rack for placing food. On the outside, add a few dials for controlling the temperature and timer.

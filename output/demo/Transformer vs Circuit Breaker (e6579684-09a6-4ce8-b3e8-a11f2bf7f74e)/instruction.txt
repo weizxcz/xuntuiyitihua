@@ -1,0 +1,1 @@
+Create a 3D model comparing a transformer and a circuit breaker. The transformer should have a rectangular body with cylindrical coils on top. The circuit breaker should be a small rectangular box with a switch on the front. Place them side by side for comparison.

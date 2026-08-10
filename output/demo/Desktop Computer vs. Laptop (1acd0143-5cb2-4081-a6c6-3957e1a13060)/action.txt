@@ -1,0 +1,100 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material mat_grey_aluminum; diffuse_color = (0.70,0.72,0.75,1.00).
+Define material mat_screen_black; diffuse_color = (0.05,0.05,0.05,1.00).
+Define material mat_screen_glow; diffuse_color = (0.20,0.40,0.80,0.50).
+Define material mat_white_keycap; diffuse_color = (0.95,0.95,0.95,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Desk Surface  ---
+Create primitive cuboid with size 1.6×0.8×0.02 m and name it desk_surface.
+Rotate desk_surface so its +Z axis aligns +Z (world).
+Anchor desk_surface to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Desktop Monitor Assembly  ---
+Create primitive cuboid with size 0.62×0.42×0.01 m and name it monitor_bezel.
+Rotate monitor_bezel so its +Z axis aligns +Z (world).
+Anchor monitor_bezel to world origin.
+Then move by offset(-0.3, 0.2, 0.025).
+
+Create primitive cuboid with size 0.58×0.38×0.005 m and name it monitor_display.
+Rotate monitor_display so its +Z axis aligns +Z (world).
+Align monitor_display.+Z_face to monitor_bezel.+Z_face.
+Then move by offset(0,0,0.005).
+Stage 2 complete.
+
+---  SECTION 3 – Create Desktop CPU Tower  ---
+Create primitive cuboid with size 0.50×0.25×0.50 m and name it desktop_cpu.
+Rotate desktop_cpu so its +Z axis aligns +Z (world).
+Anchor desktop_cpu to world origin.
+Then move by offset(-0.3, -0.2, 0.25).
+
+Create primitive cuboid with size 0.15×0.15×0.005 m and name it cpu_fan.
+Rotate cpu_fan so its +Z axis aligns +Z (world).
+Align cpu_fan.+Z_face to desktop_cpu.+Z_face.
+Then move by offset(0,0,0.255).
+Stage 3 complete.
+
+---  SECTION 4 – Create Desktop Keyboard  ---
+Create primitive cuboid with size 0.40×0.12×0.001 m and name it keyboard_keys.
+Rotate keyboard_keys so its +Z axis aligns +Z (world).
+Align keyboard_keys.+Z_face to desk_surface.+Z_face.
+Then move by offset(-0.3, 0.05, 0.001).
+
+Create primitive cuboid with size 0.45×0.15×0.002 m and name it desktop_keyboard.
+Rotate desktop_keyboard so its +Z axis aligns +Z (world).
+Align desktop_keyboard.+Z_face to desk_surface.+Z_face.
+Then move by offset(-0.3, 0.05, 0.001).
+Stage 4 complete.
+
+---  SECTION 5 – Create Desktop Mouse  ---
+Create primitive cuboid with size 0.05×0.04×0.001 m and name it mouse_button.
+Rotate mouse_button so its +Z axis aligns +Z (world).
+Align mouse_button.+Z_face to desk_surface.+Z_face.
+Then move by offset(-0.1, 0.05, 0.002).
+
+Create primitive cuboid with size 0.10×0.06×0.004 m and name it desktop_mouse.
+Rotate desktop_mouse so its +Z axis aligns +Z (world).
+Align desktop_mouse.+Z_face to desk_surface.+Z_face.
+Then move by offset(-0.1, 0.05, 0.002).
+Stage 5 complete.
+
+---  SECTION 6 – Create Laptop Base  ---
+Create primitive cuboid with size 0.35×0.25×0.005 m and name it laptop_base.
+Rotate laptop_base so its +Z axis aligns +Z (world).
+Align laptop_base.+Z_face to desk_surface.+Z_face.
+Then move by offset(0.3, 0.0, 0.0025).
+
+Create primitive cuboid with size 0.10×0.06×0.001 m and name it laptop_trackpad.
+Rotate laptop_trackpad so its +Z axis aligns +Z (world).
+Align laptop_trackpad.+Z_face to laptop_base.+Z_face.
+Then move by offset(0,0,0.0025).
+Stage 6 complete.
+
+---  SECTION 7 – Create Laptop Screen & Hinge  ---
+Create primitive cuboid with size 0.02×0.02×0.02 m and name it laptop_hinge.
+Rotate laptop_hinge so its +Z axis aligns +Z (world).
+Align laptop_hinge.+Z_face to laptop_base.+Z_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.35×0.22×0.005 m and name it laptop_screen.
+Rotate laptop_screen so its +Z axis aligns +Z (world).
+Align laptop_screen.+Z_face to laptop_hinge.+Z_face.
+Then move by offset(0,0,0.225).
+Stage 7 complete.
+
+All stages complete.

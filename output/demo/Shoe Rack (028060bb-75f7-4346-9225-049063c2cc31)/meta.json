@@ -1,0 +1,48 @@
+{
+  "id": "028060bb-75f7-4346-9225-049063c2cc31",
+  "name": "Shoe Rack",
+  "instruction": "Create a 3D model of a shoe rack with three tiers.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a shoe rack.",
+        "The shoe rack has three distinct tiers.",
+        "Each tier is horizontal and evenly spaced."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of each tier is proportionate to the overall height of the shoe rack.",
+        "The width of the shoe rack is adequate to hold shoes without overcrowding."
+      ],
+      "Texture and surface detail": [
+        "The shoe rack appears to be made of wood or a similar sturdy material.",
+        "The surface of the shoe rack is smooth and suitable for placing shoes."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The tiers are arranged vertically in a stable manner.",
+        "The shoe rack maintains balance and does not tip over.",
+        "There is enough space between tiers for easy access to shoes."
+      ],
+      "Object distance and contact": [
+        "The tiers do not overlap with each other.",
+        "There is no gap between the tiers and the sides of the shoe rack.",
+        "The base of the shoe rack is stable and supports the structure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The shoe rack is accurately modeled with three tiers as specified.",
+        "All specified attributes are represented without deviation."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,48 @@
+{
+  "id": "61bf0059-075e-4db2-af50-7623f3477abe",
+  "name": "Layered Cake",
+  "instruction": "Let's create a layered cake. Start with three round layers stacked on top of each other. Each layer should have a different flavor: chocolate, vanilla, and strawberry. The cake should be frosted with a smooth, even coating of icing. Add decorative elements like swirls and patterns on the top and sides. Finally, place some fruit slices on top for garnish.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a layered cake.",
+        "The cake consists of three round layers stacked on top of each other."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cake features swirls and patterns on the top.",
+        "The sides of the cake also have decorative patterns."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The layers are stacked correctly with each layer supporting the one above.",
+        "The frosting covers all visible surfaces of the cake evenly.",
+        "The decorative elements are applied symmetrically around the cake."
+      ],
+      "Object distance and contact": [
+        "The layers are in direct contact with each other.",
+        "The frosting is in contact with all layers and the decorative elements.",
+        "The fruit slices are placed securely on top of the icing."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the cake are accurately represented.",
+        "The flavors of each layer are correctly identified.",
+        "The decorative elements are present as described.",
+        "The garnish is appropriately placed on top."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

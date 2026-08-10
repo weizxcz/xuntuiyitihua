@@ -1,0 +1,121 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_plastic; diffuse_color = (0.10,0.10,0.10,1.00).
+Define material mat_blue_mat; diffuse_color = (0.20,0.40,0.80,1.00).
+Define material mat_brush_bristles; diffuse_color = (0.90,0.90,0.90,1.00).
+Define material mat_brush_handle; diffuse_color = (0.80,0.20,0.20,1.00).
+Define material mat_clipper_blade; diffuse_color = (0.60,0.60,0.65,1.00).
+Define material mat_clipper_body; diffuse_color = (0.15,0.15,0.15,1.00).
+Define material mat_comb_teeth; diffuse_color = (0.85,0.85,0.85,1.00).
+Define material mat_comb_handle; diffuse_color = (0.80,0.20,0.20,1.00).
+Define material mat_stainless_bowl; diffuse_color = (0.70,0.70,0.75,1.00).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Grooming Kit Case Base  ---
+Create primitive cuboid with size 0.200×0.200×0.050 m and name it case_base.
+Rotate case_base so its +Z axis aligns +Z (world).
+Align case_base.center to grooming_kit_case.center.
+Align case_base.bottom_face to (0,0,-0.025).
+Then move by offset(0,0,0).
+Boolean-union case_base into grooming_kit_case.
+
+---  SECTION 2 – Create Grooming Kit Case Lid  ---
+Create primitive cuboid with size 0.200×0.200×0.010 m and name it case_lid.
+Rotate case_lid so its +Z axis aligns +Z (world).
+Align case_lid.center to grooming_kit_case.center.
+Align case_lid.bottom_face to case_base.top_face.
+Then move by offset(0,0,0.050).
+Boolean-union case_lid into grooming_kit_case.
+
+---  SECTION 3 – Create Grooming Tools Assembly  ---
+Create primitive cuboid with size 0.050×0.050×0.015 m and name it brush_handle.
+Rotate brush_handle so its +Z axis aligns +Z (world).
+Align brush_handle.center to case_base.center.
+Then move by offset(-0.05, 0, 0).
+Align brush_handle.bottom_face to case_base.top_face.
+Then move by offset(0,0,0.005).
+Boolean-union brush_handle into grooming_tools.
+
+Create primitive cylinder with diameter 0.040 m and height 0.005 m and name it brush_bristles.
+Rotate brush_bristles so its +Z axis aligns +Z (world).
+Align brush_bristles.center to brush_handle.center.
+Align brush_bristles.bottom_face to brush_handle.top_face.
+Then move by offset(0,0,0.005).
+Boolean-union brush_bristles into grooming_tools.
+
+Create primitive cuboid with size 0.040×0.040×0.010 m and name it comb_handle.
+Rotate comb_handle so its +Z axis aligns +Z (world).
+Align comb_handle.center to case_base.center.
+Then move by offset(0, 0, 0).
+Align comb_handle.bottom_face to case_base.top_face.
+Then move by offset(0,0,0.005).
+Boolean-union comb_handle into grooming_tools.
+
+Create primitive cuboid with size 0.030×0.030×0.002 m and name it comb_teeth.
+Rotate comb_teeth so its +Z axis aligns +Z (world).
+Align comb_teeth.center to comb_handle.center.
+Align comb_teeth.bottom_face to comb_handle.top_face.
+Then move by offset(0,0,0.005).
+Boolean-union comb_teeth into grooming_tools.
+
+Create primitive cuboid with size 0.030×0.030×0.015 m and name it clipper_body.
+Rotate clipper_body so its +Z axis aligns +Z (world).
+Align clipper_body.center to case_base.center.
+Then move by offset(0.05, 0, 0).
+Align clipper_body.bottom_face to case_base.top_face.
+Then move by offset(0,0,0.005).
+Boolean-union clipper_body into grooming_tools.
+
+Create primitive cylinder with diameter 0.020 m and height 0.002 m and name it clipper_blade.
+Rotate clipper_blade so its +Z axis aligns +Z (world).
+Align clipper_blade.center to clipper_body.center.
+Align clipper_blade.bottom_face to clipper_body.top_face.
+Then move by offset(0,0,0.005).
+Boolean-union clipper_blade into grooming_tools.
+
+Boolean-union grooming_tools into grooming_kit_case.
+
+---  SECTION 4 – Create Feeding Set Mat  ---
+Create primitive cuboid with size 0.400×0.400×0.005 m and name it feeding_mat.
+Rotate feeding_mat so its +Z axis aligns +Z (world).
+Align feeding_mat.center to feeding_set.center.
+Align feeding_mat.bottom_face to (0,0,-0.0025).
+Then move by offset(0,0,0).
+Boolean-union feeding_mat into feeding_set.
+
+---  SECTION 5 – Create Water Bowl  ---
+Create primitive cylinder with diameter 0.100 m and height 0.060 m and name it bowl_water.
+Rotate bowl_water so its +Z axis aligns +Z (world).
+Align bowl_water.center to feeding_mat.center.
+Then move by offset(-0.10, 0, 0).
+Align bowl_water.bottom_face to feeding_mat.top_face.
+Then move by offset(0,0,0).
+Boolean-union bowl_water into feeding_set.
+
+---  SECTION 6 – Create Food Bowl  ---
+Create primitive cylinder with diameter 0.100 m and height 0.060 m and name it bowl_food.
+Rotate bowl_food so its +Z axis aligns +Z (world).
+Align bowl_food.center to feeding_mat.center.
+Then move by offset(0.10, 0, 0).
+Align bowl_food.bottom_face to feeding_mat.top_face.
+Then move by offset(0,0,0).
+Boolean-union bowl_food into feeding_set.
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+Stage 4 complete.
+Stage 5 complete.
+Stage 6 complete.
+All stages complete.

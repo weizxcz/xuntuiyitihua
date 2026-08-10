@@ -1,0 +1,246 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material food_safe_plastic; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+Define material metal_steel; diffuse_color = (0.7, 0.7, 0.75, 1.0).
+Define material rubber_grip; diffuse_color = (0.1, 0.1, 0.1, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Motor Housing Base  ---
+Create primitive cuboid with size 0.15×0.15×0.10 m and name it motor_housing.
+Rotate motor_housing so its +Z axis aligns +Z (world).
+Anchor motor_housing to world origin.
+Then move by offset(0, 0, 0.05).
+Apply material food_safe_plastic to motor_housing.
+
+---  SECTION 2 – Create Motor Unit  ---
+Create primitive cylinder with radius 0.04 m and height 0.06 m and name it motor.
+Rotate motor so its +Z axis aligns +Z (world).
+Anchor motor to motor_housing.top_face.
+Align motor.+Z_face to motor_housing.+Z_face.
+Then move by offset(0, 0, 0.03).
+Apply material metal_steel to motor.
+
+---  SECTION 3 – Create Drive Shaft  ---
+Create primitive cylinder with radius 0.01 m and height 0.05 m and name it drive_shaft.
+Rotate drive_shaft so its +Z axis aligns +Z (world).
+Anchor drive_shaft to motor.top_face.
+Align drive_shaft.+Z_face to motor.+Z_face.
+Then move by offset(0, 0, 0.025).
+Apply material metal_steel to drive_shaft.
+
+---  SECTION 4 – Create Pulp Collector  ---
+Create primitive cylinder with radius 0.07 m and height 0.08 m and name it pulp_collector.
+Rotate pulp_collector so its +Z axis aligns +Z (world).
+Anchor pulp_collector to motor_housing.top_face.
+Align pulp_collector.+Z_face to motor_housing.+Z_face.
+Then move by offset(0, 0, 0.04).
+Apply material food_safe_plastic to pulp_collector.
+
+---  SECTION 5 – Create Pulp Lid  ---
+Create primitive cylinder with radius 0.075 m and height 0.01 m and name it pulp_lid.
+Rotate pulp_lid so its +Z axis aligns +Z (world).
+Anchor pulp_lid to pulp_collector.top_face.
+Align pulp_lid.+Z_face to pulp_collector.+Z_face.
+Then move by offset(0, 0, 0.005).
+Apply material food_safe_plastic to pulp_lid.
+
+---  SECTION 6 – Create Juice Jar  ---
+Create primitive cylinder with radius 0.06 m and height 0.12 m and name it juice_jar.
+Rotate juice_jar so its +Z axis aligns +Z (world).
+Anchor juice_jar to motor_housing.top_face.
+Align juice_jar.+Z_face to motor_housing.+Z_face.
+Then move by offset(0, 0, 0.06).
+Apply material food_safe_plastic to juice_jar.
+
+---  SECTION 7 – Create Juicer Lid  ---
+Create primitive cylinder with radius 0.065 m and height 0.015 m and name it juicer_lid.
+Rotate juicer_lid so its +Z axis aligns +Z (world).
+Anchor juicer_lid to juice_jar.top_face.
+Align juicer_lid.+Z_face to juice_jar.+Z_face.
+Then move by offset(0, 0, 0.0075).
+Apply material food_safe_plastic to juicer_lid.
+
+---  SECTION 8 – Create Pulp Filter  ---
+Create primitive cylinder with radius 0.05 m and height 0.04 m and name it pulp_filter.
+Rotate pulp_filter so its +Z axis aligns +Z (world).
+Anchor pulp_filter to pulp_collector.top_face.
+Align pulp_filter.+Z_face to pulp_collector.+Z_face.
+Then move by offset(0, 0, 0.02).
+Apply material food_safe_plastic to pulp_filter.
+
+---  SECTION 9 – Create Pulp Filter Handle  ---
+Create primitive cuboid with size 0.02×0.02×0.05 m and name it pulp_filter_handle.
+Rotate pulp_filter_handle so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle to pulp_filter.top_face.
+Align pulp_filter_handle.+Z_face to pulp_filter.+Z_face.
+Then move by offset(0, 0, 0.025).
+Apply material food_safe_plastic to pulp_filter_handle.
+
+---  SECTION 10 – Create Pulp Filter Handle Grip  ---
+Create primitive cylinder with radius 0.015 m and height 0.03 m and name it pulp_filter_handle_grip.
+Rotate pulp_filter_handle_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip to pulp_filter_handle.top_face.
+Align pulp_filter_handle_grip.+Z_face to pulp_filter_handle.+Z_face.
+Then move by offset(0, 0, 0.015).
+Apply material rubber_grip to pulp_filter_handle_grip.
+
+---  SECTION 11 – Create Pulp Filter Handle Grip Grip  ---
+Create primitive cylinder with radius 0.012 m and height 0.02 m and name it pulp_filter_handle_grip_grip.
+Rotate pulp_filter_handle_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip to pulp_filter_handle_grip.top_face.
+Align pulp_filter_handle_grip_grip.+Z_face to pulp_filter_handle_grip.+Z_face.
+Then move by offset(0, 0, 0.01).
+Apply material rubber_grip to pulp_filter_handle_grip_grip.
+
+---  SECTION 12 – Create Pulp Filter Handle Grip Grip Grip  ---
+Create primitive cylinder with radius 0.01 m and height 0.015 m and name it pulp_filter_handle_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip to pulp_filter_handle_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0075).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip.
+
+---  SECTION 13 – Create Pulp Filter Handle Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.008 m and height 0.01 m and name it pulp_filter_handle_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.005).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip.
+
+---  SECTION 14 – Create Pulp Filter Handle Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.006 m and height 0.008 m and name it pulp_filter_handle_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.004).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip.
+
+---  SECTION 15 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.005 m and height 0.006 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.003).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 16 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.004 m and height 0.005 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0025).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 17 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.003 m and height 0.004 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.002).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 18 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.002 m and height 0.003 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0015).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 19 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0015 m and height 0.002 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.001).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 20 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.001 m and height 0.0015 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.00075).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 21 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0008 m and height 0.001 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0005).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 22 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0006 m and height 0.0008 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0004).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 23 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0005 m and height 0.0006 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0003).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 24 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0004 m and height 0.0005 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.00025).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 25 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0003 m and height 0.0004 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0002).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 26 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0002 m and height 0.0003 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.00015).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 27 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.00015 m and height 0.0002 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.0001).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 28 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.0001 m and height 0.00015 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.+Z_face.
+Then move by offset(0, 0, 0.000075).
+Apply material rubber_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+
+---  SECTION 29 – Create Pulp Filter Handle Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip Grip  ---
+Create primitive cylinder with radius 0.00008 m and height 0.0001 m and name it pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.
+Rotate pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip so its +Z axis aligns +Z (world).
+Anchor pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip to pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip.top_face.
+Align pulp_filter_handle_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_grip_g

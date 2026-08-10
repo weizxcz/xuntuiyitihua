@@ -1,0 +1,48 @@
+{
+  "id": "91941cac-8c46-4207-854f-06bc762cf7cb",
+  "name": "Apple Slicer",
+  "instruction": "Create a 3D model of an apple slicer. The slicer should have a circular frame with multiple blades radiating from the center to cut an apple into equal slices.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is an apple slicer.",
+        "The slicer has a circular frame.",
+        "The blades are arranged radially from the center.",
+        "The blades are thin and sharp."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blades are evenly spaced around the circular frame.",
+        "The size of the blades is proportionate to the frame."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blades are positioned correctly to ensure even slicing.",
+        "The circular frame provides adequate support for the blades.",
+        "The design allows for easy placement over an apple."
+      ],
+      "Object distance and contact": [
+        "The blades do not overlap with each other.",
+        "The blades are securely attached to the frame.",
+        "There is no gap between the blades and the circular frame."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the apple slicer are accurately represented.",
+        "The circular frame and radial blade arrangement are correctly implemented."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

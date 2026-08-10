@@ -1,0 +1,48 @@
+-- MATERIAL LIBRARY --
+mat_concrete | diffuse_color=(0.7,0.7,0.7,1.0)
+mat_steel_dark | diffuse_color=(0.2,0.2,0.2,1.0)
+mat_steel_light | diffuse_color=(0.8,0.8,0.8,1.0)
+mat_steel_railing | diffuse_color=(0.6,0.6,0.6,1.0)
+mat_copper | diffuse_color=(0.9,0.5,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| elevator_root | Composite of all elevator components | assembly_order=[platform_group, railing_group, gate_group, control_group, pulley_group] |
+
+Layer 1 – Primary Structure (Platform & Guide Rails)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| platform_base | Rectangular platform 2.44m × 3.05m × 0.10m | Align(XY) platform_base.center to elevator_root.center; offset(0,0,-1.5); orientation=axis:+Z; mat=mat_steel_dark; create_method=primitive(cube); size=(2.44, 0.10, 3.05) |
+| guide_rail_L | Left vertical guide rail 0.05m × 4.0m × 0.05m | Align(XZ) guide_rail_L.right_face to platform_base.left_face; offset(0,0,1.95); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.025, 4.0); orientation=axis:+Z |
+| guide_rail_R | Right vertical guide rail 0.05m × 4.0m × 0.05m | Align(XZ) guide_rail_R.left_face to platform_base.right_face; offset(0,0,1.95); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.025, 4.0); orientation=axis:+Z |
+| guide_rail_F | Front vertical guide rail 0.05m × 4.0m × 0.05m | Align(YZ) guide_rail_F.back_face to platform_base.front_face; offset(0,0,1.95); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.025, 4.0); orientation=axis:+Z |
+| guide_rail_B | Back vertical guide rail 0.05m × 4.0m × 0.05m | Align(YZ) guide_rail_B.front_face to platform_base.back_face; offset(0,0,1.95); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.025, 4.0); orientation=axis:+Z |
+
+Layer 2 – Railing System
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| railing_L | Left side railing assembly | Align(XZ) railing_L.center to guide_rail_L.center; offset(0,0,0.5); orientation=axis:+Z; mat=mat_steel_railing; create_method=primitive(cylinder); size=(0.02, 2.44); orientation=axis:+X |
+| railing_R | Right side railing assembly | Align(XZ) railing_R.center to guide_rail_R.center; offset(0,0,0.5); orientation=axis:+Z; mat=mat_steel_railing; create_method=primitive(cylinder); size=(0.02, 3.05); orientation=axis:+Y |
+| railing_F | Front side railing assembly | Align(YZ) railing_F.center to guide_rail_F.center; offset(0,0,0.5); orientation=axis:+Z; mat=mat_steel_railing; create_method=primitive(cylinder); size=(0.02, 2.44); orientation=axis:+X |
+| railing_B | Back side railing assembly (Gate side) | Align(YZ) railing_B.center to guide_rail_B.center; offset(0,0,0.5); orientation=axis:+Z; mat=mat_steel_railing; create_method=primitive(cylinder); size=(0.02, 2.44); orientation=axis:+X |
+
+Layer 3 – Gate & Control System
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| gate_panel | Gate door 2.44m × 2.0m × 0.05m | Align(XZ) gate_panel.center to railing_B.center; offset(0,0,1.0); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cube); size=(2.44, 0.05, 2.0) |
+| gate_hinge | Hinge mechanism | Align(XZ) gate_hinge.center to gate_panel.left_face; offset(-0.025,0,0); orientation=axis:+Z; mat=mat_steel_dark; create_method=primitive(cylinder); size=(0.05, 0.1); orientation=axis:+X |
+| control_panel | Control panel box 0.3m × 0.4m × 0.1m | Align(YZ) control_panel.center to gate_panel.right_face; offset(0.15,0,1.2); orientation=axis:+Z; mat=mat_steel_dark; create_method=primitive(cube); size=(0.1, 0.4, 0.3) |
+| btn_up | Up button | Align(YZ) btn_up.center to control_panel.front_face; offset(0,0.1,0.05); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.02, 0.01) |
+| btn_down | Down button | Align(YZ) btn_down.center to control_panel.front_face; offset(0,-0.1,0.05); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.02, 0.01) |
+| btn_emergency | Emergency stop button | Align(YZ) btn_emergency.center to control_panel.front_face; offset(0,-0.15,0.05); orientation=axis:+Z; mat=mat_copper; create_method=primitive(cylinder); size=(0.03, 0.01) |
+
+Layer 4 – Pulley System
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pulley_beam | Top support beam 2.5m × 0.2m × 0.2m | Align(XZ) pulley_beam.center to elevator_root.center; offset(0,0,3.5); orientation=axis:+Z; mat=mat_steel_dark; create_method=primitive(cube); size=(2.5, 0.2, 0.2) |
+| pulley_wheel | Main pulley wheel Ø0.5m × 0.1m | Align(XZ) pulley_wheel.center to pulley_beam.center; offset(0,0,0.15); orientation=axis:+Z; mat=mat_steel_light; create_method=primitive(cylinder); size=(0.25, 0.1) |
+| cable_rope | Main lifting cable 0.02m × 3.5m | Align(XZ) cable_rope.center to pulley_wheel.center; offset(0,0,-0.3); orientation=axis:+Z; mat=mat_steel_dark; create_method=primitive(cylinder); size=(0.01, 3.5) |
+# ----------  END_GRAPH  ----------

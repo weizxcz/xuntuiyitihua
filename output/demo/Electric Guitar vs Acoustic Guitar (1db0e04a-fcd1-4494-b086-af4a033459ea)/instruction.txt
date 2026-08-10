@@ -1,0 +1,1 @@
+Compare a 3D model of an electric guitar with an acoustic guitar. The electric guitar should have a solid body, six strings, and a fretboard with dot inlays. The acoustic guitar should have a hollow body, a sound hole in the center, six strings, and a fretboard with dot inlays. Place them side by side for comparison.

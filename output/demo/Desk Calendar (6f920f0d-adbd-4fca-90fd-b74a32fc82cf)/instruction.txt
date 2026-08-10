@@ -1,0 +1,1 @@
+Let's design a 3D model of a desk calendar. The calendar should have a rectangular base and a vertical stand that holds the calendar pages. The pages should be easy to flip, and the stand should be stable enough to hold the calendar upright. The base can include a small compartment for storing notes or pens.

@@ -1,0 +1,34 @@
+-- MATERIAL LIBRARY --
+mat_black | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| logo_1 | Composite of interlocking triangles forming a hexagon | A. Composite of 6 equilateral triangles arranged in a hexagonal ring; mat=mat_black; create_method=union; assembly_order=[tri_1, tri_2, tri_3, tri_4, tri_5, tri_6] |
+| logo_2 | Composite of overlapping circles creating a flower-like pattern | A. Composite of 6 circles arranged radially around a central circle; mat=mat_white; create_method=union; assembly_order=[circ_center, circ_1, circ_2, circ_3, circ_4, circ_5, circ_6] |
+
+Layer 1 – Primary Structure (Logo 1: Hexagon)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tri_1 | Equilateral triangle | size=side 0.100 m; orientation=axis:+Z; mat=mat_black; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.100m, height ~0.0866m. Base on XY plane. |
+| tri_2 | Equilateral triangle | size=side 0.100 m; orientation=axis:+Z; mat=mat_black; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.100m, height ~0.0866m. Base on XY plane. |
+| tri_3 | Equilateral triangle | size=side 0.100 m; orientation=axis:+Z; mat=mat_black; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.100m, height ~0.0866m. Base on XY plane. |
+| tri_4 | Equilateral triangle | size=side 0.100 m; orientation=axis:+Z; mat=mat_black; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.100m, height ~0.0866m. Base on XY plane. |
+| tri_5 | Equilateral triangle | size=side 0.100 m; orientation=axis:+Z; mat=mat_black; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.100m, height ~0.0866m. Base on XY plane. |
+| tri_6 | Equilateral triangle | size=side 0.100 m; orientation=axis:+Z; mat=mat_black; create_method=extrude_from_sketch; constraint=BMesh sketch: Equilateral triangle, side 0.100m, height ~0.0866m. Base on XY plane. |
+
+Layer 2 – Primary Structure (Logo 2: Flower)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| circ_center | Central circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+| circ_1 | Outer circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+| circ_2 | Outer circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+| circ_3 | Outer circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+| circ_4 | Outer circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+| circ_5 | Outer circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+| circ_6 | Outer circle | size=Ø0.050 m; orientation=axis:+Z; mat=mat_white; create_method=extrude_from_sketch; constraint=BMesh sketch: Circle, diameter 0.050m. |
+
+# ----------  END_GRAPH  ----------

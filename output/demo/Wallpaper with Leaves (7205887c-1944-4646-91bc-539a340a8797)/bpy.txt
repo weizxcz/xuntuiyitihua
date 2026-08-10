@@ -1,0 +1,213 @@
+import bpy
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_color = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, scale):
+    bpy.ops.mesh.primitive_cube_add(size=1, align='WORLD', location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    obj.scale = scale
+    return obj
+
+def apply_transform(obj):
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+def rotate_local_z(obj, angle_deg):
+    """Rotate object around its local Z axis by angle_deg"""
+    angle_rad = math.radians(angle_deg)
+    # Get current world rotation
+    rot_world = obj.rotation_euler.to_matrix()
+    # Create local rotation matrix
+    rot_local = Matrix.Rotation(angle_rad, 4, 'Z')
+    # Convert local rotation to world space and apply
+    # Note: Blender's rotation_euler is ZYX. Direct matrix multiplication on rotation_euler is tricky.
+    # Safer approach: Convert to Quaternion, rotate, convert back.
+    q_local = Matrix.Rotation(angle_rad, 4, 'Z').to_3x3().to_4x4()
+    # We need to rotate the object's orientation.
+    # Current orientation in world space
+    q_world = obj.rotation_euler.to_quaternion()
+    # We want to apply a local Z rotation.
+    # q_new = q_world * q_local (if q_local is in object space)
+    # Actually, simpler: rotate the object's data or use transform tool logic.
+    # Let's use the standard way: rotate around local axis.
+    # Since we just created it and aligned Z to Z, local Z is world Z.
+    # But after scaling/offset, local axes might differ if non-uniform scale was applied before rotation.
+    # Here scale is applied after rotation in the prompt? No: "Rotate... Then move... Rotate... Scale".
+    # Wait, prompt says: Anchor -> Move -> Rotate -> Scale.
+    # So when we rotate, scale is (1,1,1). Local Z is World Z.
+    # So we can just add to rotation_euler.z.
+    obj.rotation_euler.z += angle_rad
+
+def set_material(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_leaf_green = make_material("leaf_green", (0.15, 0.45, 0.15, 1.0))
+mat_leaf_stem = make_material("leaf_stem", (0.1, 0.3, 0.1, 1.0))
+mat_wallpaper_base = make_material("wallpaper_base", (0.95, 0.95, 0.9, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create wallpaper base substrate ---
+# Create primitive cuboid with size 1.0×1.0×0.001 m and name it wallpaper_base.
+# Rotate wallpaper_base so its +Z axis aligns +Z (world).
+# Anchor wallpaper_base to world origin.
+# Then move by offset(0,0,0).
+
+wallpaper_base = add_cube("wallpaper_base", (1.0, 1.0, 0.001), (0, 0, 0), (0, 0, 0), (1, 1, 1))
+set_material(wallpaper_base, mat_wallpaper_base)
+
+# --- SECTION 2 – Create leaf template geometry ---
+# Create primitive cuboid with size 0.05×0.02×0.001 m and name it leaf_template.
+# Rotate leaf_template so its +Z axis aligns +Z (world).
+# Anchor leaf_template to world origin.
+# Then move by offset(0,0,0).
+
+leaf_template = add_cube("leaf_template", (0.05, 0.02, 0.001), (0, 0, 0), (0, 0, 0), (1, 1, 1))
+set_material(leaf_template, mat_leaf_green)
+
+# --- SECTION 3 – Instantiate leaf instances ---
+
+# Helper to create and configure a leaf instance
+def create_leaf_instance(name, offset_x, offset_y, offset_z, rot_z_deg, scale_val):
+    # Create primitive cuboid with size 0.05×0.02×0.001 m
+    obj = add_cube(name, (0.05, 0.02, 0.001), (0, 0, 0), (0, 0, 0), (1, 1, 1))
+    set_material(obj, mat_leaf_green)
+    
+    # Rotate so +Z aligns +Z (already default)
+    # Anchor to world origin (already at 0,0,0)
+    # Move by offset
+    obj.location = (offset_x, offset_y, offset_z)
+    
+    # Rotate so its local +Z axis achieves rotation=axis:Z, angle
+    # Since scale is (1,1,1) at this point, local Z is world Z.
+    rotate_local_z(obj, rot_z_deg)
+    
+    # Scale
+    obj.scale = (scale_val, scale_val, 1.0)
+    
+    return obj
+
+# Instance 1
+create_leaf_instance("leaf_instance_1", 0.1, 0.1, 0.001, 15, 0.8)
+# Instance 2
+create_leaf_instance("leaf_instance_2", 0.3, 0.2, 0.001, 45, 1.2)
+# Instance 3
+create_leaf_instance("leaf_instance_3", 0.5, 0.1, 0.001, 300, 0.9)
+# Instance 4
+create_leaf_instance("leaf_instance_4", 0.7, 0.3, 0.001, 60, 1.1)
+# Instance 5
+create_leaf_instance("leaf_instance_5", 0.9, 0.2, 0.001, 270, 0.7)
+# Instance 6
+create_leaf_instance("leaf_instance_6", 0.2, 0.4, 0.001, 120, 1.0)
+# Instance 7
+create_leaf_instance("leaf_instance_7", 0.4, 0.5, 0.001, 200, 0.85)
+# Instance 8
+create_leaf_instance("leaf_instance_8", 0.6, 0.6, 0.001, 330, 1.15)
+# Instance 9
+create_leaf_instance("leaf_instance_9", 0.8, 0.7, 0.001, 150, 0.95)
+# Instance 10
+create_leaf_instance("leaf_instance_10", 0.1, 0.8, 0.001, 240, 1.05)
+# Instance 11
+create_leaf_instance("leaf_instance_11", 0.3, 0.9, 0.001, 90, 0.75)
+# Instance 12
+create_leaf_instance("leaf_instance_12", 0.5, 0.8, 0.001, 315, 1.1)
+# Instance 13
+create_leaf_instance("leaf_instance_13", 0.7, 0.9, 0.001, 45, 0.9)
+# Instance 14
+create_leaf_instance("leaf_instance_14", 0.9, 0.8, 0.001, 210, 1.0)
+# Instance 15
+create_leaf_instance("leaf_instance_15", 0.2, 0.6, 0.001, 180, 0.8)
+# Instance 16
+create_leaf_instance("leaf_instance_16", 0.4, 0.7, 0.001, 270, 1.2)
+# Instance 17
+create_leaf_instance("leaf_instance_17", 0.6, 0.8, 0.001, 30, 0.95)
+# Instance 18
+create_leaf_instance("leaf_instance_18", 0.8, 0.6, 0.001, 300, 1.05)
+# Instance 19
+create_leaf_instance("leaf_instance_19", 0.1, 0.5, 0.001, 135, 0.85)
+# Instance 20
+create_leaf_instance("leaf_instance_20", 0.3, 0.3, 0.001, 225, 1.1)
+# Instance 21
+create_leaf_instance("leaf_instance_21", 0.5, 0.4, 0.001, 345, 0.9)
+# Instance 22
+create_leaf_instance("leaf_instance_22", 0.7, 0.5, 0.001, 75, 1.15)
+# Instance 23
+create_leaf_instance("leaf_instance_23", 0.9, 0.5, 0.001, 165, 0.75)
+# Instance 24
+create_leaf_instance("leaf_instance_24", 0.2, 0.7, 0.001, 255, 1.0)
+# Instance 25
+create_leaf_instance("leaf_instance_25", 0.4, 0.2, 0.001, 345, 0.8)
+# Instance 26
+create_leaf_instance("leaf_instance_26", 0.6, 0.3, 0.001, 15, 1.2)
+# Instance 27
+create_leaf_instance("leaf_instance_27", 0.8, 0.4, 0.001, 300, 0.95)
+# Instance 28
+create_leaf_instance("leaf_instance_28", 0.1, 0.3, 0.001, 195, 1.05)
+# Instance 29
+create_leaf_instance("leaf_instance_29", 0.3, 0.6, 0.001, 285, 0.9)
+# Instance 30
+create_leaf_instance("leaf_instance_30", 0.5, 0.6, 0.001, 105, 1.1)
+# Instance 31
+create_leaf_instance("leaf_instance_31", 0.7, 0.2, 0.001, 225, 0.85)
+# Instance 32
+create_leaf_instance("leaf_instance_32", 0.9, 0.6, 0.001, 315, 1.15)
+# Instance 33
+create_leaf_instance("leaf_instance_33", 0.2, 0.9, 0.001, 45, 0.75)
+# Instance 34
+create_leaf_instance("leaf_instance_34", 0.4, 0.1, 0.001, 135, 1.0)
+# Instance 35
+create_leaf_instance("leaf_instance_35", 0.6, 0.9, 0.001, 225, 0.8)
+# Instance 36
+create_leaf_instance("leaf_instance_36", 0.8, 0.1, 0.001, 315, 1.2)
+# Instance 37
+create_leaf_instance("leaf_instance_37", 0.1, 0.7, 0.001, 105, 0.95)
+# Instance 38
+create_leaf_instance("leaf_instance_38", 0.3, 0.8, 0.001, 195, 1.05)
+# Instance 39
+create_leaf_instance("leaf_instance_39", 0.5, 0.2, 0.001, 285, 0.9)
+# Instance 40
+create_leaf_instance("leaf_instance_40", 0.7, 0.7, 0.001, 75, 1.1)
+# Instance 41
+create_leaf_instance("leaf_instance_41", 0.9, 0.7, 0.001, 165, 0.85)
+# Instance 42
+create_leaf_instance("leaf_instance_42", 0.2, 0.1, 0.001, 255, 1.15)
+# Instance 43
+create_leaf_instance("leaf_instance_43", 0.4, 0.9, 0.001, 345, 0.75)
+# Instance 44
+create_leaf_instance("leaf_instance_44", 0.6, 0.1, 0.001, 15, 1.0)
+# Instance 45
+create_leaf_instance("leaf_instance_45", 0.8, 0.9, 0.001, 105, 0.8)
+# Instance 46
+create_leaf_instance("leaf_instance_46", 0.1, 0.6, 0.001, 195, 1.2)
+# Instance 47
+create_leaf_instance("leaf_instance_47", 0.3, 0.1, 0.001, 285, 0.95)
+# Instance 48
+create_leaf_instance("leaf_instance_48", 0.5, 0.9, 0.001, 75, 1.05)

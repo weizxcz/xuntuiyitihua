@@ -1,0 +1,294 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive(name, shape, size=None, diameter=None, height=None, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    
+    if shape == 'cube':
+        obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    elif shape == 'cylinder':
+        # Cylinder default is radius, height
+        r = diameter / 2 if diameter else 0.5
+        h = height if height else 1.0
+        obj.scale = (r, r, h)
+    elif shape == 'disc':
+        r = diameter / 2 if diameter else 0.5
+        h = height if height else 0.01
+        obj.scale = (r, r, h)
+    elif shape == 'cone':
+        r = diameter / 2 if diameter else 0.5
+        h = height if height else 1.0
+        obj.scale = (r, r, h)
+    elif shape == 'sphere':
+        r = diameter / 2 if diameter else 0.5
+        obj.scale = (r, r, r)
+        
+    return obj
+
+def align_face_to_face(obj_top, obj_bottom, offset_z=0):
+    """Align obj_top's bottom face to obj_bottom's top face, then apply Z offset."""
+    # Get bounding boxes
+    min_b, max_b = obj_bottom.bound_box, obj_top.bound_box
+    
+    # Calculate world coordinates of faces
+    # Assuming standard orientation where Z is up
+    # Bottom face of top object
+    # Top face of bottom object
+    
+    # We need to move obj_top so its lowest Z matches obj_bottom's highest Z
+    # But we must respect local transforms. Simplest is to use world coords.
+    
+    # Get world matrix
+    mat_bottom = obj_bottom.matrix_world
+    mat_top = obj_top.matrix_world
+    
+    # Local min/max Z
+    min_z_bottom = min([v[2] for v in min_b])
+    max_z_bottom = max([v[2] for v in max_b])
+    
+    min_z_top = min([v[2] for v in min_b])
+    max_z_top = max([v[2] for v in max_b])
+    
+    # World Z of bottom object's top face
+    world_z_bottom_top = mat_bottom.translation.z + max_z_bottom
+    
+    # World Z of top object's bottom face (before move)
+    world_z_top_bottom = mat_top.translation.z + min_z_top
+    
+    # Delta to align
+    delta_z = world_z_bottom_top - world_z_top_bottom + offset_z
+    
+    obj_top.location.z += delta_z
+    
+    return obj_top
+
+def align_center_to_center(obj_target, obj_source):
+    """Align obj_source center to obj_target center."""
+    mat_target = obj_target.matrix_world
+    mat_source = obj_source.matrix_world
+    
+    center_target = mat_target.translation
+    center_source = mat_source.translation
+    
+    delta = center_target - center_source
+    obj_source.location += delta
+    
+    return obj_source
+
+def apply_boolean_union(target, cutter):
+    """Apply a boolean union modifier and apply it."""
+    # Ensure target is active
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    
+    # Add modifier
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = cutter
+    
+    # Apply
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter if desired, or keep it. Usually keep for debugging, but let's remove to clean up.
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def apply_boolean_subtract(target, cutter):
+    """Apply a boolean subtract modifier and apply it."""
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.select_all(action='DESELECT')
+    target.select_set(True)
+    
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_board_green = make_material("board_green", (0.1, 0.4, 0.1, 1.0))
+mat_connector_gold = make_material("connector_gold", (0.8, 0.6, 0.1, 1.0))
+mat_ic_black = make_material("ic_black", (0.1, 0.1, 0.1, 1.0))
+mat_led_red = make_material("led_red", (0.8, 0.0, 0.0, 1.0))
+mat_resistor_body = make_material("resistor_body", (0.8, 0.6, 0.4, 1.0))
+mat_resistor_lead = make_material("resistor_lead", (0.7, 0.7, 0.7, 1.0))
+mat_via_copper = make_material("via_copper", (0.8, 0.5, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create PCB Substrate and Base Layer
+
+# 1.1 Create substrate
+substrate = add_primitive("substrate", "cube", size=(0.150, 0.100, 0.002), location=(0,0,0), rotation=(0,0,0))
+substrate.data.materials.append(mat_board_green)
+
+# 1.2 Create copper_layer
+copper_layer = add_primitive("copper_layer", "cube", size=(0.150, 0.100, 0.00005), location=(0,0,0), rotation=(0,0,0))
+copper_layer.data.materials.append(mat_via_copper)
+
+# Align copper_layer to substrate
+align_face_to_face(copper_layer, substrate, offset_z=0.001)
+
+# 1.3 Create via_1
+via_1 = add_primitive("via_1", "cylinder", diameter=0.002, height=0.002, location=(0,0,0), rotation=(0,0,0))
+via_1.data.materials.append(mat_via_copper)
+
+# Anchor via_1 to substrate (center-to-center)
+align_center_to_center(substrate, via_1)
+# Offset via_1
+via_1.location.x -= 0.05
+via_1.location.y -= 0.03
+
+# 1.4 Create via_2
+via_2 = add_primitive("via_2", "cylinder", diameter=0.002, height=0.002, location=(0,0,0), rotation=(0,0,0))
+via_2.data.materials.append(mat_via_copper)
+
+# Anchor via_2 to substrate
+align_center_to_center(substrate, via_2)
+# Offset via_2
+via_2.location.x += 0.05
+via_2.location.y += 0.03
+
+# 1.5 Boolean Unions
+apply_boolean_union(substrate, via_1)
+apply_boolean_union(substrate, via_2)
+apply_boolean_union(substrate, copper_layer)
+
+# SECTION 2 – Create Integrated Circuits
+
+# 2.1 Create ic_1
+ic_1 = add_primitive("ic_1", "cube", size=(0.040, 0.040, 0.005), location=(0,0,0), rotation=(0,0,0))
+ic_1.data.materials.append(mat_ic_black)
+
+# Align ic_1 to substrate
+align_face_to_face(ic_1, substrate, offset_z=0.0035)
+# Offset ic_1
+ic_1.location.x -= 0.03
+ic_1.location.y += 0.02
+
+# 2.2 Create ic_2
+ic_2 = add_primitive("ic_2", "cube", size=(0.020, 0.020, 0.004), location=(0,0,0), rotation=(0,0,0))
+ic_2.data.materials.append(mat_ic_black)
+
+# Align ic_2 to substrate
+align_face_to_face(ic_2, substrate, offset_z=0.003)
+# Offset ic_2
+ic_2.location.x += 0.03
+ic_2.location.y -= 0.02
+
+# SECTION 3 – Create Passive Components
+
+# 3.1 Create resistor_1
+resistor_1 = add_primitive("resistor_1", "cube", size=(0.006, 0.003, 0.003), location=(0,0,0), rotation=(0,0,0))
+resistor_1.data.materials.append(mat_resistor_body)
+
+# Align resistor_1 to substrate
+align_face_to_face(resistor_1, substrate, offset_z=0.0025)
+# Offset resistor_1
+resistor_1.location.x -= 0.08
+resistor_1.location.y += 0.04
+
+# 3.2 Create resistor_2
+resistor_2 = add_primitive("resistor_2", "cube", size=(0.006, 0.003, 0.003), location=(0,0,0), rotation=(0,0,0))
+resistor_2.data.materials.append(mat_resistor_body)
+
+# Align resistor_2 to substrate
+align_face_to_face(resistor_2, substrate, offset_z=0.0025)
+# Offset resistor_2
+resistor_2.location.x += 0.08
+resistor_2.location.y -= 0.04
+
+# 3.3 Create capacitor_1
+capacitor_1 = add_primitive("capacitor_1", "cube", size=(0.005, 0.005, 0.004), location=(0,0,0), rotation=(0,0,0))
+capacitor_1.data.materials.append(mat_resistor_body) # Using resistor body color as generic passive or specific if defined
+
+# Align capacitor_1 to substrate
+align_face_to_face(capacitor_1, substrate, offset_z=0.003)
+# Offset capacitor_1
+capacitor_1.location.x -= 0.06
+capacitor_1.location.y -= 0.04
+
+# 3.4 Create capacitor_2
+capacitor_2 = add_primitive("capacitor_2", "cube", size=(0.005, 0.005, 0.004), location=(0,0,0), rotation=(0,0,0))
+capacitor_2.data.materials.append(mat_resistor_body)
+
+# Align capacitor_2 to substrate
+align_face_to_face(capacitor_2, substrate, offset_z=0.003)
+# Offset capacitor_2
+capacitor_2.location.x += 0.06
+capacitor_2.location.y += 0.04
+
+# SECTION 4 – Create LEDs
+
+# 4.1 Create led_1
+led_1 = add_primitive("led_1", "cylinder", diameter=0.004, height=0.003, location=(0,0,0), rotation=(0,0,0))
+led_1.data.materials.append(mat_led_red)
+
+# Align led_1 to substrate
+align_face_to_face(led_1, substrate, offset_z=0.0025)
+# Offset led_1
+led_1.location.x -= 0.05
+led_1.location.y += 0.06
+
+# 4.2 Create led_2
+led_2 = add_primitive("led_2", "cylinder", diameter=0.004, height=0.003, location=(0,0,0), rotation=(0,0,0))
+led_2.data.materials.append(mat_led_red)
+
+# Align led_2 to substrate
+align_face_to_face(led_2, substrate, offset_z=0.0025)
+# Offset led_2
+led_2.location.x += 0.05
+led_2.location.y -= 0.06
+
+# SECTION 5 – Create Connectors
+
+# 5.1 Create conn_1
+conn_1 = add_primitive("conn_1", "cube", size=(0.030, 0.010, 0.008), location=(0,0,0), rotation=(0,0,0))
+conn_1.data.materials.append(mat_connector_gold)
+
+# Align conn_1 to substrate
+align_face_to_face(conn_1, substrate, offset_z=0.005)
+# Offset conn_1
+conn_1.location.y -= 0.045
+
+# 5.2 Create conn_2
+conn_2 = add_primitive("conn_2", "cube", size=(0.020, 0.010, 0.006), location=(0,0,0), rotation=(0,0,0))
+conn_2.data.materials.append(mat_connector_gold)
+
+# Align conn_2 to substrate
+align_face_to_face(conn_2, substrate, offset_z=0.005)
+# Offset conn_2
+conn_2.location.y += 0.045
+
+print("All stages complete.")
+```

@@ -1,0 +1,33 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wallpaper_base; diffuse_color = (0.941, 0.941, 0.941, 1).
+Define material mat_wallpaper_pattern; diffuse_color = (0.784, 0.784, 0.784, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base sheet  ---
+Create primitive cuboid with size 1.0×2.0×0.002 m and name it base_sheet.
+Rotate base_sheet so its +Z axis aligns +Z (world).
+Anchor base_sheet to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create pattern tiles  ---
+For r in 0…9 and c in 0…9:
+  Create primitive cuboid with size 0.1×0.1×0.002 m and name it tile_r_c.
+  Rotate tile_r_c so its +Z axis aligns +Z (world).
+  Anchor tile_r_c to base_sheet.+Z_face.
+  Then offset(0.05 + c·0.1, 0.05 + r·0.1, 0.001).
+Stage 2 complete.
+
+All stages complete.

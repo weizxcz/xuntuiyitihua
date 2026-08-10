@@ -1,0 +1,31 @@
+-- MATERIAL LIBRARY --
+mat_hammer_head | diffuse_color=(0.4,0.4,0.4,1.0)
+mat_hammer_handle | diffuse_color=(0.6,0.3,0.1,1.0)
+mat_screwdriver_handle | diffuse_color=(0.9,0.2,0.1,1.0)
+mat_screwdriver_shaft | diffuse_color=(0.5,0.5,0.5,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Composite assembly of hammer and screwdriver | A. Composite of hammer_assembly + screwdriver_assembly; offset(0.15, 0, 0) for hammer, offset(-0.15, 0, 0) for screwdriver to separate them visually |
+
+Layer 1 – Primary Structure (Hammer)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hammer_assembly | Composite of hammer_head + hammer_handle | A. Composite of hammer_head + hammer_handle; assembly_order=[hammer_head, hammer_handle] |
+| hammer_head | Composite of flat_face_cylinder + claw_prism | A. Composite of flat_face_cylinder + claw_prism; create_method=boolean_union |
+| flat_face_cylinder | Cylinder Ø0.050×0.020 m (Head body) | cylinder Ø0.050×0.020; orientation=axis:+X; mat=mat_hammer_head; create_method=primitive |
+| claw_prism | Tapered claw shape attached to one side | Align(XZ) claw_prism.right_face to flat_face_cylinder.left_face; offset(0.010, 0, 0); orientation=axis:+X; mat=mat_hammer_head; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Profile of a tapered claw. Start at base width 0.050m, taper to tip width 0.010m over length 0.040m. Extrude thickness 0.020m. Caps enabled. |
+| hammer_handle | Cylinder Ø0.020×0.300 m (Handle) | Align(X) hammer_handle.right_face to flat_face_cylinder.center; offset(0.035, 0, 0); orientation=axis:+X; mat=mat_hammer_handle; create_method=primitive |
+
+Layer 1 – Primary Structure (Screwdriver)
+| ID | Description | Key attributes /placement |
+|---|---|---|
+| screwdriver_assembly | Composite of screwdriver_head + screwdriver_shaft + screwdriver_handle | A. Composite of screwdriver_head + screwdriver_shaft + screwdriver_handle; assembly_order=[screwdriver_shaft, screwdriver_head, screwdriver_handle] |
+| screwdriver_shaft | Cylinder Ø0.005×0.150 m (Shaft) | cylinder Ø0.005×0.150; orientation=axis:+X; mat=mat_screwdriver_shaft; create_method=primitive |
+| screwdriver_head | Flat tip prism | Align(X) screwdriver_head.left_face to screwdriver_shaft.right_face; offset(0.0025, 0, 0); orientation=axis:+X; mat=mat_screwdriver_shaft; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Flat tip profile. Width 0.005m, thickness 0.002m, length 0.020m. Extrude thickness 0.005m. Caps enabled. |
+| screwdriver_handle | Ergonomic grip shape | Align(X) screwdriver_handle.left_face to screwdriver_shaft.left_face; offset(-0.0025, 0, 0); orientation=axis:+X; mat=mat_screwdriver_handle; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Ergonomic handle profile. Width 0.025m, thickness 0.015m, length 0.080m. Extrude thickness 0.025m. Caps enabled. |
+
+# ----------  END_GRAPH  ----------

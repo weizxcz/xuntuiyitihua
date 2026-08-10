@@ -1,0 +1,71 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_hex_blue; diffuse_color = (0.15,0.25,0.45,1.0).
+Define material mat_tri_blue; diffuse_color = (0.15,0.25,0.45,1.0).
+Define material mat_tri_dark_blue; diffuse_color = (0.05,0.10,0.20,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Hexagonal Tiling Group  ---
+Create primitive cylinder with diameter 0.200 m and height 0.005 m and name it hex_tile_1.
+Rotate hex_tile_1 so its +Z axis aligns +Z (world).
+Anchor hex_tile_1 to world origin (0,0,0).
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.200 m and height 0.005 m and name it hex_tile_2.
+Rotate hex_tile_2 so its +Z axis aligns +Z (world).
+Anchor hex_tile_2 to world origin (0,0,0).
+Then move by offset(0.173, 0.100, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Hexagonal Border Group  ---
+Create primitive cube with size 0.500×0.050×0.005 m and name it hex_border_group.
+Rotate hex_border_group so its +Z axis aligns +Z (world).
+Align hex_border_group.center to hex_tiling_group.center.
+Then move by offset(0,0,0.0025).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Triangular Tiling Group  ---
+Create primitive cylinder with diameter 0.200 m and height 0.005 m and name it tri_tile_1.
+Rotate tri_tile_1 so its +Z axis aligns +Z (world).
+Align tri_tile_1.center to world origin (0,0,0).
+Then move by offset(0,0,0).
+
+Create primitive cylinder with diameter 0.200 m and height 0.005 m and name it tri_tile_2.
+Rotate tri_tile_2 so its +Z axis aligns +Z (world).
+Align tri_tile_2.center to world origin (0,0,0).
+Then move by offset(0.100, 0.173, 0).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Triangular Border Group  ---
+Create primitive cube with size 0.500×0.050×0.005 m and name it tri_border_group.
+Rotate tri_border_group so its +Z axis aligns +Z (world).
+Align tri_border_group.center to tri_tiling_group.center.
+Then move by offset(0,0,0.0025).
+
+Stage 4 complete.
+
+---  SECTION 5 – Assemble Rug Base and Final Placement  ---
+Create an Empty helper (cube display) and name it rug_base.
+Rotate rug_base so its axis aligns +Z (world).
+Move rug_base to (0,0,0).
+
+Align rug_hex_design.center to rug_base.left_half.
+Align rug_tri_design.center to rug_base.right_half.
+
+Stage 5 complete.
+
+All stages complete.

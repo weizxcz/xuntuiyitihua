@@ -1,0 +1,244 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_beige; diffuse_color = (0.96,0.93,0.88,1.0).
+Define material fabric_cushion_blue; diffuse_color = (0.2,0.4,0.6,1.0).
+Define material wood_frame_oak; diffuse_color = (0.6,0.4,0.2,1.0).
+Define material wood_legs_dark; diffuse_color = (0.2,0.15,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Modules  ---
+Create primitive cuboid with size 1.6m×0.9m×0.4m and name it base_module_A.
+Rotate base_module_A so its +Z axis aligns +Z (world).
+Align base_module_A.center to sofa_root.center.
+Then offset(0,0,0).
+
+Create primitive cuboid with size 0.9m×0.9m×0.4m and name it base_module_B.
+Rotate base_module_B so its +Z axis aligns +Z (world).
+Align base_module_B.center to sofa_root.center.
+Then offset(0,0,0).
+
+Create primitive cuboid with size 1.6m×1.4m×0.4m and name it base_module_C.
+Rotate base_module_C so its +Z axis aligns +Z (world).
+Align base_module_C.center to sofa_root.center.
+Then offset(0,0,0).
+
+Create primitive cuboid with size 0.6m×0.9m×0.4m and name it base_module_D.
+Rotate base_module_D so its +Z axis aligns +Z (world).
+Align base_module_D.center to sofa_root.center.
+Then offset(0,0,0).
+
+Boolean-union base_module_A, base_module_B, base_module_C, and base_module_D; keep base_module_A.
+Rename base_module_A to sofa_root.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create Legs for Module A  ---
+Create cylinder with Ø0.05×0.15m and name it leg_A_fl.
+Rotate leg_A_fl so its +Z axis aligns +Z (world).
+Align leg_A_fl.center to base_module_A.left_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_A_fr.
+Rotate leg_A_fr so its +Z axis aligns +Z (world).
+Align leg_A_fr.center to base_module_A.right_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_A_bl.
+Rotate leg_A_bl so its +Z axis aligns +Z (world).
+Align leg_A_bl.center to base_module_A.left_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_A_br.
+Rotate leg_A_br so its +Z axis aligns +Z (world).
+Align leg_A_br.center to base_module_A.right_face.
+Then offset(0,0,-0.15).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Legs for Module B  ---
+Create cylinder with Ø0.05×0.15m and name it leg_B_fl.
+Rotate leg_B_fl so its +Z axis aligns +Z (world).
+Align leg_B_fl.center to base_module_B.left_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_B_fr.
+Rotate leg_B_fr so its +Z axis aligns +Z (world).
+Align leg_B_fr.center to base_module_B.right_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_B_bl.
+Rotate leg_B_bl so its +Z axis aligns +Z (world).
+Align leg_B_bl.center to base_module_B.left_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_B_br.
+Rotate leg_B_br so its +Z axis aligns +Z (world).
+Align leg_B_br.center to base_module_B.right_face.
+Then offset(0,0,-0.15).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Legs for Module C  ---
+Create cylinder with Ø0.05×0.15m and name it leg_C_fl.
+Rotate leg_C_fl so its +Z axis aligns +Z (world).
+Align leg_C_fl.center to base_module_C.left_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_C_fr.
+Rotate leg_C_fr so its +Z axis aligns +Z (world).
+Align leg_C_fr.center to base_module_C.right_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_C_bl.
+Rotate leg_C_bl so its +Z axis aligns +Z (world).
+Align leg_C_bl.center to base_module_C.left_face.
+Then offset(0,0,-0.15).
+
+Create cylinder with Ø0.05×0.15m and name it leg_C_br.
+Rotate leg_C_br so its +Z axis aligns +Z (world).
+Align leg_C_br.center to base_module_C.right_face.
+Then offset(0,0,-0.15).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Armrests for Module A  ---
+Create primitive cuboid with size 0.1m×0.9m×0.5m and name it arm_A_L.
+Rotate arm_A_L so its +Z axis aligns +Z (world).
+Align arm_A_L.center to base_module_A.left_face.
+Then offset(0,0,0.1).
+
+Create primitive cuboid with size 0.1m×0.9m×0.5m and name it arm_A_R.
+Rotate arm_A_R so its +Z axis aligns +Z (world).
+Align arm_A_R.center to base_module_A.right_face.
+Then offset(0,0,0.1).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Armrests for Module B  ---
+Create primitive cuboid with size 0.1m×0.9m×0.5m and name it arm_B_L.
+Rotate arm_B_L so its +Z axis aligns +Z (world).
+Align arm_B_L.center to base_module_B.left_face.
+Then offset(0,0,0.1).
+
+Create primitive cuboid with size 0.1m×0.9m×0.5m and name it arm_B_R.
+Rotate arm_B_R so its +Z axis aligns +Z (world).
+Align arm_B_R.center to base_module_B.right_face.
+Then offset(0,0,0.1).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create Armrests for Module C  ---
+Create primitive cuboid with size 0.1m×1.4m×0.5m and name it arm_C_L.
+Rotate arm_C_L so its +Z axis aligns +Z (world).
+Align arm_C_L.center to base_module_C.left_face.
+Then offset(0,0,0.1).
+
+Create primitive cuboid with size 0.1m×1.4m×0.5m and name it arm_C_R.
+Rotate arm_C_R so its +Z axis aligns +Z (world).
+Align arm_C_R.center to base_module_C.right_face.
+Then offset(0,0,0.1).
+
+Stage 7 complete.
+
+---  SECTION 8 – Create Seat Cushions  ---
+Create primitive cuboid with size 1.5m×0.8m×0.15m and name it cushion_seat_A.
+Rotate cushion_seat_A so its +Z axis aligns +Z (world).
+Align cushion_seat_A.center to base_module_A.top_face.
+Then offset(0,0,0.05).
+
+Create primitive cuboid with size 0.8m×0.8m×0.15m and name it cushion_seat_B.
+Rotate cushion_seat_B so its +Z axis aligns +Z (world).
+Align cushion_seat_B.center to base_module_B.top_face.
+Then offset(0,0,0.05).
+
+Create primitive cuboid with size 1.5m×1.3m×0.15m and name it cushion_seat_C.
+Rotate cushion_seat_C so its +Z axis aligns +Z (world).
+Align cushion_seat_C.center to base_module_C.top_face.
+Then offset(0,0,0.05).
+
+Stage 8 complete.
+
+---  SECTION 9 – Create Back Cushions  ---
+Create primitive cuboid with size 1.5m×0.15m×0.4m and name it cushion_back_A.
+Rotate cushion_back_A so its +Z axis aligns +Z (world).
+Align cushion_back_A.center to base_module_A.back_face.
+Then offset(0,0,0.1).
+
+Create primitive cuboid with size 0.8m×0.15m×0.4m and name it cushion_back_B.
+Rotate cushion_back_B so its +Z axis aligns +Z (world).
+Align cushion_back_B.center to base_module_B.back_face.
+Then offset(0,0,0.1).
+
+Create primitive cuboid with size 1.5m×0.15m×0.4m and name it cushion_back_C.
+Rotate cushion_back_C so its +Z axis aligns +Z (world).
+Align cushion_back_C.center to base_module_C.back_face.
+Then offset(0,0,0.1).
+
+Stage 9 complete.
+
+---  SECTION 10 – Create Throw Cushions  ---
+Create primitive cuboid with size 0.4m×0.4m×0.1m and name it cushion_throw_1.
+Rotate cushion_throw_1 so its +Z axis aligns +Z (world).
+Align cushion_throw_1.center to cushion_seat_A.top_face.
+Then offset(0,0,0.05).
+
+Create primitive cuboid with size 0.4m×0.4m×0.1m and name it cushion_throw_2.
+Rotate cushion_throw_2 so its +Z axis aligns +Z (world).
+Align cushion_throw_2.center to cushion_seat_B.top_face.
+Then offset(0,0,0.05).
+
+Stage 10 complete.
+
+---  SECTION 11 – Create Configuration Examples  ---
+Create primitive cuboid with size 1.6m×0.9m×0.4m and name it config_traditional_base1.
+Rotate config_traditional_base1 so its +Z axis aligns +Z (world).
+Align config_traditional_base1.center to sofa_root.center.
+Then offset(0,0,0).
+
+Create primitive cuboid with size 0.6m×0.9m×0.4m and name it config_traditional_base2.
+Rotate config_traditional_base2 so its +Z axis aligns +Z (world).
+Align config_traditional_base2.center to sofa_root.center.
+Then offset(0,0,0).
+
+Create primitive cuboid with size 1.6m×0.9m×0.4m and name it config_traditional_base3.
+Rotate config_traditional_base3 so its +Z axis aligns +Z (world).
+Align config_traditional_base3.center to sofa_root.center.
+Then offset(0,0,0).
+
+Boolean-union config_traditional_base1, config_traditional_base2, and config_traditional_base3; keep config_traditional_base1.
+Rename config_traditional_base1 to config_traditional.
+
+Create primitive cuboid with size 1.6m×0.9m×0.4m and name it config_sectional_base1.
+Rotate config_sectional_base1 so its +Z axis aligns +Z (world).
+Align config_sectional_base1.center to sofa_root.center.
+Then offset(0,0,0).
+
+Create primitive cuboid with size 0.9m×0.9m×0.4m and name it config_sectional_base2.
+Rotate config_sectional_base2 so its +Z axis aligns +Z (world).
+Align config_sectional_base2.center to sofa_root.center.
+Then offset(0,0,0).
+
+Boolean-union config_sectional_base1 and config_sectional_base2; keep config_sectional_base1.
+Rename config_sectional_base1 to config_sectional.
+
+Create primitive cuboid with size 1.6m×1.4m×0.4m and name it config_chaise_base.
+Rotate config_chaise_base so its +Z axis aligns +Z (world).
+Align config_chaise_base.center to sofa_root.center.
+Then offset(0,0,0).
+
+Rename config_chaise_base to config_chaise.
+
+Stage 11 complete.
+
+All stages complete.

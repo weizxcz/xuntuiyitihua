@@ -1,0 +1,48 @@
+{
+  "id": "be452468-c0cc-44ea-85d3-322147b3dda8",
+  "name": "Puzzle",
+  "instruction": "Create a 3D model of a jigsaw puzzle. The puzzle should have 100 pieces, each uniquely shaped to fit together. The completed puzzle forms a rectangle measuring 10 inches by 15 inches. Ensure the pieces are easy to distinguish and fit together seamlessly.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a jigsaw puzzle.",
+        "The puzzle consists of 100 uniquely shaped pieces.",
+        "Each piece has interlocking tabs and blanks for fitting."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The overall dimensions of the completed puzzle are 10 inches by 15 inches.",
+        "Each individual piece should be sized appropriately to fit within the overall dimensions."
+      ],
+      "Proportion": [
+        "The pieces are proportionate to the overall size of the puzzle.",
+        "The shape of each piece allows for seamless fitting within the rectangular shape."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pieces are designed to fit together without gaps.",
+        "The arrangement of pieces allows for a clear rectangular shape.",
+        "Each piece can be rotated and flipped to find the correct fit."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the pieces when assembled.",
+        "Each piece connects firmly with adjacent pieces.",
+        "The edges of the completed puzzle align perfectly."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes regarding the number of pieces and dimensions are accurately represented.",
+        "The design ensures that pieces are uniquely shaped and fit together seamlessly."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

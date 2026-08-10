@@ -1,0 +1,52 @@
+{
+  "id": "1ba2961f-6695-402c-b466-2fe48a07bfd3",
+  "name": "Rabbit Hutch",
+  "instruction": "Design a rabbit hutch with two levels. The bottom level should be an open run area enclosed with wire mesh, and the top level should be a sheltered sleeping area accessible by a ramp. Include a door on the front of the sleeping area for easy access.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a rabbit hutch.",
+        "The hutch has two distinct levels.",
+        "The bottom level is an open run area.",
+        "The top level is a sheltered sleeping area.",
+        "The ramp connects the two levels."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the top level is adequate for a rabbit to stand.",
+        "The ramp is at a reasonable angle for easy climbing."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bottom level is spacious enough for movement.",
+        "The top level is securely positioned above the bottom level.",
+        "The ramp is correctly aligned between the two levels.",
+        "The door is positioned for easy access without obstruction."
+      ],
+      "Object distance and contact": [
+        "The wire mesh does not interfere with the internal space of the bottom level.",
+        "The ramp connects seamlessly to both levels.",
+        "The door fits properly within the frame of the top level."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design includes both levels as instructed.",
+        "The ramp is included as a means of access.",
+        "A door is present on the front of the sleeping area."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

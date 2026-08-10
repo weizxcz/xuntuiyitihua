@@ -1,0 +1,58 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_brush_head; diffuse_color = (0.1, 0.4, 0.9, 1.0).
+Define material mat_brush_head_grip; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+Define material mat_bristle; diffuse_color = (0.95, 0.95, 0.95, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create handle group  ---
+Create primitive cuboid with size 0.020×0.015×0.180 m and name it handle_main.
+Rotate handle_main so its +Z axis aligns +Z (world).
+Anchor handle_main to world origin.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.018×0.013×0.100 m and name it handle_grip.
+Rotate handle_grip so its +Z axis aligns +Z (world).
+Align handle_grip.center to handle_main.center.
+Align handle_grip.bottom_face to handle_main.bottom_face.
+Then move by offset(0,0,0.040).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create head assembly  ---
+Create primitive cuboid with size 0.025×0.008×0.045 m and name it head_main.
+Rotate head_main so its +Z axis aligns +Z (world).
+Align head_main.center to handle_main.top_face.
+Align head_main.bottom_face to handle_main.top_face.
+Then move by offset(0,0,0.004).
+
+Create primitive cuboid with size 0.015×0.006×0.020 m and name it head_neck.
+Rotate head_neck so its +Z axis aligns +Z (world).
+Align head_neck.center to handle_main.top_face.
+Align head_neck.bottom_face to handle_main.top_face.
+Then move by offset(0,0,0.090).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create bristle grid  ---
+For r in 0…5 and c in 0…4:
+  Create primitive cylinder with diameter 0.0015 m and height 0.012 m and name it bristle_template_r_c.
+  Rotate bristle_template_r_c so its +Z axis aligns +Z (world).
+  Align bristle_template_r_c.center to head_main.top_face.
+  Align bristle_template_r_c.bottom_face to head_main.top_face.
+  Then offset(-0.008 + c*0.004, -0.010 + r*0.004, 0.004).
+
+Stage 3 complete.
+
+All stages complete.

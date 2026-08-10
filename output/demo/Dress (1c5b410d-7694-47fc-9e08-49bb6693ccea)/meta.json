@@ -1,0 +1,48 @@
+{
+  "id": "1c5b410d-7694-47fc-9e08-49bb6693ccea",
+  "name": "Dress",
+  "instruction": "Please create a 3D model of a dress. It should have short sleeves and a knee-length skirt. The neckline should be round, and the waist should be slightly cinched. Add a zipper at the back for closure.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a dress.",
+        "The dress has short sleeves.",
+        "The skirt length is knee-length.",
+        "The neckline is round.",
+        "The waist is slightly cinched."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The skirt length is proportionate to the overall dress design.",
+        "The cinched waist is appropriately defined relative to the dress silhouette."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The sleeves are correctly positioned on the shoulders.",
+        "The skirt flows appropriately from the waist.",
+        "The neckline is accurately shaped and positioned."
+      ],
+      "Object distance and contact": [
+        "The zipper is properly aligned at the back without gaps.",
+        "The sleeves do not overlap with the neckline."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The dress adheres to the design specifications provided."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

@@ -1,0 +1,50 @@
+{
+  "id": "aa6b4f3f-1596-4839-9d12-612e1f60d851",
+  "name": "Cargo Helicopter",
+  "instruction": "Imagine a helicopter designed for transporting heavy loads. It has a robust fuselage with a large cargo hold. The helicopter features a set of powerful rotors on top and a smaller tail rotor for stability. Add landing skids at the bottom for support.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a helicopter.",
+        "The fuselage is robust and designed for heavy loads.",
+        "The cargo hold is large and spacious.",
+        "The helicopter has a set of powerful rotors on top.",
+        "There is a smaller tail rotor for stability.",
+        "The landing skids are positioned at the bottom."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the rotors is proportionate to the fuselage.",
+        "The tail rotor is appropriately sized for stability.",
+        "The landing skids are proportionate to the overall size of the helicopter."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The rotors are mounted correctly on top of the fuselage.",
+        "The tail rotor is positioned at the rear for stability.",
+        "The landing skids are properly placed for support."
+      ],
+      "Object distance and contact": [
+        "The rotors do not overlap with the fuselage.",
+        "The landing skids are in contact with the ground."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the helicopter are accurately represented.",
+        "There are no deviations from the instructions regarding the design."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

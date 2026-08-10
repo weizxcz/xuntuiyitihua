@@ -1,0 +1,297 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material with specified diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh object."""
+    # size is total width/height/depth
+    half = size / 2.0
+    bpy.ops.mesh.primitive_cube_add(size=half, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, depth, location=(0,0,0), rotation=(0,0,0)):
+    """Add a disc (cylinder with small depth) mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', target_vector=(0,0,1)):
+    """Align an object's local axis to a target world vector."""
+    # Ensure object is in world space for calculation
+    mat_world = obj.matrix_world
+    local_axis = obj.matrix_world.to_quaternion() @ mathutils.Vector(axis)
+    target = mathutils.Vector(target_vector).normalized()
+    
+    if local_axis.dot(target) < -0.9999:
+        # 180 degree flip
+        rot_quat = mathutils.Quaternion((1,0,0), math.pi)
+    else:
+        rot_quat = local_axis.rotation_difference(target)
+    
+    obj.rotation_euler = rot_quat.to_euler()
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtraction using modifier stack."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target is active for modifier addition
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(target_name, other_name):
+    """Perform boolean union."""
+    target = bpy.data.objects[target_name]
+    other = bpy.data.objects[other_name]
+    
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = other
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(other, do_unlink=True)
+
+def add_bevel(obj_name, width=0.001, segments=2):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    bpy.context.view_layer.objects.active = obj
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    # Apply to keep geometry simple for this script
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+class Locator:
+    """Helper class to find centers of objects."""
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def center_world(self):
+        return self.obj.matrix_world.to_translation()
+    
+    def face_center_world(self, face_type='TOP'):
+        """Approximate center of a specific face based on bounding box."""
+        # Simple approximation: center + offset along normal
+        center = self.center_world()
+        # For standard primitives aligned to axes:
+        if face_type == 'TOP':
+            return center + Vector((0,0, self.obj.dimensions.z/2))
+        elif face_type == 'BOTTOM':
+            return center + Vector((0,0, -self.obj.dimensions.z/2))
+        return center
+
+def average(points):
+    """Calculate average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_board_green = make_material("board_green", (0.15, 0.45, 0.15, 1.0))
+mat_board_white = make_material("board_white", (0.95, 0.95, 0.95, 1.0))
+mat_card_stock = make_material("card_stock", (0.90, 0.90, 0.85, 1.0))
+mat_dice_white = make_material("dice_white", (0.95, 0.95, 0.95, 1.0))
+mat_dice_red = make_material("dice_red", (0.85, 0.10, 0.10, 1.0))
+mat_piece_blue = make_material("piece_blue", (0.10, 0.20, 0.80, 1.0))
+mat_piece_red = make_material("piece_red", (0.80, 0.10, 0.10, 1.0))
+mat_piece_yellow = make_material("piece_yellow", (0.90, 0.80, 0.10, 1.0))
+mat_piece_green = make_material("piece_green", (0.10, 0.70, 0.10, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create board base ---
+# Create primitive cube with size 0.300×0.300×0.020 m and name it board_base.
+obj_board_base = add_cube("board_base", size=0.300, location=(0,0,0), rotation=(0,0,0))
+
+# Rotate board_base so its +Z axis aligns +Z (world).
+# Cube default is +Z up, so no rotation needed, but explicit alignment:
+align_axis_to_vector(obj_board_base, 'Z', (0,0,1))
+
+# Anchor board_base to world origin.
+# Cube center is at origin by default in add_cube.
+obj_board_base.location = Vector((0,0,0))
+
+# Then move by offset(0,0,0).
+obj_board_base.location += Vector((0,0,0))
+
+# Apply material board_green to board_base.
+if obj_board_base.data.materials:
+    obj_board_base.data.materials[0] = mat_board_green
+else:
+    obj_board_base.data.materials.append(mat_board_green)
+
+# --- SECTION 2 – Create board grid overlay ---
+# Create primitive cube with size 0.300×0.300×0.001 m and name it board_grid.
+obj_board_grid = add_cube("board_grid", size=0.300, location=(0,0,0), rotation=(0,0,0))
+
+# Rotate board_grid so its +Z axis aligns +Z (world).
+align_axis_to_vector(obj_board_grid, 'Z', (0,0,1))
+
+# Align board_grid.bottom_face to board_base.top_face.
+# board_base top face is at z = 0.010 (half of 0.020)
+# board_grid bottom face is at z = -0.0005 (half of 0.001)
+# Target Z for grid center = 0.010 - 0.0005 = 0.0095
+loc_base_top = Vector((0,0, 0.010))
+loc_grid_bottom = Vector((0,0, -0.0005))
+offset_z = loc_base_top.z - loc_grid_bottom.z
+obj_board_grid.location = Vector((0,0, offset_z))
+
+# Then move by offset(0,0,0.001).
+obj_board_grid.location += Vector((0,0,0.001))
+
+# Apply material board_white to board_grid.
+if obj_board_grid.data.materials:
+    obj_board_grid.data.materials[0] = mat_board_white
+else:
+    obj_board_grid.data.materials.append(mat_board_white)
+
+# Boolean-subtract board_grid from board_base; discard board_grid.
+# Note: The prompt mentions grid_lines_width and spacing, but the instruction 
+# explicitly says "Boolean-subtract board_grid from board_base". 
+# Since board_grid is a single solid block, this will just cut a thin slice off the top.
+# To simulate "grid lines" via boolean subtraction as hinted, we would normally create 
+# multiple thin cutters. However, the prompt only defines ONE object "board_grid" 
+# and says "Boolean-subtract board_grid". I will follow the explicit object instruction.
+# If the intent was to carve lines, the prompt would have defined multiple grid_line objects.
+# Given "Constraint: grid_lines_width... applied via boolean subtraction logic", 
+# and only one object provided, I will perform the subtraction as defined.
+# To make it visually distinct as a "grid overlay" cut, I'll assume the prompt implies 
+# the grid object IS the cutter.
+boolean_subtract("board_grid", "board_base")
+
+# --- SECTION 3 – Create game pieces ---
+
+# piece_blue
+obj_piece_blue = add_cylinder("piece_blue", radius=0.020, depth=0.060, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_piece_blue, 'Z', (0,0,1))
+obj_piece_blue.location = Vector((0,0,0)) # Anchor to origin
+obj_piece_blue.location += Vector((-0.10, -0.10, 0.040)) # Offset
+if obj_piece_blue.data.materials:
+    obj_piece_blue.data.materials[0] = mat_piece_blue
+else:
+    obj_piece_blue.data.materials.append(mat_piece_blue)
+
+# piece_red
+obj_piece_red = add_cylinder("piece_red", radius=0.020, depth=0.060, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_piece_red, 'Z', (0,0,1))
+obj_piece_red.location = Vector((0,0,0)) # Anchor to origin
+obj_piece_red.location += Vector((0.10, -0.10, 0.040)) # Offset
+if obj_piece_red.data.materials:
+    obj_piece_red.data.materials[0] = mat_piece_red
+else:
+    obj_piece_red.data.materials.append(mat_piece_red)
+
+# piece_yellow
+obj_piece_yellow = add_cylinder("piece_yellow", radius=0.020, depth=0.060, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_piece_yellow, 'Z', (0,0,1))
+obj_piece_yellow.location = Vector((0,0,0)) # Anchor to origin
+obj_piece_yellow.location += Vector((-0.10, 0.10, 0.040)) # Offset
+if obj_piece_yellow.data.materials:
+    obj_piece_yellow.data.materials[0] = mat_piece_yellow
+else:
+    obj_piece_yellow.data.materials.append(mat_piece_yellow)
+
+# piece_green
+obj_piece_green = add_cylinder("piece_green", radius=0.020, depth=0.060, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_piece_green, 'Z', (0,0,1))
+obj_piece_green.location = Vector((0,0,0)) # Anchor to origin
+obj_piece_green.location += Vector((0.10, 0.10, 0.040)) # Offset
+if obj_piece_green.data.materials:
+    obj_piece_green.data.materials[0] = mat_piece_green
+else:
+    obj_piece_green.data.materials.append(mat_piece_green)
+
+# --- SECTION 4 – Create dice ---
+
+# dice_1
+obj_dice_1 = add_cube("dice_1", size=0.020, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_dice_1, 'Z', (0,0,1))
+obj_dice_1.location = Vector((0,0,0)) # Anchor to origin
+obj_dice_1.location += Vector((-0.05, 0.15, 0.020)) # Offset
+if obj_dice_1.data.materials:
+    obj_dice_1.data.materials[0] = mat_dice_white
+else:
+    obj_dice_1.data.materials.append(mat_dice_white)
+
+# dice_2
+obj_dice_2 = add_cube("dice_2", size=0.020, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_dice_2, 'Z', (0,0,1))
+obj_dice_2.location = Vector((0,0,0)) # Anchor to origin
+obj_dice_2.location += Vector((0.05, 0.15, 0.020)) # Offset
+if obj_dice_2.data.materials:
+    obj_dice_2.data.materials[0] = mat_dice_red
+else:
+    obj_dice_2.data.materials.append(mat_dice_red)
+
+# --- SECTION 5 – Create card stack ---
+
+# card_stack
+obj_card_stack = add_cube("card_stack", size=0.080, location=(0,0,0), rotation=(0,0,0))
+align_axis_to_vector(obj_card_stack, 'Z', (0,0,1))
+obj_card_stack.location = Vector((0,0,0)) # Anchor to origin
+obj_card_stack.location += Vector((0, 0.15, 0.020)) # Offset
+if obj_card_stack.data.materials:
+    obj_card_stack.data.materials[0] = mat_card_stock
+else:
+    obj_card_stack.data.materials.append(mat_card_stock)
+
+# Finalize scene
+bpy.context.view_layer.update()
+```

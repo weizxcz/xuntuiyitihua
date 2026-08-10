@@ -1,0 +1,49 @@
+{
+  "id": "7bae1b3a-9795-4e65-8f6d-98e9f0c3de89",
+  "name": "Pencil",
+  "instruction": "Design a pencil. The pencil should be hexagonal in shape and include an eraser at the end. ",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a pencil.",
+        "The pencil has a hexagonal shape.",
+        "The eraser is located at the end of the pencil."
+      ],
+      "Color representation": [
+        "The pencil body can be represented in a typical wood color.",
+        "The eraser is usually pink or red."
+      ],
+      "Size": [
+        "The pencil length should be standard, approximately 18cm.",
+        "The eraser size should be proportionate to the pencil."
+      ],
+      "Proportion": [
+        "The hexagonal body is proportionate to the length of the pencil.",
+        "The eraser is appropriately sized relative to the pencil body."
+      ],
+      "Texture and surface detail": [
+        "The pencil body have a smooth wooden texture.",
+        "The eraser should have a rubbery texture."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hexagonal shape is correctly defined in three dimensions.",
+        "The eraser is properly placed at the end of the pencil.",
+        "The pencil's body maintains a consistent hexagonal cross-section."
+      ],
+      "Object distance and contact": [
+        "The eraser is securely attached to the pencil.",
+        "There is no gap between the eraser and the pencil body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the instruction without deviations."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

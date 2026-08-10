@@ -1,0 +1,44 @@
+{
+  "id": "21c9c56a-04b7-4bcc-85fb-8cd0702b371a",
+  "name": "Travel Pillow",
+  "instruction": "Design a travel pillow that provides neck support. It should be U-shaped and compact enough to carry easily.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a travel pillow.",
+        "The pillow is U-shaped."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pillow is at reasonable large for travelling."
+      ],
+      "Texture and surface detail": [
+        "The material should be soft and comfortable for prolonged use.",
+        "The exterior may have a washable cover."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The U-shape allows the pillow to fit around the neck comfortably.",
+        "The pillow should have sufficient volume to provide support without being bulky."
+      ],
+      "Object distance and contact": [
+        "The design ensures that the pillow maintains contact with the neck.",
+        "The ends of the U-shape should meet comfortably without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The pillow accurately reflects the U-shape as specified.",
+        "The neck support functionality is clearly integrated."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

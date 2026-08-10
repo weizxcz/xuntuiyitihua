@@ -1,0 +1,1 @@
+I need you to create a 3D model of a xylophone. The xylophone should have a series of rectangular bars arranged in ascending order of size, each representing different musical notes. The bars should be mounted on a frame and struck with mallets to produce sound. Ensure the frame is sturdy and the bars are evenly spaced.

@@ -1,0 +1,51 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.80,1.0)
+mat_black_plastic | diffuse_color=(0.10,0.10,0.10,1.0)
+mat_blue_acrylic | diffuse_color=(0.10,0.30,0.80,0.80)
+mat_glass | diffuse_color=(0.90,0.95,1.00,0.30)
+mat_steel | diffuse_color=(0.60,0.60,0.65,1.0)
+mat_white_plastic | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_unit | Composite of base_plate, motor_assembly, display_module, syringe_holder | assembly_order=[base_plate], [motor_assembly], [display_module], [syringe_holder] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Rectangular base plate Ø0.200×0.020 m (W×H×D) | Align(XY) base_plate.center to (0,0,0); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| motor_assembly | Composite of stepper_motor, lead_screw, nut_block | assembly_order=[stepper_motor], [lead_screw], [nut_block] |
+| display_module | Composite of lcd_screen, bezel, control_panel | assembly_order=[bezel], [lcd_screen], [control_panel] |
+| syringe_holder | Composite of syringe_clamp, guide_rail, plunger_pusher | assembly_order=[guide_rail], [syringe_clamp], [plunger_pusher] |
+
+Layer 2 – Motor Assembly Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| stepper_motor | Stepper motor block 0.040×0.040×0.050 m | Align(XY) stepper_motor.center to base_plate.center; offset(0, -0.050, 0.010); orientation=axis:+Z; mat=mat_steel; create_method=primitive |
+| lead_screw | Lead screw rod Ø0.006×0.150 m | Align(Z) lead_screw.bottom_face to stepper_motor.top_face; offset(0, 0, 0.025); orientation=axis:+Z; mat=mat_steel; create_method=primitive |
+| nut_block | Lead screw nut block 0.010×0.010×0.010 m | Align(Z) nut_block.bottom_face to lead_screw.top_face; offset(0, 0, 0.075); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+
+Layer 3 – Display Module Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bezel | Display bezel frame 0.120×0.080×0.005 m | Align(XY) bezel.center to base_plate.center; offset(0, 0.060, 0.010); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| lcd_screen | LCD screen panel 0.100×0.060×0.002 m | Align(XY) lcd_screen.center to bezel.center; offset(0, 0, 0.003); orientation=axis:+Z; mat=mat_blue_acrylic; create_method=primitive |
+| control_panel | Control panel with buttons 0.120×0.040×0.002 m | Align(XY) control_panel.center to bezel.center; offset(0, -0.060, 0.005); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive |
+
+Layer 4 – Syringe Holder Details
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| guide_rail | Guide rail for syringe barrel 0.150×0.020×0.010 m | Align(XY) guide_rail.center to base_plate.center; offset(0.050, 0.020, 0.010); orientation=axis:+Z; mat=mat_aluminum; create_method=primitive |
+| syringe_clamp | Syringe barrel clamp 0.030×0.030×0.010 m | Align(XY) syringe_clamp.center to guide_rail.center; offset(0, 0, 0.010); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive |
+| plunger_pusher | Plunger pusher block 0.020×0.020×0.010 m | Align(XY) plunger_pusher.center to guide_rail.center; offset(0, -0.020, 0.010); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive |
+
+Layer 5 – Syringe Component (Optional/Placeholder)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| syringe_barrel | Syringe barrel cylinder Ø0.020×0.100 m | Align(XY) syringe_barrel.center to syringe_clamp.center; offset(0, 0, 0.010); orientation=axis:+Z; mat=mat_glass; create_method=primitive |
+| syringe_plunger | Syringe plunger rod Ø0.015×0.080 m | Align(XY) syringe_plunger.center to syringe_barrel.center; offset(0, 0, 0.050); orientation=axis:+Z; mat=mat_white_plastic; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,624 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi, radians
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def apply_material(obj, mat):
+    """Assign material to the first material slot of an object."""
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+
+def add_primitive(name, shape, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a primitive mesh object."""
+    bpy.ops.mesh.primitive_add(location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    
+    # Scale based on shape and size
+    if shape == 'cube':
+        # size is (x, y, z)
+        obj.scale = (size[0], size[1], size[2])
+    elif shape == 'cylinder' or shape == 'disc':
+        # size is (radius, height) or (diameter, height) -> assuming radius, height for cylinder logic usually, 
+        # but prompt says "Ø0.010" which is diameter. 
+        # Let's assume size tuple is (radius, height) for internal logic, but prompt gives diameter.
+        # I will handle diameter conversion in the caller or here.
+        # Standard add_cylinder uses radius.
+        radius = size[0] / 2.0 if size[0] > 1 else size[0] # Heuristic: if > 1, likely diameter in mm? No, prompt is meters.
+        # Prompt: "Ø0.010" -> radius 0.005.
+        # Let's pass radius directly to be safe.
+        pass 
+    elif shape == 'cone':
+        radius = size[0] / 2.0
+        height = size[1]
+        obj.scale = (radius, radius, height)
+    elif shape == 'sphere':
+        radius = size[0]
+        obj.scale = (radius, radius, radius)
+
+    # Apply rotation
+    obj.rotation_euler = rotation
+    
+    return obj
+
+def add_cylinder(name, diameter, height, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder with specific diameter and height."""
+    radius = diameter / 2.0
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cube(name, size, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube with specific dimensions."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location) # size=1 creates 2x2x2 cube centered at 0
+    obj = bpy.context.active_object
+    obj.name = name
+    # Scale to fit size (x, y, z)
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation
+    return obj
+
+def align_axis_to_vector(obj, axis_to_align='+Z', target_vector):
+    """Rotate object so its local axis aligns with target_vector."""
+    # Normalize target
+    v = target_vector.normalized()
+    
+    # Define source axis
+    if axis_to_align == '+Z':
+        src = Vector((0, 0, 1))
+    elif axis_to_align == '+X':
+        src = Vector((1, 0, 0))
+    elif axis_to_align == '+Y':
+        src = Vector((0, 1, 0))
+    else:
+        src = Vector((0, 0, 1))
+        
+    # Calculate rotation
+    rot_quat = src.rotation_difference(v)
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = rot_quat
+
+def get_face_center(obj, face_type):
+    """
+    Calculate the world location of a specific face center.
+    face_type: 'top', 'bottom', 'left', 'right', 'front', 'back', 'center'
+    """
+    # Get object matrix
+    mat = obj.matrix_world
+    
+    # Get bounding box corners
+    # We need to transform the local bbox corners to world space
+    # Local bbox corners relative to center
+    # Cube: +/- size/2
+    # Cylinder: depends on orientation
+    
+    # Simplified approach: Use the object's rotation to determine face directions
+    # And add/subtract half dimensions
+    
+    # Determine dimensions
+    if obj.type == 'MESH':
+        # Get extents
+        # Note: scale is applied to mesh data, but matrix_world includes scale.
+        # We need local dimensions.
+        if obj.type == 'MESH':
+            # Recalculate dimensions from scale and original size if known?
+            # Easier: Use the object's data bounds if not scaled weirdly, 
+            # but since we scale primitives, let's use the scale * original_size/2
+            
+            # This is tricky without storing original size. 
+            # Alternative: Use the known construction logic.
+            # Since we create them with specific scales, we can infer.
+            pass
+
+    # Robust method: Raycast or Bounding Box
+    # Let's use a simpler geometric approximation based on object type and rotation
+    
+    # Helper to get local axis vectors in world space
+    def world_axis(axis):
+        return (mat @ axis).normalized()
+
+    # Determine half-dimensions
+    # We need to know the object's dimensions. 
+    # Since we create them, we can store them or re-calculate from vertices.
+    # Let's re-calculate from vertices for robustness.
+    
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.transform(bm, matrix=mat, verts=bm.verts) # World space verts
+    
+    # Find min/max in local axes transformed to world? 
+    # No, we want the face center in World Space.
+    
+    # Project all verts onto the normal of the face we want.
+    
+    # Define face normals in Local Space
+    if face_type == 'top':
+        local_normal = Vector((0, 0, 1))
+    elif face_type == 'bottom':
+        local_normal = Vector((0, 0, -1))
+    elif face_type == 'right':
+        local_normal = Vector((1, 0, 0))
+    elif face_type == 'left':
+        local_normal = Vector((-1, 0, 0))
+    elif face_type == 'front':
+        local_normal = Vector((0, 1, 0))
+    elif face_type == 'back':
+        local_normal = Vector((0, -1, 0))
+    elif face_type == 'center':
+        return mat.to_translation()
+    else:
+        return mat.to_translation()
+
+    # Transform normal to World Space
+    world_normal = (mat @ local_normal).normalized()
+    
+    # Find the vertex with the maximum dot product with world_normal
+    max_dot = -1
+    max_vert = None
+    for v in bm.verts:
+        d = v.co.dot(world_normal)
+        if d > max_dot:
+            max_dot = d
+            max_vert = v
+            
+    if max_vert:
+        # The face center is approximately the average of vertices on that face
+        # For simplicity, just return the max vertex location if it's a cube/cylinder end
+        # Better: Average all vertices with dot product > max_dot - epsilon
+        face_verts = [v for v in bm.verts if v.co.dot(world_normal) > max_dot - 0.0001]
+        if face_verts:
+            center = sum((v.co for v in face_verts), Vector()) / len(face_verts)
+            return center
+    
+    bm.free()
+    return mat.to_translation()
+
+def align_to_face(obj_target, face_type_target, obj_source, face_type_source):
+    """
+    Align obj_source so that face_type_source touches face_type_target of obj_target.
+    Assumes objects are already oriented correctly.
+    """
+    target_loc = get_face_center(obj_target, face_type_target)
+    source_loc = get_face_center(obj_source, face_type_source)
+    
+    # Calculate offset to move source face to target face
+    # We want source_face_center to equal target_face_center
+    offset = target_loc - source_loc
+    
+    obj_source.location += offset
+
+def connect_faces(obj_a, face_a, obj_b, face_b):
+    """
+    Move obj_b so that face_b touches face_a of obj_a.
+    """
+    # Get the center of face_a on obj_a
+    loc_a = get_face_center(obj_a, face_a)
+    
+    # Get the center of face_b on obj_b (before move)
+    loc_b = get_face_center(obj_b, face_b)
+    
+    # Calculate translation vector
+    # We want loc_b_new == loc_a
+    # But wait, "Connect" usually means they touch.
+    # If face_a is 'right' of A and face_b is 'left' of B, they touch at the same point.
+    
+    # However, get_face_center returns the center of the face.
+    # So if we move B such that its face_b center is at loc_a, they will be coincident.
+    
+    # But we need to be careful about direction.
+    # If A's right face is at X=1, and B's left face is at X=-1 (local), 
+    # and we move B so its left face center is at X=1, B's center will be at X=1 - (-width/2) = 1 + width/2.
+    # This effectively places B adjacent to A.
+    
+    # Let's verify with vectors.
+    # Vector from A's face center to B's face center (current)
+    # We want to move B by (A_face_center - B_face_center)
+    
+    move_vec = loc_a - loc_b
+    obj_b.location += move_vec
+
+def boolean_subtract(cutter_name, target_name):
+    """
+    Perform Boolean Subtract using cutter on target.
+    """
+    cutter = bpy.data.objects.get(cutter_name)
+    target = bpy.data.objects.get(target_name)
+    
+    if not cutter or not target:
+        print(f"Error: {cutter_name} or {target_name} not found")
+        return
+
+    # Add Boolean Modifier to Target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply Modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete Cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(obj_a_name, obj_b_name):
+    """
+    Perform Boolean Union of obj_a and obj_b.
+    """
+    obj_a = bpy.data.objects.get(obj_a_name)
+    obj_b = bpy.data.objects.get(obj_b_name)
+    
+    if not obj_a or not obj_b:
+        print(f"Error: {obj_a_name} or {obj_b_name} not found")
+        return
+
+    # Add Boolean Modifier to obj_a
+    mod = obj_a.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = obj_b
+    
+    # Apply Modifier
+    bpy.context.view_layer.objects.active = obj_a
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Delete obj_b
+    bpy.data.objects.remove(obj_b, do_unlink=True)
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_aluminum = make_material("mat_aluminum", (0.75, 0.75, 0.80, 1.0))
+mat_black_abs = make_material("mat_black_abs", (0.10, 0.10, 0.10, 1.0))
+mat_blue_acrylic = make_material("mat_blue_acrylic", (0.20, 0.40, 0.80, 0.80))
+mat_glass = make_material("mat_glass", (0.90, 0.95, 1.00, 0.30))
+mat_green_pcb = make_material("mat_green_pcb", (0.10, 0.60, 0.20, 1.0))
+mat_lead_screw = make_material("mat_lead_screw", (0.60, 0.60, 0.65, 1.0))
+mat_motor_stepper = make_material("mat_motor_stepper", (0.20, 0.20, 0.25, 1.0))
+mat_nitrile = make_material("mat_nitrile", (0.15, 0.15, 0.20, 1.0))
+mat_plastic_trans = make_material("mat_plastic_trans", (0.90, 0.90, 0.90, 0.40))
+mat_silicone = make_material("mat_silicone", (0.80, 0.80, 0.80, 1.0))
+mat_steel = make_material("mat_steel", (0.50, 0.50, 0.55, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create Base Plate ---
+# Create primitive cuboid with size 0.200×0.150×0.010 m and name it base_plate.
+base_plate = add_cube("base_plate", (0.200, 0.150, 0.010), location=(0,0,0), rotation=(0,0,0))
+apply_material(base_plate, mat_steel)
+
+# Rotate base_plate so its +Z axis aligns +Z (world).
+# It is already aligned, but we ensure it.
+align_axis_to_vector(base_plate, '+Z', Vector((0,0,1)))
+
+# Anchor base_plate to world origin.
+base_plate.location = (0,0,0)
+
+# Move base_plate by offset(0,0,0).
+base_plate.location += Vector((0,0,0))
+
+# --- SECTION 2 – Create Motor Assembly ---
+
+# Create stepper_motor
+# Size 0.040×0.040×0.040
+stepper_motor = add_cube("stepper_motor", (0.040, 0.040, 0.040), location=(0,0,0), rotation=(0,0,0))
+apply_material(stepper_motor, mat_motor_stepper)
+
+# Rotate stepper_motor so its +Z axis aligns +X (world).
+align_axis_to_vector(stepper_motor, '+Z', Vector((1,0,0)))
+
+# Anchor stepper_motor to base_plate.bottom_face.
+# base_plate.bottom_face is at Z = -0.005 (half height)
+# stepper_motor center is at 0.
+# We need to move stepper_motor so its bottom face touches base_plate bottom face.
+# But wait, "Anchor to base_plate.bottom_face" usually implies placing it ON the face.
+# If it's a motor assembly, it might be mounted on the bottom.
+# Let's align the bottom face of stepper_motor to the bottom face of base_plate.
+align_to_face(base_plate, 'bottom', stepper_motor, 'bottom')
+
+# Move stepper_motor by offset(0.050,-0.050,0.010).
+# This offset is relative to the anchor point? Or global?
+# "Offset is in reference local axes."
+# After anchoring, the object is at a specific location.
+# We apply the offset to the current location.
+stepper_motor.location += Vector((0.050, -0.050, 0.010))
+
+# Create motor_mount
+# Size 0.040×0.040×0.040
+motor_mount = add_cube("motor_mount", (0.040, 0.040, 0.040), location=(0,0,0), rotation=(0,0,0))
+apply_material(motor_mount, mat_black_abs)
+
+# Rotate motor_mount so its +Z axis aligns +X (world).
+align_axis_to_vector(motor_mount, '+Z', Vector((1,0,0)))
+
+# Anchor motor_mount to base_plate.bottom_face.
+align_to_face(base_plate, 'bottom', motor_mount, 'bottom')
+
+# Move motor_mount by offset(0.050,-0.050,0.010).
+motor_mount.location += Vector((0.050, -0.050, 0.010))
+
+# Create coupling
+# Ø0.010×0.020 m (Diameter 0.010, Height 0.020)
+coupling = add_cylinder("coupling", 0.010, 0.020, location=(0,0,0), rotation=(0,0,0))
+apply_material(coupling, mat_steel)
+
+# Rotate coupling so its +Z axis aligns +X (world).
+align_axis_to_vector(coupling, '+Z', Vector((1,0,0)))
+
+# Anchor coupling to base_plate.bottom_face.
+align_to_face(base_plate, 'bottom', coupling, 'bottom')
+
+# Move coupling by offset(0.050,0.000,0.010).
+coupling.location += Vector((0.050, 0.000, 0.010))
+
+# Connect stepper_motor.right_face + coupling.left_face.
+# Note: Since both are rotated +Z to +X, their local +X is now World +X.
+# Right face is +X, Left face is -X.
+connect_faces(stepper_motor, 'right', coupling, 'left')
+
+# Connect coupling.right_face + lead_screw.left_face.
+# lead_screw doesn't exist yet, but we will create it in Section 3.
+# We need to store the position or create lead_screw first?
+# The prompt says Stage 2 complete, then Stage 3.
+# But the connection is defined in Stage 2.
+# We must create lead_screw in Stage 3, then go back and connect?
+# Or create lead_screw in Stage 2?
+# Prompt: "Stage 2 complete" implies we finish Stage 2.
+# "Stage 3 – Create Lead Screw Assembly" creates lead_screw.
+# So we cannot connect in Stage 2 if lead_screw doesn't exist.
+# However, the instruction "Connect coupling.right_face + lead_screw.left_face" is in Stage 2.
+# This implies lead_screw should exist or be created.
+# Let's create lead_screw in Stage 3, but we need to perform the connection.
+# I will perform the connection in Stage 3 after lead_screw is created, 
+# OR I will create lead_screw in Stage 2 if the logic dictates.
+# Looking at Stage 3: "Create primitive cylinder... name it lead_screw".
+# It seems lead_screw is created in Stage 3.
+# The connection instruction in Stage 2 is likely a logical dependency.
+# I will perform the connection in Stage 3 after lead_screw is placed.
+# Wait, if I do it in Stage 3, I need to know where coupling is.
+# Let's just do the connection in Stage 3.
+
+# --- SECTION 3 – Create Lead Screw Assembly ---
+
+# Create lead_screw
+# Ø0.008×0.120 m
+lead_screw = add_cylinder("lead_screw", 0.008, 0.120, location=(0,0,0), rotation=(0,0,0))
+apply_material(lead_screw, mat_lead_screw)
+
+# Rotate lead_screw so its +Z axis aligns +X (world).
+align_axis_to_vector(lead_screw, '+Z', Vector((1,0,0)))
+
+# Anchor lead_screw to base_plate.bottom_face.
+align_to_face(base_plate, 'bottom', lead_screw, 'bottom')
+
+# Move lead_screw by offset(0.050,0.000,0.010).
+lead_screw.location += Vector((0.050, 0.000, 0.010))
+
+# Now perform the connection from Stage 2
+connect_faces(coupling, 'right', lead_screw, 'left')
+
+# Create nut_block
+# Size 0.020×0.020×0.020
+nut_block = add_cube("nut_block", (0.020, 0.020, 0.020), location=(0,0,0), rotation=(0,0,0))
+apply_material(nut_block, mat_black_abs)
+
+# Rotate nut_block so its +Z axis aligns +X (world).
+align_axis_to_vector(nut_block, '+Z', Vector((1,0,0)))
+
+# Anchor nut_block to lead_screw.center.
+# lead_screw.center is its origin.
+nut_block.location = lead_screw.location
+
+# Move nut_block by offset(0.050,0.000,0.010).
+nut_block.location += Vector((0.050, 0.000, 0.010))
+
+# Create linear_rail
+# Ø0.010×0.120 m
+linear_rail = add_cylinder("linear_rail", 0.010, 0.120, location=(0,0,0), rotation=(0,0,0))
+apply_material(linear_rail, mat_steel)
+
+# Rotate linear_rail so its +Z axis aligns +X (world).
+align_axis_to_vector(linear_rail, '+Z', Vector((1,0,0)))
+
+# Anchor linear_rail to base_plate.bottom_face.
+align_to_face(base_plate, 'bottom', linear_rail, 'bottom')
+
+# Move linear_rail by offset(0.050,0.000,0.010).
+linear_rail.location += Vector((0.050, 0.000, 0.010))
+
+# --- SECTION 4 – Create Display Module ---
+
+# Create pcb_board
+# Size 0.100×0.080×0.002 m
+pcb_board = add_cube("pcb_board", (0.100, 0.080, 0.002), location=(0,0,0), rotation=(0,0,0))
+apply_material(pcb_board, mat_green_pcb)
+
+# Rotate pcb_board so its +Z axis aligns +Z (world).
+align_axis_to_vector(pcb_board, '+Z', Vector((0,0,1)))
+
+# Anchor pcb_board to base_plate.top_face.
+align_to_face(base_plate, 'top', pcb_board, 'bottom')
+
+# Move pcb_board by offset(0.000,0.000,0.010).
+pcb_board.location += Vector((0.000, 0.000, 0.010))
+
+# Create lcd_screen
+# Size 0.080×0.040×0.002 m
+lcd_screen = add_cube("lcd_screen", (0.080, 0.040, 0.002), location=(0,0,0), rotation=(0,0,0))
+apply_material(lcd_screen, mat_blue_acrylic)
+
+# Rotate lcd_screen so its +Z axis aligns +Z (world).
+align_axis_to_vector(lcd_screen, '+Z', Vector((0,0,1)))
+
+# Anchor lcd_screen to pcb_board.top_face.
+align_to_face(pcb_board, 'top', lcd_screen, 'bottom')
+
+# Move lcd_screen by offset(0.000,0.000,0.012).
+lcd_screen.location += Vector((0.000, 0.000, 0.012))
+
+# Create bezel
+# Size 0.090×0.050×0.002 m
+bezel = add_cube("bezel", (0.090, 0.050, 0.002), location=(0,0,0), rotation=(0,0,0))
+apply_material(bezel, mat_black_abs)
+
+# Rotate bezel so its +Z axis aligns +Z (world).
+align_axis_to_vector(bezel, '+Z', Vector((0,0,1)))
+
+# Anchor bezel to pcb_board.top_face.
+align_to_face(pcb_board, 'top', bezel, 'bottom')
+
+# Move bezel by offset(0.000,0.000,0.012).
+bezel.location += Vector((0.000, 0.000, 0.012))
+
+# --- SECTION 5 – Create Syringe Holder ---
+
+# Create barrel_guide
+# Ø0.025×0.100 m
+barrel_guide = add_cylinder("barrel_guide", 0.025, 0.100, location=(0,0,0), rotation=(0,0,0))
+apply_material(barrel_guide, mat_plastic_trans)
+
+# Rotate barrel_guide so its +Z axis aligns +X (world).
+align_axis_to_vector(barrel_guide, '+Z', Vector((1,0,0)))
+
+# Anchor barrel_guide to base_plate.top_face.
+align_to_face(base_plate, 'top', barrel_guide, 'bottom')
+
+# Move barrel_guide by offset(0.050,0.000,0.060).
+barrel_guide.location += Vector((0.050, 0.000, 0.060))
+
+# Create plunger_pusher
+# Size 0.020×0.020×0.005 m
+plunger_pusher = add_cube("plunger_pusher", (0.020, 0.020, 0.005), location=(0,0,0), rotation=(0,0,0))
+apply_material(plunger_pusher, mat_nitrile)
+
+# Rotate plunger_pusher so its +Z axis aligns +X (world).
+align_axis_to_vector(plunger_pusher, '+Z', Vector((1,0,0)))
+
+# Anchor plunger_pusher to nut_block.right_face.
+align_to_face(nut_block, 'right', plunger_pusher, 'left')
+
+# Move plunger_pusher by offset(0.050,0.000,0.060).
+plunger_pusher.location += Vector((0.050, 0.000, 0.060))
+
+# Create flange_stop
+# Size 0.020×0.020×0.005 m
+flange_stop = add_cube("flange_stop", (0.020, 0.020, 0.005), location=(0,0,0), rotation=(0,0,0))
+apply_material(flange_stop, mat_black_abs)
+
+# Rotate flange_stop so its +Z axis aligns +X (world).
+align_axis_to_vector(flange_stop, '+Z', Vector((1,0,0)))
+
+# Anchor flange_stop to base_plate.top_face.
+align_to_face(base_plate, 'top', flange_stop, 'bottom')
+
+# Move flange_stop by offset(0.050,0.000,0.060).
+flange_stop.location += Vector((0.050, 0.000, 0.060))
+
+# --- SECTION 6 – Create Syringe Consumable ---
+
+# Create glass_barrel
+# Ø0.020×0.080 m
+glass_barrel = add_cylinder("glass_barrel", 0.020, 0.080, location=(0,0,0), rotation=(0,0,0))
+apply_material(glass_barrel, mat_glass)
+
+# Rotate glass_barrel so its +Z axis aligns +X (world).
+align_axis_to_vector(glass_barrel, '+Z', Vector((1,0,0)))
+
+# Anchor glass_barrel to barrel_guide.inner_face.
+# "inner_face" is ambiguous for a cylinder. 
+# Assuming it means the face pointing towards the center of the assembly or the face facing the plunger.
+# Given the orientation (+Z to +X), and it's inside barrel_guide, 
+# it likely sits along the axis.
+# If it's "inner", it might mean the face at the "back" relative to the needle?
+# Or it might mean it's anchored to the center axis?
+# Let's assume "inner_face" means the face at the negative X end (left) if the needle is at positive X?
+# Or maybe it means it's anchored to the barrel_guide's axis?
+# Let's interpret "inner_face" as the face pointing towards the center of the syringe assembly.
+# If the syringe is horizontal, and the plunger is at one end, the "inner" face of the barrel is the one facing the plunger?
+# No, the plunger is inside.
+# Let's assume it means the face at the "back" of the barrel (left face, -X).
+align_to_face(barrel_guide, 'left', glass_barrel, 'left')
+
+# Move glass_barrel by offset(0.050,0.000,0.060).
+glass_barrel.location += Vector((0.050, 0.000, 0.060))
+
+# Create rubber_plunger
+# Ø0.018×0.010 m
+rubber_plunger = add_cylinder("rubber_plunger", 0.018, 0.010, location=(0,0,0), rotation=(0,0,0))
+apply_material(rubber_plunger, mat_nitrile)
+
+# Rotate rubber_plunger so its +Z axis aligns +X (world).
+align_axis_to_vector(rubber_plunger, '+Z', Vector((1,0,0)))
+
+# Anchor rubber_plunger to glass_barrel.inner_face.
+# Assuming inner_face is the left face (-X) of the barrel.
+align_to_face(glass_barrel, 'left', rubber_plunger, 'right') # Plunger right face touches barrel left face?
+# If plunger is inside, its right face (if +X is right) would be towards the needle.
+# Its left face would be towards the back.
+# Let's assume the plunger is at the back.
+# So rubber_plunger.right_face touches glass_barrel.left_face?
+# No, if it's inside, the plunger's left face is at the back of the barrel.
+# Let's just anchor it to the left face of the barrel.
+align_to_face(glass_barrel, 'left', rubber_plunger, 'left')
+
+# Move rubber_plunger by offset(0.050,0.000,0.060).
+rubber_plunger.location += Vector((0.050, 0.000, 0.060))
+
+# Create plastic_flange
+# Ø0.022×0.005 m
+plastic_flange = add_cylinder("plastic_flange", 0.022, 0.005, location=(0,0,0), rotation=(0,0,0))
+apply_material(plastic_flange, mat_plastic_trans)
+
+# Rotate plastic_flange so its +Z axis aligns +X (world).
+align_axis_to_vector(plastic_flange, '+Z', Vector((1,0,0)))
+
+# Anchor plastic_flange to glass_barrel.left_face.
+align_to_face(glass_barrel, 'left', plastic_flange, 'left')
+
+# Move plastic_flange by offset(0.050,0.000,0.060).
+plastic_flange.location += Vector((0.050, 0.000, 0.060))
+
+# Create needle_hub
+# Ø0.010×0.010 m
+needle_hub = add_cylinder("needle_hub", 0.010, 0.010, location=(0,0,0), rotation=(0,0,0))
+apply_material(needle_hub, mat_plastic_trans)
+
+# Rotate needle_hub so its +Z axis aligns +X (world).
+align_axis_to_vector(needle_hub, '+Z', Vector((1,0,0)))
+
+# Anchor needle_hub to glass_barrel.right_face.
+align_to_face(glass_barrel, 'right', needle_hub, 'right')
+
+# Move needle_hub by offset(0.050,0.000,0.060).
+needle_hub.location += Vector((0.050, 0.000, 0.060))
+```

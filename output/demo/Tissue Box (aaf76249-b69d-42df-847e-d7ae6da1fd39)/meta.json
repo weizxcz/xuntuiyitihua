@@ -1,0 +1,44 @@
+{
+  "id": "aaf76249-b69d-42df-847e-d7ae6da1fd39",
+  "name": "Tissue Box",
+  "instruction": "Could you design a tissue box for me? I want it to be rectangular with a slot on the top to pull tissues from. Make sure it can hold a standard size tissue pack.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a rectangular tissue box.",
+        "The box has a slot on the top for tissue extraction."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The slot is proportionate to the box."
+      ],
+      "Texture and surface detail": [
+        "The material of the box should be sturdy enough to support the tissues."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The slot is positioned correctly on the top for easy access to tissues.",
+        "The dimensions of the box are proportionate to accommodate a standard tissue pack."
+      ],
+      "Object distance and contact": [
+        "The slot does not interfere with the structural integrity of the box.",
+        "The base of the box is stable and supports the weight of the tissue pack."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects the request for a rectangular shape.",
+        "The inclusion of a top slot is correctly implemented.",
+        "The box is designed to hold a standard size tissue pack without issues."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

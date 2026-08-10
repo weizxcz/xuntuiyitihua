@@ -1,0 +1,43 @@
+{
+  "id": "0160d96f-89ce-4b69-aac0-42810f96b63c",
+  "name": "Frisbee",
+  "instruction": "Can you generate a simple frisbee?",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a frisbee.",
+        "The frisbee has a circular shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The thickness of the frisbee is reasonable for flight."
+      ],
+      "Texture and surface detail": [
+        "The surface should be smooth for aerodynamic performance."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The frisbee should have a consistent thickness throughout.",
+        "The edges of the frisbee are rounded for safety."
+      ],
+      "Object distance and contact": [
+        "There are no overlapping parts in the frisbee design.",
+        "The frisbee should be a single solid object."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The frisbee is generated as a simple object.",
+        "The design adheres to the basic characteristics of a frisbee."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

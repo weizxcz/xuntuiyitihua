@@ -1,0 +1,1 @@
+Let's create a 3D model of a plant pot. The pot should be cylindrical with a slightly wider top than bottom. Include a drainage hole at the base.

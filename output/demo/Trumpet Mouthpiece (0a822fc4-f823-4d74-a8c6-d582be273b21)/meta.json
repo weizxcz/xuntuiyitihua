@@ -1,0 +1,45 @@
+{
+  "id": "0a822fc4-f823-4d74-a8c6-d582be273b21",
+  "name": "Trumpet Mouthpiece",
+  "instruction": "Design a trumpet mouthpiece. It should be cylindrical with a flared end.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a trumpet mouthpiece.",
+        "The mouthpiece is cylindrical in shape.",
+        "The mouthpiece has a flared end."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The end is proportionate to the mouthpiece."
+      ],
+      "Texture and surface detail": [
+        "The surface of the mouthpiece is smooth for comfortable use.",
+        "The flared end may have subtle grooves for grip."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical part is properly aligned with the flared end.",
+        "The flared end is proportionate to the cylindrical section."
+      ],
+      "Object distance and contact": [
+        "The flared end does not overlap with the cylindrical section.",
+        "There is a seamless transition between the cylindrical part and the flared end."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the mouthpiece are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

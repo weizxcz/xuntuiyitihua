@@ -1,0 +1,56 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.80,1.0)
+mat_black_plastic | diffuse_color=(0.10,0.10,0.10,1.0)
+mat_blue_foam | diffuse_color=(0.10,0.20,0.50,1.0)
+mat_grey_steel | diffuse_color=(0.40,0.40,0.45,1.0)
+mat_white_pad | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bed_root | Composite of base_frame + mattress + head_section + foot_section + side_rails + control_panel | assembly_order=[base_frame], [mattress], [head_section, foot_section], [side_rails], [control_panel] |
+
+Layer 1 – Primary Structure (Base & Frame)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_frame | Composite of main_chassis + caster_wheels | assembly_order=[main_chassis], [caster_wheels] |
+| main_chassis | Rectangular steel frame 2.0×0.9×0.15 m | mat=grey_steel; create_method=primitive; size=(2.0, 0.9, 0.15); pos=(0, 0, 0.075); orientation=axis:+Z |
+| caster_wheels | 4× caster units at corners | pattern=grid(rows:2, cols:2, x_spacing:1.8, y_spacing:0.7, start_offset:(-0.9, -0.4)); mat=black_plastic; create_method=primitive; size=(0.05, 0.05, 0.05); pos=(0, 0, 0.025); orientation=axis:+Z; after=main_chassis |
+| wheel_assembly | Composite of caster_wheel + stem | assembly_order=[caster_wheel, stem] |
+| caster_wheel | Cylinder Ø0.05×0.05 m | mat=black_plastic; create_method=primitive; size=(0.05, 0.05, 0.05); pos=(0, 0, 0.025); orientation=axis:+Z |
+| stem | Cylinder Ø0.02×0.05 m | mat=grey_steel; create_method=primitive; size=(0.02, 0.02, 0.05); pos=(0, 0, 0.025); orientation=axis:+Z; connect=caster_wheel.top + stem.bottom |
+
+Layer 2 – Mattress & Support
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| mattress | Rectangular foam pad 2.0×0.9×0.1 m | mat=white_pad; create_method=primitive; size=(2.0, 0.9, 0.1); pos=(0, 0, 0.2); orientation=axis:+Z; align=base_frame.top_face to mattress.bottom_face |
+| support_beam_long | 2× Longitudinal steel beams | pattern=grid(rows:1, cols:2, x_spacing:0.4, y_spacing:0, start_offset:(-0.2, 0)); mat=grey_steel; create_method=primitive; size=(1.8, 0.05, 0.05); pos=(0, 0, 0.15); orientation=axis:+Z; align=base_frame.top_face to support_beam_long.bottom_face |
+| support_beam_short | 2× Shortitudinal steel beams | pattern=grid(rows:2, cols:1, x_spacing:0, y_spacing:0.4, start_offset:(0, -0.2)); mat=grey_steel; create_method=primitive; size=(0.05, 0.8, 0.05); pos=(0, 0, 0.15); orientation=axis:+Z; align=base_frame.top_face to support_beam_short.bottom_face |
+
+Layer 3 – Adjustable Sections (Head & Foot)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| head_section | Composite of head_platform + head_mattress + hinge_joint | assembly_order=[head_platform, head_mattress, hinge_joint] |
+| head_platform | Rectangular steel plate 0.8×0.9×0.02 m | mat=grey_steel; create_method=primitive; size=(0.8, 0.9, 0.02); pos=(0.6, 0, 0.25); orientation=axis:+Z; align=base_frame.top_face to head_platform.bottom_face |
+| head_mattress | Rectangular foam pad 0.8×0.9×0.1 m | mat=blue_foam; create_method=primitive; size=(0.8, 0.9, 0.1); pos=(0.6, 0, 0.31); orientation=axis:+Z; align=head_platform.top_face to head_mattress.bottom_face |
+| hinge_joint | Cylinder Ø0.05×0.1 m | mat=grey_steel; create_method=primitive; size=(0.05, 0.05, 0.1); pos=(0.2, 0, 0.25); orientation=axis:+Y; align=base_frame.top_face to hinge_joint.bottom_face |
+| foot_section | Composite of foot_platform + foot_mattress + hinge_joint | assembly_order=[foot_platform, foot_mattress, hinge_joint] |
+| foot_platform | Rectangular steel plate 0.8×0.9×0.02 m | mat=grey_steel; create_method=primitive; size=(0.8, 0.9, 0.02); pos=(-0.6, 0, 0.25); orientation=axis:+Z; align=base_frame.top_face to foot_platform.bottom_face |
+| foot_mattress | Rectangular foam pad 0.8×0.9×0.1 m | mat=blue_foam; create_method=primitive; size=(0.8, 0.9, 0.1); pos=(-0.6, 0, 0.31); orientation=axis:+Z; align=foot_platform.top_face to foot_mattress.bottom_face |
+| hinge_joint | Cylinder Ø0.05×0.1 m | mat=grey_steel; create_method=primitive; size=(0.05, 0.05, 0.1); pos=(-0.2, 0, 0.25); orientation=axis:+Y; align=base_frame.top_face to hinge_joint.bottom_face |
+
+Layer 4 – Safety Rails
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| side_rails | 2× Longitudinal safety rails | pattern=grid(rows:1, cols:2, x_spacing:0, y_spacing:0.45, start_offset:(0, -0.45)); mat=mat_aluminum; create_method=primitive; size=(1.8, 0.02, 0.6); pos=(0, 0, 0.5); orientation=axis:+Z; align=mattress.top_face to side_rails.bottom_face |
+| rail_support | 4× Vertical posts for rails | pattern=grid(rows:2, cols:2, x_spacing:0.8, y_spacing:0.9, start_offset:(-0.4, -0.45)); mat=mat_aluminum; create_method=primitive; size=(0.02, 0.02, 0.6); pos=(0, 0, 0.5); orientation=axis:+Z; align=mattress.top_face to rail_support.bottom_face |
+
+Layer 5 – Control Panel
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| control_panel | Composite of panel_body + buttons | assembly_order=[panel_body, buttons] |
+| panel_body | Rectangular box 0.1×0.05×0.02 m | mat=black_plastic; create_method=primitive; size=(0.1, 0.05, 0.02); pos=(0.95, 0.45, 0.3); orientation=axis:+Z; align=mattress.top_face to panel_body.bottom_face |
+| buttons | 4× Small cylinders | pattern=grid(rows:2, cols:2, x_spacing:0.02, y_spacing:0.01, start_offset:(-0.01, -0.005)); mat=mat_aluminum; create_method=primitive; size=(0.01, 0.01, 0.005); pos=(0.95, 0.45, 0.31); orientation=axis:+Z; align=panel_body.top_face to buttons.bottom_face |
+# ----------  END_GRAPH  ----------

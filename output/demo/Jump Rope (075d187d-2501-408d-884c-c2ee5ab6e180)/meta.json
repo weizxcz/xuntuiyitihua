@@ -1,0 +1,46 @@
+{
+  "id": "075d187d-2501-408d-884c-c2ee5ab6e180",
+  "name": "Jump Rope",
+  "instruction": "Create a 3D model of a jump rope. The rope should be long enough for an adult to use, with handles on both ends.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a jump rope.",
+        "The jump rope consists of a long, flexible rope.",
+        "There are handles at both ends of the rope."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the rope is proportionate to the length of the handles.",
+        "The handles are proportionate to the thickness of the rope."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The handles are positioned correctly at both ends of the rope.",
+        "The rope hangs naturally when not in use.",
+        "The rope should have a slight curve when laid flat."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the handles and the rope.",
+        "The handles are securely attached to the ends of the rope."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The model reflects the requirement for adult use."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

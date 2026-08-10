@@ -1,0 +1,12 @@
+Create a 3D model of a paintbrush set.
+
+1. Include brushes of varying sizes.
+2. Each brush should have a handle and bristles.
+3. Arrange them in a neat row.
+4. Ensure the handles are straight and uniform.
+5. Add a small label on each handle indicating the brush size.
+6. The bristles should be slightly spread out at the tips.
+7. Include a holder for the brushes.
+8. The holder should keep the brushes upright.
+9. Ensure the entire set is compact.
+10. The brushes should be easy to access and remove.

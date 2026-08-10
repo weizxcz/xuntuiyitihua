@@ -1,0 +1,265 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def get_face_normal(obj, face_index):
+    """Returns the world-space normal of a specific face."""
+    obj.update_from_repr() # Ensure data is up to date
+    matrix_world = obj.matrix_world
+    matrix_local_inv = obj.matrix_world.inverted()
+    
+    # Get vertices of the face
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+    face = bm.faces[face_index]
+    
+    # Calculate center and normal in local space
+    center_local = sum((v.co for v in face.verts), Vector()) / len(face.verts)
+    normal_local = face.normal
+    
+    # Transform to world space
+    center_world = matrix_world @ center_local
+    normal_world = matrix_world.to_3x3() @ normal_local
+    
+    bm.free()
+    return center_world, normal_world
+
+def align_object_to_face(obj_target, obj_source, target_face_idx, source_face_idx):
+    """
+    Aligns obj_source to obj_target such that:
+    1. The XY planes are parallel (normals aligned).
+    2. The source face is touching the target face (center-to-center alignment on normal axis).
+    """
+    target_center, target_normal = get_face_normal(obj_target, target_face_idx)
+    source_center, source_normal = get_face_normal(obj_source, source_face_idx)
+    
+    # Calculate rotation to align normals
+    # We want source_normal to align with target_normal
+    # However, for "top_face" to "bottom_face", normals might be opposite.
+    # The prompt says "Align sheet.Z_face to backing.top_face".
+    # Usually, top face normal is +Z, bottom is -Z.
+    # If we align +Z to +Z, they are parallel.
+    
+    # Determine direction vector
+    if target_face_idx == 0: # Assuming face 0 is bottom (-Z) or similar? 
+        # Blender cube faces: 0: -X, 1: +X, 2: -Y, 3: +Y, 4: -Z (Bottom), 5: +Z (Top)
+        # Let's assume standard cube orientation:
+        # Face 4 is Bottom (-Z), Face 5 is Top (+Z).
+        pass
+    
+    # Simple approach: Align Z axis of source to Z axis of target
+    # Since we rotated them to align +Z to world +Z, their local Z is world Z.
+    # So rotation is already done. We just need position.
+    
+    # Calculate offset vector
+    # We want source_face to touch target_face.
+    # If target is Top (+Z) and Source is Bottom (-Z), we want Source Bottom to touch Target Top.
+    # Target Top Center: target_center
+    # Target Top Normal: target_normal (approx +Z)
+    # Source Bottom Center: source_center
+    # Source Bottom Normal: source_normal (approx -Z)
+    
+    # Distance between centers along the normal
+    # We want: source_center + source_normal * (source_thickness/2) = target_center + target_normal * (target_thickness/2) ?
+    # No, simpler: The faces are at specific locations.
+    
+    # Let's use a locator approach for precision
+    # Create a temporary empty at target face center
+    bpy.ops.object.empty_add(location=target_center)
+    loc = bpy.context.active_object
+    loc.name = "temp_loc"
+    
+    # Orient empty to match target face normal
+    rot_mat = Matrix.Rotation(0, 4, target_normal) # This is tricky without a second vector
+    
+    # Actually, since we already rotated objects to align +Z to World +Z:
+    # Target Top Face is at Z = target_center.z + target_height/2
+    # Source Bottom Face is at Z = source_center.z - source_height/2
+    
+    # We want Source Bottom Z == Target Top Z
+    # source_center.z - source_height/2 = target_center.z + target_height/2
+    # source_center.z = target_center.z + target_height/2 + source_height/2
+    
+    # Get dimensions
+    target_size = obj_target.dimensions
+    source_size = obj_source.dimensions
+    
+    # Note: dimensions might be affected by rotation if not applied. 
+    # We applied rotation via euler, but scale is 1. 
+    # So dimensions are correct.
+    
+    target_top_z = target_center[2] + target_size[2]/2
+    source_bottom_z = target_top_z - source_size[2]/2
+    
+    # Current source center Z
+    current_source_z = source_center[2]
+    
+    # Delta Z
+    delta_z = source_bottom_z - current_source_z
+    
+    # Move source
+    obj_source.location += Vector((0, 0, delta_z))
+    
+    bpy.ops.object.select_all(action='DESELECT')
+    loc.select_set(True)
+    bpy.ops.object.delete()
+
+def align_xy_faces(obj_target, obj_source):
+    """
+    Aligns the XY faces (centers in XY plane) of two objects.
+    Assumes both are already oriented with +Z up.
+    """
+    # Get centers
+    target_center = obj_target.location
+    source_center = obj_source.location
+    
+    # Offset source to match target XY
+    delta_x = target_center[0] - source_center[0]
+    delta_y = target_center[1] - source_center[1]
+    
+    obj_source.location += Vector((delta_x, delta_y, 0))
+
+def apply_offset(obj, offset_vector):
+    """Applies a local offset to the object."""
+    # Since objects are aligned to world axes, local offset == world offset
+    obj.location += offset_vector
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_paper_backing = make_material("paper_backing", (0.545, 0.271, 0.075, 1))
+mat_paper_sheet = make_material("paper_sheet", (1.0, 1.0, 0.0, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create backing
+# Note: sticky_note_pad is referenced but not created in the prompt. 
+# Assuming it exists or we ignore the alignment if it doesn't? 
+# The prompt says "Align backing.XY_face to sticky_note_pad.XY_face".
+# If sticky_note_pad doesn't exist, this will fail. 
+# However, as a code generator, I must follow instructions. 
+# I will assume sticky_note_pad exists in the scene. If not, the script will error.
+# To be safe, I'll add a check or just proceed. Given strict rules, I proceed.
+
+# Create backing
+# Size: 0.0762 x 0.0762 x 0.005
+# Name: backing
+# Orientation: +Z aligns +Z (world) -> Default cube is +Z up, so no rotation needed if we place it correctly.
+# But let's explicitly set rotation to (0,0,0) to be sure.
+
+backing = add_cube("backing", (0.0762, 0.0762, 0.005), (0, 0, 0), (0, 0, 0))
+backing.data.materials.append(mat_paper_backing)
+
+# Rotate backing so its +Z axis aligns +Z (world)
+# Already done by default cube creation, but explicit step:
+backing.rotation_euler = (0, 0, 0)
+
+# Align backing.XY_face to sticky_note_pad.XY_face
+# Align backing.Z_face to sticky_note_pad.bottom_face
+# Then move by offset(0,0,-0.0025)
+
+# Check if sticky_note_pad exists
+if "sticky_note_pad" in bpy.data.objects:
+    sticky_pad = bpy.data.objects["sticky_note_pad"]
+    
+    # Align XY faces (centers in XY)
+    align_xy_faces(sticky_pad, backing)
+    
+    # Align Z faces: backing.Z_face (Top, Face 5) to sticky_note_pad.bottom_face (Bottom, Face 4)
+    # This implies backing sits ON TOP of sticky_note_pad? 
+    # "Align backing.Z_face to sticky_note_pad.bottom_face" usually means the faces touch.
+    # If backing is on top, its bottom face (Face 4) touches sticky_note_pad's top face (Face 5).
+    # But the instruction says "backing.Z_face" (Top) to "sticky_note_pad.bottom_face" (Bottom).
+    # This would mean backing is BELOW sticky_note_pad? Or inverted?
+    # Let's look at the offset: offset(0,0,-0.0025).
+    # If backing is below, its top face touches sticky_note_pad's bottom face.
+    # This makes sense for a "backing" under a pad.
+    
+    # Align backing Top (Face 5) to sticky_note_pad Bottom (Face 4)
+    # We need to calculate the position.
+    
+    # Get sticky_note_pad dimensions
+    pad_size = sticky_pad.dimensions
+    pad_bottom_z = sticky_pad.location[2] - pad_size[2]/2
+    
+    # Backing Top Z should be at pad_bottom_z
+    # Backing Top Z = backing.location[2] + backing.dimensions[2]/2
+    # So: backing.location[2] + 0.005/2 = pad_bottom_z
+    # backing.location[2] = pad_bottom_z - 0.0025
+    
+    backing.location[2] = pad_bottom_z - 0.0025
+    
+    # Apply offset
+    apply_offset(backing, Vector((0, 0, -0.0025)))
+else:
+    # Fallback if sticky_note_pad doesn't exist: Place at origin
+    # This is a safety measure, though strict adherence requires the object.
+    pass
+
+# SECTION 2 – Create stacked sheets
+# Create 20 sheets (sheet_0 to sheet_19)
+# Each sheet: 0.0762 x 0.0762 x 0.0001
+# Name: sheet_N
+# Orientation: +Z aligns +Z
+# Align sheet.XY_face to backing.XY_face
+# Align sheet.Z_face to previous_sheet.top_face (or backing.top_face for sheet_0)
+# Offset(0,0,0.00005)
+
+prev_sheet = None
+for i in range(20):
+    sheet_name = f"sheet_{i}"
+    
+    # Create sheet
+    sheet = add_cube(sheet_name, (0.0762, 0.0762, 0.0001), (0, 0, 0), (0, 0, 0))
+    sheet.data.materials.append(mat_paper_sheet)
+    
+    # Align XY faces to backing
+    align_xy_faces(backing, sheet)
+    
+    # Align Z face
+    if i == 0:
+        # Align sheet_0.Z_face (Top) to backing.top_face (Top)
+        # This means sheet_0 sits ON TOP of backing.
+        # Backing Top Z = backing.location[2] + backing.dimensions[2]/2
+        # Sheet_0 Bottom Z = sheet.location[2] - sheet.dimensions[2]/2
+        # We want Sheet_0 Bottom Z == Backing Top Z
+        
+        backing_top_z = backing.location[2] + backing.dimensions[2]/2
+        sheet.location[2] = backing_top_z + sheet.dimensions[2]/2
+    else:
+        # Align sheet_i.Z_face (Top) to sheet_{i-1}.top_face (Top)
+        # This means sheet_i sits ON TOP of sheet_{i-1}.
+        prev_top_z = prev_sheet.location[2] + prev_sheet.dimensions[2]/2
+        sheet.location[2] = prev_top_z + sheet.dimensions[2]/2
+    
+    # Apply offset
+    apply_offset(sheet, Vector((0, 0, 0.00005)))
+    
+    prev_sheet = sheet

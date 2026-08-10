@@ -1,0 +1,41 @@
+-- MATERIAL LIBRARY --
+copper_wire | diffuse_color=(0.87,0.27,0.09,1.0)
+magnetic_steel | diffuse_color=(0.4,0.4,0.45,1.0)
+steel_alloy | diffuse_color=(0.3,0.3,0.35,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| generator_assembly | Composite of stator_frame + rotor_core + shaft + end_covers | assembly_order=[stator_frame], [rotor_core, shaft], [end_covers] |
+
+Layer 1 – Primary Structure (Stator)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| stator_frame | Composite of outer_housing + inner_core_ring + winding_slots | assembly_order=[outer_housing, inner_core_ring, winding_slots] |
+| outer_housing | Cylinder Ø0.200×0.150 m (Housing) | pos=(0,0,0); orientation=axis:+Z; mat=steel_alloy; create_method=primitive |
+| inner_core_ring | Cylinder Ø0.180×0.140 m (Hollow) | Align(Z) inner_core_ring.bottom_face to outer_housing.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=magnetic_steel; create_method=primitive |
+| winding_slots | Composite of 4 radial slots | Align(XY) winding_slots.center to outer_housing.center; Align(Z) winding_slots.bottom_face to outer_housing.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=magnetic_steel; create_method=boolean_subtract; constraint=4 slots, width 0.010m, depth 0.015m, spaced 90° |
+
+Layer 2 – Primary Structure (Rotor)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rotor_core | Composite of core_body + magnets + windings | assembly_order=[core_body, magnets, windings] |
+| core_body | Cylinder Ø0.100×0.120 m | pos=(0,0,0.075); orientation=axis:+Z; mat=magnetic_steel; create_method=primitive |
+| magnets | Composite of 4 pole pieces | Align(XY) magnets.center to core_body.center; Align(Z) magnets.bottom_face to core_body.top_face; offset(0,0,0.001); orientation=axis:+Z; mat=magnetic_steel; create_method=primitive; constraint=4 blocks, 0.020m wide, 0.010m thick, spaced 90° |
+| windings | Composite of 4 coil groups | Align(XY) windings.center to core_body.center; Align(Z) windings.bottom_face to core_body.top_face; offset(0,0,0.011); orientation=axis:+Z; mat=copper_wire; create_method=primitive; constraint=4 coils, 0.015m diameter, 0.020m height, spaced 90° |
+
+Layer 3 – Shaft & Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| shaft | Cylinder Ø0.020×0.200 m | Align(XY) shaft.center to generator_assembly.center; Align(Z) shaft.bottom_face to stator_frame.bottom_face; offset(0,0,-0.025); orientation=axis:+Z; mat=steel_alloy; create_method=primitive |
+| rotor_core_mount | Composite of rotor_core + shaft | Align(XY) rotor_core.center to shaft.center; Align(Z) rotor_core.bottom_face to shaft.top_face; offset(0,0,0.060); orientation=axis:+Z; mat=-; create_method=boolean_union |
+
+Layer 4 – End Covers
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| end_cover_top | Cylinder Ø0.180×0.010 m | Align(XY) end_cover_top.center to generator_assembly.center; Align(Z) end_cover_top.bottom_face to stator_frame.top_face; offset(0,0,0.005); orientation=axis:+Z; mat=steel_alloy; create_method=primitive |
+| end_cover_bottom | Cylinder Ø0.180×0.010 m | Align(XY) end_cover_bottom.center to generator_assembly.center; Align(Z) end_cover_bottom.top_face to stator_frame.bottom_face; offset(0,0,-0.005); orientation=axis:+Z; mat=steel_alloy; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

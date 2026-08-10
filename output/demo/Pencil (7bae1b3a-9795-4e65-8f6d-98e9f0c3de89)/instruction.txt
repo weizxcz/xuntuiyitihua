@@ -1,0 +1,1 @@
+Design a pencil. The pencil should be hexagonal in shape and include an eraser at the end. 

@@ -1,0 +1,140 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_frame; diffuse_color = (0.502,0.271,0.0,1.0).
+Define material mat_bar_c; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_d; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_e; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_f; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_g; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_a; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_b; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_bar_c_high; diffuse_color = (0.957,0.851,0.651,1.0).
+Define material mat_mallet_head; diffuse_color = (0.957,0.957,0.957,1.0).
+Define material mat_mallet_stick; diffuse_color = (0.502,0.271,0.0,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create frame base left and right pillars  ---
+Create primitive cuboid with size 0.02×0.02×0.6 m and name it frame_base_left.
+Rotate frame_base_left so its +Z axis aligns +Z (world).
+Anchor frame_base_left.bottom_face to world.bottom_face.
+Align frame_base_left.left_face to world.left_face.
+Then move by offset(0,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.6 m and name it frame_base_right.
+Rotate frame_base_right so its +Z axis aligns +Z (world).
+Anchor frame_base_right.bottom_face to world.bottom_face.
+Align frame_base_right.right_face to world.right_face.
+Then move by offset(0,0,0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create frame top, bottom, and mid horizontal bars  ---
+Create primitive cuboid with size 0.42×0.02×0.02 m and name it frame_base_top.
+Rotate frame_base_top so its +Z axis aligns +Z (world).
+Anchor frame_base_top.top_face to frame_base_left.top_face.
+Align frame_base_top.front_face to frame_base_left.front_face.
+Then move by offset(0.2,0,0).
+
+Create primitive cuboid with size 0.42×0.02×0.02 m and name it frame_base_bottom.
+Rotate frame_base_bottom so its +Z axis aligns +Z (world).
+Anchor frame_base_bottom.bottom_face to frame_base_left.bottom_face.
+Align frame_base_bottom.front_face to frame_base_left.front_face.
+Then move by offset(0.2,0,0).
+
+Create primitive cuboid with size 0.42×0.02×0.02 m and name it frame_base_mid.
+Rotate frame_base_mid so its +Z axis aligns +Z (world).
+Anchor frame_base_mid.top_face to frame_base_left.top_face.
+Align frame_base_mid.front_face to frame_base_left.front_face.
+Then move by offset(0.2,0,0.3).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create ascending bars c through c_high  ---
+Create primitive cuboid with size 0.02×0.02×0.15 m and name it bar_c.
+Rotate bar_c so its +Z axis aligns +Z (world).
+Anchor bar_c.bottom_face to frame_base_mid.top_face.
+Align bar_c.front_face to frame_base_mid.front_face.
+Then move by offset(0.02,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.17 m and name it bar_d.
+Rotate bar_d so its +Z axis aligns +Z (world).
+Anchor bar_d.bottom_face to frame_base_mid.top_face.
+Align bar_d.front_face to frame_base_mid.front_face.
+Then move by offset(0.06,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.19 m and name it bar_e.
+Rotate bar_e so its +Z axis aligns +Z (world).
+Anchor bar_e.bottom_face to frame_base_mid.top_face.
+Align bar_e.front_face to frame_base_mid.front_face.
+Then move by offset(0.10,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.21 m and name it bar_f.
+Rotate bar_f so its +Z axis aligns +Z (world).
+Anchor bar_f.bottom_face to frame_base_mid.top_face.
+Align bar_f.front_face to frame_base_mid.front_face.
+Then move by offset(0.14,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.23 m and name it bar_g.
+Rotate bar_g so its +Z axis aligns +Z (world).
+Anchor bar_g.bottom_face to frame_base_mid.top_face.
+Align bar_g.front_face to frame_base_mid.front_face.
+Then move by offset(0.18,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.25 m and name it bar_a.
+Rotate bar_a so its +Z axis aligns +Z (world).
+Anchor bar_a.bottom_face to frame_base_mid.top_face.
+Align bar_a.front_face to frame_base_mid.front_face.
+Then move by offset(0.22,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.27 m and name it bar_b.
+Rotate bar_b so its +Z axis aligns +Z (world).
+Anchor bar_b.bottom_face to frame_base_mid.top_face.
+Align bar_b.front_face to frame_base_mid.front_face.
+Then move by offset(0.26,0,0).
+
+Create primitive cuboid with size 0.02×0.02×0.29 m and name it bar_c_high.
+Rotate bar_c_high so its +Z axis aligns +Z (world).
+Anchor bar_c_high.bottom_face to frame_base_mid.top_face.
+Align bar_c_high.front_face to frame_base_mid.front_face.
+Then move by offset(0.30,0,0).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create mallet 1  ---
+Create primitive cylinder with Ø0.005×0.25 m and name it mallet_1_stick.
+Rotate mallet_1_stick so its +Z axis aligns +Z (world).
+Anchor mallet_1_stick.bottom_face to world.bottom_face.
+Then move by offset(0.1,0,0).
+
+Create primitive cylinder with Ø0.02×0.02 m and name it mallet_1_head.
+Rotate mallet_1_head so its +Z axis aligns +Z (world).
+Anchor mallet_1_head.bottom_face to mallet_1_stick.top_face.
+Then move by offset(0,0,0.01).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create mallet 2  ---
+Create primitive cylinder with Ø0.005×0.25 m and name it mallet_2_stick.
+Rotate mallet_2_stick so its +Z axis aligns +Z (world).
+Anchor mallet_2_stick.bottom_face to world.bottom_face.
+Then move by offset(0.3,0,0).
+
+Create primitive cylinder with Ø0.02×0.02 m and name it mallet_2_head.
+Rotate mallet_2_head so its +Z axis aligns +Z (world).
+Anchor mallet_2_head.bottom_face to mallet_2_stick.top_face.
+Then move by offset(0,0,0.01).
+
+Stage 5 complete.
+
+All stages complete.

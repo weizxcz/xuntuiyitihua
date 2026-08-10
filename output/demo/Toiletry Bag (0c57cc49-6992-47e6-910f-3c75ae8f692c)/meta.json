@@ -1,0 +1,48 @@
+{
+  "id": "0c57cc49-6992-47e6-910f-3c75ae8f692c",
+  "name": "Toiletry Bag",
+  "instruction": "Design a toiletry bag with multiple compartments for organizing toiletries. It should have a main compartment for larger items, smaller pockets for accessories, and a secure zipper closure. The bag should be compact and easy to carry.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a toiletry bag.",
+        "The bag features a rectangular shape.",
+        "There are multiple compartments within the bag."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The main compartment is larger than the smaller pockets.",
+        "The size of the smaller pockets is proportionate to the main compartment."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The main compartment is positioned at the center of the bag.",
+        "The smaller pockets are arranged around the main compartment for easy access.",
+        "The zipper closure runs along the top of the bag."
+      ],
+      "Object distance and contact": [
+        "The compartments do not overlap each other.",
+        "There is adequate space between the main compartment and smaller pockets.",
+        "The zipper closure is securely positioned without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified compartments are accurately represented.",
+        "The bag includes a secure zipper closure as instructed.",
+        "The design is compact and easy to carry as requested."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

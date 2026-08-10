@@ -1,0 +1,32 @@
+-- MATERIAL LIBRARY --
+fabric_silk | diffuse_color=(0.15,0.05,0.05,1.0)
+fabric_silk_lining | diffuse_color=(0.10,0.03,0.03,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| necktie | Composite of necktie_blade + necktie_tongue + necktie_back + necktie_loop + necktie_keeper | assembly_order=necktie_blade, necktie_tongue, necktie_back, necktie_loop, necktie_keeper |
+
+Layer 1 – Primary Structure (The Blade)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| necktie_blade | Tapered triangular prism approx 0.150×0.080×0.002 m (W×H×T) | Align(XY) necktie_blade.center to necktie.center; orientation=axis:+Z; mat=fabric_silk; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Define a symmetric isosceles triangle. Base width W=0.150 m at bottom (y=-0.040), tip height H=0.080 m at top (y=+0.040). Vertices: (-0.075, -0.040, 0), (+0.075, -0.040, 0), (0, +0.040, 0). Close loop, ensure face normal +Z. Extrude thickness t=0.002 m along +Z with caps. |
+
+Layer 2 – Secondary Structure (The Tongue)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| necktie_tongue | Small rectangular tab approx 0.040×0.020×0.002 m | Align(XY) necktie_tongue.center to necktie_blade.bottom_face.center; offset(0, -0.050, 0); orientation=axis:+Z; mat=fabric_silk; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Rectangle W=0.040 m, H=0.020 m centered at origin. Extrude t=0.002 m along +Z. |
+
+Layer 3 – Back Structure (The Back Panel)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| necktie_back | Tapered triangular prism approx 0.140×0.070×0.001 m | Align(XY) necktie_back.center to necktie_blade.center; offset(0, 0, -0.0015); orientation=axis:+Z; mat=fabric_silk_lining; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Isosceles triangle slightly smaller than blade. Base W=0.140 m, Height H=0.070 m. Vertices: (-0.070, -0.035, 0), (+0.070, -0.035, 0), (0, +0.035, 0). Extrude t=0.001 m along +Z. |
+
+Layer 4 – Loop & Keeper
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| necktie_loop | Small rectangular ring approx 0.030×0.010×0.002 m | Align(XY) necktie_loop.center to necktie_blade.center; offset(0, 0.020, 0); orientation=axis:+Z; mat=fabric_silk; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Rectangle W=0.030 m, H=0.010 m. Extrude t=0.002 m along +Z. |
+| necktie_keeper | Small rectangular strip approx 0.030×0.005×0.002 m | Align(XY) necktie_keeper.center to necktie_blade.center; offset(0, -0.010, 0); orientation=axis:+Z; mat=fabric_silk; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Rectangle W=0.030 m, H=0.005 m. Extrude t=0.002 m along +Z. |
+# ----------  END_GRAPH  ----------

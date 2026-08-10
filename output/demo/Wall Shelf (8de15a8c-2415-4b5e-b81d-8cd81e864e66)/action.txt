@@ -1,0 +1,48 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_white_paint; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material mat_wood_oak; diffuse_color = (0.75,0.60,0.40,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create shelf panel  ---
+Create primitive cuboid with size 0.914×0.203×0.025 m and name it shelf_panel.
+Rotate shelf_panel so its +Z axis aligns +Z (world).
+Move shelf_panel to (0, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create left bracket  ---
+Create primitive cuboid with size 0.025×0.150×0.025 m and name it bracket_L_vertical_plate.
+Rotate bracket_L_vertical_plate so its +Z axis aligns +Z (world).
+Align bracket_L_vertical_plate.back_face to shelf_panel.bottom_face.
+Then move by offset(0, 0, -0.025).
+
+Create primitive cuboid with size 0.203×0.025×0.025 m and name it bracket_L_horizontal_plate.
+Rotate bracket_L_horizontal_plate so its +Z axis aligns +Z (world).
+Align bracket_L_horizontal_plate.top_face to bracket_L_vertical_plate.bottom_face.
+Then move by offset(0, 0, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create right bracket  ---
+Create primitive cuboid with size 0.025×0.150×0.025 m and name it bracket_R_vertical_plate.
+Rotate bracket_R_vertical_plate so its +Z axis aligns +Z (world).
+Align bracket_R_vertical_plate.back_face to shelf_panel.bottom_face.
+Then move by offset(0.711, 0, -0.025).
+
+Create primitive cuboid with size 0.203×0.025×0.025 m and name it bracket_R_horizontal_plate.
+Rotate bracket_R_horizontal_plate so its +Z axis aligns +Z (world).
+Align bracket_R_horizontal_plate.top_face to bracket_R_vertical_plate.bottom_face.
+Then move by offset(0, 0, 0).
+Stage 3 complete.
+
+All stages complete.

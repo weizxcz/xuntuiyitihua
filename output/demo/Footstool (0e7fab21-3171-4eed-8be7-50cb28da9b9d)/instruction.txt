@@ -1,0 +1,1 @@
+Create a 3D model of a footstool. It should be square with four short legs.

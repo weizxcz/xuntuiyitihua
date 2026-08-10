@@ -1,0 +1,55 @@
+{
+  "id": "48e04b79-a785-4362-9c43-b99c9ce402a2",
+  "name": "Winter Coat for Hiking",
+  "instruction": "Design a 3D model of a winter coat suitable for hiking. The coat should have a hood, multiple pockets, and adjustable cuffs. Include a zipper and a buttoned flap over the zipper for added protection. The coat should be long enough to cover the hips and have a drawstring at the waist for a better fit.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a winter coat.",
+        "The coat features a hood.",
+        "The coat has multiple pockets.",
+        "The cuffs are adjustable.",
+        "The coat includes a zipper.",
+        "There is a buttoned flap over the zipper.",
+        "The coat is long enough to cover the hips.",
+        "The coat has a drawstring at the waist."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hood is proportionate to the coat.",
+        "The pockets are positioned for easy access while hiking.",
+        "The cuffs are appropriately sized for adjustability."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hood is correctly positioned on the coat.",
+        "The pockets are placed at a reachable height.",
+        "The cuffs are designed to fit snugly around the wrists.",
+        "The drawstring at the waist allows for adjustment without compromising the coat's structure."
+      ],
+      "Object distance and contact": [
+        "The zipper is aligned properly with the coat's front.",
+        "The buttoned flap overlaps the zipper without gaps.",
+        "The pockets do not interfere with the coat's silhouette.",
+        "The drawstring does not obstruct the waist area."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented in the design.",
+        "The coat includes all requested features without omissions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

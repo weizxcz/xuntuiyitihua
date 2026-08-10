@@ -1,0 +1,265 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def clear_scene():
+    """Delete every existing object to start from a clean scene."""
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action='ALL')
+    bpy.ops.object.delete(use_global=False)
+    # Clear collections if necessary, though delete usually handles it
+    for col in bpy.data.collections:
+        col.objects.clear()
+
+def set_units_metres():
+    """Set the length unit to metres."""
+    bpy.context.scene.unit_settings.scale_length = 1.0
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material with the given diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, width_segments=32, height_segments=16):
+    """Add a UV Sphere primitive, centered at origin."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=width_segments, ring_count=height_segments, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_bottom, radius_top, depth):
+    """Add a cone primitive, centered at origin."""
+    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=radius_bottom, radius2=radius_top, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_bevel(obj, width, segments=5, profile=0.5, limit_method='ANGLE'):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.profile = profile
+    mod.limit_method = limit_method
+    mod.angle_limit = math.radians(30) # Default angle limit
+    return mod
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Perform a boolean subtract operation using a cutter object."""
+    # Ensure target is active for the modifier addition
+    bpy.context.view_layer.objects.active = target_obj
+    
+    # Add Boolean Modifier
+    mod = target_obj.modifiers.new(name="BooleanSubtract", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter object
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    return target_obj
+
+def boolean_union(union_obj, target_obj):
+    """Perform a boolean union operation."""
+    bpy.context.view_layer.objects.active = target_obj
+    
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+    return target_obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align an object's local axis to a world vector."""
+    # Get current rotation
+    rot_euler = obj.rotation_euler.copy()
+    
+    # Define target axis vector in local space
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    elif axis == 'Z':
+        local_axis = Vector((0, 0, 1))
+    else:
+        raise ValueError("Axis must be X, Y, or Z")
+        
+    # Calculate rotation matrix to align local_axis to world vector
+    # We need to rotate the object so that its local axis points in the direction of 'vector'
+    # This is equivalent to finding the rotation that maps local_axis to vector.normalized()
+    
+    # Normalize input vector
+    target_vec = vector.normalized()
+    
+    # Create rotation matrix
+    # Using quaternion rotation from one vector to another
+    quat = local_axis.rotation_difference(target_vec)
+    
+    # Apply rotation
+    obj.rotation_euler = quat.to_euler()
+    obj.update_tag()
+
+def average(points):
+    """Calculate the average position of a list of points."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    """Helper class to calculate positions relative to an object."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.matrix_world = obj.matrix_world
+        self.matrix_local = obj.matrix_local
+        
+    def center_world(self):
+        """Return the world center of the object."""
+        return self.matrix_world.to_translation()
+        
+    def face_center_world(self, face_index=0):
+        """Return the world center of a specific face (by index)."""
+        # This is a simplified approximation for primitives
+        # For complex meshes, we'd need to iterate vertices of the face
+        # Here we assume standard orientations for primitives created by helpers
+        if self.obj.type == 'MESH':
+            # Get bounding box center of the specific face? 
+            # Simplified: Return center + offset based on normal
+            # Since we control creation, we can infer.
+            # Let's stick to center_world for general alignment unless specific face logic is needed.
+            # For "top_face" or "bottom_face", we can calculate based on height.
+            pass
+        return self.center_world()
+
+    def top_face_world(self):
+        """Return the world position of the top face center (assuming Z-up cylinder/cone)."""
+        # Local top face center is (0, 0, radius/height depending on primitive)
+        # For a cylinder centered at 0,0,0 with height H, top is at Z = H/2
+        # We need to transform this local point to world space
+        local_top = Vector((0, 0, self.obj.dimensions.z / 2))
+        return self.matrix_world @ local_top
+
+    def bottom_face_world(self):
+        """Return the world position of the bottom face center."""
+        local_bottom = Vector((0, 0, -self.obj.dimensions.z / 2))
+        return self.matrix_world @ local_bottom
+
+    def radial_point_world(self, angle=0, radius_factor=1.0):
+        """Return a point on the radial edge."""
+        # Simplified: returns a point on the X axis at the edge
+        # Local radial point at angle 0 is (radius, 0, 0)
+        # We need the radius. For cylinder/cone, it's dimensions.x / 2
+        radius = self.obj.dimensions.x / 2
+        local_point = Vector((radius * radius_factor, 0, 0))
+        return self.matrix_world @ local_point
+
+# ==============================================================================
+# BLOCK 0: Scene Reset & Units
+# ==============================================================================
+clear_scene()
+set_units_metres()
+
+# ==============================================================================
+# BLOCK 1: Materials
+# ==============================================================================
+mat_candle_wax = make_material("candle_wax", (1.00, 1.00, 0.86, 1))
+mat_wick_cotton = make_material("wick_cotton", (0.08, 0.08, 0.08, 1))
+
+# ==============================================================================
+# BLOCK 2: Geometry Generation
+# ==============================================================================
+
+# --- SECTION 1 – Create wax body ---
+# Create primitive cylinder with diameter 0.080 m and height 0.150 m and name it wax_body.
+# Radius = Diameter / 2 = 0.040
+wax_body = add_cylinder("wax_body", radius=0.040, depth=0.150)
+wax_body.data.materials.append(mat_candle_wax)
+
+# Rotate wax_body so its +Z axis aligns +Z (world).
+# Since add_cylinder creates Z-up by default, this is already aligned.
+# Explicitly ensure alignment.
+align_axis_to_vector(wax_body, 'Z', Vector((0, 0, 1)))
+
+# Align wax_body.XY_face to world.origin.
+# "XY_face" usually implies the bottom face if Z is up.
+# Align bottom face to world origin (0,0,0).
+loc_wax = Locator(wax_body)
+bottom_wax = loc_wax.bottom_face_world()
+offset_wax = -bottom_wax
+wax_body.location += offset_wax
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create wick ---
+# Create primitive cylinder with diameter 0.002 m and height 0.020 m and name it wick.
+wick = add_cylinder("wick", radius=0.001, depth=0.020)
+wick.data.materials.append(mat_wick_cotton)
+
+# Rotate wick so its +Z axis aligns +Z (world).
+align_axis_to_vector(wick, 'Z', Vector((0, 0, 1)))
+
+# Align wick.XY_face to wax_body.center.
+# "XY_face" likely means the bottom face of the wick (Z-up).
+# Align wick bottom to wax_body center.
+loc_wax_body = Locator(wax_body)
+center_wax = loc_wax_body.center_world()
+
+loc_wick = Locator(wick)
+bottom_wick = loc_wick.bottom_face_world()
+
+# Move wick so its bottom face is at wax_body center
+offset_align = center_wax - bottom_wick
+wick.location += offset_align
+
+# Align wick.bottom_face to wax_body.top_face.
+# This implies stacking. Wick bottom should touch Wax Body top.
+# Currently, Wick Bottom is at Wax Body Center.
+# We need to move Wick Up so its Bottom is at Wax Body Top.
+top_wax = loc_wax_body.top_face_world()
+bottom_wick_new = loc_wick.bottom_face_world() # This is still at center_wax due to previous step
+
+# Calculate required move to put Wick Bottom at Wax Body Top
+# Target Wick Bottom Position = Top Wax Position
+# Current Wick Bottom Position = Center Wax Position
+# Move Vector = Top Wax - Center Wax
+move_vector = top_wax - center_wax
+wick.location += move_vector
+
+# Then move by offset(0,0,0.002).
+# This is an additional offset in local axes.
+# Since Wick is Z-aligned, local Z is world Z.
+wick.location += Vector((0, 0, 0.002))
+
+# Stage 2 complete.
+```

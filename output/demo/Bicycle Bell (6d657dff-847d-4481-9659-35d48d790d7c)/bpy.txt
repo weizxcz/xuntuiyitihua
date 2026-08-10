@@ -1,0 +1,390 @@
+```python
+import bpy
+import bmesh
+import mathutils
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    """Add a cube mesh object with specific size."""
+    bpy.ops.mesh.primitive_cube_add(size=1) # size parameter in add is half-width
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    return obj
+
+def add_uvsphere(name, radius, res=32):
+    """Add a UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=res, ring_count=res//2)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius, height):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius, radius2=0, depth=height)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_disc(name, radius, segments=32):
+    """Add a disc mesh object."""
+    bpy.ops.mesh.primitive_circle_add(radius=radius, fill_type='TRIFAN', segments=segments)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean_subtract(cutter_obj, target_obj):
+    """Apply Boolean Subtract modifier from cutter to target."""
+    # Ensure target has a modifier slot
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter_obj, do_unlink=True)
+
+def boolean_union(union_obj, target_obj):
+    """Apply Boolean Union modifier from union_obj to target."""
+    mod = target_obj.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove union_obj
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj, width, segments=4, profile=0.5):
+    """Add a bevel modifier to an object."""
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.profile = profile
+    # Apply immediately for simplicity in this script flow
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a global vector."""
+    # axis: 'X', 'Y', or 'Z'
+    # vector: target global direction
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else:
+        local_axis = Vector((0, 0, 1))
+        
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vector.normalized())
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    """Calculate the average position of a list of vectors."""
+    if not points:
+        return Vector((0, 0, 0))
+    avg = sum(points, Vector()) / len(points)
+    return avg
+
+class Locator:
+    """Helper class to find specific points on an object's mesh."""
+    def __init__(self, obj):
+        self.obj = obj
+        self.mesh = obj.data
+        self.verts = self.mesh.vertices
+        self.has_calc_normals = False
+        
+    def _ensure_normals(self):
+        if not self.has_calc_normals:
+            self.mesh.calc_normals_split()
+            self.has_calc_normals = True
+
+    def center_world(self):
+        """Get the world-space center of the object's bounding box."""
+        bbox = [self.obj.matrix_world @ v.co for v in self.verts]
+        return average(bbox)
+
+    def face_center_world(self, face_index):
+        """Get the world-space center of a specific face."""
+        self._ensure_normals()
+        face = self.mesh.polygons[face_index]
+        # Get vertices of the face
+        verts_co = [self.obj.matrix_world @ self.verts[i].co for i in face.vertices]
+        return average(verts_co)
+
+    def radial_point_world(self, angle_deg, axis='Z', center_offset=Vector((0,0,0))):
+        """Get a point on the radial perimeter of the object's bounding box."""
+        # Simple approximation: find min/max extents on X/Y plane
+        xs = [v.co.x for v in self.verts]
+        ys = [v.co.y for v in self.verts]
+        zs = [v.co.z for v in self.verts]
+        
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        min_z, max_z = min(zs), max(zs)
+        
+        cx = (min_x + max_x) / 2
+        cy = (min_y + max_y) / 2
+        cz = (min_z + max_z) / 2
+        
+        # Radius approximation
+        rx = (max_x - min_x) / 2
+        ry = (max_y - min_y) / 2
+        
+        angle_rad = math.radians(angle_deg)
+        
+        # Calculate point on ellipse
+        px = cx + rx * math.cos(angle_rad)
+        py = cy + ry * math.sin(angle_rad)
+        pz = cz # Mid Z
+        
+        return Vector((px, py, pz))
+
+    def bottom_face_world(self):
+        """Get the center of the bottom-most face."""
+        self._ensure_normals()
+        min_z = min(v.co.z for v in self.verts)
+        # Find faces that have vertices at min_z
+        candidate_faces = []
+        for i, face in enumerate(self.mesh.polygons):
+            verts_z = [self.verts[v_idx].co.z for v_idx in face.vertices]
+            if min(verts_z) == min_z:
+                candidate_faces.append(i)
+        
+        if not candidate_faces:
+            return self.center_world()
+            
+        # Return the center of the first candidate face
+        return self.face_center_world(candidate_faces[0])
+
+    def top_face_world(self):
+        """Get the center of the top-most face."""
+        self._ensure_normals()
+        max_z = max(v.co.z for v in self.verts)
+        candidate_faces = []
+        for i, face in enumerate(self.mesh.polygons):
+            verts_z = [self.verts[v_idx].co.z for v_idx in face.vertices]
+            if max(verts_z) == max_z:
+                candidate_faces.append(i)
+        
+        if not candidate_faces:
+            return self.center_world()
+            
+        return self.face_center_world(candidate_faces[0])
+
+    def side_at(self, angle_deg):
+        """Get the center of the side face at a given angle (0=+X, 90=+Y)."""
+        # This is a simplified heuristic for cylindrical objects
+        # It returns a point on the perimeter
+        return self.radial_point_world(angle_deg)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_bell_dome = make_material("bell_dome", (1.0, 0.843, 0.0, 1))
+mat_clamp_base = make_material("clamp_base", (0.196, 0.196, 0.196, 1))
+mat_lever = make_material("lever", (0.784, 0.784, 0.784, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# Note: bicycle_bell is referenced but not defined in the prompt. 
+# We assume it exists or create a placeholder if needed. 
+# However, the prompt says "Align ... to bicycle_bell.center". 
+# If bicycle_bell doesn't exist, this will fail. 
+# Assuming bicycle_bell is a pre-existing object in the scene or created elsewhere.
+# For safety, let's check if it exists. If not, we might need to create a dummy or assume it's there.
+# Given the strict instructions, I will assume bicycle_bell exists.
+
+# Check if bicycle_bell exists
+if "bicycle_bell" not in bpy.data.objects:
+    # Create a dummy object to prevent crash if not present, though logically it should be there.
+    # In a real scenario, this object would be built in previous steps.
+    # Here we create a simple cube as a placeholder for the anchor.
+    bpy.ops.mesh.primitive_cube_add(size=0.1)
+    obj = bpy.context.active_object
+    obj.name = "bicycle_bell"
+    obj.location = (0, 0, 0)
+
+bicycle_bell = bpy.data.objects["bicycle_bell"]
+
+# --- SECTION 1 – Create bell_dome ---
+
+# Create full_sphere and name it bell_dome
+bell_dome = add_uvsphere("bell_dome", radius=0.0254) # Radius chosen to fit typical bell size, not specified exactly but implied by cutter
+bell_dome.data.materials.append(mat_bell_dome)
+
+# Rotate bell_dome so its +Z axis aligns +Z (world) - Default is already +Z, but explicit step
+align_axis_to_vector(bell_dome, 'Z', Vector((0, 0, 1)))
+
+# Create plane_cutter and name it bell_dome_cut with size 0.0508×0.0508×0.0508 m
+# A cube of this size can act as a cutter.
+bell_dome_cut = add_cube("bell_dome_cut", (0.0508, 0.0508, 0.0508))
+bell_dome_cut.data.materials.append(mat_clamp_base) # Material doesn't matter for cutter
+
+# Orientation=axis:+Z (Default)
+
+# Anchor bell_dome_cut to bell_dome.center
+loc_bell_dome = bell_dome.location
+bell_dome_cut.location = loc_bell_dome
+
+# Then move by offset(0, 0, -0.0254)
+bell_dome_cut.location.z -= 0.0254
+
+# Boolean-subtract bell_dome_cut from bell_dome
+boolean_subtract(bell_dome_cut, bell_dome)
+
+# Rotate bell_dome so its curved face points +Z.
+# After cutting the bottom half (z -= 0.0254 from center of radius 0.0254), 
+# the flat face is at z=0 (if center was 0) or z=-0.0254 relative to original center.
+# The sphere center was at 0. The cut plane is at z = -0.0254.
+# The remaining hemisphere is the top half (z > -0.0254).
+# The flat face normal points -Z. The curved face normal points generally +Z.
+# The prompt says "Rotate bell_dome so its curved face points +Z".
+# Currently, the flat face is at the bottom. The curved part is on top.
+# So the object is already oriented correctly relative to world Z if we consider the "dome" shape.
+# However, if "curved face points +Z" implies the symmetry axis of the dome points +Z, 
+# and the flat base is at -Z, then it is already correct.
+# Let's ensure the flat face is at the bottom (-Z direction) and curved part up.
+# The cut was at z = -0.0254. The sphere center was 0.
+# So the flat face is at z = -0.0254. The top of the sphere is at z = 0.0254.
+# The object sits above the cut plane.
+# To make the "curved face point +Z", we might need to flip it if the flat face was intended to be the base.
+# Usually, a dome sits on its flat face. If the flat face is at the bottom, the curved part points up (+Z).
+# So no rotation is needed if the flat face is at the bottom.
+# Let's verify: The cutter moved down by -0.0254. It cut the bottom.
+# The remaining object is the top hemisphere.
+# The flat face is at the bottom. The curved surface is on top.
+# This matches "curved face points +Z".
+
+# Align bell_dome.center to bicycle_bell.center
+loc_bell = bell_dome.location
+loc_bike = bicycle_bell.location
+bell_dome.location = loc_bike
+
+# Align bell_dome.bottom_face to bicycle_bell.bottom_face
+# We need to find the bottom face of bell_dome and bicycle_bell
+loc_bell_bottom = bell_dome.location
+loc_bike_bottom = bicycle_bell.location
+
+# Calculate the Z offset difference between their bottom faces
+# We need to know the Z position of the bottom face of each object.
+# For bell_dome (hemisphere), the bottom face is the flat cut face.
+# Its Z coordinate is loc_bell_bottom.z - radius (if center is at loc).
+# Wait, the center of the sphere was at loc_bell_bottom. The cut was at loc - 0.0254.
+# So the flat face Z is loc_bell_bottom.z - 0.0254.
+# For bicycle_bell, we need its bottom face Z.
+# Let's use the Locator class to be precise.
+
+loc_bell_obj = Locator(bell_dome)
+loc_bike_obj = Locator(bicycle_bell)
+
+z_bell_bottom = loc_bell_obj.bottom_face_world().z
+z_bike_bottom = loc_bike_obj.bottom_face_world().z
+
+# Move bell_dome so its bottom face Z matches bicycle_bell bottom face Z
+delta_z = z_bike_bottom - z_bell_bottom
+bell_dome.location.z += delta_z
+
+# Assembly guideline satisfied.
+# Stage 1 complete.
+
+# --- SECTION 2 – Create lever ---
+
+# Create primitive cuboid with size 0.015×0.005×0.002 m and name it lever
+lever = add_cube("lever", (0.015, 0.005, 0.002))
+lever.data.materials.append(mat_lever)
+
+# Rotate lever so its +Z axis aligns +Z (world) - Default
+align_axis_to_vector(lever, 'Z', Vector((0, 0, 1)))
+
+# Align lever.center to bell_dome.side_at(0°)
+loc_bell_side = bell_dome.location
+# side_at(0°) usually means +X direction from center
+# Using the locator to get the point on the perimeter
+loc_bell_loc = Locator(bell_dome)
+point_side = loc_bell_loc.radial_point_world(0) # 0 degrees is +X
+
+# Set lever center to this point
+lever.location = point_side
+
+# Align lever.bottom_face to bell_dome.side_at(0°)
+# This implies the bottom face of the lever should be at the same Z as the side point?
+# Or does it mean the lever's bottom face should be aligned with the vertical position of the side point?
+# "side_at(0°)" returns a 3D point.
+# Let's assume it means the Z coordinate of the lever's bottom face should match the Z coordinate of the side point.
+z_side = point_side.z
+z_lev_bottom = lever.location.z - (lever.dimensions.z / 2) # Assuming default orientation
+delta_z_lev = z_side - z_lev_bottom
+lever.location.z += delta_z_lev
+
+# Then move by offset(0.0254, 0, 0)
+lever.location.x += 0.0254
+
+# Assembly guideline satisfied.
+# Stage 2 complete.
+
+# --- SECTION 3 – Create clamp_base ---
+
+# Create primitive cylinder with diameter 0.040 m and height 0.010 m and name it clamp_base
+# Radius = 0.020
+clamp_base = add_cylinder("clamp_base", radius=0.020, depth=0.010)
+clamp_base.data.materials.append(mat_clamp_base)
+
+# Rotate clamp_base so its +Z axis aligns +Z (world) - Default
+align_axis_to_vector(clamp_base, 'Z', Vector((0, 0, 1)))
+
+# Align clamp_base.center to bicycle_bell.center
+loc_bike = bicycle_bell.location
+clamp_base.location = loc_bike
+
+# Align clamp_base.top_face to bell_dome.bottom_face
+# Get Z of bell_dome bottom face
+z_bell_bottom_final = loc_bell_obj.bottom_face_world().z
+# Get Z of clamp_base top face
+# Clamp base center is at loc_bike. Top face is at loc_bike.z + height/2
+z_clamp_top = clamp_base.location.z + (clamp_base.dimensions.z / 2)
+
+# Move clamp_base so its top face Z matches bell_dome bottom face Z
+delta_z_clamp = z_bell_bottom_final - z_clamp_top
+clamp_base.location.z += delta_z_clamp
+
+# Then move by offset(0, 0, -0.005)
+clamp_base.location.z -= 0.005
+
+# Assembly guideline satisfied.
+# Stage 3 complete.
+
+# All stages complete.
+```

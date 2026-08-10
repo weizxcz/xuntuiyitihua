@@ -1,0 +1,216 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_text_object(text, size, location, rotation_euler):
+    obj_data = bpy.data.curves.new(name=text, type='FONT')
+    obj_data.body = text
+    obj_data.size = size
+    obj = bpy.data.objects.new(name=text, object_data=obj_data)
+    obj.location = location
+    obj.rotation_euler = rotation_euler
+    bpy.context.collection.objects.link(obj)
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_disc(name, radius, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cube(name, size, location, rotation_euler):
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, depth, location, rotation_euler):
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_uvsphere(name, radius, location, rotation_euler):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def boolean_subtract(cutter_name, target_name):
+    cutter = bpy.data.objects[cutter_name]
+    target = bpy.data.objects[target_name]
+    
+    # Ensure target is active for modifier addition
+    bpy.context.view_layer.objects.active = target
+    
+    # Add Boolean Modifier
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    
+    # Apply Modifier
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    union = bpy.data.objects[union_name]
+    target = bpy.data.objects[target_name]
+    
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    bpy.data.objects.remove(union, do_unlink=True)
+
+def add_bevel(name, target_name, width, segments):
+    target = bpy.data.objects[target_name]
+    bpy.context.view_layer.objects.active = target
+    
+    mod = target.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    if axis == 'X':
+        src = Vector((1, 0, 0))
+    elif axis == 'Y':
+        src = Vector((0, 1, 0))
+    elif axis == 'Z':
+        src = Vector((0, 0, 1))
+    
+    # Normalize input vector
+    vec = vector.normalized()
+    
+    # Calculate rotation matrix
+    rot_mat = src.rotation_difference(vec).to_matrix().to_4x4()
+    
+    # Apply rotation
+    obj.rotation_euler = rot_mat.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0, 0, 0))
+    avg = Vector((0, 0, 0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def center_world(self):
+        return self.obj.location
+
+    def face_center_world(self):
+        # Assuming "face center" implies the center of the object's geometry
+        # For simple primitives, this is the same as center_world
+        return self.obj.location
+
+    def radial_point_world(self, angle, radius):
+        # Returns a point in the XY plane at a given angle and radius from the object's center
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
+        z = 0
+        return self.obj.location + Vector((x, y, z))
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+
+# --- Block 1: Materials ---
+
+mat_body_wood = make_material("body_wood", (0.65, 0.35, 0.15, 1.0))
+mat_bridge_wood = make_material("bridge_wood", (0.15, 0.08, 0.02, 1.0))
+mat_fretboard_wood = make_material("fretboard_wood", (0.10, 0.05, 0.02, 1.0))
+mat_metal_string = make_material("metal_string", (0.80, 0.80, 0.85, 1.0))
+mat_metal_tuning = make_material("metal_tuning", (0.90, 0.85, 0.60, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create Body Assembly
+
+# Create primitive cuboid
+# Size 0.28x0.45x0.05 m. 
+# In Blender, cube size is total width. So half_size = size/2.
+# Location is center.
+body_assembly = add_cube("body_assembly", 0.05, (0, 0, 0), (0, 0, 0))
+# Assign material
+if body_assembly.data.materials:
+    body_assembly.data.materials[0] = mat_body_wood
+else:
+    body_assembly.data.materials.append(mat_body_wood)
+
+# Rotate body_assembly so its +Z axis aligns +Z (world).
+# It is already aligned, but we follow the instruction.
+align_axis_to_vector(body_assembly, 'Z', Vector((0, 0, 1)))
+
+# Anchor body_assembly to world origin.
+body_assembly.location = Vector((0, 0, 0))
+
+# Then move by offset(0,0,0).
+body_assembly.location += Vector((0, 0, 0))
+
+# Helper to create cutters and subtract
+def create_and_subtract_waist_cutter(index, target_name):
+    cutter_name = f"{target_name}_cut_waist{index}"
+    # Cylinder diameter 0.04 m -> radius 0.02 m
+    # Height 0.05 m
+    # Anchor to target.center
+    target = bpy.data.objects[target_name]
+    anchor_loc = target.location
+    
+    # Create cutter
+    cutter = add_cylinder(cutter_name, 0.02, 0.05, anchor_loc, (0, 0, 0))
+    
+    # Rotate cutter so its +Z axis aligns +Z (world)
+    align_axis_to_vector(cutter, 'Z', Vector((0, 0, 1)))
+    
+    # Anchor cutter to target.center
+    cutter.location = target.location
+    
+    # Move by offset(0,0,0)
+    cutter.location += Vector((0, 0, 0))
+    
+    # Boolean subtract
+    boolean_subtract(cutter_name, target_name)
+
+# Perform 55 cuts
+for i in range(1, 56):
+    create_and_subtract_waist_cutter(i, "body_assembly")

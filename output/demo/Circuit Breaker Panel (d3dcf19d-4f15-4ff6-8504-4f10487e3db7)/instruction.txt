@@ -1,0 +1,1 @@
+Create a 3D model of a circuit breaker panel. The panel should be rectangular with a door that opens to reveal multiple circuit breakers inside. Each breaker should have a switch to turn it on or off. Include labels for each breaker to indicate its function.

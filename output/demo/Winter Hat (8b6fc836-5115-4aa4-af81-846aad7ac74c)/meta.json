@@ -1,0 +1,44 @@
+{
+  "id": "8b6fc836-5115-4aa4-af81-846aad7ac74c",
+  "name": "Winter Hat",
+  "instruction": "Design a winter hat that covers the ears and has a pom-pom on top. Make it look cozy and warm.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a winter hat.",
+        "The hat has a rounded top.",
+        "The hat extends down to cover the ears."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pom-pom is proportionate to the hat."
+      ],
+      "Texture and surface detail": [
+        "The hat appears to have a knitted texture."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pom-pom is positioned centrally on top of the hat.",
+        "The ear coverage is symmetrical on both sides."
+      ],
+      "Object distance and contact": [
+        "The hat fits closely to the head without gaps.",
+        "The ear flaps are securely attached to the main body of the hat."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design conveys a cozy and warm appearance."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

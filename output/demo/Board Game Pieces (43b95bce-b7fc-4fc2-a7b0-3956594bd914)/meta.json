@@ -1,0 +1,43 @@
+{
+  "id": "43b95bce-b7fc-4fc2-a7b0-3956594bd914",
+  "name": "Board Game Pieces",
+  "instruction": "Create a set of board game pieces. They should be small and easily distinguishable from each other. Arrange them in a playful and scattered manner.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The set contains multiple distinct shapes for each game piece.",
+        "Each piece is small in size."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pieces in the board game are proportionate to the board."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The pieces are arranged in a playful manner.",
+        "The pieces are scattered rather than in a straight line."
+      ],
+      "Object distance and contact": [
+        "There is adequate space between each piece for clear visibility.",
+        "No pieces overlap with each other."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All pieces are distinguishable from each other.",
+        "The arrangement is playful and scattered as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

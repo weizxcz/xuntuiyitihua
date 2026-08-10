@@ -1,0 +1,49 @@
+{
+  "id": "fe0abca5-df8b-466a-b88f-db8085e94778",
+  "name": "Icon",
+  "instruction": "Create an icon that represents a house. Compare it to a typical home icon.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The icon represents a house.",
+        "The house shape is typically a square or rectangle with a triangular roof.",
+        "The icon may include a chimney.",
+        "Windows are often represented as squares or rectangles.",
+        "The door is usually centered and rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The roof should be proportionate to the house base.",
+        "Windows and doors should be proportionate to the overall house size."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The house icon should appear two-dimensional but suggest depth through shading.",
+        "The roof should be positioned above the house body.",
+        "Windows and doors should be aligned correctly within the house structure."
+      ],
+      "Object distance and contact": [
+        "There should be no overlap between the roof and the house body.",
+        "Windows and doors should be clearly defined and not merged with the house structure."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The icon accurately represents a house.",
+        "The design adheres to common characteristics of a typical home icon.",
+        "All specified attributes of a house icon are included."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

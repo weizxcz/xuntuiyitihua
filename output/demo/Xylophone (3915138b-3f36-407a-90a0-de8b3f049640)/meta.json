@@ -1,0 +1,47 @@
+{
+  "id": "3915138b-3f36-407a-90a0-de8b3f049640",
+  "name": "Xylophone",
+  "instruction": "I need you to create a 3D model of a xylophone. The xylophone should have a series of rectangular bars arranged in ascending order of size, each representing different musical notes. The bars should be mounted on a frame and struck with mallets to produce sound. Ensure the frame is sturdy and the bars are evenly spaced.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a xylophone.",
+        "The xylophone consists of a series of rectangular bars.",
+        "The bars are arranged in ascending order of size."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The bars are proportionate to the xylophone."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bars are correctly positioned on the frame.",
+        "The ascending size of the bars is visually clear.",
+        "The mallets are positioned appropriately for use."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the bars.",
+        "The bars are securely mounted on the frame.",
+        "The mallets are within reach of the bars."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The arrangement of bars follows the ascending order of size.",
+        "The frame is designed to be sturdy as instructed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

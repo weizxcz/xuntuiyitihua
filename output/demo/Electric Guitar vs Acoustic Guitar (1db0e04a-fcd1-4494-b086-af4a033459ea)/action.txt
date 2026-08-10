@@ -1,0 +1,250 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material acoustic_wood; diffuse_color = (0.65,0.45,0.25,1.0).
+Define material electric_body_paint; diffuse_color = (0.1,0.1,0.9,1.0).
+Define material fretboard_wood; diffuse_color = (0.15,0.08,0.05,1.0).
+Define material metal_strings; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material metal_hardware; diffuse_color = (0.7,0.7,0.7,1.0).
+Define material pearl_inlay; diffuse_color = (0.95,0.95,0.9,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Electric Guitar Body  ---
+Create primitive cuboid with size 0.5×0.15×0.05 m and name it electric_body.
+Rotate electric_body so its +Z axis aligns +Z (world).
+Move electric_body to pos=(-0.2, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Electric Neck Assembly  ---
+Create primitive cuboid with size 0.05×0.4×0.03 m and name it electric_neck.
+Rotate electric_neck so its +Z axis aligns +Z (world).
+Anchor electric_neck to electric_body.+Z_face.
+Then move by offset(0, 0.25, 0).
+
+Create primitive cuboid with size 0.04×0.35×0.005 m and name it electric_fretboard.
+Rotate electric_fretboard so its +Z axis aligns +Z (world).
+Align electric_fretboard.+Z_face to electric_neck.+Z_face.
+Then move by offset(0, 0, 0.0125).
+
+Create primitive cuboid with size 0.06×0.1×0.02 m and name it electric_headstock.
+Rotate electric_headstock so its +Z axis aligns +Z (world).
+Align electric_headstock.+Z_face to electric_neck.+Z_face.
+Then move by offset(0, 0.4, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create Electric Hardware  ---
+Create primitive cuboid with size 0.02×0.01×0.005 m and name it electric_pickup_1.
+Rotate electric_pickup_1 so its +Z axis aligns +Z (world).
+Align electric_pickup_1.+Z_face to electric_body.+Z_face.
+Then move by offset(-0.1, 0, 0.025).
+
+Create primitive cuboid with size 0.02×0.01×0.005 m and name it electric_pickup_2.
+Rotate electric_pickup_2 so its +Z axis aligns +Z (world).
+Align electric_pickup_2.+Z_face to electric_body.+Z_face.
+Then move by offset(0.1, 0, 0.025).
+
+Create primitive cuboid with size 0.05×0.02×0.01 m and name it electric_bridge.
+Rotate electric_bridge so its +Z axis aligns +Z (world).
+Align electric_bridge.+Z_face to electric_body.+Z_face.
+Then move by offset(0, -0.05, 0.025).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it electric_tuning_peg_1.
+Rotate electric_tuning_peg_1 so its +Z axis aligns +Z (world).
+Align electric_tuning_peg_1.+Z_face to electric_headstock.+Z_face.
+Then move by offset(-0.02, 0.05, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it electric_tuning_peg_2.
+Rotate electric_tuning_peg_2 so its +Z axis aligns +Z (world).
+Align electric_tuning_peg_2.+Z_face to electric_headstock.+Z_face.
+Then move by offset(0.02, 0.05, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it electric_tuning_peg_3.
+Rotate electric_tuning_peg_3 so its +Z axis aligns +Z (world).
+Align electric_tuning_peg_3.+Z_face to electric_headstock.+Z_face.
+Then move by offset(-0.02, 0.0, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it electric_tuning_peg_4.
+Rotate electric_tuning_peg_4 so its +Z axis aligns +Z (world).
+Align electric_tuning_peg_4.+Z_face to electric_headstock.+Z_face.
+Then move by offset(0.02, 0.0, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it electric_tuning_peg_5.
+Rotate electric_tuning_peg_5 so its +Z axis aligns +Z (world).
+Align electric_tuning_peg_5.+Z_face to electric_headstock.+Z_face.
+Then move by offset(-0.02, -0.05, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it electric_tuning_peg_6.
+Rotate electric_tuning_peg_6 so its +Z axis aligns +Z (world).
+Align electric_tuning_peg_6.+Z_face to electric_headstock.+Z_face.
+Then move by offset(0.02, -0.05, 0.01).
+Stage 3 complete.
+
+---  SECTION 4 – Create Electric Strings  ---
+Create path_sweep with length 0.6 m and name it electric_string_1.
+Rotate electric_string_1 so its +Z axis aligns +Z (world).
+Connect electric_string_1.+Z_face to electric_bridge.+Z_face.
+Then move by offset(-0.02, 0, 0).
+
+Create path_sweep with length 0.6 m and name it electric_string_2.
+Rotate electric_string_2 so its +Z axis aligns +Z (world).
+Connect electric_string_2.+Z_face to electric_bridge.+Z_face.
+Then move by offset(-0.01, 0, 0).
+
+Create path_sweep with length 0.6 m and name it electric_string_3.
+Rotate electric_string_3 so its +Z axis aligns +Z (world).
+Connect electric_string_3.+Z_face to electric_bridge.+Z_face.
+Then move by offset(0, 0, 0).
+
+Create path_sweep with length 0.6 m and name it electric_string_4.
+Rotate electric_string_4 so its +Z axis aligns +Z (world).
+Connect electric_string_4.+Z_face to electric_bridge.+Z_face.
+Then move by offset(0.01, 0, 0).
+
+Create path_sweep with length 0.6 m and name it electric_string_5.
+Rotate electric_string_5 so its +Z axis aligns +Z (world).
+Connect electric_string_5.+Z_face to electric_bridge.+Z_face.
+Then move by offset(0.02, 0, 0).
+
+Create path_sweep with length 0.6 m and name it electric_string_6.
+Rotate electric_string_6 so its +Z axis aligns +Z (world).
+Connect electric_string_6.+Z_face to electric_bridge.+Z_face.
+Then move by offset(0.03, 0, 0).
+Stage 4 complete.
+
+---  SECTION 5 – Create Electric Inlays  ---
+Create primitive cuboid with size 0.005×0.005×0.001 m and name it electric_inlay_1.
+Rotate electric_inlay_1 so its +Z axis aligns +Z (world).
+Align electric_inlay_1.+Z_face to electric_fretboard.+Z_face.
+Then move by offset(0, 0.1, 0.0025).
+
+Create primitive cuboid with size 0.005×0.005×0.001 m and name it electric_inlay_2.
+Rotate electric_inlay_2 so its +Z axis aligns +Z (world).
+Align electric_inlay_2.+Z_face to electric_fretboard.+Z_face.
+Then move by offset(0, 0.2, 0.0025).
+
+Create primitive cuboid with size 0.005×0.005×0.001 m and name it electric_inlay_3.
+Rotate electric_inlay_3 so its +Z axis aligns +Z (world).
+Align electric_inlay_3.+Z_face to electric_fretboard.+Z_face.
+Then move by offset(0, 0.3, 0.0025).
+Stage 5 complete.
+
+---  SECTION 6 – Create Acoustic Guitar Body  ---
+Create primitive cuboid with size 0.5×0.2×0.1 m and name it acoustic_body.
+Rotate acoustic_body so its +Z axis aligns +Z (world).
+Move acoustic_body to pos=(0.2, 0, 0).
+Stage 6 complete.
+
+---  SECTION 7 – Create Acoustic Neck Assembly  ---
+Create primitive cuboid with size 0.05×0.4×0.03 m and name it acoustic_neck.
+Rotate acoustic_neck so its +Z axis aligns +Z (world).
+Anchor acoustic_neck to acoustic_body.+Z_face.
+Then move by offset(0, 0.25, 0).
+
+Create primitive cuboid with size 0.04×0.35×0.005 m and name it acoustic_fretboard.
+Rotate acoustic_fretboard so its +Z axis aligns +Z (world).
+Align acoustic_fretboard.+Z_face to acoustic_neck.+Z_face.
+Then move by offset(0, 0, 0.0125).
+
+Create primitive cuboid with size 0.06×0.1×0.02 m and name it acoustic_headstock.
+Rotate acoustic_headstock so its +Z axis aligns +Z (world).
+Align acoustic_headstock.+Z_face to acoustic_neck.+Z_face.
+Then move by offset(0, 0.4, 0).
+Stage 7 complete.
+
+---  SECTION 8 – Create Acoustic Hardware  ---
+Create primitive cuboid with size 0.05×0.02×0.01 m and name it acoustic_bridge.
+Rotate acoustic_bridge so its +Z axis aligns +Z (world).
+Align acoustic_bridge.+Z_face to acoustic_body.+Z_face.
+Then move by offset(0, -0.05, 0.05).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it acoustic_tuning_peg_1.
+Rotate acoustic_tuning_peg_1 so its +Z axis aligns +Z (world).
+Align acoustic_tuning_peg_1.+Z_face to acoustic_headstock.+Z_face.
+Then move by offset(-0.02, 0.05, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it acoustic_tuning_peg_2.
+Rotate acoustic_tuning_peg_2 so its +Z axis aligns +Z (world).
+Align acoustic_tuning_peg_2.+Z_face to acoustic_headstock.+Z_face.
+Then move by offset(0.02, 0.05, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it acoustic_tuning_peg_3.
+Rotate acoustic_tuning_peg_3 so its +Z axis aligns +Z (world).
+Align acoustic_tuning_peg_3.+Z_face to acoustic_headstock.+Z_face.
+Then move by offset(-0.02, 0.0, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it acoustic_tuning_peg_4.
+Rotate acoustic_tuning_peg_4 so its +Z axis aligns +Z (world).
+Align acoustic_tuning_peg_4.+Z_face to acoustic_headstock.+Z_face.
+Then move by offset(0.02, 0.0, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it acoustic_tuning_peg_5.
+Rotate acoustic_tuning_peg_5 so its +Z axis aligns +Z (world).
+Align acoustic_tuning_peg_5.+Z_face to acoustic_headstock.+Z_face.
+Then move by offset(-0.02, -0.05, 0.01).
+
+Create primitive cuboid with size 0.01×0.01×0.01 m and name it acoustic_tuning_peg_6.
+Rotate acoustic_tuning_peg_6 so its +Z axis aligns +Z (world).
+Align acoustic_tuning_peg_6.+Z_face to acoustic_headstock.+Z_face.
+Then move by offset(0.02, -0.05, 0.01).
+Stage 8 complete.
+
+---  SECTION 9 – Create Acoustic Strings  ---
+Create path_sweep with length 0.6 m and name it acoustic_string_1.
+Rotate acoustic_string_1 so its +Z axis aligns +Z (world).
+Connect acoustic_string_1.+Z_face to acoustic_bridge.+Z_face.
+Then move by offset(-0.02, 0, 0).
+
+Create path_sweep with length 0.6 m and name it acoustic_string_2.
+Rotate acoustic_string_2 so its +Z axis aligns +Z (world).
+Connect acoustic_string_2.+Z_face to acoustic_bridge.+Z_face.
+Then move by offset(-0.01, 0, 0).
+
+Create path_sweep with length 0.6 m and name it acoustic_string_3.
+Rotate acoustic_string_3 so its +Z axis aligns +Z (world).
+Connect acoustic_string_3.+Z_face to acoustic_bridge.+Z_face.
+Then move by offset(0, 0, 0).
+
+Create path_sweep with length 0.6 m and name it acoustic_string_4.
+Rotate acoustic_string_4 so its +Z axis aligns +Z (world).
+Connect acoustic_string_4.+Z_face to acoustic_bridge.+Z_face.
+Then move by offset(0.01, 0, 0).
+
+Create path_sweep with length 0.6 m and name it acoustic_string_5.
+Rotate acoustic_string_5 so its +Z axis aligns +Z (world).
+Connect acoustic_string_5.+Z_face to acoustic_bridge.+Z_face.
+Then move by offset(0.02, 0, 0).
+
+Create path_sweep with length 0.6 m and name it acoustic_string_6.
+Rotate acoustic_string_6 so its +Z axis aligns +Z (world).
+Connect acoustic_string_6.+Z_face to acoustic_bridge.+Z_face.
+Then move by offset(0.03, 0, 0).
+Stage 9 complete.
+
+---  SECTION 10 – Create Acoustic Inlays  ---
+Create primitive cuboid with size 0.005×0.005×0.001 m and name it acoustic_inlay_1.
+Rotate acoustic_inlay_1 so its +Z axis aligns +Z (world).
+Align acoustic_inlay_1.+Z_face to acoustic_fretboard.+Z_face.
+Then move by offset(0, 0.1, 0.0025).
+
+Create primitive cuboid with size 0.005×0.005×0.001 m and name it acoustic_inlay_2.
+Rotate acoustic_inlay_2 so its +Z axis aligns +Z (world).
+Align acoustic_inlay_2.+Z_face to acoustic_fretboard.+Z_face.
+Then move by offset(0, 0.2, 0.0025).
+
+Create primitive cuboid with size 0.005×0.005×0.001 m and name it acoustic_inlay_3.
+Rotate acoustic_inlay_3 so its +Z axis aligns +Z (world).
+Align acoustic_inlay_3.+Z_face to acoustic_fretboard.+Z_face.
+Then move by offset(0, 0.3, 0.0025).
+Stage 10 complete.
+
+All stages complete.

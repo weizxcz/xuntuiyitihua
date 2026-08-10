@@ -1,0 +1,36 @@
+-- MATERIAL LIBRARY --
+glass_clear | diffuse_color=(0.9,0.95,1.0,0.1)
+metal_steel | diffuse_color=(0.6,0.6,0.65,1.0)
+specimen_organic | diffuse_color=(0.2,0.4,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| microscope_slide_assembly | Composite of slide_base + specimen + cover_slip | assembly_order=[slide_base], [specimen], [cover_slip] |
+
+Layer 1 – Primary Structure (Slide Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| slide_base | Composite of glass_plate + metal_frame | assembly_order=[glass_plate], [metal_frame] |
+| glass_plate | Cube 0.076×0.026×0.001 m (Standard Microscope Slide Dimensions) | pos=(0,0,0); orientation=axis:+Z; mat=glass_clear; create_method=primitive |
+| metal_frame | Composite of left_rail + right_rail + top_rail + bottom_rail | assembly_order=[left_rail], [right_rail], [top_rail], [bottom_rail] |
+| left_rail | Cylinder Ø0.002×0.076 m | Align(XZ) left_rail.center to glass_plate.left_face; offset(0,0,0.0005); orientation=axis:+Y; mat=metal_steel; create_method=primitive |
+| right_rail | Cylinder Ø0.002×0.076 m | Align(XZ) right_rail.center to glass_plate.right_face; offset(0,0,0.0005); orientation=axis:+Y; mat=metal_steel; create_method=primitive |
+| top_rail | Cylinder Ø0.002×0.026 m | Align(YZ) top_rail.center to glass_plate.top_face; offset(0,0,0.0005); orientation=axis:+X; mat=metal_steel; create_method=primitive |
+| bottom_rail | Cylinder Ø0.002×0.026 m | Align(YZ) bottom_rail.center to glass_plate.bottom_face; offset(0,0,0.0005); orientation=axis:+X; mat=metal_steel; create_method=primitive |
+
+Layer 2 – Specimen
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| specimen | Composite of organic_sample + mounting_medium | assembly_order=[organic_sample], [mounting_medium] |
+| organic_sample | Cube 0.010×0.010×0.0001 m (Representative Cell Cluster) | Align(XY) organic_sample.center to glass_plate.top_face; offset(0,0,0.0001); orientation=axis:+Z; mat=specimen_organic; create_method=primitive |
+| mounting_medium | Cube 0.012×0.012×0.00005 m (Covering the sample) | Align(XY) mounting_medium.center to organic_sample.center; offset(0,0,0.00015); orientation=axis:+Z; mat=glass_clear; create_method=primitive |
+
+Layer 3 – Cover Slip
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cover_slip | Cube 0.022×0.022×0.0001 m (Standard Cover Slip) | Align(XY) cover_slip.bottom_face to mounting_medium.top_face; offset(0,0,0.00005); orientation=axis:+Z; mat=glass_clear; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

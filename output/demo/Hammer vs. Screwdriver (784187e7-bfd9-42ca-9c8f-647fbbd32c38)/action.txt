@@ -1,0 +1,69 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_hammer_head; diffuse_color = (0.4, 0.4, 0.4, 1.0).
+Define material mat_hammer_handle; diffuse_color = (0.6, 0.3, 0.1, 1.0).
+Define material mat_screwdriver_handle; diffuse_color = (0.9, 0.2, 0.1, 1.0).
+Define material mat_screwdriver_shaft; diffuse_color = (0.5, 0.5, 0.5, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Hammer Head Body (flat_face_cylinder)  ---
+Create primitive cylinder with diameter 0.050 m and length 0.020 m and name it flat_face_cylinder.
+Rotate flat_face_cylinder so its +Z axis aligns +X (world).
+Anchor flat_face_cylinder to root.left_face.
+Then move by offset(0.15, 0, 0).
+
+---  SECTION 2 – Create Hammer Claw (claw_prism)  ---
+Create primitive cuboid with size 0.050×0.020×0.040 m and name it claw_prism.
+Rotate claw_prism so its +Z axis aligns +X (world).
+Align claw_prism.right_face to flat_face_cylinder.left_face.
+Then move by offset(0.010, 0, 0).
+Boolean-union claw_prism into flat_face_cylinder; discard claw_prism.
+Rename resulting object hammer_head.
+
+---  SECTION 3 – Create Hammer Handle (hammer_handle)  ---
+Create primitive cylinder with diameter 0.020 m and length 0.300 m and name it hammer_handle.
+Rotate hammer_handle so its +Z axis aligns +X (world).
+Align hammer_handle.right_face to hammer_head.center.
+Then move by offset(0.035, 0, 0).
+Boolean-union hammer_handle into hammer_head; discard hammer_handle.
+Rename resulting object hammer_assembly.
+
+---  SECTION 4 – Create Screwdriver Shaft (screwdriver_shaft)  ---
+Create primitive cylinder with diameter 0.005 m and length 0.150 m and name it screwdriver_shaft.
+Rotate screwdriver_shaft so its +Z axis aligns +X (world).
+Anchor screwdriver_shaft to root.left_face.
+Then move by offset(-0.15, 0, 0).
+
+---  SECTION 5 – Create Screwdriver Head (screwdriver_head)  ---
+Create primitive cuboid with size 0.005×0.005×0.020 m and name it screwdriver_head.
+Rotate screwdriver_head so its +Z axis aligns +X (world).
+Align screwdriver_head.left_face to screwdriver_shaft.right_face.
+Then move by offset(0.0025, 0, 0).
+Boolean-union screwdriver_head into screwdriver_shaft; discard screwdriver_head.
+Rename resulting object screwdriver_head_part.
+
+---  SECTION 6 – Create Screwdriver Handle (screwdriver_handle)  ---
+Create primitive cuboid with size 0.025×0.025×0.080 m and name it screwdriver_handle.
+Rotate screwdriver_handle so its +Z axis aligns +X (world).
+Align screwdriver_handle.left_face to screwdriver_shaft.left_face.
+Then move by offset(-0.0025, 0, 0).
+Boolean-union screwdriver_handle into screwdriver_shaft; discard screwdriver_handle.
+Rename resulting object screwdriver_assembly.
+
+---  SECTION 7 – Final Assembly Validation  ---
+Validate that hammer_assembly is positioned at offset(0.15, 0, 0) relative to root.
+Validate that screwdriver_assembly is positioned at offset(-0.15, 0, 0) relative to root.
+Assembly guideline satisfied.
+Stage 1 complete.
+All stages complete.

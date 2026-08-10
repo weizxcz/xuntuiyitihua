@@ -1,0 +1,86 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_main; diffuse_color = (0.2,0.2,0.2,1.0).
+Define material fabric_lining; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material metal_zipper; diffuse_color = (0.7,0.7,0.7,1.0).
+Define material plastic_puller; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create fabric shell (front and back panels)  ---
+Create primitive cube with size 0.200×0.100×0.002 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Anchor front_panel to world origin.
+Then move by offset(0,0,0).
+
+Create primitive cube with size 0.200×0.100×0.002 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Anchor back_panel to world origin.
+Then move by offset(0,0,0.002).
+
+---  SECTION 2 – Create fabric shell (side gusset)  ---
+Create primitive cube with size 0.200×0.050×0.002 m and name it side_gusset.
+Rotate side_gusset so its +Z axis aligns +Z (world).
+Anchor side_gusset to world origin.
+Then move by offset(0,0,-0.025).
+
+Boolean-union front_panel, back_panel, and side_gusset; keep front_panel as fabric_shell.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 3 – Create lining shell (front and back panels)  ---
+Create primitive cube with size 0.190×0.090×0.001 m and name it front_lining.
+Rotate front_lining so its +Z axis aligns +Z (world).
+Anchor front_lining to world origin.
+Then move by offset(0,0,0.001).
+
+Create primitive cube with size 0.190×0.090×0.001 m and name it back_lining.
+Rotate back_lining so its +Z axis aligns +Z (world).
+Anchor back_lining to world origin.
+Then move by offset(0,0,-0.001).
+
+Boolean-union front_lining and back_lining; keep front_lining as lining_shell.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 4 – Create zipper track (left and right tracks)  ---
+Create primitive cube with size 0.200×0.005×0.002 m and name it left_track.
+Rotate left_track so its +Z axis aligns +Z (world).
+Anchor left_track to world origin.
+Then move by offset(-0.100,0,0.050).
+
+Create primitive cube with size 0.200×0.005×0.002 m and name it right_track.
+Rotate right_track so its +Z axis aligns +Z (world).
+Anchor right_track to world origin.
+Then move by offset(0.100,0,0.050).
+
+Boolean-union left_track and right_track; keep left_track as zipper_track.
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 5 – Create pullers (left and right pullers)  ---
+Create primitive cube with size 0.010×0.005×0.002 m and name it left_puller.
+Rotate left_puller so its +Z axis aligns +Z (world).
+Anchor left_puller to world origin.
+Then move by offset(-0.100,0,0.052).
+
+Create primitive cube with size 0.010×0.005×0.002 m and name it right_puller.
+Rotate right_puller so its +Z axis aligns +Z (world).
+Anchor right_puller to world origin.
+Then move by offset(0.100,0,0.052).
+
+Boolean-union left_puller and right_puller; keep left_puller as pullers.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

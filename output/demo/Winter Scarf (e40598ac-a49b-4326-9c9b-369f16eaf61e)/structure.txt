@@ -1,0 +1,22 @@
+-- MATERIAL LIBRARY --
+fabric_blue | diffuse_color=(0.1,0.2,0.4,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+| scarf_body | Composite of main rectangular fabric body and fringe clusters | A. Composite of scarf_main + fringe_L + fringe_R; simple classic winter scarf design |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+| scarf_main | Rectangular fabric block 0.25×1.8×0.002 m | Align(XY) scarf_main.center to scarf_body.center; orientation=axis:+Z; mat=fabric_blue; create_method=primitive |
+| fringe_L | Cluster of 20 hanging threads at left end | Align(XY) fringe_L.center to scarf_main.left_face.center; orientation=axis:+Z; mat=fabric_blue; create_method=primitive |
+| fringe_R | Cluster of 20 hanging threads at right end | Align(XY) fringe_R.center to scarf_main.right_face.center; orientation=axis:+Z; mat=fabric_blue; create_method=primitive |
+
+Layer 2 – Leaf Primitives
+| ID | Description | Key attributes / placement |
+| scarf_main | Rectangular cuboid 0.25×1.8×0.002 m | pos=(0,0,0); orientation=axis:+Z; mat=fabric_blue; create_method=cube |
+| fringe_L | 20 cylinders arranged in a line | Align(XY) fringe_L.center to scarf_main.left_face.center; orientation=axis:+Z; mat=fabric_blue; create_method=cylinder |
+| fringe_R | 20 cylinders arranged in a line | Align(XY) fringe_R.center to scarf_main.right_face.center; orientation=axis:+Z; mat=fabric_blue; create_method=cylinder |
+
+# ----------  END_GRAPH  ----------

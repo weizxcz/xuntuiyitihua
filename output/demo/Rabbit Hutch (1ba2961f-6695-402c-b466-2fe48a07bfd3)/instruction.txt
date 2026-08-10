@@ -1,0 +1,1 @@
+Design a rabbit hutch with two levels. The bottom level should be an open run area enclosed with wire mesh, and the top level should be a sheltered sleeping area accessible by a ramp. Include a door on the front of the sleeping area for easy access.

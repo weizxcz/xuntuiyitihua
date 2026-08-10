@@ -1,0 +1,1 @@
+Design a chocolate bar with a segmented top, allowing it to be easily broken into smaller pieces.

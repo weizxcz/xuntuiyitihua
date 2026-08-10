@@ -1,0 +1,1 @@
+Let's create a 3D model of a harp. It should have a tall, triangular frame with a curved top. Strings should run vertically from the top to the base. Include tuning pegs at the top and pedals at the bottom for note changes.

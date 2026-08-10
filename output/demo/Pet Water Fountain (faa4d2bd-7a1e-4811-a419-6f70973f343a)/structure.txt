@@ -1,0 +1,57 @@
+-- MATERIAL LIBRARY --
+mat_black_abs | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_clear_acrylic | diffuse_color=(0.9,0.95,1.0,0.3)
+mat_silicone_grey | diffuse_color=(0.4,0.4,0.4,1.0)
+mat_white_pp | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_shell | Composite of base_plate + outer_wall + inner_basin | A. base_plate + outer_wall + inner_basin; Base unit for the fountain. |
+| water_basin | Composite of water_surface + water_volume | A. water_surface + water_volume; The water contained within the basin. |
+| filtration_unit | Composite of filter_housing + filter_cartridge + filter_sponge | A. filter_housing + filter_cartridge + filter_sponge; The cleaning mechanism. |
+| pump_assembly | Composite of pump_motor + impeller + intake_strainer | A. pump_motor + impeller + intake_strainer; The water circulation engine. |
+| spout_assembly | Composite of spout_body + spout_nozzle | A. spout_body + spout_nozzle; The water exit point. |
+| power_cord | Power cord with plug and strain relief | Single continuous cable. |
+
+Layer 1 – Primary Structure (Base Shell)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Disc Ø0.250×0.015 m | cylinder Ø0.250×0.015; mat=mat_black_abs; pos=(0,0,0); orientation=axis:+Z; create_method=primitive; assembly_order=[base_shell] |
+| outer_wall | Cylinder Ø0.250×0.120 m (hollow) | cylinder Ø0.250×0.120; mat=mat_black_abs; pos=(0,0,0.0675); orientation=axis:+Z; create_method=primitive; assembly_order=[base_shell] |
+| inner_basin | Cylinder Ø0.220×0.100 m (hollow) | cylinder Ø0.220×0.100; mat=mat_clear_acrylic; pos=(0,0,0.0675); orientation=axis:+Z; create_method=primitive; assembly_order=[base_shell] |
+
+Layer 2 – Water Volume
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| water_surface | Disc Ø0.210×0.001 m | cylinder Ø0.210×0.001; mat=mat_clear_acrylic; pos=(0,0,0.110); orientation=axis:+Z; create_method=primitive; assembly_order=[water_basin] |
+| water_volume | Cylinder Ø0.210×0.090 m | cylinder Ø0.210×0.090; mat=mat_clear_acrylic; pos=(0,0,0.060); orientation=axis:+Z; create_method=primitive; assembly_order=[water_basin] |
+
+Layer 3 – Filtration Unit
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| filter_housing | Cylinder Ø0.080×0.040 m | cylinder Ø0.080×0.040; mat=mat_white_pp; pos=(0,0,0.035); orientation=axis:+Z; create_method=primitive; assembly_order=[filtration_unit] |
+| filter_cartridge | Cylinder Ø0.070×0.030 m | cylinder Ø0.070×0.030; mat=mat_silicone_grey; pos=(0,0,0.035); orientation=axis:+Z; create_method=primitive; assembly_order=[filtration_unit] |
+| filter_sponge | Cylinder Ø0.075×0.010 m | cylinder Ø0.075×0.010; mat=mat_silicone_grey; pos=(0,0,0.040); orientation=axis:+Z; create_method=primitive; assembly_order=[filtration_unit] |
+
+Layer 4 – Pump Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pump_motor | Cylinder Ø0.060×0.050 m | cylinder Ø0.060×0.050; mat=mat_black_abs; pos=(0,0,0.030); orientation=axis:+Z; create_method=primitive; assembly_order=[pump_assembly] |
+| impeller | Disc Ø0.050×0.010 m | cylinder Ø0.050×0.010; mat=mat_black_abs; pos=(0,0,0.060); orientation=axis:+Z; create_method=primitive; assembly_order=[pump_assembly] |
+| intake_strainer | Cylinder Ø0.040×0.020 m | cylinder Ø0.040×0.020; mat=mat_black_abs; pos=(0,0,0.020); orientation=axis:+Z; create_method=primitive; assembly_order=[pump_assembly] |
+
+Layer 5 – Spout Assembly
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| spout_body | Cylinder Ø0.030×0.080 m | cylinder Ø0.030×0.080; mat=mat_white_pp; pos=(0,0,0.055); orientation=axis:+Z; create_method=primitive; assembly_order=[spout_assembly] |
+| spout_nozzle | Cone Ø0.020×0.010 m | cone Ø0.020×0.010; mat=mat_white_pp; pos=(0,0,0.100); orientation=axis:+Z; create_method=primitive; assembly_order=[spout_assembly] |
+
+Layer 6 – Power Cord
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| power_cord | Cable Ø0.005×0.500 m | cylinder Ø0.005×0.500; mat=mat_black_abs; pos=(0.125,0,0.0075); orientation=axis:+Y; create_method=primitive; assembly_order=[power_cord] |
+
+# ----------  END_GRAPH  ----------

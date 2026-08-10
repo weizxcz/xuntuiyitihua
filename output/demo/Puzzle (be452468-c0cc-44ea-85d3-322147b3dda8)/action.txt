@@ -1,0 +1,426 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_puzzle_blue; diffuse_color = (0.2, 0.4, 0.8, 1.0).
+Define material mat_puzzle_green; diffuse_color = (0.2, 0.6, 0.2, 1.0).
+Define material mat_puzzle_red; diffuse_color = (0.8, 0.2, 0.2, 1.0).
+Define material mat_puzzle_yellow; diffuse_color = (0.9, 0.8, 0.2, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create puzzle base  ---
+Create primitive cuboid with size 0.254×0.381×0.005 m and name it puzzle_base.
+Rotate puzzle_base so its +Z axis aligns +Z (world).
+Move puzzle_base to (0, 0, 0).
+Apply material mat_puzzle_blue to puzzle_base.
+Stage 1 complete.
+
+---  SECTION 2 – Create edge_top group  ---
+Create primitive cuboid with size 0.254×0.0254×0.005 m and name it edge_top.
+Rotate edge_top so its +Z axis aligns +Z (world).
+Align edge_top.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0, 0).
+Apply material mat_puzzle_red to edge_top.
+Stage 2 complete.
+
+---  SECTION 3 – Create edge_bottom group  ---
+Create primitive cuboid with size 0.254×0.0254×0.005 m and name it edge_bottom.
+Rotate edge_bottom so its +Z axis aligns +Z (world).
+Align edge_bottom.bottom_face to puzzle_base.top_face.
+Then move by offset(0, -0.381, 0).
+Apply material mat_puzzle_red to edge_bottom.
+Stage 3 complete.
+
+---  SECTION 4 – Create edge_left group  ---
+Create primitive cuboid with size 0.005×0.381×0.005 m and name it edge_left.
+Rotate edge_left so its +Z axis aligns +Z (world).
+Align edge_left.bottom_face to puzzle_base.top_face.
+Then move by offset(-0.254, 0, 0).
+Apply material mat_puzzle_red to edge_left.
+Stage 4 complete.
+
+---  SECTION 5 – Create edge_right group  ---
+Create primitive cuboid with size 0.005×0.381×0.005 m and name it edge_right.
+Rotate edge_right so its +Z axis aligns +Z (world).
+Align edge_right.bottom_face to puzzle_base.top_face.
+Then move by offset(0.254, 0, 0).
+Apply material mat_puzzle_red to edge_right.
+Stage 5 complete.
+
+---  SECTION 6 – Create inner_row_1  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_1.
+Rotate inner_row_1 so its +Z axis aligns +Z (world).
+Align inner_row_1.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.0254, 0).
+Apply material mat_puzzle_green to inner_row_1.
+Stage 6 complete.
+
+---  SECTION 7 – Create inner_row_2  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_2.
+Rotate inner_row_2 so its +Z axis aligns +Z (world).
+Align inner_row_2.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.0508, 0).
+Apply material mat_puzzle_green to inner_row_2.
+Stage 7 complete.
+
+---  SECTION 8 – Create inner_row_3  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_3.
+Rotate inner_row_3 so its +Z axis aligns +Z (world).
+Align inner_row_3.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.0762, 0).
+Apply material mat_puzzle_green to inner_row_3.
+Stage 8 complete.
+
+---  SECTION 9 – Create inner_row_4  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_4.
+Rotate inner_row_4 so its +Z axis aligns +Z (world).
+Align inner_row_4.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.1016, 0).
+Apply material mat_puzzle_green to inner_row_4.
+Stage 9 complete.
+
+---  SECTION 10 – Create inner_row_5  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_5.
+Rotate inner_row_5 so its +Z axis aligns +Z (world).
+Align inner_row_5.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.127, 0).
+Apply material mat_puzzle_green to inner_row_5.
+Stage 10 complete.
+
+---  SECTION 11 – Create inner_row_6  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_6.
+Rotate inner_row_6 so its +Z axis aligns +Z (world).
+Align inner_row_6.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.1524, 0).
+Apply material mat_puzzle_green to inner_row_6.
+Stage 11 complete.
+
+---  SECTION 12 – Create inner_row_7  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_7.
+Rotate inner_row_7 so its +Z axis aligns +Z (world).
+Align inner_row_7.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.1778, 0).
+Apply material mat_puzzle_green to inner_row_7.
+Stage 12 complete.
+
+---  SECTION 13 – Create inner_row_8  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_8.
+Rotate inner_row_8 so its +Z axis aligns +Z (world).
+Align inner_row_8.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.2032, 0).
+Apply material mat_puzzle_green to inner_row_8.
+Stage 13 complete.
+
+---  SECTION 14 – Create inner_row_9  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_9.
+Rotate inner_row_9 so its +Z axis aligns +Z (world).
+Align inner_row_9.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.2286, 0).
+Apply material mat_puzzle_green to inner_row_9.
+Stage 14 complete.
+
+---  SECTION 15 – Create inner_row_10  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_10.
+Rotate inner_row_10 so its +Z axis aligns +Z (world).
+Align inner_row_10.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.254, 0).
+Apply material mat_puzzle_green to inner_row_10.
+Stage 15 complete.
+
+---  SECTION 16 – Create inner_row_11  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_11.
+Rotate inner_row_11 so its +Z axis aligns +Z (world).
+Align inner_row_11.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.2794, 0).
+Apply material mat_puzzle_green to inner_row_11.
+Stage 16 complete.
+
+---  SECTION 17 – Create inner_row_12  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_12.
+Rotate inner_row_12 so its +Z axis aligns +Z (world).
+Align inner_row_12.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.3048, 0).
+Apply material mat_puzzle_green to inner_row_12.
+Stage 17 complete.
+
+---  SECTION 18 – Create inner_row_13  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_13.
+Rotate inner_row_13 so its +Z axis aligns +Z (world).
+Align inner_row_13.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.3302, 0).
+Apply material mat_puzzle_green to inner_row_13.
+Stage 18 complete.
+
+---  SECTION 19 – Create inner_row_14  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_14.
+Rotate inner_row_14 so its +Z axis aligns +Z (world).
+Align inner_row_14.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.3556, 0).
+Apply material mat_puzzle_green to inner_row_14.
+Stage 19 complete.
+
+---  SECTION 20 – Create inner_row_15  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_15.
+Rotate inner_row_15 so its +Z axis aligns +Z (world).
+Align inner_row_15.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.381, 0).
+Apply material mat_puzzle_green to inner_row_15.
+Stage 20 complete.
+
+---  SECTION 21 – Create inner_row_16  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_16.
+Rotate inner_row_16 so its +Z axis aligns +Z (world).
+Align inner_row_16.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.4064, 0).
+Apply material mat_puzzle_green to inner_row_16.
+Stage 21 complete.
+
+---  SECTION 22 – Create inner_row_17  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_17.
+Rotate inner_row_17 so its +Z axis aligns +Z (world).
+Align inner_row_17.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.4318, 0).
+Apply material mat_puzzle_green to inner_row_17.
+Stage 22 complete.
+
+---  SECTION 23 – Create inner_row_18  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_18.
+Rotate inner_row_18 so its +Z axis aligns +Z (world).
+Align inner_row_18.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.4572, 0).
+Apply material mat_puzzle_green to inner_row_18.
+Stage 23 complete.
+
+---  SECTION 24 – Create inner_row_19  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_19.
+Rotate inner_row_19 so its +Z axis aligns +Z (world).
+Align inner_row_19.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.4826, 0).
+Apply material mat_puzzle_green to inner_row_19.
+Stage 24 complete.
+
+---  SECTION 25 – Create inner_row_20  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_20.
+Rotate inner_row_20 so its +Z axis aligns +Z (world).
+Align inner_row_20.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.508, 0).
+Apply material mat_puzzle_green to inner_row_20.
+Stage 25 complete.
+
+---  SECTION 26 – Create inner_row_21  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_21.
+Rotate inner_row_21 so its +Z axis aligns +Z (world).
+Align inner_row_21.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.5334, 0).
+Apply material mat_puzzle_green to inner_row_21.
+Stage 26 complete.
+
+---  SECTION 27 – Create inner_row_22  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_22.
+Rotate inner_row_22 so its +Z axis aligns +Z (world).
+Align inner_row_22.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.5588, 0).
+Apply material mat_puzzle_green to inner_row_22.
+Stage 27 complete.
+
+---  SECTION 28 – Create inner_row_23  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_23.
+Rotate inner_row_23 so its +Z axis aligns +Z (world).
+Align inner_row_23.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.5842, 0).
+Apply material mat_puzzle_green to inner_row_23.
+Stage 28 complete.
+
+---  SECTION 29 – Create inner_row_24  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_24.
+Rotate inner_row_24 so its +Z axis aligns +Z (world).
+Align inner_row_24.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.6096, 0).
+Apply material mat_puzzle_green to inner_row_24.
+Stage 29 complete.
+
+---  SECTION 30 – Create inner_row_25  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_25.
+Rotate inner_row_25 so its +Z axis aligns +Z (world).
+Align inner_row_25.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.635, 0).
+Apply material mat_puzzle_green to inner_row_25.
+Stage 30 complete.
+
+---  SECTION 31 – Create inner_row_26  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_26.
+Rotate inner_row_26 so its +Z axis aligns +Z (world).
+Align inner_row_26.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.6604, 0).
+Apply material mat_puzzle_green to inner_row_26.
+Stage 31 complete.
+
+---  SECTION 32 – Create inner_row_27  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_27.
+Rotate inner_row_27 so its +Z axis aligns +Z (world).
+Align inner_row_27.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.6858, 0).
+Apply material mat_puzzle_green to inner_row_27.
+Stage 32 complete.
+
+---  SECTION 33 – Create inner_row_28  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_28.
+Rotate inner_row_28 so its +Z axis aligns +Z (world).
+Align inner_row_28.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.7112, 0).
+Apply material mat_puzzle_green to inner_row_28.
+Stage 33 complete.
+
+---  SECTION 34 – Create inner_row_29  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_29.
+Rotate inner_row_29 so its +Z axis aligns +Z (world).
+Align inner_row_29.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.7366, 0).
+Apply material mat_puzzle_green to inner_row_29.
+Stage 34 complete.
+
+---  SECTION 35 – Create inner_row_30  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_30.
+Rotate inner_row_30 so its +Z axis aligns +Z (world).
+Align inner_row_30.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.762, 0).
+Apply material mat_puzzle_green to inner_row_30.
+Stage 35 complete.
+
+---  SECTION 36 – Create inner_row_31  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_31.
+Rotate inner_row_31 so its +Z axis aligns +Z (world).
+Align inner_row_31.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.7874, 0).
+Apply material mat_puzzle_green to inner_row_31.
+Stage 36 complete.
+
+---  SECTION 37 – Create inner_row_32  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_32.
+Rotate inner_row_32 so its +Z axis aligns +Z (world).
+Align inner_row_32.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.8128, 0).
+Apply material mat_puzzle_green to inner_row_32.
+Stage 37 complete.
+
+---  SECTION 38 – Create inner_row_33  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_33.
+Rotate inner_row_33 so its +Z axis aligns +Z (world).
+Align inner_row_33.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.8382, 0).
+Apply material mat_puzzle_green to inner_row_33.
+Stage 38 complete.
+
+---  SECTION 39 – Create inner_row_34  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_34.
+Rotate inner_row_34 so its +Z axis aligns +Z (world).
+Align inner_row_34.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.8636, 0).
+Apply material mat_puzzle_green to inner_row_34.
+Stage 39 complete.
+
+---  SECTION 40 – Create inner_row_35  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_35.
+Rotate inner_row_35 so its +Z axis aligns +Z (world).
+Align inner_row_35.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.889, 0).
+Apply material mat_puzzle_green to inner_row_35.
+Stage 40 complete.
+
+---  SECTION 41 – Create inner_row_36  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_36.
+Rotate inner_row_36 so its +Z axis aligns +Z (world).
+Align inner_row_36.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.9144, 0).
+Apply material mat_puzzle_green to inner_row_36.
+Stage 41 complete.
+
+---  SECTION 42 – Create inner_row_37  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_37.
+Rotate inner_row_37 so its +Z axis aligns +Z (world).
+Align inner_row_37.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.9398, 0).
+Apply material mat_puzzle_green to inner_row_37.
+Stage 42 complete.
+
+---  SECTION 43 – Create inner_row_38  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_38.
+Rotate inner_row_38 so its +Z axis aligns +Z (world).
+Align inner_row_38.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.9652, 0).
+Apply material mat_puzzle_green to inner_row_38.
+Stage 43 complete.
+
+---  SECTION 44 – Create inner_row_39  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_39.
+Rotate inner_row_39 so its +Z axis aligns +Z (world).
+Align inner_row_39.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 0.9906, 0).
+Apply material mat_puzzle_green to inner_row_39.
+Stage 44 complete.
+
+---  SECTION 45 – Create inner_row_40  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_40.
+Rotate inner_row_40 so its +Z axis aligns +Z (world).
+Align inner_row_40.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.016, 0).
+Apply material mat_puzzle_green to inner_row_40.
+Stage 45 complete.
+
+---  SECTION 46 – Create inner_row_41  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_41.
+Rotate inner_row_41 so its +Z axis aligns +Z (world).
+Align inner_row_41.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.0414, 0).
+Apply material mat_puzzle_green to inner_row_41.
+Stage 46 complete.
+
+---  SECTION 47 – Create inner_row_42  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_42.
+Rotate inner_row_42 so its +Z axis aligns +Z (world).
+Align inner_row_42.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.0668, 0).
+Apply material mat_puzzle_green to inner_row_42.
+Stage 47 complete.
+
+---  SECTION 48 – Create inner_row_43  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_43.
+Rotate inner_row_43 so its +Z axis aligns +Z (world).
+Align inner_row_43.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.0922, 0).
+Apply material mat_puzzle_green to inner_row_43.
+Stage 48 complete.
+
+---  SECTION 49 – Create inner_row_44  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_44.
+Rotate inner_row_44 so its +Z axis aligns +Z (world).
+Align inner_row_44.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.1176, 0).
+Apply material mat_puzzle_green to inner_row_44.
+Stage 49 complete.
+
+---  SECTION 50 – Create inner_row_45  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_45.
+Rotate inner_row_45 so its +Z axis aligns +Z (world).
+Align inner_row_45.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.143, 0).
+Apply material mat_puzzle_green to inner_row_45.
+Stage 50 complete.
+
+---  SECTION 51 – Create inner_row_46  ---
+Create primitive cuboid with size 0.2032×0.0254×0.005 m and name it inner_row_46.
+Rotate inner_row_46 so its +Z axis aligns +Z (world).
+Align inner_row_46.bottom_face to puzzle_base.top_face.
+Then move by offset(0, 1.1684, 0).
+Apply material mat_puzzle_green to inner_row_46.
+Stage 51 complete.
+

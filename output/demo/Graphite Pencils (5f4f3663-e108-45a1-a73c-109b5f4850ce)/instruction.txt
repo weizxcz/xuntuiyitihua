@@ -1,0 +1,1 @@
+Design a set of graphite pencils used by artists for sketching. Each pencil should have a cylindrical body with a hexagonal cross-section, and a sharpened tip. The set should include a range of hardness from 9H to 9B. The pencils should be grouped together in a simple holder.

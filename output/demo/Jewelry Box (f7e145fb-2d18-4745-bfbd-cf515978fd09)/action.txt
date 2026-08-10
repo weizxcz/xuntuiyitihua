@@ -1,0 +1,107 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_dark; diffuse_color = (0.20,0.10,0.05,1.0).
+Define material mat_wood_light; diffuse_color = (0.60,0.45,0.30,1.0).
+Define material mat_mirror; diffuse_color = (0.80,0.85,0.90,1.0).
+Define material mat_satin_white; diffuse_color = (0.95,0.95,0.92,1.0).
+Define material mat_silk_red; diffuse_color = (0.60,0.05,0.05,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base bottom  ---
+Create primitive cube with size 0.30×0.20×0.02 m and name it base_bottom.
+Rotate base_bottom so its +Z axis aligns +Z (world).
+Anchor base_bottom to world origin.
+Then move by offset(0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create base sides  ---
+Create primitive cube with size 0.30×0.20×0.02 m and name it base_sides_void.
+Rotate base_sides_void so its +Z axis aligns +Z (world).
+Anchor base_sides_void to base_bottom.+Z_face.
+Then move by offset(0,0,0.01).
+Create primitive cube with size 0.28×0.18×0.018 m and name it base_interior_void.
+Rotate base_interior_void so its +Z axis aligns +Z (world).
+Anchor base_interior_void to base_bottom.+Z_face.
+Then move by offset(0,0,0.01).
+Boolean-subtract base_interior_void from base_sides_void; keep base_sides_void.
+Rename base_sides_void to base_sides.
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create lid top  ---
+Create primitive cube with size 0.30×0.20×0.02 m and name it lid_top.
+Rotate lid_top so its +Z axis aligns +Z (world).
+Anchor lid_top to world origin.
+Then move by offset(0,0,0.04).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create lid hinge mount  ---
+Create primitive cube with size 0.02×0.02×0.02 m and name it lid_hinge_mount.
+Rotate lid_hinge_mount so its +Z axis aligns +Z (world).
+Anchor lid_hinge_mount to world origin.
+Then move by offset(0,-0.10,0.03).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create lid mirror frame  ---
+Create primitive cube with size 0.28×0.18×0.005 m and name it lid_mirror_frame.
+Rotate lid_mirror_frame so its +Z axis aligns +Z (world).
+Anchor lid_mirror_frame to world origin.
+Then move by offset(0,0,0.035).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create lid mirror surface  ---
+Create primitive cube with size 0.26×0.16×0.001 m and name it lid_mirror_surface.
+Rotate lid_mirror_surface so its +Z axis aligns +Z (world).
+Anchor lid_mirror_surface to world origin.
+Then move by offset(0,0,0.032).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Create ring tray  ---
+Create primitive cube with size 0.10×0.10×0.005 m and name it ring_tray.
+Rotate ring_tray so its +Z axis aligns +Z (world).
+Anchor ring_tray to world origin.
+Then move by offset(-0.05,0,0.005).
+Assembly guideline satisfied.
+Stage 7 complete.
+
+---  SECTION 8 – Create necklace rail  ---
+Create primitive cube with size 0.20×0.02×0.005 m and name it necklace_rail.
+Rotate necklace_rail so its +Z axis aligns +Z (world).
+Anchor necklace_rail to world origin.
+Then move by offset(0,0.05,0.005).
+Assembly guideline satisfied.
+Stage 8 complete.
+
+---  SECTION 9 – Create earring holder  ---
+Create primitive cube with size 0.08×0.08×0.005 m and name it earring_holder.
+Rotate earring_holder so its +Z axis aligns +Z (world).
+Anchor earring_holder to world origin.
+Then move by offset(0.05,-0.05,0.005).
+Assembly guideline satisfied.
+Stage 9 complete.
+
+---  SECTION 10 – Create velvet lining  ---
+Create primitive cube with size 0.28×0.18×0.002 m and name it velvet_lining.
+Rotate velvet_lining so its +Z axis aligns +Z (world).
+Anchor velvet_lining to world origin.
+Then move by offset(0,0,0.001).
+Assembly guideline satisfied.
+Stage 10 complete.
+
+All stages complete.

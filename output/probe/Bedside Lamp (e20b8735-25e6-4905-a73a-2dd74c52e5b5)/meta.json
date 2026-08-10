@@ -1,0 +1,48 @@
+{
+  "id": "e20b8735-25e6-4905-a73a-2dd74c52e5b5",
+  "name": "Bedside Lamp",
+  "instruction": "Design a bedside lamp. The base is circular with a diameter of 6 inches. The lamp has a straight, vertical stand, 12 inches tall, with a conical shade at the top.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a bedside lamp.",
+        "The base of the lamp is circular.",
+        "The stand of the lamp is straight and vertical.",
+        "The shade of the lamp is conical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The diameter of the base is 6 inches.",
+        "The height of the stand is 12 inches."
+      ],
+      "Proportion": [
+        "The height of the stand is proportionate to the diameter of the base.",
+        "The conical shade is appropriately sized for the vertical stand."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The base is positioned correctly to support the vertical stand.",
+        "The conical shade is properly aligned with the top of the stand.",
+        "The overall structure is stable and balanced."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the base and the stand.",
+        "The shade is securely positioned on top of the stand."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

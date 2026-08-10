@@ -1,0 +1,29 @@
+-- MATERIAL LIBRARY --
+steel_hardened | diffuse_color=(0.3,0.3,0.35,1.0)
+steel_spring | diffuse_color=(0.2,0.2,0.25,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| crane_hook_assembly | Composite of hook_body + safety_latch + spring + pin | assembly_order=[hook_body], [safety_latch, spring, pin] |
+
+Layer 1 – Primary Structure (Hook Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| hook_body | Composite of shank + throat + tip | assembly_order=[shank], [throat], [tip] |
+| shank | Cylinder Ø0.04×0.3 m (L=0.3 m) | pos=(0, 0, 0.15); orientation=axis:+Z; mat=steel_hardened; create_method=primitive |
+| throat | Torus R=0.06, r=0.02 m | Align(Z) throat.bottom to shank.top; offset(0,0,0); orientation=axis:+Z; mat=steel_hardened; create_method=primitive |
+| tip | Cone R=0.02, h=0.04 m | Align(Z) tip.bottom to throat.top; offset(0,0,0); orientation=axis:+Z; mat=steel_hardened; create_method=primitive |
+
+Layer 2 – Safety Latch Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| safety_latch | Composite of latch_arm + latch_tip | assembly_order=[latch_arm], [latch_tip] |
+| latch_arm | Box 0.01×0.01×0.08 m | Align(XY) latch_arm.center to throat.side_at(0°); offset(0,0,0.02); orientation=axis:+Z; mat=steel_hardened; create_method=primitive |
+| latch_tip | Sphere R=0.015 m | Align(XY) latch_tip.center to latch_arm.top_face; offset(0,0,0.04); orientation=axis:+Z; mat=steel_hardened; create_method=primitive |
+| spring | Cylinder Ø0.005×0.02 m | Align(XY) spring.center to latch_arm.side_at(90°); offset(0,0,0.04); orientation=axis:+X; mat=steel_spring; create_method=primitive |
+| pin | Cylinder Ø0.002×0.02 m | Align(XY) pin.center to latch_arm.side_at(90°); offset(0,0,0.04); orientation=axis:+X; mat=steel_hardened; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,26 @@
+-- MATERIAL LIBRARY --
+mat_baroque_gold | diffuse_color=(0.76,0.64,0.12,1.0)
+mat_frame_base | diffuse_color=(0.15,0.15,0.15,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_root | Composite of frame_base + decorative_elements | assembly_order=[frame_base], [decorative_elements] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| frame_base | Rectangular frame base 0.600×0.800×0.040 m (W×H×D) | pos=(0,0,0); orientation=axis:+Z; mat=mat_frame_base; create_method=primitive |
+
+Layer 2 – Decorative Elements
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| decorative_elements | Composite of top_crown + bottom_crown + left_vine + right_vine + corner_ornaments | assembly_order=[top_crown], [bottom_crown], [left_vine], [right_vine], [corner_ornaments] |
+| top_crown | Baroque scrollwork along top edge 0.600×0.050×0.020 m | Align(XY) top_crown.bottom_face to frame_base.top_face; offset(0,0,0.020); orientation=axis:+Z; mat=mat_baroque_gold; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Parametric Baroque scroll pattern. Outer boundary: sinusoidal wave with amplitude 0.010 m, wavelength 0.100 m. Inner boundary: parallel curve offset by 0.015 m. Connect endpoints with smooth cubic splines. Extrude thickness t=0.020 m along +Z with caps. Maintain sharp edges on scroll peaks. |
+| bottom_crown | Baroque scrollwork along bottom edge 0.600×0.050×0.020 m | Align(XY) bottom_crown.top_face to frame_base.bottom_face; offset(0,0,0.020); orientation=axis:+Z; mat=mat_baroque_gold; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Mirror of top_crown pattern. Extrude thickness t=0.020 m along +Z with caps. |
+| left_vine | Vertical Baroque vine pattern along left edge 0.050×0.800×0.020 m | Align(XY) left_vine.right_face to frame_base.left_face; offset(0.020,0,0); orientation=axis:+Z; mat=mat_baroque_gold; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Vertical scroll pattern with amplitude 0.010 m, wavelength 0.100 m. Inner boundary offset by 0.015 m. Extrude thickness t=0.020 m along +Z with caps. |
+| right_vine | Vertical Baroque vine pattern along right edge 0.050×0.800×0.020 m | Align(XY) right_vine.left_face to frame_base.right_face; offset(-0.020,0,0); orientation=axis:+Z; mat=mat_baroque_gold; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Mirror of left_vine pattern. Extrude thickness t=0.020 m along +Z with caps. |
+| corner_ornaments | Four Baroque corner ornaments 0.080×0.080×0.030 m each | Align(XY) corner_ornaments.center to Avg(frame_base.top_left_corner, frame_base.top_right_corner, frame_base.bottom_left_corner, frame_base.bottom_right_corner); offset(0,0,0.015); orientation=axis:+Z; mat=mat_baroque_gold; create_method=extrude_from_sketch; constraint=**BMesh sketch essentials (XY plane):** Symmetrical Baroque corner motif with curved petals. Outer radius R=0.040 m. Extrude thickness t=0.030 m along +Z with caps. |
+# ----------  END_GRAPH  ----------

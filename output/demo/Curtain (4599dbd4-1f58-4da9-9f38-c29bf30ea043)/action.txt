@@ -1,0 +1,85 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_curtain; diffuse_color = (0.85,0.85,0.90,1.0).
+Define material metal_rod; diffuse_color = (0.80,0.80,0.80,1.0).
+Define material wood_bracket; diffuse_color = (0.50,0.30,0.10,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create rod_main  ---
+Create primitive cylinder with diameter 0.025 m and length 1.8 m and name it rod_main.
+Rotate rod_main so its +Z axis aligns +X (world).
+Move rod_main to pos=(0, 0, 2.4).
+Stage 1 complete.
+
+---  SECTION 2 – Create finial_L  ---
+Create primitive sphere with diameter 0.05 m and name it finial_L.
+Rotate finial_L so its +Z axis aligns +X (world).
+Align finial_L.center to rod_main.left_face.center.
+Then move by offset(-0.0125,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create finial_R  ---
+Create primitive sphere with diameter 0.05 m and name it finial_R.
+Rotate finial_R so its +Z axis aligns +X (world).
+Align finial_R.center to rod_main.right_face.center.
+Then move by offset(0.0125,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create wall_plate_L  ---
+Create primitive cube with size 0.05×0.02×0.01 m and name it wall_plate_L.
+Rotate wall_plate_L so its +Z axis aligns +Y (world).
+Move wall_plate_L to pos=(-0.9, -0.05, 2.35).
+Stage 4 complete.
+
+---  SECTION 5 – Create support_arm_L  ---
+Create primitive cylinder with diameter 0.01 m and length 0.05 m and name it support_arm_L.
+Rotate support_arm_L so its +Z axis aligns +Y (world).
+Align support_arm_L.bottom_face to wall_plate_L.top_face.center.
+Then move by offset(0,0,0.01).
+Stage 5 complete.
+
+---  SECTION 6 – Create wall_plate_R  ---
+Create primitive cube with size 0.05×0.02×0.01 m and name it wall_plate_R.
+Rotate wall_plate_R so its +Z axis aligns +Y (world).
+Move wall_plate_R to pos=(0.9, -0.05, 2.35).
+Stage 6 complete.
+
+---  SECTION 7 – Create support_arm_R  ---
+Create primitive cylinder with diameter 0.01 m and length 0.05 m and name it support_arm_R.
+Rotate support_arm_R so its +Z axis aligns +Y (world).
+Align support_arm_R.bottom_face to wall_plate_R.top_face.center.
+Then move by offset(0,0,0.01).
+Stage 7 complete.
+
+---  SECTION 8 – Create fabric_main  ---
+Create primitive cube with size 1.8×2.0×0.01 m and name it fabric_main.
+Rotate fabric_main so its +Z axis aligns +Z (world).
+Move fabric_main to pos=(0, -0.005, 1.4).
+Stage 8 complete.
+
+---  SECTION 9 – Create header_hem  ---
+Create primitive cube with size 1.8×0.1×0.02 m and name it header_hem.
+Rotate header_hem so its +Z axis aligns +Z (world).
+Align header_hem.bottom_face to fabric_main.top_face.
+Then move by offset(0,0,0.05).
+Stage 9 complete.
+
+---  SECTION 10 – Final Assembly Validation  ---
+Validate that rod_assembly (rod_main, finial_L, finial_R) is centered at z=2.4.
+Validate that brackets (wall_plate_L, support_arm_L, wall_plate_R, support_arm_R) are symmetric at x=-0.9 and x=0.9.
+Validate that curtain_panel (fabric_main, header_hem) is positioned below the rod.
+Assembly guideline satisfied.
+Stage 10 complete.
+
+All stages complete.

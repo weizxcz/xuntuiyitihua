@@ -1,0 +1,275 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color=(1.0, 1.0, 1.0, 1.0)):
+    """Create a principled BSDF material."""
+    if name in bpy.data.materials:
+        mat = bpy.data.materials[name]
+    else:
+        mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size=(1,1,1), location=(0,0,0), rotation=(0,0,0)):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation
+    return obj
+
+def add_cylinder(name, radius=0.5, depth=1, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top=0, radius_bottom=0.5, depth=1, location=(0,0,0), rotation=(0,0,0)):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_bottom, radius2=radius_top, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius=0.5, location=(0,0,0)):
+    """Add an UV Sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_text_object(name, text="Text", size=(1,1,1), location=(0,0,0), rotation=(0,0,0)):
+    """Add a text object."""
+    bpy.ops.object.text_add(location=location, rotation=rotation)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.data.body = text
+    obj.scale = (size[0], size[1], size[2])
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a world vector."""
+    if axis == 'Z':
+        # Align Z to vector
+        z_vec = obj.matrix_world.to_3x3().col[2]
+        if z_vec.dot(vector) < 0:
+            vector = -vector
+        # Simple rotation to align Z with vector (assuming vector is normalized)
+        rot_mat = z_vec.rotation_difference(vector).to_matrix().to_4x4()
+        obj.matrix_world = rot_mat @ obj.matrix_world
+    elif axis == 'X':
+        x_vec = obj.matrix_world.to_3x3().col[0]
+        if x_vec.dot(vector) < 0:
+            vector = -vector
+        rot_mat = x_vec.rotation_difference(vector).to_matrix().to_4x4()
+        obj.matrix_world = rot_mat @ obj.matrix_world
+    elif axis == 'Y':
+        y_vec = obj.matrix_world.to_3x3().col[1]
+        if y_vec.dot(vector) < 0:
+            vector = -vector
+        rot_mat = y_vec.rotation_difference(vector).to_matrix().to_4x4()
+        obj.matrix_world = rot_mat @ obj.matrix_world
+
+def boolean_subtract(cutter_name, target_name):
+    """Perform boolean subtract using modifier stack."""
+    target = bpy.data.objects[target_name]
+    cutter = bpy.data.objects[cutter_name]
+    
+    # Ensure target has no existing boolean modifier named 'Boolean'
+    for mod in target.modifiers:
+        if mod.name == 'Boolean':
+            target.modifiers.remove(mod)
+            
+    bool_mod = target.modifiers.new(name='Boolean', type='BOOLEAN')
+    bool_mod.object = cutter
+    bool_mod.operation = 'DIFFERENCE'
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_name, target_name):
+    """Perform boolean union using modifier stack."""
+    target = bpy.data.objects[target_name]
+    union_obj = bpy.data.objects[union_name]
+    
+    for mod in target.modifiers:
+        if mod.name == 'Boolean':
+            target.modifiers.remove(mod)
+            
+    bool_mod = target.modifiers.new(name='Boolean', type='BOOLEAN')
+    bool_mod.object = union_obj
+    bool_mod.operation = 'UNION'
+    
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+    
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def add_bevel(obj_name, width=0.01, segments=5):
+    """Add a bevel modifier to an object."""
+    obj = bpy.data.objects[obj_name]
+    mod = obj.modifiers.new(name='Bevel', type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    mod.angle_limit = 0.0 # Default, can be adjusted
+    # Apply immediately for simplicity in this script context
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        
+    def center_world(self):
+        return self.obj.location
+    
+    def face_center_world(self, face_index=0):
+        # Approximate face center by averaging vertices of the face
+        # Note: This requires mesh data to be evaluated
+        mesh = self.obj.data
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        
+        if face_index < len(bm.faces):
+            face = bm.faces[face_index]
+            verts = face.verts
+            center = average([v.co for v in verts])
+            # Transform to world space
+            return self.obj.matrix_world @ center
+        else:
+            return self.center_world()
+        finally:
+            bm.free()
+
+    def radial_point_world(self, angle=0, radius=1.0):
+        # Placeholder for radial point calculation if needed
+        return self.obj.matrix_world @ Vector((radius * cos(angle), radius * sin(angle), 0))
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.system = 'METRIC'
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_card_stock = make_material("mat_card_stock", diffuse_color=(1.0, 1.0, 1.0, 1.0))
+mat_ink_black = make_material("mat_ink_black", diffuse_color=(0.0, 0.0, 0.0, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create card base ---
+
+# Create primitive cuboid with size 0.085×0.001×0.055 m and name it card_base.
+card_base = add_cube("card_base", size=(0.085, 0.001, 0.055), location=(0, 0, 0), rotation=(0, 0, 0))
+card_base.data.materials.append(mat_card_stock)
+
+# Rotate card_base so its +Z axis aligns +Z (world).
+# Cube default Z is up, so no rotation needed if aligned to world Z.
+align_axis_to_vector(card_base, 'Z', (0, 0, 1))
+
+# Anchor card_base to world origin.
+card_base.location = (0, 0, 0)
+
+# Then move by offset(0, 0, 0).
+card_base.location += Vector((0, 0, 0))
+
+# --- SECTION 2 – Create text elements ---
+
+# Create primitive cuboid with size 0.060×0.0001×0.015 m and name it name_text.
+name_text = add_cube("name_text", size=(0.060, 0.0001, 0.015), location=(0, 0, 0), rotation=(0, 0, 0))
+name_text.data.materials.append(mat_ink_black)
+
+# Rotate name_text so its +Z axis aligns +Z (world).
+align_axis_to_vector(name_text, 'Z', (0, 0, 1))
+
+# Align name_text.XY_face to card_base.XY_face.
+# Assuming XY_face means the face normal to Z axis.
+# We want to align the bottom face of name_text to the top face of card_base.
+# card_base center is at Z=0. Top face is at Z = 0.055 / 2 = 0.0275.
+# name_text height is 0.015. Bottom face is at Z = -0.015 / 2 = -0.0075 relative to center.
+# To align bottom of name_text to top of card_base:
+# name_text.location.z + (-0.015/2) = card_base.location.z + (0.055/2)
+# name_text.location.z - 0.0075 = 0 + 0.0275
+# name_text.location.z = 0.035
+
+# Align logic:
+# Get card_base top Z
+cb_top_z = card_base.location.z + (card_base.dimensions[2] / 2)
+# Set name_text bottom Z to match
+nt_bottom_z = cb_top_z
+name_text.location.z = nt_bottom_z + (name_text.dimensions[2] / 2)
+
+# Then move by offset(0, 0.015, 0.0005).
+name_text.location += Vector((0, 0.015, 0.0005))
+
+# Create primitive cuboid with size 0.040×0.0001×0.008 m and name it title_text.
+title_text = add_cube("title_text", size=(0.040, 0.0001, 0.008), location=(0, 0, 0), rotation=(0, 0, 0))
+title_text.data.materials.append(mat_ink_black)
+
+# Rotate title_text so its +Z axis aligns +Z (world).
+align_axis_to_vector(title_text, 'Z', (0, 0, 1))
+
+# Align title_text.XY_face to card_base.XY_face.
+tt_bottom_z = cb_top_z
+title_text.location.z = tt_bottom_z + (title_text.dimensions[2] / 2)
+
+# Then move by offset(0, 0.005, 0.0005).
+title_text.location += Vector((0, 0.005, 0.0005))
+
+# Create primitive cuboid with size 0.035×0.0001×0.006 m and name it phone_text.
+phone_text = add_cube("phone_text", size=(0.035, 0.0001, 0.006), location=(0, 0, 0), rotation=(0, 0, 0))
+phone_text.data.materials.append(mat_ink_black)
+
+# Rotate phone_text so its +Z axis aligns +Z (world).
+align_axis_to_vector(phone_text, 'Z', (0, 0, 1))
+
+# Align phone_text.XY_face to card_base.XY_face.
+pt_bottom_z = cb_top_z
+phone_text.location.z = pt_bottom_z + (phone_text.dimensions[2] / 2)
+
+# Then move by offset(0, -0.005, 0.0005).
+phone_text.location += Vector((0, -0.005, 0.0005))
+
+# Create primitive cuboid with size 0.040×0.0001×0.006 m and name it email_text.
+email_text = add_cube("email_text", size=(0.040, 0.0001, 0.006), location=(0, 0, 0), rotation=(0, 0, 0))
+email_text.data.materials.append(mat_ink_black)
+
+# Rotate email_text so its +Z axis aligns +Z (world).
+align_axis_to_vector(email_text, 'Z', (0, 0, 1))
+
+# Align email_text.XY_face to card_base.XY_face.
+et_bottom_z = cb_top_z
+email_text.location.z = et_bottom_z + (email_text.dimensions[2] / 2)
+
+# Then move by offset(0, -0.012, 0.0005).
+email_text.location += Vector((0, -0.012, 0.0005))
+```

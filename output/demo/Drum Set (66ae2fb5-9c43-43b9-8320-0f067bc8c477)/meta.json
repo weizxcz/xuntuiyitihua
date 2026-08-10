@@ -1,0 +1,57 @@
+{
+  "id": "66ae2fb5-9c43-43b9-8320-0f067bc8c477",
+  "name": "Drum Set",
+  "instruction": "Design a drum set with a bass drum, snare drum, and a set of toms. Include a hi-hat and a couple of cymbals. The drums should be mounted on stands, and the bass drum should have a pedal for playing it.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a drum set.",
+        "The drum set includes a bass drum.",
+        "The drum set includes a snare drum.",
+        "The drum set includes a set of toms.",
+        "The drum set includes a hi-hat.",
+        "The drum set includes a couple of cymbals."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The bass drum is proportionate to the snare drum.",
+        "The toms are proportionate to the snare drum.",
+        "The hi-hat is proportionate to the other drums.",
+        "The cymbals are proportionate to the overall drum set."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The bass drum is positioned centrally in the drum set.",
+        "The snare drum is positioned in front of the drummer.",
+        "The toms are mounted above the bass drum.",
+        "The hi-hat is positioned to the left of the snare drum.",
+        "The cymbals are positioned to the right of the snare drum."
+      ],
+      "Object distance and contact": [
+        "The bass drum is mounted on the floor.",
+        "The snare drum is mounted on a stand at an appropriate height.",
+        "The toms are mounted securely above the bass drum.",
+        "The hi-hat is mounted on a stand and is accessible.",
+        "The cymbals are mounted on stands and are positioned for easy reach."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components of the drum set are included.",
+        "The bass drum has a pedal for playing it.",
+        "The drums are mounted on stands as instructed."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

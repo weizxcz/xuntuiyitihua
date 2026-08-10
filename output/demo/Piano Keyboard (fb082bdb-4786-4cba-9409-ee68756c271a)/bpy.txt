@@ -1,0 +1,291 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    """Create a new material with a specific diffuse color."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler):
+    """Add a cube mesh object."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    return obj
+
+def add_cylinder(name, radius, depth, location, rotation_euler):
+    """Add a cylinder mesh object."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, location=location, rotation=rotation_euler)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cone(name, radius_top, radius_bottom, depth, location, rotation_euler):
+    """Add a cone mesh object."""
+    bpy.ops.mesh.primitive_cone_add(radius1=radius_top, radius2=radius_bottom, depth=depth, location=location, rotation=rotation_euler)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_uvsphere(name, radius, location, rotation_euler):
+    """Add an UV sphere mesh object."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation_euler)
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis='Z', vector=(0,0,1)):
+    """Align an object's local axis to a world vector."""
+    if axis == 'X':
+        local_axis = Vector((1, 0, 0))
+    elif axis == 'Y':
+        local_axis = Vector((0, 1, 0))
+    else: # Z
+        local_axis = Vector((0, 0, 1))
+    
+    target = Vector(vector).normalized()
+    if local_axis.normalized().dot(target) < -0.999:
+        rot = Matrix.Rotation(math.pi, 4, local_axis.cross(target).normalized() if local_axis.cross(target).length > 0 else Vector((1,0,0)))
+    else:
+        rot = local_axis.rotation_difference(target).to_matrix().to_4x4()
+    
+    obj.rotation_euler = rot.to_euler()
+
+def boolean_subtract(cutter, target):
+    """Perform boolean subtract using modifier stack."""
+    # Ensure target is active for modifier addition if needed, but we'll add to target
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = cutter
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_obj, target):
+    """Perform boolean union using modifier stack."""
+    bpy.context.view_layer.objects.active = target
+    mod = target.modifiers.new(name="BooleanUnion", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = union_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(union_obj, do_unlink=True)
+
+def get_face_center(obj, axis='Z'):
+    """Get the world center of the face normal to the specified axis."""
+    # Assuming standard cube orientation where faces are at +/- half size
+    # We need to transform the local face center to world space
+    local_center = Vector((0,0,0))
+    if axis == 'X':
+        local_center = Vector((1,0,0)) if obj.scale[0] > 0 else Vector((-1,0,0)) # Simplified: just direction
+        # Actually, for a cube centered at 0,0,0, the face center is at (size/2, 0, 0)
+        # Let's calculate based on scale
+        half_size = obj.scale[0] / 2
+        local_center = Vector((half_size, 0, 0))
+    elif axis == 'Y':
+        half_size = obj.scale[1] / 2
+        local_center = Vector((0, half_size, 0))
+    else: # Z
+        half_size = obj.scale[2] / 2
+        local_center = Vector((0, 0, half_size))
+    
+    return obj.matrix_world @ local_center
+
+def average(points):
+    """Calculate the average of a list of vectors."""
+    if not points:
+        return Vector((0,0,0))
+    return sum(points, Vector()) / len(points)
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+black_key_mat = make_material("black_key_mat", (0, 0, 0, 1))
+control_panel_mat = make_material("control_panel_mat", (30/255, 30/255, 30/255, 1))
+white_key_mat = make_material("white_key_mat", (240/255, 240/255, 240/255, 1))
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create Base Frame Components ---
+
+# Create white_key_base
+white_key_base = add_cube("white_key_base", (0.700, 0.150, 0.050), (0, 0, 0), (0, 0, 0))
+white_key_base.data.materials.append(white_key_mat)
+
+# Create black_key_base
+black_key_base = add_cube("black_key_base", (0.400, 0.150, 0.030), (0, 0, 0.010), (0, 0, 0))
+black_key_base.data.materials.append(black_key_mat)
+
+# Create control_panel_base
+control_panel_base = add_cube("control_panel_base", (0.100, 0.150, 0.050), (0.400, 0, 0), (0, 0, 0))
+control_panel_base.data.materials.append(control_panel_mat)
+
+# Boolean-union white_key_base, black_key_base, and control_panel_base; keep white_key_base
+# We union black_key_base into white_key_base
+boolean_union(black_key_base, white_key_base)
+# We union control_panel_base into white_key_base
+boolean_union(control_panel_base, white_key_base)
+
+# Rename white_key_base to base_frame
+white_key_base.name = "base_frame"
+base_frame = white_key_base
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create White Keys Pattern ---
+
+white_key_templates = []
+
+for c in range(88): # 0...87
+    # Create primitive cuboid
+    name = f"white_key_template_{c}"
+    # Size 0.007x0.150x0.050
+    # Anchor to base_frame.top_face
+    # Align +Z_face to base_frame.+Z_face (already aligned by default creation)
+    # Offset(-0.3065 + c*0.007, 0, 0.050)
+    
+    # Calculate position
+    # Anchor to base_frame.top_face means Z position is at base_frame top face
+    # base_frame top face Z is at 0.025 (half height)
+    # Offset Z is 0.050, so final Z = 0.025 + 0.050 = 0.075
+    # Offset X is -0.3065 + c*0.007
+    # Offset Y is 0
+    
+    x_pos = -0.3065 + c * 0.007
+    y_pos = 0
+    z_pos = 0.025 + 0.050 # base_frame half height + offset
+    
+    key = add_cube(name, (0.007, 0.150, 0.050), (x_pos, y_pos, z_pos), (0, 0, 0))
+    key.data.materials.append(white_key_mat)
+    white_key_templates.append(key)
+
+# Boolean-union all white_key_template_c objects; keep white_key_template_0
+if white_key_templates:
+    target = white_key_templates[0]
+    for i in range(1, len(white_key_templates)):
+        boolean_union(white_key_templates[i], target)
+    white_key_template_0 = target
+else:
+    white_key_template_0 = None
+
+# Stage 2 complete.
+
+# --- SECTION 3 – Create Black Keys Pattern ---
+
+black_key_templates = []
+
+for c in range(52): # 0...51
+    # Create primitive cuboid
+    name = f"black_key_template_{c}"
+    # Size 0.004x0.090x0.025
+    # Anchor to base_frame.top_face
+    # Align +Z_face to base_frame.+Z_face
+    # Offset(-0.292 + c*0.028, 0, 0.025)
+    
+    # Calculate position
+    # Anchor to base_frame.top_face means Z position is at base_frame top face
+    # base_frame top face Z is at 0.025
+    # Offset Z is 0.025, so final Z = 0.025 + 0.025 = 0.050
+    # Offset X is -0.292 + c*0.028
+    # Offset Y is 0
+    
+    x_pos = -0.292 + c * 0.028
+    y_pos = 0
+    z_pos = 0.025 + 0.025 # base_frame half height + offset
+    
+    key = add_cube(name, (0.004, 0.090, 0.025), (x_pos, y_pos, z_pos), (0, 0, 0))
+    key.data.materials.append(black_key_mat)
+    black_key_templates.append(key)
+
+# Boolean-union all black_key_template_c objects; keep black_key_template_0
+if black_key_templates:
+    target = black_key_templates[0]
+    for i in range(1, len(black_key_templates)):
+        boolean_union(black_key_templates[i], target)
+    black_key_template_0 = target
+else:
+    black_key_template_0 = None
+
+# Stage 3 complete.
+
+# --- SECTION 4 – Create Control Panel Details ---
+
+# Create control_screen
+# Size 0.080x0.080x0.002
+# Anchor to control_panel_base.top_face
+# Align +Z_face to control_panel_base.+Z_face
+# Offset(0.010, 0, 0.026)
+
+# control_panel_base is at (0.400, 0, 0) with size 0.100x0.150x0.050
+# Its top face Z is at 0 + 0.025 = 0.025
+# Its center X is 0.400, Y is 0
+# Offset X is 0.010, Y is 0, Z is 0.026
+# Final X = 0.400 + 0.010 = 0.410
+# Final Y = 0 + 0 = 0
+# Final Z = 0.025 + 0.026 = 0.051
+
+control_screen = add_cube("control_screen", (0.080, 0.080, 0.002), (0.410, 0, 0.051), (0, 0, 0))
+control_screen.data.materials.append(control_panel_mat)
+
+# Create control_buttons
+# Size 0.080x0.020x0.005
+# Anchor to control_panel_base.top_face
+# Align +Z_face to control_panel_base.+Z_face
+# Offset(0.010, 0, 0.010)
+
+# Final X = 0.400 + 0.010 = 0.410
+# Final Y = 0 + 0 = 0
+# Final Z = 0.025 + 0.010 = 0.035
+
+control_buttons = add_cube("control_buttons", (0.080, 0.020, 0.005), (0.410, 0, 0.035), (0, 0, 0))
+control_buttons.data.materials.append(control_panel_mat)
+
+# Boolean-union control_screen and control_buttons; keep control_screen
+boolean_union(control_buttons, control_screen)
+
+# Rename control_screen to control_panel_details
+control_screen.name = "control_panel_details"
+control_panel_details = control_screen
+
+# Stage 4 complete.
+
+# --- SECTION 5 – Final Assembly ---
+
+# Boolean-union base_frame, white_key_template_0, black_key_template_0, and control_panel_details; keep base_frame
+
+# Union white_key_template_0 into base_frame
+if white_key_template_0:
+    boolean_union(white_key_template_0, base_frame)
+
+# Union black_key_template_0 into base_frame
+if black_key_template_0:
+    boolean_union(black_key_template_0, base_frame)
+
+# Union control_panel_details into base_frame
+boolean_union(control_panel_details, base_frame)
+
+# Rename base_frame to piano_assembly
+base_frame.name = "piano_assembly"
+
+# Stage 5 complete.
+
+# All stages complete.
+```

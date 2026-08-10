@@ -1,0 +1,90 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material plastic_white; diffuse_color = (0.94, 0.94, 0.94, 1).
+Define material metal_copper; diffuse_color = (0.78, 0.39, 0.20, 1).
+Define material metal_steel; diffuse_color = (0.59, 0.59, 0.63, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Root Assembly Anchor  ---
+Create an Empty helper (cube display) and name it root.
+Rotate root so its axis aligns +Z (world).
+Move root to (0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Face Plate Structure  ---
+Create primitive cuboid with size 0.100×0.150×0.004 m and name it face_plate.
+Rotate face_plate so its +Z axis aligns +Z (world).
+Anchor face_plate to root.center.
+Then move by offset(0,0,0).
+Apply material plastic_white to face_plate.
+
+Create primitive cuboid with size 0.090×0.140×0.002 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Anchor base_plate to face_plate.center.
+Align base_plate.Z to face_plate.Z.
+Then move by offset(0,0,-0.002).
+Apply material plastic_white to base_plate.
+
+Boolean-union base_plate from face_plate; keep face_plate.
+Stage 2 complete.
+
+---  SECTION 3 – Create Face Plate Holes (Boolean Subtractions)  ---
+Create primitive cylinder with radius 0.002 m and height 0.040 m and name it slot_L_cut.
+Rotate slot_L_cut so its +Z axis aligns +Y (world).
+Anchor slot_L_cut to face_plate.center.
+Then move by offset(-0.015, 0.010, 0).
+Boolean-subtract slot_L_cut from face_plate; discard slot_L_cut.
+
+Create primitive cylinder with radius 0.002 m and height 0.040 m and name it slot_R_cut.
+Rotate slot_R_cut so its +Z axis aligns +Y (world).
+Anchor slot_R_cut to face_plate.center.
+Then move by offset(0.015, 0.010, 0).
+Boolean-subtract slot_R_cut from face_plate; discard slot_R_cut.
+
+Create primitive cylinder with radius 0.004 m and height 0.004 m and name it hole_G_cut.
+Rotate hole_G_cut so its +Z axis aligns +Z (world).
+Anchor hole_G_cut to face_plate.center.
+Then move by offset(0, -0.020, 0).
+Boolean-subtract hole_G_cut from face_plate; discard hole_G_cut.
+Stage 3 complete.
+
+---  SECTION 4 – Create Internal Contacts  ---
+Create primitive cuboid with size 0.002×0.030×0.001 m and name it contact_L.
+Rotate contact_L so its +Z axis aligns +Z (world).
+Anchor contact_L to slot_L_cut.center (using previous slot position).
+Align contact_L.Z to face_plate.Z.
+Then move by offset(0,0,-0.002).
+Apply material metal_copper to contact_L.
+
+Create primitive cuboid with size 0.002×0.030×0.001 m and name it contact_R.
+Rotate contact_R so its +Z axis aligns +Z (world).
+Anchor contact_R to slot_R_cut.center (using previous slot position).
+Align contact_R.Z to face_plate.Z.
+Then move by offset(0,0,-0.002).
+Apply material metal_copper to contact_R.
+
+Create primitive cylinder with radius 0.003 m and height 0.006 m and name it contact_G.
+Rotate contact_G so its +Z axis aligns +Z (world).
+Anchor contact_G to hole_G_cut.center (using previous hole position).
+Align contact_G.Z to face_plate.Z.
+Then move by offset(0,0,-0.002).
+Apply material metal_steel to contact_G.
+Stage 4 complete.
+
+---  SECTION 5 – Final Assembly  ---
+Boolean-union contact_L from face_plate; keep face_plate.
+Boolean-union contact_R from face_plate; keep face_plate.
+Boolean-union contact_G from face_plate; keep face_plate.
+Assembly guideline satisfied.
+All stages complete.

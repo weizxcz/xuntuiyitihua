@@ -1,0 +1,1 @@
+Create a 3D model of a cat bed. The bed should be circular with raised edges to provide a cozy space for the cat to curl up in.

@@ -1,0 +1,63 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.80,1.0)
+mat_black_abs | diffuse_color=(0.10,0.10,0.10,1.0)
+mat_blue_acrylic | diffuse_color=(0.20,0.40,0.80,0.80)
+mat_glass | diffuse_color=(0.90,0.95,1.00,0.30)
+mat_green_pcb | diffuse_color=(0.10,0.60,0.20,1.0)
+mat_lead_screw | diffuse_color=(0.60,0.60,0.65,1.0)
+mat_motor_stepper | diffuse_color=(0.20,0.20,0.25,1.0)
+mat_nitrile | diffuse_color=(0.15,0.15,0.20,1.0)
+mat_plastic_trans | diffuse_color=(0.90,0.90,0.90,0.40)
+mat_silicone | diffuse_color=(0.80,0.80,0.80,1.0)
+mat_steel | diffuse_color=(0.50,0.50,0.55,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_unit | Composite of base_plate, motor_assembly, lead_screw_assembly, display_module, syringe_holder | assembly_order=[base_plate], [motor_assembly], [lead_screw_assembly], [display_module], [syringe_holder]; mat=mat_black_abs; create_method=composite |
+
+Layer 1 – Primary Structure (Base & Motor)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_plate | Rectangular base plate 0.200×0.150×0.010 m | pos=(0,0,0); orientation=axis:+Z; mat=mat_black_abs; create_method=primitive(cube); constraint=Base platform for all components |
+| motor_assembly | Composite of stepper_motor, motor_mount, coupling | assembly_order=[stepper_motor], [motor_mount], [coupling]; mat=mat_motor_stepper; create_method=composite |
+| stepper_motor | Stepper motor block 0.040×0.040×0.040 m | pos=(0.050, -0.050, 0.010); orientation=axis:+X; mat=mat_motor_stepper; create_method=primitive(cube); constraint=Standard NEMA 17 size |
+| motor_mount | L-shaped bracket holding motor | pos=(0.050, -0.050, 0.010); orientation=axis:+X; mat=mat_aluminum; create_method=primitive(cuboid); constraint=Aligns motor to lead screw axis |
+| coupling | Flexible coupling connecting motor to screw | pos=(0.050, 0.000, 0.010); orientation=axis:+X; mat=mat_nitrile; create_method=primitive(cylinder); constraint=Connects motor shaft to lead screw |
+
+Layer 2 – Drive Mechanism
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lead_screw_assembly | Composite of lead_screw, nut_block, linear_rail | assembly_order=[lead_screw], [nut_block], [linear_rail]; mat=mat_lead_screw; create_method=composite |
+| lead_screw | Threaded rod Ø0.008×0.120 m | pos=(0.050, 0.000, 0.010); orientation=axis:+X; mat=mat_lead_screw; create_method=primitive(cylinder); constraint=Translates rotation to linear motion |
+| nut_block | Acme nut block on screw | pos=(0.050, 0.000, 0.010); orientation=axis:+X; mat=mat_plastic_trans; create_method=primitive(cuboid); constraint=Moves linearly with screw rotation |
+| linear_rail | Guide rail for smooth motion | pos=(0.050, 0.000, 0.010); orientation=axis:+X; mat=mat_steel; create_method=primitive(cylinder); constraint=Supports nut block movement |
+
+Layer 3 – User Interface
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| display_module | Composite of lcd_screen, pcb_board, bezel | assembly_order=[pcb_board], [lcd_screen], [bezel]; mat=mat_green_pcb; create_method=composite |
+| pcb_board | Main control board 0.100×0.080×0.002 m | pos=(0.000, 0.000, 0.010); orientation=axis:+Z; mat=mat_green_pcb; create_method=primitive(cuboid); constraint=Electronics housing |
+| lcd_screen | Digital display screen 0.080×0.040×0.002 m | pos=(0.000, 0.000, 0.012); orientation=axis:+Z; mat=mat_blue_acrylic; create_method=primitive(cuboid); constraint=Shows flow rate/volume |
+| bezel | Front frame for display | pos=(0.000, 0.000, 0.012); orientation=axis:+Z; mat=mat_black_abs; create_method=primitive(cuboid); constraint=Protects screen and buttons |
+
+Layer 4 – Syringe Interface
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| syringe_holder | Composite of barrel_guide, plunger_pusher, flange_stop | assembly_order=[barrel_guide], [plunger_pusher], [flange_stop]; mat=mat_aluminum; create_method=composite |
+| barrel_guide | Cylindrical guide for syringe barrel Ø0.025×0.100 m | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_aluminum; create_method=primitive(cylinder); constraint=Aligns syringe barrel |
+| plunger_pusher | Flat plate pushing plunger | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_silicone; create_method=primitive(cuboid); constraint=Connects to nut_block via offset; pushes plunger |
+| flange_stop | Stopper for syringe flange | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_aluminum; create_method=primitive(cuboid); constraint=Prevents syringe from sliding out |
+
+Layer 5 – Consumable (Syringe)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| syringe | Composite of glass_barrel, rubber_plunger, plastic_flange, needle_hub | assembly_order=[glass_barrel], [rubber_plunger], [plastic_flange], [needle_hub]; mat=mat_glass; create_method=composite |
+| glass_barrel | Transparent syringe barrel Ø0.020×0.080 m | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_glass; create_method=primitive(cylinder); constraint=Contains fluid |
+| rubber_plunger | Rubber stopper inside barrel | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_nitrile; create_method=primitive(cylinder); constraint=Seals barrel, pushed by plunger_pusher |
+| plastic_flange | Flange at end of barrel | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_plastic_trans; create_method=primitive(cylinder); constraint=Rests against flange_stop |
+| needle_hub | Luer lock tip | pos=(0.050, 0.000, 0.060); orientation=axis:+X; mat=mat_plastic_trans; create_method=primitive(cylinder); constraint=Connects to needle (not modeled) |
+
+# ----------  END_GRAPH  ----------

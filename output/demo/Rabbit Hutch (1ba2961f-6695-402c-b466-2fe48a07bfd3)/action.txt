@@ -1,0 +1,150 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_wood_frame; diffuse_color = (0.55,0.35,0.15,1.0).
+Define material mat_wire_mesh; diffuse_color = (0.6,0.6,0.6,0.8).
+Define material mat_roof_shingles; diffuse_color = (0.2,0.2,0.2,1.0).
+Define material mat_door_panel; diffuse_color = (0.55,0.35,0.15,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Frame Corner Posts  ---
+Create primitive cuboid with size 0.05×0.3×0.05 m and name it corner_post_LF.
+Rotate corner_post_LF so its +Z axis aligns +Z (world).
+Move corner_post_LF to pos=(-0.5, -0.5, 0).
+
+Create primitive cuboid with size 0.05×0.3×0.05 m and name it corner_post_RF.
+Rotate corner_post_RF so its +Z axis aligns +Z (world).
+Move corner_post_RF to pos=(0.5, -0.5, 0).
+
+Create primitive cuboid with size 0.05×0.3×0.05 m and name it corner_post_LB.
+Rotate corner_post_LB so its +Z axis aligns +Z (world).
+Move corner_post_LB to pos=(-0.5, 0.5, 0).
+
+Create primitive cuboid with size 0.05×0.3×0.05 m and name it corner_post_RB.
+Rotate corner_post_RB so its +Z axis aligns +Z (world).
+Move corner_post_RB to pos=(0.5, 0.5, 0).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create Bottom Rails  ---
+Create primitive cuboid with size 1.0×0.05×0.05 m and name it bottom_rail_front.
+Rotate bottom_rail_front so its +Z axis aligns +Z (world).
+Align bottom_rail_front.bottom_face to Avg(corner_post_LF.bottom_face, corner_post_RF.bottom_face).
+Then move by offset(0,0,0.025).
+
+Create primitive cuboid with size 1.0×0.05×0.05 m and name it bottom_rail_back.
+Rotate bottom_rail_back so its +Z axis aligns +Z (world).
+Align bottom_rail_back.bottom_face to Avg(corner_post_LB.bottom_face, corner_post_RB.bottom_face).
+Then move by offset(0,0,0.025).
+
+Create primitive cuboid with size 0.05×0.05×1.0 m and name it bottom_rail_left.
+Rotate bottom_rail_left so its +Z axis aligns +Z (world).
+Align bottom_rail_left.bottom_face to Avg(corner_post_LF.bottom_face, corner_post_LB.bottom_face).
+Then move by offset(0,0,0.025).
+
+Create primitive cuboid with size 0.05×0.05×1.0 m and name it bottom_rail_right.
+Rotate bottom_rail_right so its +Z axis aligns +Z (world).
+Align bottom_rail_right.bottom_face to Avg(corner_post_RF.bottom_face, corner_post_RB.bottom_face).
+Then move by offset(0,0,0.025).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Run Enclosure Floor and Mesh Walls  ---
+Create primitive cuboid with size 1.0×0.01×1.0 m and name it floor_grate.
+Rotate floor_grate so its +Z axis aligns +Z (world).
+Align floor_grate.center to Avg(corner_post_LF.center, corner_post_RF.center, corner_post_LB.center, corner_post_RB.center).
+Then move by offset(0,0,0.01).
+
+Create primitive cylinder with diameter 1.0 m and height 0.25 m and name it mesh_front.
+Rotate mesh_front so its +Z axis aligns +Z (world).
+Align mesh_front.center to Avg(corner_post_LF.center, corner_post_RF.center).
+Then move by offset(0,0,0.125).
+
+Create primitive cylinder with diameter 1.0 m and height 0.25 m and name it mesh_back.
+Rotate mesh_back so its +Z axis aligns +Z (world).
+Align mesh_back.center to Avg(corner_post_LB.center, corner_post_RB.center).
+Then move by offset(0,0,0.125).
+
+Create primitive cylinder with diameter 1.0 m and height 0.25 m and name it mesh_left.
+Rotate mesh_left so its +Z axis aligns +Z (world).
+Align mesh_left.center to Avg(corner_post_LF.center, corner_post_LB.center).
+Then move by offset(0,0,0.125).
+
+Create primitive cylinder with diameter 1.0 m and height 0.25 m and name it mesh_right.
+Rotate mesh_right so its +Z axis aligns +Z (world).
+Align mesh_right.center to Avg(corner_post_RF.center, corner_post_RB.center).
+Then move by offset(0,0,0.125).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Sleeping Chamber Structure  ---
+Create primitive cuboid with size 1.0×0.02×1.0 m and name it chamber_floor.
+Rotate chamber_floor so its +Z axis aligns +Z (world).
+Align chamber_floor.center to Avg(corner_post_LF.center, corner_post_RF.center, corner_post_LB.center, corner_post_RB.center).
+Then move by offset(0,0,0.3).
+
+Create primitive cuboid with size 1.0×0.4×0.02 m and name it chamber_back.
+Rotate chamber_back so its +Z axis aligns +Z (world).
+Align chamber_back.center to Avg(corner_post_LB.center, corner_post_RB.center).
+Then move by offset(0,0,0.5).
+
+Create primitive cuboid with size 0.02×0.4×1.0 m and name it chamber_left.
+Rotate chamber_left so its +Z axis aligns +Z (world).
+Align chamber_left.center to Avg(corner_post_LF.center, corner_post_LB.center).
+Then move by offset(0,0,0.5).
+
+Create primitive cuboid with size 0.02×0.4×1.0 m and name it chamber_right.
+Rotate chamber_right so its +Z axis aligns +Z (world).
+Align chamber_right.center to Avg(corner_post_RF.center, corner_post_RB.center).
+Then move by offset(0,0,0.5).
+
+Create primitive cuboid with size 1.0×0.02×1.0 m and name it chamber_ceiling.
+Rotate chamber_ceiling so its +Z axis aligns +Z (world).
+Align chamber_ceiling.center to Avg(corner_post_LF.center, corner_post_RF.center, corner_post_LB.center, corner_post_RB.center).
+Then move by offset(0,0,0.7).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Roof  ---
+Create primitive cuboid with size 0.55×0.02×1.05 m and name it roof_left.
+Rotate roof_left so its +Z axis aligns +Z (world).
+Align roof_left.center to Avg(corner_post_LF.center, corner_post_LB.center).
+Then move by offset(0,0,0.71).
+Rotate roof_left so its local Y axis tilts 10 degrees.
+
+Create primitive cuboid with size 0.55×0.02×1.05 m and name it roof_right.
+Rotate roof_right so its +Z axis aligns +Z (world).
+Align roof_right.center to Avg(corner_post_RF.center, corner_post_RB.center).
+Then move by offset(0,0,0.71).
+Rotate roof_right so its local Y axis tilts -10 degrees.
+
+Stage 5 complete.
+
+---  SECTION 6 – Create Ramp  ---
+Create primitive cuboid with size 0.8×0.02×1.0 m and name it ramp.
+Rotate ramp so its +Z axis aligns +Z (world).
+Align ramp.center to Avg(corner_post_LF.center, corner_post_RF.center).
+Then move by offset(0,0,0.15).
+Rotate ramp so its local X axis tilts -15 degrees.
+
+Stage 6 complete.
+
+---  SECTION 7 – Create Door  ---
+Create primitive cuboid with size 0.4×0.3×0.02 m and name it door.
+Rotate door so its +Z axis aligns +Z (world).
+Align door.center to Avg(corner_post_LF.center, corner_post_RF.center).
+Then move by offset(0,0,0.5).
+
+Stage 7 complete.
+
+All stages complete.

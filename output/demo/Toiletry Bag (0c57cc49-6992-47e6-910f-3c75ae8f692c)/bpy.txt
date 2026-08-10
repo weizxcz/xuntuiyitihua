@@ -1,0 +1,291 @@
+```python
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+def make_material(name, diffuse_color):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_primitive_cube(name, size, location, rotation_euler):
+    """Add a cube and apply size, location, and rotation."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0]/2, size[1]/2, size[2]/2)
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    return obj
+
+def align_face_to_face(obj_source, obj_target, axis='Y', offset=0):
+    """
+    Aligns a specific face of obj_source to the corresponding face of obj_target.
+    axis: 'X', 'Y', or 'Z' indicating the local axis of the face normal.
+    offset: additional distance to move along the normal after alignment.
+    """
+    # Get world matrices
+    mat_src = obj_source.matrix_world
+    mat_tgt = obj_target.matrix_world
+    
+    # Determine face normal direction in world space
+    # We assume the object is axis-aligned or we align based on the object's local axis
+    # For simplicity in this script, we assume standard orientation where local axis aligns with world axis
+    # or we calculate the face center and normal.
+    
+    # Get face normal in world space
+    # Since we are dealing with simple boxes aligned to axes, we can infer the normal direction
+    # based on the axis parameter.
+    # +axis face normal is +1 in that world axis direction if object is not rotated relative to world.
+    # However, to be robust, let's find the face center and normal.
+    
+    # Helper to get face info
+    def get_face_normal_and_center(obj, axis_char):
+        # This is a simplified approach assuming the object's local axes align with world axes
+        # or that we are aligning based on the object's local orientation.
+        # If the object is rotated, we need to transform the local normal.
+        
+        local_normal = Vector((0, 0, 0))
+        if axis_char == 'X': local_normal = Vector((1, 0, 0))
+        elif axis_char == 'Y': local_normal = Vector((0, 1, 0))
+        elif axis_char == 'Z': local_normal = Vector((0, 0, 1))
+        
+        # Transform normal to world space
+        world_normal = local_normal @ obj.matrix_world.to_3x3()
+        world_normal.normalize()
+        
+        # Get face center (approximate by adding half size in that direction)
+        half_size = obj.dimensions / 2
+        offset_vec = half_size * local_normal
+        face_center_local = offset_vec
+        face_center_world = face_center_local @ obj.matrix_world
+        
+        return face_center_world, world_normal
+
+    src_center, src_normal = get_face_normal_and_center(obj_source, axis)
+    tgt_center, tgt_normal = get_face_normal_and_center(obj_target, axis)
+    
+    # We want src_face to touch tgt_face.
+    # The tgt_face normal points OUT of the target.
+    # The src_face normal points OUT of the source.
+    # To align them (touching), the src_face should be at tgt_center - tgt_normal * (distance).
+    # Actually, usually we want the src face to be coplanar with the tgt face.
+    # If we align +Y face of A to +Y face of B, they are parallel.
+    # If we want them to touch, we need to move A so its face is at B's face position.
+    
+    # Vector from src_face to tgtFace
+    # Target position for src_face center = tgt_center
+    # But we want the surfaces to touch.
+    # If normals are same direction, they are parallel.
+    # Distance between planes = (tgt_center - src_center) . tgt_normal
+    
+    # Let's move obj_source so its face center coincides with tgt_face center?
+    # No, usually "align face to face" implies coplanarity or touching.
+    # Given the context of assembly, it likely means touching.
+    # If we align +Y face of Source to +Y face of Target, and they are on the same side,
+    # we might want to push Source away or pull it in.
+    # Let's assume we want the Source face to be AT the Target face location.
+    
+    # Calculate translation vector
+    # We want src_face_world to move to tgt_center
+    # But we also need to account for the fact that they might be on opposite sides.
+    # Let's just move the source object so its face center is at the target face center.
+    # Then apply offset.
+    
+    delta = tgt_center - src_center
+    obj_source.location += delta
+    
+    # Apply offset along the normal
+    # If offset > 0, move further out along the normal
+    obj_source.location += src_normal * offset
+
+def align_axis_to_vector(obj, axis_char, vector):
+    """Rotate object so its local axis aligns with a world vector."""
+    if axis_char == 'X': local_axis = Vector((1, 0, 0))
+    elif axis_char == 'Y': local_axis = Vector((0, 1, 0))
+    elif axis_char == 'Z': local_axis = Vector((0, 0, 1))
+    
+    # Normalize input vector
+    vector = vector.normalized()
+    local_axis = local_axis.normalized()
+    
+    # Calculate rotation
+    rot_quat = local_axis.rotation_difference(vector)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def create_panel(name, size, align_axis, anchor_pos, offset, align_to_obj=None, align_axis_face=None):
+    """
+    Generic panel creation helper.
+    align_axis: 'X', 'Y', 'Z' - which local axis aligns with world axis.
+    """
+    # 1. Create primitive
+    # Default cube is centered at 0,0,0 with size 1.
+    # We want size X, Y, Z.
+    # We need to orient it first.
+    
+    # Orientation:
+    # If align_axis is 'Z', we want local Z to align with world Z.
+    # Cube default is Z up. So no rotation needed for Z.
+    # If align_axis is 'Y', we want local Y to align with world Y.
+    # Cube default Y is forward. We need to rotate -90 deg around X to make Y up?
+    # Or just set rotation_euler directly.
+    
+    rot = (0, 0, 0)
+    if align_axis == 'Y':
+        rot = (-pi/2, 0, 0) # Rotate X by -90 deg so Y becomes Z? No.
+        # Let's check:
+        # Default: X right, Y forward, Z up.
+        # We want Local Y to align with World Y.
+        # If we don't rotate, Local Y IS World Y.
+        # So if align_axis == 'Y', rot = (0,0,0).
+        pass
+    elif align_axis == 'Z':
+        # Local Z aligns with World Z.
+        # Default Local Z IS World Z.
+        # So if align_axis == 'Z', rot = (0,0,0).
+        pass
+    elif align_axis == 'X':
+        # Local X aligns with World X.
+        # Default Local X IS World X.
+        # So if align_axis == 'X', rot = (0,0,0).
+        pass
+        
+    # Wait, the prompt says:
+    # "Rotate front_panel so its +Z axis aligns +Z (world)." -> Default is already aligned.
+    # "Rotate bottom_panel so its +Y axis aligns +Y (world)." -> Default is already aligned.
+    # "Rotate side_gusset so its +X axis aligns +X (world)." -> Default is already aligned.
+    
+    # It seems the primitives are created with default orientation which matches the world axes for X, Y, Z.
+    # So no rotation is needed if we just create a cube and scale it.
+    
+    obj = add_primitive_cube(name, size, (0, 0, 0), rot)
+    
+    # 2. Anchor to world origin (already at 0,0,0)
+    
+    # 3. Offset
+    obj.location = Vector(offset)
+    
+    # 4. Align faces if specified
+    if align_to_obj and align_axis_face:
+        align_face_to_face(obj, align_to_obj, axis=align_axis_face)
+        
+    return obj
+
+# ==============================================================================
+# BLOCK 0: SCENE RESET & UNITS
+# ==============================================================================
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# ==============================================================================
+# BLOCK 1: MATERIALS
+# ==============================================================================
+
+mat_fabric_main = make_material("fabric_main", (0.8, 0.8, 0.8, 1.0))
+mat_fabric_lining = make_material("fabric_lining", (0.9, 0.9, 0.9, 1.0))
+mat_zipper_track = make_material("zipper_track", (0.2, 0.2, 0.2, 1.0))
+mat_zipper_pull = make_material("zipper_pull", (0.7, 0.7, 0.7, 1.0))
+
+# ==============================================================================
+# BLOCK 2: GEOMETRY GENERATION
+# ==============================================================================
+
+# --- SECTION 1 – Create main_body: front_panel ---
+# Size 0.25x0.15x0.005. +Z aligns +Z.
+# Anchor to origin. Offset (0,0,0).
+front_panel = create_panel("front_panel", (0.25, 0.15, 0.005), 'Z', (0,0,0), (0,0,0))
+front_panel.data.materials.append(mat_fabric_main)
+
+# --- SECTION 2 – Create main_body: back_panel ---
+# Size 0.25x0.15x0.005. +Z aligns +Z.
+# Anchor to origin. Offset (0,0,-0.005).
+back_panel = create_panel("back_panel", (0.25, 0.15, 0.005), 'Z', (0,0,0), (0,0,-0.005))
+back_panel.data.materials.append(mat_fabric_main)
+
+# --- SECTION 3 – Create main_body: bottom_panel ---
+# Size 0.25x0.005x0.10. +Y aligns +Y.
+# Anchor to origin. Offset (0, -0.075, 0).
+bottom_panel = create_panel("bottom_panel", (0.25, 0.005, 0.10), 'Y', (0,0,0), (0,-0.075,0))
+bottom_panel.data.materials.append(mat_fabric_main)
+
+# --- SECTION 4 – Create main_body: side_gusset ---
+# Size 0.005x0.15x0.10. +X aligns +X.
+# Anchor to origin. Offset (-0.125, 0, 0).
+side_gusset = create_panel("side_gusset", (0.005, 0.15, 0.10), 'X', (0,0,0), (-0.125,0,0))
+side_gusset.data.materials.append(mat_fabric_main)
+
+# --- SECTION 5 – Create divider ---
+# Size 0.25x0.005x0.10. +Y aligns +Y.
+# Anchor to origin. Offset (0, 0, 0.05).
+# Align +Y face to front_panel +Y face.
+# Align +Y face to back_panel +Y face.
+divider = create_panel("divider", (0.25, 0.005, 0.10), 'Y', (0,0,0), (0,0,0.05))
+divider.data.materials.append(mat_fabric_main)
+
+# Align divider +Y face to front_panel +Y face
+align_face_to_face(divider, front_panel, axis='Y')
+# Align divider +Y face to back_panel +Y face
+align_face_to_face(divider, back_panel, axis='Y')
+
+# --- SECTION 6 – Create small_pocket_A ---
+# Size 0.10x0.005x0.08. +Y aligns +Y.
+# Anchor to origin. Offset (-0.05, 0.05, 0.05).
+# Align +Y face to divider +Y face.
+small_pocket_A = create_panel("small_pocket_A", (0.10, 0.005, 0.08), 'Y', (0,0,0), (-0.05,0.05,0.05))
+small_pocket_A.data.materials.append(mat_fabric_lining)
+
+align_face_to_face(small_pocket_A, divider, axis='Y')
+
+# --- SECTION 7 – Create small_pocket_B ---
+# Size 0.10x0.005x0.08. +Y aligns +Y.
+# Anchor to origin. Offset (0.05, 0.05, 0.05).
+# Align +Y face to divider +Y face.
+small_pocket_B = create_panel("small_pocket_B", (0.10, 0.005, 0.08), 'Y', (0,0,0), (0.05,0.05,0.05))
+small_pocket_B.data.materials.append(mat_fabric_lining)
+
+align_face_to_face(small_pocket_B, divider, axis='Y')
+
+# --- SECTION 8 – Create zipper_track ---
+# Size 0.25x0.002x0.02. +Y aligns +Y.
+# Anchor to origin. Offset (0, 0.075, 0).
+# Align +Y face to front_panel +Y face.
+# Align +Y face to back_panel +Y face.
+zipper_track = create_panel("zipper_track", (0.25, 0.002, 0.02), 'Y', (0,0,0), (0,0.075,0))
+zipper_track.data.materials.append(mat_zipper_track)
+
+align_face_to_face(zipper_track, front_panel, axis='Y')
+align_face_to_face(zipper_track, back_panel, axis='Y')
+
+# --- SECTION 9 – Create zipper_pull ---
+# Size 0.02x0.002x0.01. +Y aligns +Y.
+# Anchor to origin. Offset (0.12, 0.075, 0).
+# Align +Y face to zipper_track +Y face.
+zipper_pull = create_panel("zipper_pull", (0.02, 0.002, 0.01), 'Y', (0,0,0), (0.12,0.075,0))
+zipper_pull.data.materials.append(mat_zipper_pull)
+
+align_face_to_face(zipper_pull, zipper_track, axis='Y')
+
+# --- SECTION 10 – Create handle ---
+# Size 0.15x0.005x0.02. +Y aligns +Y.
+# Anchor to origin. Offset (0, 0.075, 0.05).
+# Align +Y face to back_panel +Y face.
+handle = create_panel("handle", (0.15, 0.005, 0.02), 'Y', (0,0,0), (0,0.075,0.05))
+handle.data.materials.append(mat_fabric_lining)
+
+align_face_to_face(handle, back_panel, axis='Y')
+```

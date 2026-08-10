@@ -1,0 +1,44 @@
+{
+  "id": "4e34810e-6320-43a1-9bb2-7d131dd3461c",
+  "name": "Kitchen Knife",
+  "instruction": "Create a kitchen knife with a straight blade and a handle. The blade should be sharp and taper to a point, while the handle should be ergonomic and easy to grip.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The blade is sharp.",
+        "The blade and handle are straight."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The blade and the handle are proportionate to the knife."
+      ],
+      "Texture and surface detail": [
+        "The blade appears to be made of stainless steel."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The blade is properly aligned with the handle.",
+        "The tapering of the blade is gradual and consistent.",
+        "The handle is positioned securely at the base of the blade."
+      ],
+      "Object distance and contact": [
+        "There is no gap between the blade and the handle.",
+        "The blade and handle are connected without any overlap."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the knife are accurately represented.",
+        "The design adheres to the instructions without deviations."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

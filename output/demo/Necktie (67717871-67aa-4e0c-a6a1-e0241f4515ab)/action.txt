@@ -1,0 +1,65 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material fabric_lining; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create blade_main  ---
+Create primitive cuboid with size 0.150×0.001×0.750 m and name it blade_main.
+Rotate blade_main so its +Z axis aligns +Z (world).
+Anchor blade_main to world origin.
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create blade_taper  ---
+Create primitive cuboid with size 0.150×0.001×0.200 m and name it blade_taper.
+Rotate blade_taper so its +Z axis aligns +Z (world).
+Align blade_taper.bottom_face to blade_main.top_face.
+Then move by offset(0,0,0.750).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create necktie_tape  ---
+Create primitive cuboid with size 0.040×0.001×0.300 m and name it necktie_tape.
+Rotate necktie_tape so its +Z axis aligns +Z (world).
+Align necktie_tape.bottom_face to blade_main.top_face.
+Then move by offset(0,0,0.150).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Create necktie_loop  ---
+Create primitive cuboid with size 0.040×0.001×0.080 m and name it necktie_loop.
+Rotate necktie_loop so its +Z axis aligns +Z (world).
+Align necktie_loop.bottom_face to blade_main.top_face.
+Then move by offset(0,0,0.250).
+Assembly guideline satisfied.
+Stage 4 complete.
+
+---  SECTION 5 – Create necktie_keeper  ---
+Create primitive cuboid with size 0.040×0.001×0.050 m and name it necktie_keeper.
+Rotate necktie_keeper so its +Z axis aligns +Z (world).
+Align necktie_keeper.bottom_face to blade_main.top_face.
+Then move by offset(0,0,0.350).
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create necktie_tag  ---
+Create primitive cuboid with size 0.020×0.001×0.030 m and name it necktie_tag.
+Rotate necktie_tag so its +Z axis aligns +Z (world).
+Align necktie_tag.bottom_face to blade_main.top_face.
+Then move by offset(0,0,0.450).
+Assembly guideline satisfied.
+Stage 6 complete.
+
+All stages complete.

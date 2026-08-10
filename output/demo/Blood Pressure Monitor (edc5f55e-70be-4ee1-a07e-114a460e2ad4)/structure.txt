@@ -1,0 +1,60 @@
+-- MATERIAL LIBRARY --
+abs_black | diffuse_color=(0.10,0.10,0.10,1.00)
+abs_white | diffuse_color=(0.95,0.95,0.95,1.00)
+aluminum_silver | diffuse_color=(0.75,0.75,0.78,1.00)
+lcd_green | diffuse_color=(0.10,0.80,0.10,1.00)
+nylon_black | diffuse_color=(0.05,0.05,0.05,1.00)
+nylon_white | diffuse_color=(0.90,0.90,0.90,1.00)
+silicone_grey | diffuse_color=(0.60,0.60,0.60,1.00)
+velcro_gray | diffuse_color=(0.50,0.50,0.50,1.00)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bp_monitor_root | Composite assembly of the main display unit and the inflatable cuff assembly | assembly_order=[display_unit_group], [cuff_group] |
+
+Layer 1 – Primary Structure (Display Unit)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| display_housing | Composite of main_body + screen_beze + button_panel | A. Composite of main_body + screen_beze + button_panel; <brief assembly phrase> |
+| main_body | Rectangular prism housing the electronics | cylinder Ø0.080×0.025 m (approximated as cube for simplicity in this context, or box); size=0.080×0.120×0.025 m; mat=abs_white; create_method=primitive |
+| screen_beze | Frame surrounding the LCD | size=0.060×0.080×0.002 m; mat=abs_black; create_method=primitive |
+| button_panel | Panel containing start/stop/memory buttons | size=0.060×0.030×0.002 m; mat=abs_black; create_method=primitive |
+| lcd_screen | Digital display surface | size=0.050×0.070×0.001 m; mat=lcd_green; create_method=primitive |
+| button_start | Start/Stop measurement button | cylinder Ø0.015×0.005 m; mat=abs_black; create_method=primitive |
+| button_memory | Memory recall button | cylinder Ø0.010×0.005 m; mat=abs_black; create_method=primitive |
+| internal_electronics | PCB and battery compartment | size=0.070×0.110×0.015 m; mat=abs_black; create_method=primitive |
+
+Layer 2 – Primary Structure (Cuff Assembly)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cuff_assembly | Composite of cuff_band + bladder + velcro + connector | assembly_order=[cuff_band_group], [bladder_group], [velcro_group], [connector_group] |
+| cuff_band | Main fabric strap | size=0.040×0.300×0.005 m (rolled); mat=nylon_white; create_method=primitive |
+| cuff_inner | Soft padding layer | size=0.038×0.290×0.003 m; mat=silicone_grey; create_method=primitive |
+| bladder | Inflatable air chamber | size=0.035×0.280×0.001 m; mat=silicone_grey; create_method=primitive |
+| velcro_hook | Hook side of closure | size=0.040×0.100×0.002 m; mat=velcro_gray; create_method=primitive |
+| velcro_loop | Loop side of closure | size=0.040×0.100×0.002 m; mat=velcro_gray; create_method=primitive |
+| air_connector | Tube connection port | cylinder Ø0.010×0.015 m; mat=abs_black; create_method=primitive |
+| air_tube | Flexible tubing | cylinder Ø0.005×0.500 m; mat=abs_black; create_method=primitive |
+
+Layer 3 – Detailed Components & Placement
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| main_body | Rectangular prism housing the electronics | size=0.080×0.120×0.025 m; mat=abs_white; create_method=primitive; pos=(0,0,0); orientation=axis:+Z |
+| screen_beze | Frame surrounding the LCD | size=0.060×0.080×0.002 m; mat=abs_black; create_method=primitive; Align(Z) screen_beze.bottom_face to main_body.top_face; offset(0,0,0.001) |
+| lcd_screen | Digital display surface | size=0.050×0.070×0.001 m; mat=lcd_green; create_method=primitive; Align(Z) lcd_screen.bottom_face to screen_beze.top_face; offset(0,0,0.001) |
+| button_panel | Panel containing start/stop/memory buttons | size=0.060×0.030×0.002 m; mat=abs_black; create_method=primitive; Align(Z) button_panel.bottom_face to main_body.top_face; offset(0,-0.045,0.001) |
+| button_start | Start/Stop measurement button | cylinder Ø0.015×0.005 m; mat=abs_black; create_method=primitive; Align(Z) button_start.bottom_face to button_panel.top_face; offset(-0.015,0,0.001) |
+| button_memory | Memory recall button | cylinder Ø0.010×0.005 m; mat=abs_black; create_method=primitive; Align(Z) button_memory.bottom_face to button_panel.top_face; offset(0.015,0,0.001) |
+| internal_electronics | PCB and battery compartment | size=0.070×0.110×0.015 m; mat=abs_black; create_method=primitive; Align(Z) internal_electronics.bottom_face to main_body.bottom_face; offset(0,0,-0.005) |
+| cuff_band | Main fabric strap | size=0.040×0.300×0.005 m; mat=nylon_white; create_method=primitive; pos=(0.15,0,0); orientation=axis:+Z |
+| cuff_inner | Soft padding layer | size=0.038×0.290×0.003 m; mat=silicone_grey; create_method=primitive; Align(Z) cuff_inner.bottom_face to cuff_band.top_face; offset(0,0,0.001) |
+| bladder | Inflatable air chamber | size=0.035×0.280×0.001 m; mat=silicone_grey; create_method=primitive; Align(Z) bladder.bottom_face to cuff_inner.top_face; offset(0,0,0.001) |
+| velcro_hook | Hook side of closure | size=0.040×0.100×0.002 m; mat=velcro_gray; create_method=primitive; Align(Z) velcro_hook.bottom_face to cuff_band.top_face; offset(0,0.100,0.001) |
+| velcro_loop | Loop side of closure | size=0.040×0.100×0.002 m; mat=velcro_gray; create_method=primitive; Align(Z) velcro_loop.bottom_face to cuff_band.top_face; offset(0,-0.100,0.001) |
+| air_connector | Tube connection port | cylinder Ø0.010×0.015 m; mat=abs_black; create_method=primitive; Align(Z) air_connector.bottom_face to cuff_band.top_face; offset(0,0.150,0.001) |
+| air_tube | Flexible tubing | cylinder Ø0.005×0.500 m; mat=abs_black; create_method=primitive; Align(Z) air_tube.bottom_face to air_connector.top_face; offset(0,0,0.007) |
+
+# ----------  END_GRAPH  ----------

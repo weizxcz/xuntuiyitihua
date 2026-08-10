@@ -1,0 +1,42 @@
+{
+  "id": "40223b3b-ef1f-489a-b082-83fde02b581a",
+  "name": "Juicer",
+  "instruction": "Create a juicer that can handle both soft and hard fruits. Include a pulp collector and an easy-to-clean design.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a juicer."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The pulp collector is proportionate to the body."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The juicer components are arranged for optimal functionality.",
+        "The pulp collector is positioned for easy access."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the juicer's components.",
+        "The pulp collector is securely attached to the juicer."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified features are accurately represented.",
+        "The design adheres to the requirements for handling both soft and hard fruits."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

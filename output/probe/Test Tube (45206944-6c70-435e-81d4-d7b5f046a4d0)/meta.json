@@ -1,0 +1,44 @@
+{
+  "id": "45206944-6c70-435e-81d4-d7b5f046a4d0",
+  "name": "Test Tube",
+  "instruction": "Model a test tube that is cylindrical and narrow.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a test tube.",
+        "The test tube is cylindrical in shape.",
+        "The test tube is narrow."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "There is no specified propotion for test tube."
+      ],
+      "Texture and surface detail": [
+        "The surface of the test tube is smooth and glass-like."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cylindrical shape is correctly represented in three dimensions.",
+        "The narrow design allows for proper vertical orientation."
+      ],
+      "Object distance and contact": [
+        "The test tube stands upright without any support.",
+        "There is no overlap with other objects in the scene."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The test tube accurately reflects the cylindrical and narrow specifications.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

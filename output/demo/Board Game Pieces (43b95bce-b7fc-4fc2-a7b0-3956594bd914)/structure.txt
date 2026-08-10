@@ -1,0 +1,46 @@
+-- MATERIAL LIBRARY --
+mat_blue | diffuse_color=(0.2,0.4,0.8,1.0)
+mat_green | diffuse_color=(0.2,0.7,0.2,1.0)
+mat_red | diffuse_color=(0.8,0.2,0.2,1.0)
+mat_yellow | diffuse_color=(0.9,0.8,0.1,1.0)
+mat_white | diffuse_color=(0.95,0.95,0.95,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| root | Root assembly for board game pieces | assembly_order=[pieces_group] |
+
+Layer 1 – Primary Structure (Pieces)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pieces_group | Composite group of 4 distinct game pieces | assembly_order=[blue_piece, green_piece, red_piece, yellow_piece] |
+| blue_piece | Blue pawn-like piece | Composite of base_cylinder + body_cylinder + head_sphere; mat=mat_blue; create_method=union; pos=(0.05, 0.05, 0.01); orientation=axis:+Z |
+| green_piece | Green cone-like piece | Composite of base_cylinder + cone_body; mat=mat_green; create_method=union; pos=(0.15, 0.02, 0.01); orientation=axis:+Z |
+| red_piece | Red cube-like piece | Composite of base_cylinder + cube_body; mat=mat_red; create_method=union; pos=(0.02, 0.12, 0.01); orientation=axis:+Z |
+| yellow_piece | Yellow star-like piece | Composite of base_cylinder + star_prism; mat=mat_yellow; create_method=union; pos=(0.12, 0.10, 0.01); orientation=axis:+Z |
+
+Layer 2 – Component Decomposition (Blue Piece)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_cylinder | Base for all pieces | cylinder Ø0.02×0.005 m; mat=mat_white; create_method=primitive; pos=(0,0,0); orientation=axis:+Z |
+| body_cylinder | Body for blue piece | cylinder Ø0.015×0.02 m; mat=mat_blue; create_method=primitive; pos=(0,0,0.0125); orientation=axis:+Z; constraint=Align(Z) body_cylinder.bottom_face to base_cylinder.top_face |
+| head_sphere | Head for blue piece | sphere Ø0.012 m; mat=mat_blue; create_method=primitive; pos=(0,0,0.0275); orientation=axis:+Z; constraint=Align(Z) head_sphere.bottom to body_cylinder.top |
+
+Layer 2 – Component Decomposition (Green Piece)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cone_body | Body for green piece | cone Ø0.015×0.025 m; mat=mat_green; create_method=primitive; pos=(0,0,0.015); orientation=axis:+Z; constraint=Align(Z) cone_body.bottom_face to base_cylinder.top_face |
+
+Layer 2 – Component Decomposition (Red Piece)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cube_body | Body for red piece | cube 0.015×0.015×0.015 m; mat=mat_red; create_method=primitive; pos=(0,0,0.0125); orientation=axis:+Z; constraint=Align(Z) cube_body.bottom_face to base_cylinder.top_face |
+
+Layer 2 – Component Decomposition (Yellow Piece)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| star_prism | Star top for yellow piece | 5-point star prism Ø0.015×0.005 m; mat=mat_yellow; create_method=extrude_from_sketch; pos=(0,0,0.0125); orientation=axis:+Z; constraint=Align(Z) star_prism.bottom_face to base_cylinder.top_face; constraint=BMesh sketch essentials (XY plane): 10-vertex star polygon, outer R=0.0075, inner r=0.003, start θ₀=90°, step 36°, extrude t=0.005 m along +Z with caps |
+
+# ----------  END_GRAPH  ----------

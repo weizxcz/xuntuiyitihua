@@ -1,0 +1,1 @@
+Design both pliers and needle-nose pliers. The pliers should have a wide, flat gripping surface, while the needle-nose pliers should have long, narrow tips for precision work.

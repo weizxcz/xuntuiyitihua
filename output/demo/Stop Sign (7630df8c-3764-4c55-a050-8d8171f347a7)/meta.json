@@ -1,0 +1,43 @@
+{
+  "id": "7630df8c-3764-4c55-a050-8d8171f347a7",
+  "name": "Stop Sign",
+  "instruction": "Create a simple stop sign with an octagonal shape and the word \"STOP\" in bold letters.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is an octagonal stop sign.",
+        "The stop sign has eight equal sides."
+      ],
+      "Color representation": [
+        "The stop sign is typically red in color.",
+        "The text 'STOP' is usually white."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The shape in the stop sign is proportionate to the entire sign."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The sign is flat and positioned vertically.",
+        "The text is centered within the octagonal shape."
+      ],
+      "Object distance and contact": [
+        "There are no overlaps or gaps in the design."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The octagonal shape is accurately represented.",
+        "The word 'STOP' is correctly displayed in bold."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

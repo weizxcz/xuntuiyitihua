@@ -1,0 +1,60 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material key_cap; diffuse_color = (0.94, 0.94, 0.94, 1).
+Define material mouse_body; diffuse_color = (0.78, 0.78, 0.78, 1).
+Define material pcb; diffuse_color = (0.12, 0.47, 0.12, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Desk Surface  ---
+Create primitive cuboid with size 1.2×0.6×0.02 m and name it desk_surface.
+Rotate desk_surface so its +Z axis aligns +Z (world).
+Then move by offset(0, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create Keyboard Base  ---
+Create primitive cuboid with size 0.44×0.14×0.004 m and name it kb_base.
+Rotate kb_base so its +Z axis aligns +Z (world).
+Then move by offset(-0.3, 0.15, 0.022).
+Stage 2 complete.
+
+---  SECTION 3 – Create Keyboard PCB  ---
+Create primitive cuboid with size 0.42×0.12×0.002 m and name it kb_pcb.
+Rotate kb_pcb so its +Z axis aligns +Z (world).
+Anchor kb_pcb to kb_base.top_face.
+Align kb_pcb.+Z_face to kb_base.+Z_face.
+Then move by offset(0, 0, 0.002).
+Stage 3 complete.
+
+---  SECTION 4 – Create Keyboard Top Plate  ---
+Create primitive cuboid with size 0.43×0.13×0.003 m and name it kb_top_plate.
+Rotate kb_top_plate so its +Z axis aligns +Z (world).
+Anchor kb_top_plate to kb_base.top_face.
+Align kb_top_plate.+Z_face to kb_base.+Z_face.
+Then move by offset(0, 0, 0.006).
+Stage 4 complete.
+
+---  SECTION 5 – Create Keycap Grid (Rows 1-5)  ---
+Create Empty helper (cube display) and name it key_grid_anchor.
+Rotate key_grid_anchor so its axis aligns +Z (world).
+Move key_grid_anchor to (-0.48, 0.19, 0.030).
+
+For r in 0…4 and c in 0…19:
+  Create primitive cuboid with size 0.015×0.015×0.004 m and name it key_{r+1}_{c+1}.
+  Rotate key_{r+1}_{c+1} so its +Z axis aligns +Z (world).
+  Anchor key_{r+1}_{c+1} to key_grid_anchor.top_face.
+  Align key_{r+1}_{c+1}.+Z_face to key_grid_anchor.+Z_face.
+  Then offset(c * 0.02, -r * 0.02, 0).
+Stage 5 complete.
+
+All stages complete.

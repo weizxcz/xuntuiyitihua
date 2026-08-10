@@ -1,0 +1,76 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material chocolate_dark; diffuse_color = (0.31,0.16,0.08,1.0).
+Define material chocolate_milk; diffuse_color = (0.55,0.35,0.20,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create chocolate_base  ---
+Create primitive cuboid with size 0.100×0.050×0.020 m and name it chocolate_base.
+Rotate chocolate_base so its +Z axis aligns +Z (world).
+Align chocolate_base.center to root.center.
+Align chocolate_base.bottom_face to root.bottom_face.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create chocolate_segments  ---
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_0_0.
+Rotate seg_0_0 so its +Z axis aligns +Z (world).
+Align seg_0_0.center to Avg(chocolate_base.left_face, chocolate_base.bottom_face).
+Align seg_0_0.bottom_face to chocolate_base.top_face.
+Then move by offset(-0.037, -0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_0_1.
+Rotate seg_0_1 so its +Z axis aligns +Z (world).
+Align seg_0_1.center to Avg(chocolate_base.right_face, chocolate_base.bottom_face).
+Align seg_0_1.bottom_face to chocolate_base.top_face.
+Then move by offset(0.037, -0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_0_2.
+Rotate seg_0_2 so its +Z axis aligns +Z (world).
+Align seg_0_2.center to Avg(chocolate_base.left_face, chocolate_base.top_face).
+Align seg_0_2.bottom_face to chocolate_base.top_face.
+Then move by offset(-0.037, 0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_0_3.
+Rotate seg_0_3 so its +Z axis aligns +Z (world).
+Align seg_0_3.center to Avg(chocolate_base.right_face, chocolate_base.top_face).
+Align seg_0_3.bottom_face to chocolate_base.top_face.
+Then move by offset(0.037, 0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_1_0.
+Rotate seg_1_0 so its +Z axis aligns +Z (world).
+Align seg_1_0.center to Avg(chocolate_base.left_face, chocolate_base.bottom_face).
+Align seg_1_0.bottom_face to chocolate_base.top_face.
+Then move by offset(-0.037, -0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_1_1.
+Rotate seg_1_1 so its +Z axis aligns +Z (world).
+Align seg_1_1.center to Avg(chocolate_base.right_face, chocolate_base.bottom_face).
+Align seg_1_1.bottom_face to chocolate_base.top_face.
+Then move by offset(0.037, -0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_1_2.
+Rotate seg_1_2 so its +Z axis aligns +Z (world).
+Align seg_1_2.center to Avg(chocolate_base.left_face, chocolate_base.top_face).
+Align seg_1_2.bottom_face to chocolate_base.top_face.
+Then move by offset(-0.037, 0.012, 0.001).
+
+Create primitive cuboid with size 0.024×0.024×0.018 m and name it seg_1_3.
+Rotate seg_1_3 so its +Z axis aligns +Z (world).
+Align seg_1_3.center to Avg(chocolate_base.right_face, chocolate_base.top_face).
+Align seg_1_3.bottom_face to chocolate_base.top_face.
+Then move by offset(0.037, 0.012, 0.001).
+Stage 2 complete.
+
+All stages complete.

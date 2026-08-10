@@ -1,0 +1,45 @@
+{
+  "id": "05a41044-5aab-4db2-8179-5b35c1fe5f7c",
+  "name": "Solar Panel",
+  "instruction": "Let's design a solar panel. The panel should be rectangular, with a grid of photovoltaic cells on the surface. The cells should be evenly distributed, covering the entire panel. Add a frame around the panel to hold the cells in place. Include a small junction box on the back for electrical connections. Ensure the panel is flat and uniform.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a rectangular solar panel.",
+        "The panel features a grid of photovoltaic cells.",
+        "The frame around the panel is rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cells are proportionate to the entire panel."
+      ],
+      "Texture and surface detail": [
+        "The photovoltaic cells are evenly distributed across the entire panel.",
+        "The cells cover the full surface area of the panel."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The photovoltaic cells are properly aligned within the rectangular frame.",
+        "The junction box is positioned correctly on the back of the panel."
+      ],
+      "Object distance and contact": [
+        "The frame securely holds the photovoltaic cells without gaps.",
+        "The junction box does not interfere with the panel's flat surface."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the solar panel are accurately represented.",
+        "The design adheres strictly to the provided instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

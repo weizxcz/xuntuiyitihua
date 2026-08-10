@@ -1,0 +1,43 @@
+{
+  "id": "5a22f1b5-28a0-47cb-80e4-e12cb9b74dad",
+  "name": "Desktop Computer",
+  "instruction": "Hey, can you create a 3D model of a desktop computer? It should include a monitor, a CPU tower, a keyboard, and a mouse. The monitor should be flat and rectangular, while the CPU tower should have a few buttons and ports on the front. Arrange the keyboard and mouse in front of the monitor.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The monitor is flat.",
+        "The monitor is rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The keyboard is standard-sized.",
+        "The mouse is ergonomic."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The monitor is elevated above the keyboard and mouse.",
+        "The CPU tower is positioned to the side or below the monitor."
+      ],
+      "Object distance and contact": [
+        "The components of the desktop computer should not overlap each other."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are included in the model.",
+        "The arrangement of the keyboard and mouse in front of the monitor is correctly executed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

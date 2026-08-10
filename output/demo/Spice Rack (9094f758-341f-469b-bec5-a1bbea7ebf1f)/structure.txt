@@ -1,0 +1,37 @@
+-- MATERIAL LIBRARY --
+mat_wood | diffuse_color=(0.55,0.35,0.15,1.0)
+mat_metal_bracket | diffuse_color=(0.2,0.2,0.2,1.0)
+mat_metal_rail | diffuse_color=(0.8,0.8,0.8,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| spice_rack_root | Composite assembly of the entire spice rack structure | assembly_order=[bracket_group, tier_group]; mat=-; create_method=union |
+
+Layer 1 – Primary Structure (Mounting Brackets)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| bracket_L | Left mounting bracket base plate | size=0.020×0.150×0.005 (W×H×T); pos=(-0.150, 0.075, -0.025); orientation=axis:+Z; mat=mat_metal_bracket; create_method=primitive |
+| bracket_R | Right mounting bracket base plate | size=0.020×0.150×0.005 (W×H×T); pos=(0.150, 0.075, -0.025); orientation=axis:+Z; mat=mat_metal_bracket; create_method=primitive |
+| bracket_L_hole | Left mounting hole | size=0.006×0.006×0.010 (W×H×D); pos=(-0.150, 0.025, -0.025); orientation=axis:+Z; mat=-; create_method=boolean_subtract; tool_id=drill_bit_L; target_id=bracket_L |
+| bracket_R_hole | Right mounting hole | size=0.006×0.006×0.010 (W×H×D); pos=(0.150, 0.025, -0.025); orientation=axis:+Z; mat=-; create_method=boolean_subtract; tool_id=drill_bit_R; target_id=bracket_R |
+| drill_bit_L | Left drill bit cutter | size=0.006×0.006×0.010 (W×H×D); pos=(-0.150, 0.025, -0.025); orientation=axis:+Z; mat=-; create_method=primitive |
+| drill_bit_R | Right drill bit cutter | size=0.006×0.006×0.010 (W×H×D); pos=(0.150, 0.025, -0.025); orientation=axis:+Z; mat=-; create_method=primitive |
+
+Layer 2 – Primary Structure (Shelf Tiers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| tier_1 | Bottom shelf tier | size=0.300×0.100×0.015 (W×H×T); pos=(0, 0.025, 0); orientation=axis:+Z; mat=mat_wood; create_method=primitive |
+| tier_2 | Middle shelf tier | size=0.300×0.100×0.015 (W×H×T); pos=(0, 0.125, 0); orientation=axis:+Z; mat=mat_wood; create_method=primitive |
+| tier_3 | Top shelf tier | size=0.300×0.100×0.015 (W×H×T); pos=(0, 0.225, 0); orientation=axis:+Z; mat=mat_wood; create_method=primitive |
+
+Layer 3 – Primary Structure (Safety Rails)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rail_1 | Bottom tier safety rail | size=0.300×0.004×0.004 (W×H×T); pos=(0, 0.025, 0.048); orientation=axis:+Z; mat=mat_metal_rail; create_method=primitive |
+| rail_2 | Middle tier safety rail | size=0.300×0.004×0.004 (W×H×T); pos=(0, 0.125, 0.048); orientation=axis:+Z; mat=mat_metal_rail; create_method=primitive |
+| rail_3 | Top tier safety rail | size=0.300×0.004×0.004 (W×H×T); pos=(0, 0.225, 0.048); orientation=axis:+Z; mat=mat_metal_rail; create_method=primitive |
+
+# ----------  END_GRAPH  ----------

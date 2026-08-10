@@ -1,0 +1,1 @@
+Create a set of board game pieces. They should be small and easily distinguishable from each other. Arrange them in a playful and scattered manner.

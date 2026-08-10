@@ -1,0 +1,38 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material paper_white; diffuse_color = (0.941, 0.941, 0.961, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base panel  ---
+Create primitive cube with size 0.250×0.350×0.0002 m and name it base_panel.
+Rotate base_panel so its +Z axis aligns +Z (world).
+Anchor base_panel to world origin.
+Then move by offset(0,0,0).
+
+---  SECTION 2 – Create left flap  ---
+Create primitive cube with size 0.120×0.350×0.0002 m and name it flap_left.
+Rotate flap_left so its +Z axis aligns +Z (world).
+Align flap_left.bottom_face to base_panel.top_face.
+Then move by offset(0,0,0).
+
+---  SECTION 3 – Create right flap  ---
+Create primitive cube with size 0.120×0.350×0.0002 m and name it flap_right.
+Rotate flap_right so its +Z axis aligns +Z (world).
+Align flap_right.bottom_face to base_panel.top_face.
+Then move by offset(0.130,0,0).
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+All stages complete.

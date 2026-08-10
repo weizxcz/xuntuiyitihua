@@ -1,0 +1,85 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_glass_transparent; diffuse_color = (0.8,0.9,1.0,0.3).
+Define material mat_metal_gold; diffuse_color = (0.8,0.6,0.2,1.0).
+Define material mat_metal_silver; diffuse_color = (0.7,0.7,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Base Layer: Center Square  ---
+Create primitive cuboid with size 0.2×0.2×0.02 m and name it center_square.
+Rotate center_square so its +Z axis aligns +Z (world).
+Anchor center_square to world origin.
+Then move by offset(0,0,0).
+Apply material mat_metal_silver to center_square.
+
+---  SECTION 2 – Create Base Layer: Square Ring  ---
+For i in 0…3:
+  Create primitive cuboid with size 0.1×0.1×0.02 m and name it square_ring_i.
+  Rotate square_ring_i so its +Z axis aligns +Z (world).
+  Anchor square_ring_i to world origin.
+  Then position at polar(45° + i·90°; dr=0.15).
+  Then move by offset(0,0,0.01).
+  Apply material mat_metal_silver to square_ring_i.
+
+Stage 2 complete.
+
+---  SECTION 3 – Create Mid Layer: Triangle Ring  ---
+For i in 0…5:
+  Create primitive cylinder with Ø0.08×0.02 m and name it triangle_ring_i.
+  Rotate triangle_ring_i so its +Z axis aligns +Z (world).
+  Anchor triangle_ring_i to world origin.
+  Then position at polar(0° + i·60°; dr=0.25).
+  Then move by offset(0,0,0.02).
+  Apply material mat_metal_gold to triangle_ring_i.
+  Create plane_cutter and name it triangle_ring_i_cut with size 0.08×0.08 m; orientation=axis:+Z.
+  Anchor triangle_ring_i_cut to triangle_ring_i.
+  Then move by offset(0,0,0.01).
+  Rotate triangle_ring_i_cut so its +Z axis aligns +Z (world).
+  Rotate triangle_ring_i_cut so its +X axis aligns +X (world).
+  Rotate triangle_ring_i_cut by 45° about local Z axis.
+  Boolean-subtract triangle_ring_i_cut from triangle_ring_i; keep triangle_ring_i.
+  Discard triangle_ring_i_cut.
+
+Stage 3 complete.
+
+---  SECTION 4 – Create Mid Layer: Circle Ring  ---
+For i in 0…3:
+  Create primitive cylinder with Ø0.1×0.02 m and name it circle_ring_i.
+  Rotate circle_ring_i so its +Z axis aligns +Z (world).
+  Anchor circle_ring_i to world origin.
+  Then position at polar(45° + i·90°; dr=0.25).
+  Then move by offset(0,0,0.02).
+  Apply material mat_glass_transparent to circle_ring_i.
+
+Stage 4 complete.
+
+---  SECTION 5 – Create Top Layer: Central Sphere  ---
+Create primitive sphere with Ø0.15 m and name it central_sphere.
+Rotate central_sphere so its +Z axis aligns +Z (world).
+Anchor central_sphere to world origin.
+Then move by offset(0,0,0.05).
+Apply material mat_glass_transparent to central_sphere.
+
+---  SECTION 6 – Create Top Layer: Accent Spheres  ---
+For i in 0…7:
+  Create primitive sphere with Ø0.05 m and name it accent_spheres_i.
+  Rotate accent_spheres_i so its +Z axis aligns +Z (world).
+  Anchor accent_spheres_i to world origin.
+  Then position at polar(0° + i·45°; dr=0.35).
+  Then move by offset(0,0,0.05).
+  Apply material mat_metal_gold to accent_spheres_i.
+
+Stage 6 complete.
+
+All stages complete.

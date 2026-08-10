@@ -1,0 +1,1 @@
+Design a fountain pen. Start with the barrel: it's cylindrical and tapers slightly towards the end. The cap is detachable and fits snugly over the nib. The nib is pointed and extends from the grip section, which is textured for better hold. Include a clip on the cap for attaching the pen to a pocket. The pen should be functional, with all parts fitting together seamlessly.

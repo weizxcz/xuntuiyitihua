@@ -1,0 +1,1 @@
+Design a chevron pattern. The pattern should consist of V-shaped lines that repeat in a regular, alternating sequence. Ensure the lines are evenly spaced and the pattern is seamless.

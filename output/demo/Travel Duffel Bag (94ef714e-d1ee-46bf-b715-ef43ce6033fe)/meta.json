@@ -1,0 +1,44 @@
+{
+  "id": "94ef714e-d1ee-46bf-b715-ef43ce6033fe",
+  "name": "Travel Duffel Bag",
+  "instruction": "Highlight the features of a travel duffel bag. It has a large main compartment, side pockets, and a detachable shoulder strap for versatile carrying options.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a travel duffel bag.",
+        "The bag has a cylindrical shape typical of duffel bags."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The compartment, side pockets and shoulder strap are proportionate to the entire bag."
+      ],
+      "Texture and surface detail": [
+        "The bag is likely made from durable fabric suitable for travel."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The main compartment is spacious and accessible.",
+        "Side pockets are positioned for easy access.",
+        "The shoulder strap is attached securely to the bag."
+      ],
+      "Object distance and contact": [
+        "The side pockets do not interfere with the main compartment.",
+        "The shoulder strap is adjustable and does not obstruct the bag's shape."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified features of the duffel bag are accurately represented.",
+        "There are no deviations from the instructions provided."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

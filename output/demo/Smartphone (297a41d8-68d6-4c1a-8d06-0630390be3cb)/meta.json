@@ -1,0 +1,45 @@
+{
+  "id": "297a41d8-68d6-4c1a-8d06-0630390be3cb",
+  "name": "Smartphone",
+  "instruction": "Design a sleek smartphone with a large touchscreen display.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a smartphone.",
+        "The smartphone has a sleek rectangular shape.",
+        "The edges of the smartphone are rounded."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the touchscreen is proportionate to the overall size of the smartphone.",
+        "The bezels around the display are minimal."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The smartphone is designed to be held comfortably in one hand.",
+        "The touchscreen is positioned on the front face of the smartphone."
+      ],
+      "Object distance and contact": [
+        "There are no gaps between the touchscreen and the smartphone body.",
+        "The smartphone is designed to be flat with no protruding parts."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The design accurately reflects a sleek smartphone with a large touchscreen.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

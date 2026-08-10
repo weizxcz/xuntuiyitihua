@@ -1,0 +1,46 @@
+{
+  "id": "ff70924a-1d38-42ed-9639-6e0d02064b35",
+  "name": "Cat Tree",
+  "instruction": "Let's create a cat tree. Start with a square base. Add a vertical post extending from the base to the top. Include multiple platforms at different heights attached to the post. Add a small enclosed box near the top for the cat to hide in. Finally, add a dangling toy hanging from one of the platforms.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cat tree.",
+        "The base is square.",
+        "The vertical post extends from the base to the top.",
+        "There are multiple platforms attached to the post."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The base is proportionate to the entire tree."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The vertical post is centrally located to support the platforms.",
+        "Platforms are evenly spaced along the vertical post.",
+        "The enclosed box is securely positioned near the top."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the platforms and the post.",
+        "The dangling toy does not interfere with the platforms."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components (base, post, platforms, box, toy) are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

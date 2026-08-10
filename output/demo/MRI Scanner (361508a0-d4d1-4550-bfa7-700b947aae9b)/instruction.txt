@@ -1,0 +1,1 @@
+Design an MRI scanner. Start with a large cylindrical tunnel where the patient lies down. Add a sliding table that moves in and out of the tunnel. Include a control panel with various buttons and screens on the side. Add a few cables connecting the scanner to the control panel. Finally, ensure there is an emergency stop button on the control panel.

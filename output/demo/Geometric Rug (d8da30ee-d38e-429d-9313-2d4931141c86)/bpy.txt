@@ -1,0 +1,303 @@
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_color = diffuse_color
+    return mat
+
+def add_cylinder(name, radius, depth, segments=32):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius, depth=depth, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def add_cube(name, size):
+    # size is (x, y, z)
+    half = [s/2 for s in size]
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (half[0], half[1], half[2])
+    return obj
+
+def add_uvsphere(name, radius, width_seg=32, height_seg=16):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=width_seg, ring_count=height_seg, radius=radius, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def align_axis_to_vector(obj, axis, vector):
+    """Align object's local axis to a world vector."""
+    if axis == 'X':
+        src = Vector((1, 0, 0))
+    elif axis == 'Y':
+        src = Vector((0, 1, 0))
+    else: # Z
+        src = Vector((0, 0, 1))
+    
+    target = vector.normalized()
+    if src == target:
+        return
+    
+    rot_quat = src.rotation_difference(target)
+    obj.rotation_euler = rot_quat.to_euler()
+
+def average(points):
+    if not points:
+        return Vector((0,0,0))
+    avg = Vector((0,0,0))
+    for p in points:
+        avg += p
+    return avg / len(points)
+
+class Locator:
+    def __init__(self, obj):
+        self.obj = obj
+        self.matrix_world = obj.matrix_world
+    
+    def center_world(self):
+        return self.matrix_world.translation
+    
+    def face_center_world(self, face_index):
+        # Approximate face center by averaging vertices of the face
+        # Note: This assumes the object is in Edit Mode or we access data directly.
+        # For simplicity in this script, we will use the object's bounding box center or specific logic.
+        # However, for "top_face" of a simple box/cylinder, we can calculate it.
+        if self.obj.type == 'MESH':
+            # Get the top-most face normal direction
+            # Simplified: For a box aligned to Z, top face is at max Z.
+            # We will rely on the specific geometry logic in the main script for precise anchoring if needed,
+            # but generally, center_world is sufficient for "anchor to object".
+            pass
+        return self.center_world()
+
+def boolean_subtract(cutter_name, target_name):
+    cutter = bpy.data.objects.get(cutter_name)
+    target = bpy.data.objects.get(target_name)
+    if not cutter or not target:
+        return
+    
+    # Create boolean modifier on target
+    mod = target.modifiers.new(name="BoolSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove cutter
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+def boolean_union(union_objects, keep_name):
+    """
+    Union a list of objects into the first one (keep_name).
+    """
+    if not union_objects:
+        return
+    
+    target_name = keep_name
+    target = bpy.data.objects.get(target_name)
+    if not target:
+        return
+
+    # We need to join them first or use a boolean union modifier chain.
+    # Standard approach: Join all into one mesh, then boolean union with target?
+    # Or: Add boolean union modifier to target for each other object.
+    
+    # Let's use the modifier approach for precision
+    bpy.context.view_layer.objects.active = target
+    
+    for obj in union_objects:
+        if obj.name == target_name:
+            continue
+        mod = target.modifiers.new(name=f"BoolUnion_{obj.name}", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = obj
+    
+    # Apply all modifiers
+    for mod in target.modifiers:
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    # Remove the other objects
+    for obj in union_objects:
+        if obj.name != target_name:
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+def add_bevel(obj, width, segments=5):
+    mod = obj.modifiers.new(name="Bevel", type='BEVEL')
+    mod.width = width
+    mod.segments = segments
+    mod.limit_method = 'ANGLE'
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+# --- Main Script ---
+
+def main():
+    # Block 0: Scene Reset & Units
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    
+    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.system = 'METRIC'
+
+    # Block 1: Materials
+    mat_hex_blue = make_material("mat_hex_blue", (0.15, 0.25, 0.45, 1.0))
+    mat_tri_blue = make_material("mat_tri_blue", (0.15, 0.25, 0.45, 1.0))
+    mat_white = make_material("mat_white", (0.95, 0.95, 0.95, 1.0))
+
+    # Block 2: Geometry Generation
+
+    # --- SECTION 1 – Create Hexagonal Base ---
+    hex_base = add_cube("hex_base", (1.0, 1.0, 0.02))
+    align_axis_to_vector(hex_base, 'Z', Vector((0, 0, 1)))
+    hex_base.location = (0, 0, 0) # Anchor to world origin
+    hex_base.location += Vector((0, 0, 0)) # Offset
+    hex_base.data.materials.append(mat_hex_blue)
+
+    # --- SECTION 2 – Create Hexagonal Tiles ---
+    hex_tiles = []
+    for r in range(5):
+        for c in range(5):
+            name = f"hexagon_prism_{r}_{c}"
+            # Diameter 0.18 -> Radius 0.09
+            tile = add_cylinder(name, 0.09, 0.005)
+            align_axis_to_vector(tile, 'Z', Vector((0, 0, 1)))
+            
+            # Anchor to hex_base.top_face
+            # hex_base is a cube at 0,0,0 with z-size 0.02. Top face is at z=0.01.
+            # We place the tile's center on the top face.
+            # The anchor logic: "Anchor to hex_base.top_face" implies placing it on that surface.
+            # Since we are using offset relative to anchor, we set anchor point first.
+            # Let's assume anchor point is the center of the top face of hex_base.
+            anchor_loc = Vector((0, 0, 0.01)) # Center of top face of hex_base
+            
+            # Apply anchor position
+            tile.location = anchor_loc
+            
+            # Apply offset
+            offset = Vector((0.1 + c*0.2, 0.1 + r*0.1732, 0.01))
+            tile.location += offset
+            
+            hex_tiles.append(tile)
+
+    # --- SECTION 3 – Assemble Hexagonal Rug Section ---
+    # Boolean-union hex_base and all hexagon_prism_r_c objects; keep hex_base as the resulting object named rug_hex
+    union_list = [t for t in hex_tiles]
+    boolean_union(union_list, "hex_base")
+    
+    # Rename to rug_hex
+    hex_base.name = "rug_hex"
+    
+    align_axis_to_vector(hex_base, 'Z', Vector((0, 0, 1)))
+    
+    # Align rug_hex.center to world origin (0,0)
+    # Note: "world origin (0,0)" usually implies X,Y. Z might stay or be 0.
+    # Assuming (0,0,0) for full centering.
+    center = hex_base.location
+    hex_base.location = Vector((0, 0, 0))
+    
+    hex_base.location += Vector((0, 0, 0)) # Offset
+    
+    # Apply material mat_white to rug_hex
+    if len(hex_base.data.materials) > 0:
+        hex_base.data.materials[0] = mat_white
+    else:
+        hex_base.data.materials.append(mat_white)
+
+    # --- SECTION 4 – Create Triangular Base ---
+    tri_base = add_cube("tri_base", (1.0, 1.0, 0.02))
+    align_axis_to_vector(tri_base, 'Z', Vector((0, 0, 1)))
+    tri_base.location = (0, 0, 0) # Anchor to world origin
+    tri_base.location += Vector((0, 0, 0)) # Offset
+    tri_base.data.materials.append(mat_tri_blue)
+
+    # --- SECTION 5 – Create Triangular Tiles ---
+    tri_tiles = []
+    for r in range(5):
+        for c in range(5):
+            name = f"triangle_prism_{r}_{c}"
+            tile = add_cylinder(name, 0.09, 0.005)
+            align_axis_to_vector(tile, 'Z', Vector((0, 0, 1)))
+            
+            # Anchor to tri_base.top_face
+            anchor_loc = Vector((0, 0, 0.01))
+            tile.location = anchor_loc
+            
+            # Apply offset
+            offset = Vector((0.1 + c*0.2, 0.1 + r*0.1732, 0.01))
+            tile.location += offset
+            
+            tri_tiles.append(tile)
+
+    # --- SECTION 6 – Assemble Triangular Rug Section ---
+    union_list_tri = [t for t in tri_tiles]
+    boolean_union(union_list_tri, "tri_base")
+    
+    # Rename to rug_tri
+    tri_base.name = "rug_tri"
+    
+    align_axis_to_vector(tri_base, 'Z', Vector((0, 0, 1)))
+    
+    # Align rug_tri.center to position (2,0,0)
+    tri_base.location = Vector((2, 0, 0))
+    
+    tri_base.location += Vector((0, 0, 0)) # Offset
+    
+    # Apply material mat_white to rug_tri
+    if len(tri_base.data.materials) > 0:
+        tri_base.data.materials[0] = mat_white
+    else:
+        tri_base.data.materials.append(mat_white)
+
+    # --- SECTION 7 – Assemble Composite Rug Base ---
+    # Boolean-union rug_hex and rug_tri; keep rug_hex as the resulting object named rug_base
+    # Note: boolean_union expects a list of objects to union INTO the first one.
+    # Here we want to union rug_hex and rug_tri.
+    
+    # We need to perform boolean union between rug_hex and rug_tri.
+    # Let's use rug_hex as the target.
+    target = bpy.data.objects.get("rug_hex")
+    other = bpy.data.objects.get("rug_tri")
+    
+    if target and other:
+        bpy.context.view_layer.objects.active = target
+        mod = target.modifiers.new(name="BoolUnion_tri", type='BOOLEAN')
+        mod.operation = 'UNION'
+        mod.object = other
+        
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        bpy.data.objects.remove(other, do_unlink=True)
+        
+        target.name = "rug_base"
+        
+        align_axis_to_vector(target, 'Z', Vector((0, 0, 1)))
+        
+        # Align rug_base.center to Avg(rug_hex.center, rug_tri.center)
+        # Note: rug_tri was removed, but we know its center was (2,0,0) before removal?
+        # Actually, we should have calculated the average BEFORE removing.
+        # Let's recalculate based on known positions.
+        # rug_hex center is (0,0,0)
+        # rug_tri center was (2,0,0)
+        avg_center = average([Vector((0,0,0)), Vector((2,0,0))])
+        
+        target.location = avg_center
+        
+        target.location += Vector((0, 0, 0)) # Offset
+        
+        # Apply material mat_white to rug_base
+        if len(target.data.materials) > 0:
+            target.data.materials[0] = mat_white
+        else:
+            target.data.materials.append(mat_white)
+
+if __name__ == "__main__":
+    main()

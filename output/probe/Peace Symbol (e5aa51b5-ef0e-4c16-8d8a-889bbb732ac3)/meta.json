@@ -1,0 +1,48 @@
+{
+  "id": "e5aa51b5-ef0e-4c16-8d8a-889bbb732ac3",
+  "name": "Peace Symbol",
+  "instruction": "Can you create a 3D model of a peace symbol? It should be a simple circle with a vertical line and two downward-sloping lines inside it.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the model is a peace symbol.",
+        "The outer shape is a simple circle.",
+        "There is a vertical line extending from the top to the bottom of the circle.",
+        "Two downward-sloping lines are present, originating from the vertical line."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The circle is proportionate to the lines inside.",
+        "The length of the vertical line is appropriate relative to the circle's diameter.",
+        "The downward-sloping lines are evenly spaced and symmetrical."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The vertical line is centered within the circle.",
+        "The downward-sloping lines are symmetrically positioned.",
+        "The lines do not extend beyond the circle's boundary."
+      ],
+      "Object distance and contact": [
+        "The lines are connected to the circle without gaps.",
+        "There is no overlap between the lines and the circle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the peace symbol are accurately represented.",
+        "The model adheres to the simplicity requested in the instruction."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

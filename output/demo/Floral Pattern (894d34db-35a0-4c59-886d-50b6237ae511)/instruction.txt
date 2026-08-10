@@ -1,0 +1,1 @@
+Create a 3D model of a floral pattern. It should consist of several flowers arranged in a repeating design. Ensure the flowers are evenly spaced and the pattern is symmetrical.

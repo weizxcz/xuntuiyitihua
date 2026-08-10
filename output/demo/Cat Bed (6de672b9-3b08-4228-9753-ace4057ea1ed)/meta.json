@@ -1,0 +1,46 @@
+{
+  "id": "6de672b9-3b08-4228-9753-ace4057ea1ed",
+  "name": "Cat Bed",
+  "instruction": "Create a 3D model of a cat bed. The bed should be circular with raised edges to provide a cozy space for the cat to curl up in.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cat bed.",
+        "The bed is circular in shape.",
+        "The edges of the bed are raised."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The raised edges are proportionate to the circular base.",
+        "The overall size of the bed is suitable for a cat to curl up comfortably."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The raised edges are evenly distributed around the circular base.",
+        "The bed provides a defined space for the cat to curl up in.",
+        "The structure is stable and does not tip over easily."
+      ],
+      "Object distance and contact": [
+        "The raised edges are in contact with the circular base.",
+        "There are no gaps between the raised edges and the base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the cat bed are accurately represented.",
+        "The circular shape with raised edges is faithfully executed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

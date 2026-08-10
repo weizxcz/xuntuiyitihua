@@ -1,0 +1,1 @@
+Create a 3D model of a banana. It should be curved with a slightly tapered end and a stem at the top.

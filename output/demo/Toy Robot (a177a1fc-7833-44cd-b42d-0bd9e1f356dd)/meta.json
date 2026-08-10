@@ -1,0 +1,53 @@
+{
+  "id": "a177a1fc-7833-44cd-b42d-0bd9e1f356dd",
+  "name": "Toy Robot",
+  "instruction": "Design a toy robot with movable arms and legs. It should have a friendly face and a small antenna on its head.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a toy robot.",
+        "The robot has a rectangular body.",
+        "The arms are cylindrical and movable.",
+        "The legs are cylindrical and movable.",
+        "The head is a rounded shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head is proportionate to the body.",
+        "The arms and legs are balanced in size relative to the torso."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The arms are correctly positioned to allow for movement.",
+        "The legs are positioned for stability and balance.",
+        "The head is properly attached to the body.",
+        "The antenna is securely placed on top of the head."
+      ],
+      "Object distance and contact": [
+        "The arms do not overlap with the body.",
+        "The legs do not interfere with the base of the robot.",
+        "The head is securely connected to the body without gaps.",
+        "The antenna is fixed and does not wobble."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the robot are accurately represented.",
+        "The movable arms and legs are correctly implemented.",
+        "The friendly face is clearly depicted.",
+        "The small antenna is present on the head."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

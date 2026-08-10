@@ -1,0 +1,1 @@
+Create a power supply unit. It should be rectangular with a fan grill on one side. Include a power switch and a few connectors for cables.

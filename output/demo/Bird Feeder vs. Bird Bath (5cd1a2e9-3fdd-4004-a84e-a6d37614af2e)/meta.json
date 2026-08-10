@@ -1,0 +1,44 @@
+{
+  "id": "5cd1a2e9-3fdd-4004-a84e-a6d37614af2e",
+  "name": "Bird Feeder vs. Bird Bath",
+  "instruction": "Could you create a 3D model comparing a bird feeder and a bird bath? The bird feeder has perches and seed holders, while the bird bath has a shallow basin for water.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The bird feeder has a rectangular or cylindrical shape with perches.",
+        "The bird bath has a shallow basin shape."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The proportion set in the script is reasonable for the object."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The perches on the bird feeder are positioned at accessible heights.",
+        "The seed holders are easily reachable for birds.",
+        "The basin of the bird bath is positioned at a height suitable for birds."
+      ],
+      "Object distance and contact": [
+        "The perches do not obstruct the seed holders.",
+        "The bird feeder and bird bath should be positioned at a reasonable distance for easy access."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the bird feeder and bird bath are accurately represented.",
+        "The functional components of each object are included as specified."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

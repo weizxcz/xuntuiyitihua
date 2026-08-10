@@ -1,0 +1,48 @@
+{
+  "id": "54df146b-0f96-473f-a25a-fcfac6fed23c",
+  "name": "Restaurant Sign",
+  "instruction": "Design a 3D model of a restaurant sign. The sign should be rectangular with the restaurant's name in bold letters. Add decorative elements around the edges, such as vines or geometric patterns. The sign should be mounted on a pole with a base for stability. Consider the overall aesthetic appeal and how it would attract customers.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a rectangular sign.",
+        "The sign has bold letters displaying the restaurant's name.",
+        "The edges of the sign feature decorative elements."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the letters is proportionate to the sign's dimensions.",
+        "The decorative elements do not overwhelm the sign's main message."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The sign is mounted securely on a pole.",
+        "The pole is centered beneath the sign for balance.",
+        "The base of the pole is wide enough to provide stability."
+      ],
+      "Object distance and contact": [
+        "There is no overlap between the sign and the pole.",
+        "The sign is positioned at a height that is easily visible to passersby.",
+        "The decorative elements are placed without interfering with the main text."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes such as shape, text, and decorative elements are accurately represented.",
+        "The sign is effectively mounted on a pole with a stable base.",
+        "The overall aesthetic appeal aligns with the intention to attract customers."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

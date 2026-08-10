@@ -1,0 +1,31 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.75,1.0)
+mat_black_plastic | diffuse_color=(0.1,0.1,0.1,1.0)
+mat_copper | diffuse_color=(0.85,0.37,0.27,1.0)
+mat_green_pcb | diffuse_color=(0.1,0.4,0.1,1.0)
+mat_metal_grill | diffuse_color=(0.2,0.2,0.2,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| psu_chassis | Composite of psu_case + psu_fan_grill + psu_switch + psu_connectors + psu_internal | Main rectangular enclosure housing all components. |
+
+Layer 1 – Primary Structure (Chassis)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| psu_case | Rectangular box 0.150×0.086×0.015 m (W×H×D) | Align(XYZ) psu_case.center to psu_chassis.center; mat=mat_aluminum; create_method=primitive; constraint=box with hollow interior (wall thickness 0.002 m). |
+| psu_internal | Composite of psu_pcb + psu_transformer + psu_capacitors | Internal components mounted inside psu_case. |
+| psu_pcb | Green PCB board 0.140×0.070×0.002 m | Align(XY) psu_pcb.center to psu_case.center; offset(0,0,0.005); orientation=axis:+Z; mat=mat_green_pcb; create_method=primitive. |
+| psu_transformer | Copper-wound transformer block 0.060×0.040×0.030 m | Align(XY) psu_transformer.center to psu_pcb.center; offset(0,0,0.015); mat=mat_copper; create_method=primitive. |
+| psu_capacitors | Array of 4 cylindrical capacitors Ø0.015×0.025 m | Align(XY) psu_capacitors.center to psu_pcb.center; offset(0,0,0.015); mat=mat_black_plastic; create_method=primitive. |
+
+Layer 2 – External Features
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| psu_fan_grill | Fan grill mesh 0.080×0.080×0.005 m | Align(XY) psu_fan_grill.center to psu_case.left_face.center; offset(-0.005,0,0); orientation=axis:-X; mat=mat_metal_grill; create_method=primitive. |
+| psu_switch | Power switch toggle 0.010×0.010×0.010 m | Align(XY) psu_switch.center to psu_case.right_face.center; offset(0.005,0,0); orientation=axis:+X; mat=mat_black_plastic; create_method=primitive. |
+| psu_connectors | Array of 3 IEC/C13 connectors 0.015×0.010×0.015 m | Align(XY) psu_connectors.center to psu_case.back_face.center; offset(0,0,0.005); orientation=axis:+Z; mat=mat_black_plastic; create_method=primitive. |
+
+# ----------  END_GRAPH  ----------

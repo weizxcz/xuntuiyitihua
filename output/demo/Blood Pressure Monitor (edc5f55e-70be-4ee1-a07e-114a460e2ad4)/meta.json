@@ -1,0 +1,46 @@
+{
+  "id": "edc5f55e-70be-4ee1-a07e-114a460e2ad4",
+  "name": "Blood Pressure Monitor",
+  "instruction": "Create a blood pressure monitor with an inflatable cuff and a digital display unit. The cuff should be adjustable to fit different arm sizes and have a Velcro closure. The display unit should show systolic and diastolic pressure readings, as well as pulse rate. Include buttons for starting and stopping the measurement, as well as a memory function to store previous readings.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a blood pressure monitor.",
+        "The cuff is inflatable and adjustable.",
+        "The display unit is rectangular."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The cuff and unit are proportionate to the entire the monitor."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The cuff is positioned correctly to wrap around an arm.",
+        "The display unit is placed in a visible position for easy reading.",
+        "The buttons are easily accessible on the display unit."
+      ],
+      "Object distance and contact": [
+        "The cuff does not overlap with the display unit.",
+        "The Velcro closure is securely fastened without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "The cuff's adjustability and Velcro closure are correctly implemented.",
+        "The display unit functions as described with all necessary readings."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,49 @@
+{
+  "id": "8eb8f888-c4a0-47fc-a2a4-63492e32f0c2",
+  "name": "Banana",
+  "instruction": "Create a 3D model of a banana. It should be curved with a slightly tapered end and a stem at the top.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a banana.",
+        "The banana is curved.",
+        "The banana has a slightly tapered end.",
+        "The banana features a stem at the top."
+      ],
+      "Color representation": [
+        "The banana should be represented in a yellow color.",
+        "The stem should be a darker green or brown color."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The banana should have a natural, elongated shape, with a curved body that tapers slightly towards the tip.",
+        "The proportion of the stem to the banana's length should be realistic, with the stem being a small but noticeable part at the top of the banana.",
+        "The curvature of the banana should be smooth and gentle, maintaining an organic look with the middle section slightly thicker than the tapered end."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The banana is positioned correctly to showcase its curvature.",
+        "The stem is appropriately placed at the top of the banana.",
+        "The tapered end is oriented downward."
+      ],
+      "Object distance and contact": [
+        "The banana does not overlap with any other objects.",
+        "There is a clear space around the banana to emphasize its shape."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the banana are accurately represented.",
+        "The curvature, tapering, and stem are all present as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

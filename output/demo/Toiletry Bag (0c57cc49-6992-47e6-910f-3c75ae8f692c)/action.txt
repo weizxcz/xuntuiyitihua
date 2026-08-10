@@ -1,0 +1,104 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_main; diffuse_color = (0.8, 0.8, 0.8, 1.0).
+Define material fabric_lining; diffuse_color = (0.9, 0.9, 0.9, 1.0).
+Define material zipper_track; diffuse_color = (0.2, 0.2, 0.2, 1.0).
+Define material zipper_pull; diffuse_color = (0.7, 0.7, 0.7, 1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main_body: front_panel  ---
+Create primitive cuboid with size 0.25×0.15×0.005 m and name it front_panel.
+Rotate front_panel so its +Z axis aligns +Z (world).
+Anchor front_panel to world origin.
+Then move by offset(0, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create main_body: back_panel  ---
+Create primitive cuboid with size 0.25×0.15×0.005 m and name it back_panel.
+Rotate back_panel so its +Z axis aligns +Z (world).
+Anchor back_panel to world origin.
+Then move by offset(0, 0, -0.005).
+Stage 2 complete.
+
+---  SECTION 3 – Create main_body: bottom_panel  ---
+Create primitive cuboid with size 0.25×0.005×0.10 m and name it bottom_panel.
+Rotate bottom_panel so its +Y axis aligns +Y (world).
+Anchor bottom_panel to world origin.
+Then move by offset(0, -0.075, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create main_body: side_gusset  ---
+Create primitive cuboid with size 0.005×0.15×0.10 m and name it side_gusset.
+Rotate side_gusset so its +X axis aligns +X (world).
+Anchor side_gusset to world origin.
+Then move by offset(-0.125, 0, 0).
+Stage 4 complete.
+
+---  SECTION 5 – Create divider  ---
+Create primitive cuboid with size 0.25×0.005×0.10 m and name it divider.
+Rotate divider so its +Y axis aligns +Y (world).
+Anchor divider to world origin.
+Then move by offset(0, 0, 0.05).
+Align divider.+Y_face to front_panel.+Y_face.
+Align divider.+Y_face to back_panel.+Y_face.
+Assembly guideline satisfied.
+Stage 5 complete.
+
+---  SECTION 6 – Create small_pocket_A  ---
+Create primitive cuboid with size 0.10×0.005×0.08 m and name it small_pocket_A.
+Rotate small_pocket_A so its +Y axis aligns +Y (world).
+Anchor small_pocket_A to world origin.
+Then move by offset(-0.05, 0.05, 0.05).
+Align small_pocket_A.+Y_face to divider.+Y_face.
+Assembly guideline satisfied.
+Stage 6 complete.
+
+---  SECTION 7 – Create small_pocket_B  ---
+Create primitive cuboid with size 0.10×0.005×0.08 m and name it small_pocket_B.
+Rotate small_pocket_B so its +Y axis aligns +Y (world).
+Anchor small_pocket_B to world origin.
+Then move by offset(0.05, 0.05, 0.05).
+Align small_pocket_B.+Y_face to divider.+Y_face.
+Assembly guideline satisfied.
+Stage 7 complete.
+
+---  SECTION 8 – Create zipper_track  ---
+Create primitive cuboid with size 0.25×0.002×0.02 m and name it zipper_track.
+Rotate zipper_track so its +Y axis aligns +Y (world).
+Anchor zipper_track to world origin.
+Then move by offset(0, 0.075, 0).
+Align zipper_track.+Y_face to front_panel.+Y_face.
+Align zipper_track.+Y_face to back_panel.+Y_face.
+Assembly guideline satisfied.
+Stage 8 complete.
+
+---  SECTION 9 – Create zipper_pull  ---
+Create primitive cuboid with size 0.02×0.002×0.01 m and name it zipper_pull.
+Rotate zipper_pull so its +Y axis aligns +Y (world).
+Anchor zipper_pull to world origin.
+Then move by offset(0.12, 0.075, 0).
+Align zipper_pull.+Y_face to zipper_track.+Y_face.
+Assembly guideline satisfied.
+Stage 9 complete.
+
+---  SECTION 10 – Create handle  ---
+Create primitive cuboid with size 0.15×0.005×0.02 m and name it handle.
+Rotate handle so its +Y axis aligns +Y (world).
+Anchor handle to world origin.
+Then move by offset(0, 0.075, 0.05).
+Align handle.+Y_face to back_panel.+Y_face.
+Assembly guideline satisfied.
+Stage 10 complete.
+
+All stages complete.

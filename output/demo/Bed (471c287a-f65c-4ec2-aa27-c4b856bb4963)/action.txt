@@ -1,0 +1,95 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material fabric_blue; diffuse_color = (0.1,0.2,0.5,1.0).
+Define material fabric_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material metal_silver; diffuse_color = (0.7,0.7,0.7,1.0).
+Define material wood_dark; diffuse_color = (0.2,0.1,0.05,1.0).
+Define material wood_light; diffuse_color = (0.6,0.4,0.2,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create bed frame legs  ---
+Create primitive cylinder with diameter 0.05 m and height 0.35 m and name it leg_LF.
+Rotate leg_LF so its +Z axis aligns +Z (world).
+Move leg_LF to pos=(-0.95, -1.95, 0.175).
+
+Create primitive cylinder with diameter 0.05 m and height 0.35 m and name it leg_RF.
+Rotate leg_RF so its +Z axis aligns +Z (world).
+Move leg_RF to pos=(0.95, -1.95, 0.175).
+
+Create primitive cylinder with diameter 0.05 m and height 0.35 m and name it leg_LB.
+Rotate leg_LB so its +Z axis aligns +Z (world).
+Move leg_LB to pos=(-0.95, 1.95, 0.175).
+
+Create primitive cylinder with diameter 0.05 m and height 0.35 m and name it leg_RB.
+Rotate leg_RB so its +Z axis aligns +Z (world).
+Move leg_RB to pos=(0.95, 1.95, 0.175).
+
+Stage 1 complete.
+
+---  SECTION 2 – Create side rails  ---
+Create primitive box with size 0.05×3.9×0.05 m and name it side_rail_L.
+Rotate side_rail_L so its +Z axis aligns +Z (world).
+Move side_rail_L to pos=(-0.975, 0, 0.35).
+
+Create primitive box with size 0.05×3.9×0.05 m and name it side_rail_R.
+Rotate side_rail_R so its +Z axis aligns +Z (world).
+Move side_rail_R to pos=(0.975, 0, 0.35).
+
+Stage 2 complete.
+
+---  SECTION 3 – Create headboard and footboard  ---
+Create primitive box with size 2.0×0.1×1.2 m and name it headboard.
+Rotate headboard so its +Z axis aligns +Z (world).
+Move headboard to pos=(0, 1.95, 0.6).
+
+Create primitive box with size 2.0×0.1×0.6 m and name it footboard.
+Rotate footboard so its +Z axis aligns +Z (world).
+Move footboard to pos=(0, -1.95, 0.3).
+
+Stage 3 complete.
+
+---  SECTION 4 – Create bed slats  ---
+For i in 1…10:
+  Create primitive box with size 1.9×0.05×0.02 m and name it slat_i.
+  Rotate slat_i so its +Z axis aligns +Z (world).
+  Then move by offset(0, -1.8 + (i-1)*0.2, 0.36).
+
+Stage 4 complete.
+
+---  SECTION 5 – Create mattress  ---
+Create primitive box with size 2.0×1.9×0.25 m and name it mattress.
+Rotate mattress so its +Z axis aligns +Z (world).
+Move mattress to pos=(0, 0, 0.485).
+
+Stage 5 complete.
+
+---  SECTION 6 – Create pillows  ---
+Create primitive box with size 0.6×0.4×0.1 m and name it pillow_L.
+Rotate pillow_L so its +Z axis aligns +Z (world).
+Move pillow_L to pos=(-0.5, 1.7, 0.66).
+
+Create primitive box with size 0.6×0.4×0.1 m and name it pillow_R.
+Rotate pillow_R so its +Z axis aligns +Z (world).
+Move pillow_R to pos=(0.5, 1.7, 0.66).
+
+Stage 6 complete.
+
+---  SECTION 7 – Create blanket  ---
+Create primitive box with size 2.0×1.5×0.05 m and name it blanket.
+Rotate blanket so its +Z axis aligns +Z (world).
+Move blanket to pos=(0, -0.25, 0.635).
+
+Stage 7 complete.
+
+All stages complete.

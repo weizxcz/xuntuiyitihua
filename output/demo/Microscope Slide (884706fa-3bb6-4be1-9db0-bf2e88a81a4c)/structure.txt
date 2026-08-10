@@ -1,0 +1,28 @@
+-- MATERIAL LIBRARY --
+glass_clear | diffuse_color=(0.9,0.95,1.0,0.2)
+metal_steel | diffuse_color=(0.7,0.7,0.75,1.0)
+specimen_green | diffuse_color=(0.1,0.6,0.1,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| microscope_slide_assembly | Composite assembly of the slide, cover slip, and specimen | assembly_order=[slide_base, specimen_layer, cover_slip] |
+
+Layer 1 – Primary Structure (Slide Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| slide_base | Standard glass microscope slide (76mm × 26mm × 1mm) | size=(0.076, 0.026, 0.001); mat=glass_clear; create_method=primitive; orientation=axis:+Z; pos=(0,0,0) |
+
+Layer 2 – Specimen Layer
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| specimen_patch | Thin biological specimen layer | size=(0.015, 0.015, 0.0001); mat=specimen_green; create_method=primitive; orientation=axis:+Z; pos=(0,0,0.0005) |
+
+Layer 3 – Cover Slip
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| cover_slip | Standard cover glass (22mm × 22mm × 0.17mm) | size=(0.022, 0.022, 0.00017); mat=glass_clear; create_method=primitive; orientation=axis:+Z; pos=(0,0,0.00058) |
+
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,47 @@
+-- MATERIAL LIBRARY --
+mat_black_piano | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_wood_dark | diffuse_color=(0.25,0.12,0.05,1.0)
+mat_wood_light | diffuse_color=(0.85,0.75,0.60,1.0)
+mat_white_key | diffuse_color=(0.95,0.95,0.95,1.0)
+mat_black_key | diffuse_color=(0.05,0.05,0.05,1.0)
+mat_metal_pedal | diffuse_color=(0.7,0.7,0.7,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| piano_root | Composite of body, lid, keyboard, and pedals | assembly_order=[body_group, lid_group, keyboard_group, pedal_group] |
+
+Layer 1 – Primary Structure (Body)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| body_group | Composite of main shell and legs | assembly_order=[shell, legs] |
+| shell | Large curved piano body (approx 1.5m long, 0.6m high, 0.5m deep) | Align(XYZ) shell.center to piano_root.center; orientation=axis:+Z; mat=mat_black_piano; create_method=primitive; constraint=curved_box(length=1.5, height=0.6, depth=0.5, curvature=0.2) |
+| legs | 3 legs supporting the body | assembly_order=[leg_L, leg_R, leg_back] |
+| leg_L | Left leg (front) | Align(XY) leg_L.top_face to shell.bottom_face; offset(0.6, 0.2, 0); orientation=axis:+Z; mat=mat_wood_dark; create_method=cylinder; size=Ø0.05×0.7 |
+| leg_R | Right leg (front) | Align(XY) leg_R.top_face to shell.bottom_face; offset(-0.6, 0.2, 0); orientation=axis:+Z; mat=mat_wood_dark; create_method=cylinder; size=Ø0.05×0.7 |
+| leg_back | Back leg (center) | Align(XY) leg_back.top_face to shell.bottom_face; offset(0, -0.2, 0); orientation=axis:+Z; mat=mat_wood_dark; create_method=cylinder; size=Ø0.05×0.7 |
+
+Layer 2 – Lid
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lid_group | Piano lid | assembly_order=[lid_panel] |
+| lid_panel | Curved lid that opens | Align(XY) lid_panel.bottom_face to shell.top_face; offset(0, 0.1, 0); orientation=axis:+Z; mat=mat_black_piano; create_method=primitive; constraint=curved_plate(length=1.4, width=0.5, thickness=0.02, curvature=0.2) |
+
+Layer 3 – Keyboard
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| keyboard_group | Keyboard assembly | assembly_order=[keybed, white_keys, black_keys] |
+| keybed | Base for the keys | Align(XY) keybed.top_face to shell.top_face; offset(0, 0.3, 0.01); orientation=axis:+Z; mat=mat_wood_light; create_method=cube; size=1.2×0.15×0.05 |
+| white_keys | White keys (approx 52 keys) | Align(XY) white_keys.bottom_face to keybed.top_face; offset(0, 0, 0.025); orientation=axis:+Z; mat=mat_white_key; create_method=pattern; constraint=grid(rows=1, cols=52, x_spacing=0.023, y_spacing=0, start_offset=(-0.6, 0)) |
+| black_keys | Black keys (approx 36 keys) | Align(XY) black_keys.bottom_face to keybed.top_face; offset(0, 0, 0.04); orientation=axis:+Z; mat=mat_black_key; create_method=pattern; constraint=grid(rows=1, cols=36, x_spacing=0.03, y_spacing=0, start_offset=(-0.55, 0.01)) |
+
+Layer 4 – Pedals
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pedal_group | Three pedals at the bottom | assembly_order=[pedal_L, pedal_M, pedal_R] |
+| pedal_L | Left pedal (soft) | Align(XY) pedal_L.top_face to shell.bottom_face; offset(0.4, 0, 0); orientation=axis:+Z; mat=mat_metal_pedal; create_method=cylinder; size=Ø0.03×0.05 |
+| pedal_M | Middle pedal (sostenuto) | Align(XY) pedal_M.top_face to shell.bottom_face; offset(0, 0, 0); orientation=axis:+Z; mat=mat_metal_pedal; create_method=cylinder; size=Ø0.03×0.05 |
+| pedal_R | Right pedal (damper) | Align(XY) pedal_R.top_face to shell.bottom_face; offset(-0.4, 0, 0); orientation=axis:+Z; mat=mat_metal_pedal; create_method=cylinder; size=Ø0.03×0.05 |
+# ----------  END_GRAPH  ----------

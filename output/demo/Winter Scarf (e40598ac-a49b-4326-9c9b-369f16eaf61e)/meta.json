@@ -1,0 +1,47 @@
+{
+  "id": "e40598ac-a49b-4326-9c9b-369f16eaf61e",
+  "name": "Winter Scarf",
+  "instruction": "Let's create a 3D model of a winter scarf. The scarf should be long and rectangular, with fringes at both ends. It should be wide enough to provide warmth when wrapped around the neck. The scarf should have a simple, classic design without any intricate patterns or details.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a winter scarf.",
+        "The scarf has a long and rectangular shape.",
+        "The scarf features fringes at both ends."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The length of the scarf is proportionate to its width.",
+        "The fringes are proportionate to the length of the scarf."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The scarf hangs naturally when draped.",
+        "The fringes are evenly distributed at both ends.",
+        "The scarf maintains its rectangular shape when viewed from different angles."
+      ],
+      "Object distance and contact": [
+        "The fringes do not overlap with the main body of the scarf.",
+        "There is no gap between the fringes and the scarf body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the requirement of being simple and classic.",
+        "The scarf includes fringes at both ends as instructed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

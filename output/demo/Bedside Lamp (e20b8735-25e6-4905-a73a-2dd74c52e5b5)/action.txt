@@ -1,0 +1,48 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_base; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material mat_shade; diffuse_color = (1.0,0.95,0.8,0.9).
+Define material mat_stand; diffuse_color = (0.8,0.8,0.8,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create lamp base  ---
+Create primitive cylinder with radius 0.076 m and height 0.025 m and name it lamp_base.
+Rotate lamp_base so its +Z axis aligns +Z (world).
+Anchor lamp_base to world origin.
+Then move by offset(0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create lamp stand  ---
+Create primitive cylinder with radius 0.0125 m and height 0.305 m and name it lamp_stand.
+Rotate lamp_stand so its +Z axis aligns +Z (world).
+Align lamp_stand.bottom_face to lamp_base.top_face.
+Then move by offset(0,0,0.0125).
+Assembly guideline satisfied.
+Stage 2 complete.
+
+---  SECTION 3 – Create lamp shade  ---
+Create primitive cone with bottom_radius 0.06 m, top_radius 0.04 m, and height 0.150 m and name it lamp_shade.
+Rotate lamp_shade so its +Z axis aligns +Z (world).
+Align lamp_shade.bottom_face to lamp_stand.top_face.
+Then move by offset(0,0,0.0125).
+Assembly guideline satisfied.
+Stage 3 complete.
+
+---  SECTION 4 – Assemble lamp  ---
+Boolean-union lamp_base, lamp_stand, and lamp_shade to form lamp_assembly.
+Assembly guideline satisfied.
+Stage 4 complete.
+
+All stages complete.

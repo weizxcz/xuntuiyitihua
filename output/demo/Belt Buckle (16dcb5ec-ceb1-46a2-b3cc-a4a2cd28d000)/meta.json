@@ -1,0 +1,47 @@
+{
+  "id": "16dcb5ec-ceb1-46a2-b3cc-a4a2cd28d000",
+  "name": "Belt Buckle",
+  "instruction": "Create a 3D model of a belt buckle. It should be rectangular with a simple latch mechanism. Include a small logo or design on the front for decoration.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a belt buckle.",
+        "The belt buckle is rectangular in shape.",
+        "The latch mechanism is simple and functional."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The dimensions of the buckle are proportionate for typical belt sizes.",
+        "The logo is proportionate to the entire buckle."
+      ],
+      "Texture and surface detail": [
+        "The buckle appears to be made of metal or a similar material.",
+        "The surface finish is smooth and polished."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The latch mechanism is correctly positioned on the buckle.",
+        "The logo or design is centered on the front face of the buckle."
+      ],
+      "Object distance and contact": [
+        "The latch mechanism does not obstruct the logo.",
+        "There is no overlap between the latch and the buckle's body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The rectangular shape and simple latch mechanism are correctly modeled.",
+        "The logo or design is included as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

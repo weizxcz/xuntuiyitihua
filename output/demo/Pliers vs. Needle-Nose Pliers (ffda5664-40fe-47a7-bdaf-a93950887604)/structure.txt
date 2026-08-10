@@ -1,0 +1,31 @@
+-- MATERIAL LIBRARY --
+mat_steel_handle | diffuse_color=(0.2,0.2,0.2,1.0)
+mat_steel_jaw | diffuse_color=(0.6,0.6,0.6,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pliers_union | Composite union of pliers_main + pliers_pivot + needle_pliers_main + needle_pliers_pivot | (1) execute 'pliers_main': Align(XYZ) pliers_union.center to (0,0,0); orientation=axis:+Z; mat=mat_steel_jaw; (2) execute 'pliers_pivot': Align(XYZ) pliers_pivot.center to pliers_main.pivot_hole; orientation=axis:+Z; mat=mat_steel_handle; (3) execute 'needle_pliers_main': Align(XYZ) needle_pliers_main.center to (0,0,0.05); orientation=axis:+Z; mat=mat_steel_jaw; (4) execute 'needle_pliers_pivot': Align(XYZ) needle_pliers_pivot.center to needle_pliers_main.pivot_hole; orientation=axis:+Z; mat=mat_steel_handle; |
+
+Layer 1 – Primary Structure (Standard Pliers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| pliers_main | Composite of pliers_jaw + pliers_handle | (1) execute 'pliers_jaw': Align(XYZ) pliers_jaw.center to pliers_main.center; orientation=axis:+Z; mat=mat_steel_jaw; (2) execute 'pliers_handle': Align(XYZ) pliers_handle.center to pliers_main.center; orientation=axis:+Z; mat=mat_steel_handle; |
+| pliers_jaw | Composite of jaw_left + jaw_right | (1) execute 'jaw_left': Align(XYZ) jaw_left.center to pliers_jaw.center; orientation=axis:+Z; mat=mat_steel_jaw; (2) execute 'jaw_right': Align(XYZ) jaw_right.center to pliers_jaw.center; orientation=axis:+Z; mat=mat_steel_jaw; |
+| jaw_left | Flat gripping surface left half | cylinder Ø0.020×0.150 m; Align(XY) jaw_left.right_face to pliers_jaw.center; orientation=axis:+Z; mat=mat_steel_jaw; create_method=primitive; |
+| jaw_right | Flat gripping surface right half | cylinder Ø0.020×0.150 m; Align(XY) jaw_left.left_face to jaw_right.right_face; orientation=axis:+Z; mat=mat_steel_jaw; create_method=primitive; |
+| pliers_handle | Ergonomic handle for pliers | cylinder Ø0.025×0.100 m; Align(XY) pliers_handle.center to pliers_main.center; orientation=axis:+Z; mat=mat_steel_handle; create_method=primitive; |
+| pliers_pivot | Pivot pin for pliers | cylinder Ø0.005×0.030 m; Align(XYZ) pliers_pivot.center to pliers_main.pivot_hole; orientation=axis:+Z; mat=mat_steel_handle; create_method=primitive; |
+
+Layer 2 – Primary Structure (Needle-Nose Pliers)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| needle_pliers_main | Composite of needle_jaw + needle_handle | (1) execute 'needle_jaw': Align(XYZ) needle_jaw.center to needle_pliers_main.center; orientation=axis:+Z; mat=mat_steel_jaw; (2) execute 'needle_handle': Align(XYZ) needle_handle.center to needle_pliers_main.center; orientation=axis:+Z; mat=mat_steel_handle; |
+| needle_jaw | Composite of needle_tip_left + needle_tip_right | (1) execute 'needle_tip_left': Align(XYZ) needle_tip_left.center to needle_jaw.center; orientation=axis:+Z; mat=mat_steel_jaw; (2) execute 'needle_tip_right': Align(XYZ) needle_tip_right.center to needle_jaw.center; orientation=axis:+Z; mat=mat_steel_jaw; |
+| needle_tip_left | Long narrow tip left half | cylinder Ø0.005×0.200 m; Align(XY) needle_tip_left.right_face to needle_jaw.center; orientation=axis:+Z; mat=mat_steel_jaw; create_method=primitive; |
+| needle_tip_right | Long narrow tip right half | cylinder Ø0.005×0.200 m; Align(XY) needle_tip_left.left_face to needle_tip_right.right_face; orientation=axis:+Z; mat=mat_steel_jaw; create_method=primitive; |
+| needle_handle | Ergonomic handle for needle-nose pliers | cylinder Ø0.020×0.080 m; Align(XY) needle_handle.center to needle_pliers_main.center; orientation=axis:+Z; mat=mat_steel_handle; create_method=primitive; |
+| needle_pliers_pivot | Pivot pin for needle-nose pliers | cylinder Ø0.004×0.025 m; Align(XYZ) needle_pliers_pivot.center to needle_pliers_main.pivot_hole; orientation=axis:+Z; mat=mat_steel_handle; create_method=primitive; |
+# ----------  END_GRAPH  ----------

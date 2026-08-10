@@ -1,0 +1,1 @@
+Design a cheese platter. The platter is circular and has a selection of cheeses arranged neatly.

@@ -1,0 +1,1 @@
+Model a test tube that is cylindrical and narrow.

@@ -1,0 +1,47 @@
+{
+  "id": "bdf369a1-105a-4ed6-abe4-d56ec51aa2d1",
+  "name": "Forklift vs. Crane",
+  "instruction": "Compare a forklift and a crane in a 3D model. The forklift should have a small, compact body with two forks at the front for lifting pallets. The crane should have a tall, extendable arm with a hook at the end for lifting heavy objects. Place them side by side to show their differences.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The forklift has a small, compact body.",
+        "The forklift features two forks at the front.",
+        "The crane has a tall, extendable arm.",
+        "The crane includes a hook at the end."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The size of the forks is proportionate to the forklift body.",
+        "The height of the crane's arm is proportionate to its base."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The forklift and crane are placed side by side.",
+        "The forklift's forks are positioned forward.",
+        "The crane's arm extends upward."
+      ],
+      "Object distance and contact": [
+        "There is sufficient space between the forklift and crane to highlight their differences.",
+        "The base of the crane is stable and does not interfere with the forklift."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both the forklift and crane are accurately represented according to the instructions.",
+        "The placement of the objects side by side is correctly executed."
+      ]
+    }
+  },
+  "color brightness": "Medium Bright",
+  "type": "Simulative"
+}

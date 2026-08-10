@@ -1,0 +1,23 @@
+-- MATERIAL LIBRARY --
+mat_calendar_body | diffuse_color=(240,240,240,255)
+mat_calendar_binding | diffuse_color=(220,220,220,255)
+mat_calendar_text | diffuse_color=(50,50,50,255)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| calendar_root | Composite of binding + body + text | assembly_order=[binding_group, body_group, text_group] |
+
+Layer 1 – Primary Structure
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| binding_group | Composite of binding rectangle | assembly_order=[binding_rect] |
+| body_group | Composite of body cube + text | assembly_order=[body_cube, text_prism] |
+| binding_rect | Binding rectangle 0.120×0.020×0.005 m | Align(XY) binding_rect.center to calendar_root.center; offset(0, 0.060, 0); orientation=axis:+Z; mat=mat_calendar_binding; create_method=primitive |
+| body_cube | Body cube 0.100×0.100×0.005 m | Align(XY) body_cube.center to calendar_root.center; offset(0, 0, 0); orientation=axis:+Z; mat=mat_calendar_body; create_method=primitive |
+| text_group | Composite of text prism | assembly_order=[text_prism] |
+| text_prism | Number "1" prism 0.040×0.060×0.001 m | Align(XY) text_prism.center to body_cube.center; offset(0, 0, 0); orientation=axis:+Z; mat=mat_calendar_text; create_method=extrude_from_sketch; constraint=BMesh sketch essentials (XY plane): Define a vertical rectangle representing the numeral "1". Width=0.010 m, Height=0.060 m. Center at (0,0). Extrude thickness t=0.001 m along +Z with caps. |
+
+# ----------  END_GRAPH  ----------

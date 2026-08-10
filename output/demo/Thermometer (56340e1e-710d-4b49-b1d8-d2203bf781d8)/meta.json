@@ -1,0 +1,45 @@
+{
+  "id": "56340e1e-710d-4b49-b1d8-d2203bf781d8",
+  "name": "Thermometer",
+  "instruction": "Create a basic thermometer with a slender body and a small digital display. The tip should be rounded for safety. The display should show temperature readings in both Celsius and Fahrenheit.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object is a thermometer.",
+        "The body of the thermometer is slender.",
+        "The tip of the thermometer is rounded."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The body and the digital display are proportionate to the entire thermometer."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The slender body is appropriately proportioned.",
+        "The digital display is positioned clearly on the body.",
+        "The rounded tip is correctly shaped for safety."
+      ],
+      "Object distance and contact": [
+        "The display is securely attached to the body.",
+        "There are no gaps between the display and the body."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes of the thermometer are accurately represented.",
+        "The thermometer includes both Celsius and Fahrenheit readings as instructed."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

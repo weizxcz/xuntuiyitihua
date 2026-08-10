@@ -1,0 +1,1 @@
+Design a travel bag. The bag should have a large main compartment, multiple pockets, and a shoulder strap. It should evoke a sense of adventure and readiness for travel.

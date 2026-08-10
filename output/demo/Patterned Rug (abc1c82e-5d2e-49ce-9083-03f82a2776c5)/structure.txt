@@ -1,0 +1,45 @@
+-- MATERIAL LIBRARY --
+mat_geometric_blue | diffuse_color=(0.1,0.2,0.8,1.0)
+mat_geometric_white | diffuse_color=(0.9,0.9,0.9,1.0)
+mat_floral_blue | diffuse_color=(0.1,0.2,0.8,1.0)
+mat_floral_green | diffuse_color=(0.1,0.5,0.1,1.0)
+mat_floral_red | diffuse_color=(0.8,0.1,0.1,1.0)
+mat_floral_white | diffuse_color=(0.9,0.9,0.9,1.0)
+mat_rug_base | diffuse_color=(0.8,0.7,0.6,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_root | Composite of rug_base + geometric_pattern + floral_pattern | A rectangular rug base serving as the foundation for two distinct pattern styles. |
+Layer 1 – Primary Structure (Rug Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| rug_base | Rectangular prism 2.0×3.0×0.02 m | Align(XY) rug_base.center to (0,0); Align(Z) rug_base.bottom_face to (0,0,0); orientation=axis:+Z; mat=mat_rug_base; create_method=primitive; assembly_order=[rug_root]; constraint=thickness=0.02m |
+Layer 2 – Geometric Pattern Variant
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| geo_pattern_union | Composite union of geo_tile_A + geo_tile_B | A repeating grid of alternating geometric tiles. |
+| geo_tile_A | Rectangular prism 0.5×0.5×0.002 m | Align(XY) geo_tile_A.center to (0,0); Align(Z) geo_tile_A.bottom_face to rug_base.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=mat_geometric_blue; create_method=primitive; assembly_order=[geo_pattern_union]; constraint=part of 4x6 grid |
+| geo_tile_B | Rectangular prism 0.5×0.5×0.002 m | Align(XY) geo_tile_B.center to (0.5,0); Align(Z) geo_tile_B.bottom_face to rug_base.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=mat_geometric_white; create_method=primitive; assembly_order=[geo_pattern_union]; constraint=part of 4x6 grid |
+Layer 3 – Floral Pattern Variant
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| floral_pattern_union | Composite union of floral_center + floral_petals + floral_leaves | A central floral motif with surrounding leaves. |
+| floral_center | Cylinder Ø0.2×0.003 m | Align(XY) floral_center.center to (0,0); Align(Z) floral_center.bottom_face to rug_base.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=mat_floral_red; create_method=primitive; assembly_order=[floral_pattern_union]; constraint=center of motif |
+| floral_petals | Composite of 6 petal_prisms | 6 petal-shaped prisms arranged radially around the center. |
+| petal_prism | Extruded petal shape 0.1×0.05×0.002 m | Align(XY) petal_prism.center to floral_center.center; Align(Z) petal_prism.bottom_face to rug_base.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=mat_floral_white; create_method=extrude_from_sketch; assembly_order=[floral_petals]; constraint=petal_sketch; rotation=spin=Z,i*60° |
+| floral_leaves | Composite of 4 leaf_prisms | 4 leaf-shaped prisms placed between petals. |
+| leaf_prism | Extruded leaf shape 0.15×0.04×0.002 m | Align(XY) leaf_prism.center to floral_center.center; Align(Z) leaf_prism.bottom_face to rug_base.top_face; offset(0,0,0.01); orientation=axis:+Z; mat=mat_floral_green; create_method=extrude_from_sketch; assembly_order=[floral_leaves]; constraint=leaf_sketch; rotation=spin=Z,i*90°+45° |
+Layer 4 – Sketch Definitions (Geometric)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| geo_tile_A_sketch | Square sketch 0.5×0.5 m | constraint=BMesh sketch essentials (XY plane): 4-vertex square polygon. Vertices at (±0.25, ±0.25). |
+| geo_tile_B_sketch | Square sketch 0.5×0.5 m | constraint=BMesh sketch essentials (XY plane): 4-vertex square polygon. Vertices at (±0.25, ±0.25). |
+Layer 5 – Sketch Definitions (Floral)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| petal_sketch | Petal shape 0.1×0.05 m | constraint=BMesh sketch essentials (XY plane): 4-vertex petal polygon. Vertices at (0,0), (0.05,0.025), (0,0.05), (-0.05,0.025). |
+| leaf_sketch | Leaf shape 0.15×0.04 m | constraint=BMesh sketch essentials (XY plane): 4-vertex leaf polygon. Vertices at (0,0), (0.075,0.02), (0,0.04), (-0.075,0.02). |
+# ----------  END_GRAPH  ----------

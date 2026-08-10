@@ -1,0 +1,48 @@
+{
+  "id": "894d34db-35a0-4c59-886d-50b6237ae511",
+  "name": "Floral Pattern",
+  "instruction": "Create a 3D model of a floral pattern. It should consist of several flowers arranged in a repeating design. Ensure the flowers are evenly spaced and the pattern is symmetrical.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "Flowers are arranged in a repeating design.",
+        "The spacing between flowers is consistent.",
+        "The overall pattern is symmetrical."
+      ],
+      "Color representation": [
+        "Colors of the flowers are vibrant and varied.",
+        "Each flower may have different color combinations."
+      ],
+      "Size": [
+        "The size of each flower is proportionate to the overall pattern.",
+        "The scale of the pattern is suitable for the intended application."
+      ],
+      "Proportion": [
+        "The flowers in the pattern is proportionate to the entire pattern."
+      ],
+      "Texture and surface detail": [
+        "The flowers have a detailed texture that mimics natural petals.",
+        "The surface may include details like veins and gradients."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "Flowers are positioned to create a balanced look.",
+        "The depth of the flowers adds dimension to the pattern.",
+        "The arrangement maintains a clear visual flow."
+      ],
+      "Object distance and contact": [
+        "There is adequate spacing between flowers to avoid overlap.",
+        "The pattern maintains a cohesive look without gaps."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The model accurately reflects the requirement for a floral pattern.",
+        "All specified attributes such as symmetry and spacing are adhered to."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

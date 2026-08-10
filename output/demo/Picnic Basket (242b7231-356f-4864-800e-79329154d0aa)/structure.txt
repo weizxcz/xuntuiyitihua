@@ -1,0 +1,51 @@
+-- MATERIAL LIBRARY --
+mat_bamboo | diffuse_color=(0.85, 0.75, 0.50, 1.0)
+mat_leather | diffuse_color=(0.40, 0.20, 0.10, 1.0)
+mat_metal | diffuse_color=(0.70, 0.70, 0.70, 1.0)
+mat_wood | diffuse_color=(0.60, 0.45, 0.30, 1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| picnic_basket | Composite of base, lid, handle, and interior fittings | assembly_order=[base_group, lid_group, handle_group, interior_group] |
+
+Layer 1 – Primary Structure (Base)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| base_group | Composite of base_panels and corner_protectors | assembly_order=[base_bottom, base_sides, corner_protectors] |
+| base_bottom | Rectangular plate forming the floor | size=0.4572×0.3048×0.015 m; mat=mat_wood; create_method=primitive(cube); pos=(0, 0, 0); orientation=axis:+Z |
+| base_front | Front wall panel | size=0.4572×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) base_front.bottom_face to base_bottom.top_face; offset(0, 0.1524, 0); orientation=axis:+Z |
+| base_back | Back wall panel | size=0.4572×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) base_back.bottom_face to base_bottom.top_face; offset(0, -0.1524, 0); orientation=axis:+Z |
+| base_left | Left wall panel | size=0.3048×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) base_left.bottom_face to base_bottom.top_face; offset(-0.2286, 0, 0); orientation=axis:+Z |
+| base_right | Right wall panel | size=0.3048×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) base_right.bottom_face to base_bottom.top_face; offset(0.2286, 0, 0); orientation=axis:+Z |
+| corner_protectors | Four L-shaped metal brackets reinforcing corners | size=0.02×0.02×0.02 m (approx); mat=mat_metal; create_method=boolean_subtract; Align(XYZ) corner_protectors.center to Avg(base_front.left_face, base_left.front_face, base_bottom.top_face); offset(0.01, 0.01, 0.01); create_method=bevel; constraint=radius 0.002 segments 4 |
+
+Layer 2 – Primary Structure (Lid)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| lid_group | Composite of lid_panels and hinge_mechanism | assembly_order=[lid_top, lid_sides, hinges] |
+| lid_top | Rectangular plate forming the lid | size=0.4572×0.3048×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) lid_top.bottom_face to base_back.top_face; offset(0, 0, 0.254); orientation=axis:+Z |
+| lid_front | Front wall panel (hanging down when open) | size=0.4572×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) lid_front.bottom_face to lid_top.top_face; offset(0, 0.1524, 0); orientation=axis:+Z |
+| lid_back | Back wall panel (fixed to base back) | size=0.4572×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) lid_back.bottom_face to base_back.top_face; offset(0, -0.1524, 0); orientation=axis:+Z |
+| lid_left | Left wall panel | size=0.3048×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) lid_left.bottom_face to lid_top.top_face; offset(-0.2286, 0, 0); orientation=axis:+Z |
+| lid_right | Right wall panel | size=0.3048×0.254×0.015 m; mat=mat_wood; create_method=primitive(cube); Align(Z) lid_right.bottom_face to lid_top.top_face; offset(0.2286, 0, 0); orientation=axis:+Z |
+| hinges | Two metal hinges connecting lid to base | size=0.05×0.01×0.01 m; mat=mat_metal; create_method=primitive(cylinder); Align(XY) hinge_L.center to Avg(base_back.left_face, lid_back.left_face); offset(0.1, 0, 0); Align(XY) hinge_R.center to Avg(base_back.right_face, lid_back.right_face); offset(-0.1, 0, 0); orientation=axis:+Y |
+
+Layer 3 – Primary Structure (Handle)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| handle_group | Composite of handle_bar and attachment_brackets | assembly_order=[handle_bar, handle_brackets] |
+| handle_bar | Curved wooden or bamboo handle | size=0.3048×0.02×0.02 m (approximated as bent beam); mat=mat_bamboo; create_method=extrude_from_sketch; constraint=sketch:arc(radius=0.1524, angle=180°); extrusion:0.02m along Z; Align(XY) handle_bar.center to Avg(base_left.top_face, base_right.top_face); offset(0, 0, 0.254); orientation=axis:+Z |
+| handle_brackets | Two metal brackets securing handle to base | size=0.05×0.05×0.01 m; mat=mat_metal; create_method=primitive(cube); Align(XY) bracket_L.center to base_left.top_face; offset(0.1, 0, 0.254); Align(XY) bracket_R.center to base_right.top_face; offset(-0.1, 0, 0.254); orientation=axis:+Z |
+
+Layer 4 – Interior & Accessories
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| interior_group | Composite of compartments, cutlery tray, and straps | assembly_order=[compartments, cutlery_tray, straps] |
+| compartments | Dividers for plates and food storage | size=0.40×0.25×0.05 m; mat=mat_wood; create_method=boolean_subtract; Align(XY) compartments.center to base_bottom.center; offset(0, 0, 0.025); orientation=axis:+Z; create_method=bevel; constraint=radius 0.005 segments 4 |
+| cutlery_tray | Small tray for cutlery | size=0.20×0.10×0.02 m; mat=mat_wood; create_method=primitive(cube); Align(XY) cutlery_tray.center to base_bottom.center; offset(0.1, 0, 0.025); orientation=axis:+Z |
+| straps | Two leather straps to secure lid | size=0.30×0.02×0.005 m; mat=mat_leather; create_method=primitive(cube); Align(XY) strap_L.center to Avg(base_left.top_face, lid_left.bottom_face); offset(0.1, 0, 0.127); orientation=axis:+Z; Align(XY) strap_R.center to Avg(base_right.top_face, lid_right.bottom_face); offset(-0.1, 0, 0.127); orientation=axis:+Z |
+| buckles | Metal buckles for straps | size=0.03×0.03×0.01 m; mat=mat_metal; create_method=primitive(cube); Align(XY) buckle_L.center to strap_L.center; offset(0.1, 0, 0); orientation=axis:+Z; Align(XY) buckle_R.center to strap_R.center; offset(-0.1, 0, 0); orientation=axis:+Z |
+# ----------  END_GRAPH  ----------

@@ -1,0 +1,43 @@
+{
+  "id": "8d380be1-f271-45ba-ba28-6c92684fcddd",
+  "name": "Wall Hook",
+  "instruction": "Create a simple wall hook. It should be a single hook that can be mounted on a wall.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a wall hook.",
+        "The hook is designed as a single unit."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The hook is proportinate to the wall."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The hook extends outward from the wall.",
+        "The hook is designed to be securely attached to the wall."
+      ],
+      "Object distance and contact": [
+        "The hook does not interfere with adjacent objects when mounted.",
+        "The mounting area of the hook is flat for proper wall contact."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The wall hook is a single unit as specified.",
+        "The design adheres to the requirement of being mountable."
+      ]
+    }
+  },
+  "color brightness": "Bright",
+  "type": "Simulative"
+}

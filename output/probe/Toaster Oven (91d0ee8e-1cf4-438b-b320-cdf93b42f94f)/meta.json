@@ -1,0 +1,46 @@
+{
+  "id": "91d0ee8e-1cf4-438b-b320-cdf93b42f94f",
+  "name": "Toaster Oven",
+  "instruction": "Let's create a 3D model of a toaster oven. Start with a rectangular body that has a front door with a handle. The door should open downwards. Inside, add a rack for placing food. On the outside, add a few dials for controlling the temperature and timer.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a toaster oven.",
+        "The body of the toaster oven is rectangular.",
+        "The front door is correctly positioned."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The handle is proportionate to the body.",
+        "The dials for controlling the temperature and timer are postioned at right place."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The door is appropriately hinged to allow downward opening.",
+        "The rack is positioned correctly inside the toaster oven.",
+        "The dials are placed in an accessible location on the exterior."
+      ],
+      "Object distance and contact": [
+        "The door does not obstruct the rack when opened.",
+        "The handle is easily reachable without interference from other components."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified components are accurately represented.",
+        "There are no deviations from the instructions."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

@@ -1,0 +1,51 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_green_diffuse; diffuse_color = (0,1,0,1).
+Define material mat_green_emissive; diffuse_color = (0,1,0,0.8).
+Define material mat_white_diffuse; diffuse_color = (1,1,1,1).
+Define material mat_white_emissive; diffuse_color = (1,1,1,0.9).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create sign_panel  ---
+Create primitive cuboid with size 0.600×0.300×0.005 m and name it sign_panel.
+Rotate sign_panel so its +Z axis aligns +Z (world).
+Anchor sign_panel to root.center.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create text_layer  ---
+Create primitive cuboid with size 0.200×0.050×0.002 m and name it text_fire.
+Rotate text_fire so its +Z axis aligns +Z (world).
+Anchor text_fire to root.center.
+Then move by offset(0, 0.060, 0).
+
+Create primitive cuboid with size 0.200×0.050×0.002 m and name it text_exit.
+Rotate text_exit so its +Z axis aligns +Z (world).
+Anchor text_exit to root.center.
+Then move by offset(0, -0.060, 0).
+Stage 2 complete.
+
+---  SECTION 3 – Create symbol_layer  ---
+Create primitive cuboid with size 0.100×0.150×0.002 m and name it running_figure.
+Rotate running_figure so its +Z axis aligns +Z (world).
+Anchor running_figure to root.center.
+Then move by offset(0.150, 0, 0).
+
+Create primitive cuboid with size 0.100×0.050×0.002 m and name it arrow.
+Rotate arrow so its +Z axis aligns +Z (world).
+Anchor arrow to root.center.
+Then move by offset(-0.150, 0, 0).
+Stage 3 complete.
+
+All stages complete.

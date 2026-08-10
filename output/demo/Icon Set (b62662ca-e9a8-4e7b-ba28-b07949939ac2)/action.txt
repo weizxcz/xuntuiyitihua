@@ -1,0 +1,69 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material calc_body; diffuse_color = (0.784, 0.784, 0.784, 1).
+Define material calc_screen; diffuse_color = (0.196, 0.235, 0.275, 1).
+Define material notepad_cover; diffuse_color = (0.118, 0.118, 0.118, 1).
+Define material notepad_paper; diffuse_color = (0.941, 0.941, 0.941, 1).
+Define material pen_barrel; diffuse_color = (1.0, 0.843, 0.0, 1).
+Define material pen_cap; diffuse_color = (1.0, 0.843, 0.0, 1).
+Define material pen_nib; diffuse_color = (0.753, 0.753, 0.753, 1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create calculator body  ---
+Create primitive cuboid with size 0.120×0.060×0.015 m and name it calculator_body.
+Rotate calculator_body so its +Z axis aligns +Z (world).
+Move calculator_body to pos=(0.15, 0, 0).
+Stage 1 complete.
+
+---  SECTION 2 – Create calculator screen  ---
+Create primitive cuboid with size 0.080×0.030×0.002 m and name it calculator_screen.
+Rotate calculator_screen so its +Z axis aligns +Z (world).
+Align calculator_screen.bottom_face to calculator_body.top_face.
+Then move by offset(0, 0, 0.0075).
+Stage 2 complete.
+
+---  SECTION 3 – Create notepad cover  ---
+Create primitive cuboid with size 0.100×0.140×0.005 m and name it notepad_cover.
+Rotate notepad_cover so its +Z axis aligns +Z (world).
+Move notepad_cover to pos=(-0.15, 0, 0).
+Stage 3 complete.
+
+---  SECTION 4 – Create notepad paper  ---
+Create primitive cuboid with size 0.095×0.135×0.004 m and name it notepad_paper.
+Rotate notepad_paper so its +Z axis aligns +Z (world).
+Align notepad_paper.bottom_face to notepad_cover.top_face.
+Then move by offset(0, 0, 0.0005).
+Stage 4 complete.
+
+---  SECTION 5 – Create pen barrel  ---
+Create primitive cylinder with diameter 0.010 m and height 0.100 m and name it pen_barrel.
+Rotate pen_barrel so its +Z axis aligns +Z (world).
+Move pen_barrel to pos=(0, 0.20, 0).
+Stage 5 complete.
+
+---  SECTION 6 – Create pen cap  ---
+Create primitive cylinder with diameter 0.010 m and height 0.020 m and name it pen_cap.
+Rotate pen_cap so its +Z axis aligns +Z (world).
+Align pen_cap.bottom_face to pen_barrel.top_face.
+Then move by offset(0, 0, 0.010).
+Stage 6 complete.
+
+---  SECTION 7 – Create pen nib  ---
+Create primitive cone with base diameter 0.004 m and height 0.010 m and name it pen_nib.
+Rotate pen_nib so its +Z axis aligns -Z (world).
+Align pen_nib.bottom_face to pen_barrel.bottom_face.
+Then move by offset(0, 0, -0.005).
+Stage 7 complete.
+
+All stages complete.

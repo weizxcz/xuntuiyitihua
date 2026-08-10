@@ -1,0 +1,131 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material led_blue; diffuse_color = (0,0,1,1).
+Define material led_red; diffuse_color = (1,0,0,1).
+Define material plastic_black; diffuse_color = (0.05,0.05,0.05,1).
+Define material plastic_grey; diffuse_color = (0.5,0.5,0.5,1).
+Define material rubber_black; diffuse_color = (0.1,0.1,0.1,1).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Main Deck Structure  ---
+Create primitive cuboid with size 0.12×0.40×0.02 m and name it deck_main.
+Rotate deck_main so its +Z axis aligns +Z (world).
+Move deck_main to pos=(0,0,0.05).
+Bevel deck_main edges with radius 0.01 m, segments 4.
+Apply friction_texture to deck_main top face.
+
+Create primitive cuboid with size 0.11×0.38×0.002 m and name it deck_grip.
+Rotate deck_grip so its +Z axis aligns +Z (world).
+Anchor deck_grip to deck_main.+Z_face.
+Align deck_grip.Z to deck_main.Z.
+Then move by offset(0,0,0.005).
+Apply friction_texture to deck_grip top face.
+
+Boolean-union deck_grip into deck_main; discard deck_grip.
+Stage 1 complete.
+
+---  SECTION 2 – Create Left Wheel Assembly  ---
+Create primitive cylinder with size 0.08×0.08×0.08 m and name it wheel_L.
+Rotate wheel_L so its +Z axis aligns +X (world).
+Move wheel_L to pos=(-0.15,0,0.01).
+Apply toroidal_tread to wheel_L surface.
+
+Create primitive cylinder with size 0.06×0.06×0.06 m and name it motor_L.
+Rotate motor_L so its +Z axis aligns +X (world).
+Anchor motor_L to wheel_L centre.
+Align motor_L.Z to wheel_L.Z.
+Then move by offset(0,0,0).
+Apply internal_gearbox to motor_L.
+
+Boolean-union motor_L into wheel_L; discard motor_L.
+Stage 2 complete.
+
+---  SECTION 3 – Create Right Wheel Assembly  ---
+Create primitive cylinder with size 0.08×0.08×0.08 m and name it wheel_R.
+Rotate wheel_R so its +Z axis aligns +X (world).
+Move wheel_R to pos=(0.15,0,0.01).
+Apply toroidal_tread to wheel_R surface.
+
+Create primitive cylinder with size 0.06×0.06×0.06 m and name it motor_R.
+Rotate motor_R so its +Z axis aligns +X (world).
+Anchor motor_R to wheel_R centre.
+Align motor_R.Z to wheel_R.Z.
+Then move by offset(0,0,0).
+Apply internal_gearbox to motor_R.
+
+Boolean-union motor_R into wheel_R; discard motor_R.
+Stage 3 complete.
+
+---  SECTION 4 – Create Front Left LED  ---
+Create primitive sphere with size 0.01×0.01×0.01 m and name it light_front_L.
+Rotate light_front_L so its +Z axis aligns +Y (world).
+Move light_front_L to pos=(-0.05,0.18,0.02).
+Apply diffuser_lens to light_front_L.
+Stage 4 complete.
+
+---  SECTION 5 – Create Front Right LED  ---
+Create primitive sphere with size 0.01×0.01×0.01 m and name it light_front_R.
+Rotate light_front_R so its +Z axis aligns +Y (world).
+Move light_front_R to pos=(0.05,0.18,0.02).
+Apply diffuser_lens to light_front_R.
+Stage 5 complete.
+
+---  SECTION 6 – Create Back Left LED  ---
+Create primitive sphere with size 0.01×0.01×0.01 m and name it light_back_L.
+Rotate light_back_L so its +Z axis aligns -Y (world).
+Move light_back_L to pos=(-0.05,-0.18,0.02).
+Apply diffuser_lens to light_back_L.
+Stage 6 complete.
+
+---  SECTION 7 – Create Back Right LED  ---
+Create primitive sphere with size 0.01×0.01×0.01 m and name it light_back_R.
+Rotate light_back_R so its +Z axis aligns -Y (world).
+Move light_back_R to pos=(0.05,-0.18,0.02).
+Apply diffuser_lens to light_back_R.
+Stage 7 complete.
+
+---  SECTION 8 – Final Assembly of Hoverboard Root  ---
+Anchor wheel_assembly_L to deck_main.-X_face.
+Align wheel_assembly_L.X to deck_main.X.
+Then move by offset(-0.15,0,0).
+
+Anchor wheel_assembly_R to deck_main.+X_face.
+Align wheel_assembly_R.X to deck_main.X.
+Then move by offset(0.15,0,0).
+
+Anchor light_front_L to deck_main.+Y_face.
+Align light_front_L.Y to deck_main.Y.
+Then move by offset(-0.05,0.18,0).
+
+Anchor light_front_R to deck_main.+Y_face.
+Align light_front_R.Y to deck_main.Y.
+Then move by offset(0.05,0.18,0).
+
+Anchor light_back_L to deck_main.-Y_face.
+Align light_back_L.Y to deck_main.Y.
+Then move by offset(-0.05,-0.18,0).
+
+Anchor light_back_R to deck_main.-Y_face.
+Align light_back_R.Y to deck_main.Y.
+Then move by offset(0.05,-0.18,0).
+
+Boolean-union wheel_assembly_L into deck_main; discard wheel_assembly_L.
+Boolean-union wheel_assembly_R into deck_main; discard wheel_assembly_R.
+Boolean-union light_front_L into deck_main; discard light_front_L.
+Boolean-union light_front_R into deck_main; discard light_front_R.
+Boolean-union light_back_L into deck_main; discard light_back_L.
+Boolean-union light_back_R into deck_main; discard light_back_R.
+
+Assembly guideline satisfied.
+All stages complete.

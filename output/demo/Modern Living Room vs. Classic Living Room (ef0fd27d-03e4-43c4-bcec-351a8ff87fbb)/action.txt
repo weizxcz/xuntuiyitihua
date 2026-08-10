@@ -1,0 +1,195 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material classic_wood; diffuse_color = (0.45,0.25,0.15,1.0).
+Define material classic_wallpaper; diffuse_color = (0.85,0.80,0.70,1.0).
+Define material classic_rug; diffuse_color = (0.60,0.10,0.10,1.0).
+Define material fireplace_stone; diffuse_color = (0.50,0.50,0.50,1.0).
+Define material fireplace_mantel; diffuse_color = (0.90,0.85,0.75,1.0).
+Define material modern_floor; diffuse_color = (0.90,0.90,0.90,1.0).
+Define material modern_sofa; diffuse_color = (0.20,0.20,0.25,1.0).
+Define material modern_tv_screen; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material modern_tv_frame; diffuse_color = (0.10,0.10,0.10,1.0).
+Define material modern_wall; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create Modern Room Structure  ---
+Create primitive cuboid with size 6×0.1×6 m and name it modern_floor.
+Rotate modern_floor so its +Z axis aligns +Z (world).
+Move modern_floor to pos=(0,0,0).
+
+Create primitive cuboid with size 6×3×0.1 m and name it wall_back.
+Rotate wall_back so its +Z axis aligns +Z (world).
+Move wall_back to pos=(0,1.5,-3).
+
+Create primitive cuboid with size 0.1×3×6 m and name it wall_left.
+Rotate wall_left so its +Z axis aligns +Z (world).
+Move wall_left to pos=(-3,1.5,0).
+
+Create primitive cuboid with size 0.1×3×6 m and name it wall_right.
+Rotate wall_right so its +Z axis aligns +Z (world).
+Move wall_right to pos=(3,1.5,0).
+
+Boolean-union modern_floor, wall_back, wall_left, and wall_right; keep modern_floor. // Creates modern_walls composite
+
+Create primitive cuboid with size 6×0.1×6 m and name it modern_ceiling.
+Rotate modern_ceiling so its +Z axis aligns +Z (world).
+Move modern_ceiling to pos=(0,3,0).
+
+Boolean-union modern_floor, modern_walls, and modern_ceiling; keep modern_floor. // Creates modern_room composite
+
+---  SECTION 2 – Create Modern Sofa  ---
+Create primitive cuboid with size 2.5×0.4×0.8 m and name it sofa_base.
+Rotate sofa_base so its +Z axis aligns +Z (world).
+Move sofa_base to pos=(0,0.2,0).
+
+Create primitive cuboid with size 2.5×0.6×0.2 m and name it sofa_back.
+Rotate sofa_back so its +Z axis aligns +Z (world).
+Move sofa_back to pos=(0,0.7,-0.3).
+
+Create primitive cuboid with size 0.2×0.4×0.8 m and name it arm_L.
+Rotate arm_L so its +Z axis aligns +Z (world).
+Move arm_L to pos=(-1.15,0,0).
+
+Create primitive cuboid with size 0.2×0.4×0.8 m and name it arm_R.
+Rotate arm_R so its +Z axis aligns +Z (world).
+Move arm_R to pos=(1.15,0,0).
+
+Boolean-union arm_L and arm_R; keep arm_L. // Creates sofa_armrests composite
+
+Boolean-union sofa_base, sofa_back, and sofa_armrests; keep sofa_base. // Creates modern_sofa composite
+
+Move modern_sofa by offset(0,0,-1.5). // Final placement relative to room center
+
+---  SECTION 3 – Create Modern TV Unit  ---
+Create primitive cuboid with size 1.5×0.5×0.4 m and name it tv_stand.
+Rotate tv_stand so its +Z axis aligns +Z (world).
+Move tv_stand to pos=(0,0.25,0).
+
+Create primitive cuboid with size 1.2×0.7×0.05 m and name it tv_screen.
+Rotate tv_screen so its +Z axis aligns +Z (world).
+Move tv_screen to pos=(0,0.85,0).
+
+Boolean-union tv_stand and tv_screen; keep tv_stand. // Creates modern_tv_unit composite
+
+Move modern_tv_unit by offset(0,0,-2.9). // Final placement relative to room center
+
+---  SECTION 4 – Create Modern Lamp  ---
+Create primitive cylinder with Ø0.2×0.05 m and name it lamp_base.
+Rotate lamp_base so its +Z axis aligns +Z (world).
+Move lamp_base to pos=(0,0.025,0).
+
+Create primitive cylinder with Ø0.3×0.4 m and name it lamp_shade.
+Rotate lamp_shade so its +Z axis aligns +Z (world).
+Move lamp_shade to pos=(0,0.25,0).
+
+Boolean-union lamp_base and lamp_shade; keep lamp_base. // Creates modern_lamp composite
+
+Move modern_lamp by offset(-2,0,-1). // Final placement relative to room center
+
+---  SECTION 5 – Create Classic Room Structure  ---
+Create primitive cuboid with size 6×0.1×6 m and name it classic_floor.
+Rotate classic_floor so its +Z axis aligns +Z (world).
+Move classic_floor to pos=(0,0,0).
+
+Create primitive cuboid with size 6×3×0.1 m and name it c_wall_back.
+Rotate c_wall_back so its +Z axis aligns +Z (world).
+Move c_wall_back to pos=(0,1.5,-3).
+
+Create primitive cuboid with size 0.1×3×6 m and name it c_wall_left.
+Rotate c_wall_left so its +Z axis aligns +Z (world).
+Move c_wall_left to pos=(-3,1.5,0).
+
+Create primitive cuboid with size 0.1×3×6 m and name it c_wall_right.
+Rotate c_wall_right so its +Z axis aligns +Z (world).
+Move c_wall_right to pos=(3,1.5,0).
+
+Boolean-union classic_floor, c_wall_back, c_wall_left, and c_wall_right; keep classic_floor. // Creates classic_walls composite
+
+Create primitive cuboid with size 6×0.1×6 m and name it classic_ceiling.
+Rotate classic_ceiling so its +Z axis aligns +Z (world).
+Move classic_ceiling to pos=(0,3,0).
+
+Boolean-union classic_floor, classic_walls, and classic_ceiling; keep classic_floor. // Creates classic_room composite
+
+---  SECTION 6 – Create Classic Fireplace  ---
+Create primitive cuboid with size 1.2×1.0×0.3 m and name it fireplace_base.
+Rotate fireplace_base so its +Z axis aligns +Z (world).
+Move fireplace_base to pos=(0,0.5,0).
+
+Create primitive cuboid with size 1.4×0.1×0.4 m and name it fireplace_mantel.
+Rotate fireplace_mantel so its +Z axis aligns +Z (world).
+Move fireplace_mantel to pos=(0,1.05,0).
+
+Create primitive cuboid with size 0.6×0.6×0.2 m and name it fireplace_hole_cut.
+Rotate fireplace_hole_cut so its +Z axis aligns +Z (world).
+Move fireplace_hole_cut to pos=(0,0.5,0.05).
+
+Boolean-subtract fireplace_hole_cut from fireplace_base; discard fireplace_hole_cut. // Creates fireplace_base with hole
+
+Boolean-union fireplace_base and fireplace_mantel; keep fireplace_base. // Creates fireplace composite
+
+Move fireplace by offset(0,0,-2.9). // Final placement relative to room center
+
+---  SECTION 7 – Create Classic Sofa  ---
+Create primitive cuboid with size 2.2×0.3×0.7 m and name it c_sofa_base.
+Rotate c_sofa_base so its +Z axis aligns +Z (world).
+Move c_sofa_base to pos=(0,0.15,0).
+
+Create primitive cuboid with size 2.2×0.8×0.2 m and name it c_sofa_back.
+Rotate c_sofa_back so its +Z axis aligns +Z (world).
+Move c_sofa_back to pos=(0,0.7,-0.25).
+
+Create primitive cylinder with Ø0.15×0.7 m and name it c_arm_L.
+Rotate c_arm_L so its +Z axis aligns +Z (world).
+Move c_arm_L to pos=(-1.0,0,0).
+
+Create primitive cylinder with Ø0.15×0.7 m and name it c_arm_R.
+Rotate c_arm_R so its +Z axis aligns +Z (world).
+Move c_arm_R to pos=(1.0,0,0).
+
+Boolean-union c_arm_L and c_arm_R; keep c_arm_L. // Creates c_sofa_armrests composite
+
+For r in 0…1 and c in 0…1:
+  Create primitive cylinder with Ø0.05×0.3 m and name it c_sofa_legs_r_c.
+  Rotate c_sofa_legs_r_c so its +Z axis aligns +Z (world).
+  Anchor c_sofa_legs_r_c to c_sofa_base.bottom_face.
+  Then offset(-0.9 + c·1.8, -0.25 + r·0.5, 0).
+
+Boolean-union c_sofa_base, c_sofa_back, c_sofa_armrests, and c_sofa_legs; keep c_sofa_base. // Creates classic_sofa composite
+
+Move classic_sofa by offset(0,0,-1.5). // Final placement relative to room center
+
+---  SECTION 8 – Create Classic Rug and Mirror  ---
+Create primitive cylinder with Ø2×0.02 m and name it classic_rug.
+Rotate classic_rug so its +Z axis aligns +Z (world).
+Move classic_rug to pos=(0,0.01,-1.5).
+
+Create primitive cuboid with size 1.0×1.2×0.05 m and name it ornate_mirror.
+Rotate ornate_mirror so its +Z axis aligns +Z (world).
+Move ornate_mirror to pos=(0,2.0,-2.95).
+
+---  SECTION 9 – Final Assembly  ---
+Align modern_room.bottom_face to world.bottom_face.
+Align classic_room.bottom_face to world.bottom_face.
+
+Stage 1 complete.
+Stage 2 complete.
+Stage 3 complete.
+Stage 4 complete.
+Stage 5 complete.
+Stage 6 complete.
+Stage 7 complete.
+Stage 8 complete.
+Stage 9 complete.
+All stages complete.

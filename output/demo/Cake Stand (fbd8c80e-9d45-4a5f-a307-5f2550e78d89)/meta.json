@@ -1,0 +1,44 @@
+{
+  "id": "fbd8c80e-9d45-4a5f-a307-5f2550e78d89",
+  "name": "Cake Stand",
+  "instruction": "I need you to design a cake stand. It should have a circular base and a flat top surface to hold the cake. The stand should elevate the cake to make it more visible.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The object in the images is a cake stand.",
+        "The base of the stand is circular.",
+        "The top surface is flat."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height of the stand is appropriate for elevating the cake."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The circular base provides stability for the flat top surface.",
+        "The height of the stand ensures the cake is elevated."
+      ],
+      "Object distance and contact": [
+        "The top surface is securely attached to the base.",
+        "There is no gap between the top surface and the base."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "All specified attributes are accurately represented.",
+        "The design adheres to the requirement of elevating the cake."
+      ]
+    }
+  },
+  "color brightness": "Very Bright",
+  "type": "Simulative"
+}

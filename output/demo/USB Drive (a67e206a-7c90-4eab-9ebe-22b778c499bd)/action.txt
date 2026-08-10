@@ -1,0 +1,81 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_plastic_black; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_plastic_white; diffuse_color = (0.95,0.95,0.95,1.0).
+Define material mat_metal_silver; diffuse_color = (0.7,0.7,0.75,1.0).
+Define material mat_metal_gold; diffuse_color = (1.0,0.84,0.0,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create housing shell  ---
+Create primitive cuboid with size 0.060×0.020×0.008 m and name it housing_shell.
+Rotate housing_shell so its +Z axis aligns +Z (world).
+Anchor housing_shell to usb_drive_root.center.
+Then move by offset(0,0,0).
+Bevel housing_shell.edges with radius 0.002 m, segments 4.
+
+---  SECTION 2 – Create housing cap  ---
+Create primitive cuboid with size 0.010×0.020×0.008 m and name it housing_cap.
+Rotate housing_cap so its +Z axis aligns +Z (world).
+Align housing_cap.right_face to housing_shell.left_face.
+Then move by offset(0,0,0).
+
+---  SECTION 3 – Create slider body  ---
+Create primitive cuboid with size 0.040×0.018×0.006 m and name it slider_body.
+Rotate slider_body so its +Z axis aligns +Z (world).
+Anchor slider_body to housing_shell.center.
+Then move by offset(0.015,0,0).
+Bevel slider_body.edges with radius 0.001 m, segments 4.
+
+---  SECTION 4 – Create slider groove  ---
+Create primitive cuboid with size 0.038×0.016×0.005 m and name it slider_groove.
+Rotate slider_groove so its +Z axis aligns +Z (world).
+Anchor slider_groove to housing_shell.center.
+Then move by offset(0.015,0,0).
+Boolean-subtract slider_groove from housing_shell; discard slider_groove.
+
+---  SECTION 5 – Create connector shield  ---
+Create primitive cuboid with size 0.012×0.045×0.012 m and name it connector_shield.
+Rotate connector_shield so its +Z axis aligns +X (world).
+Align connector_shield.center to housing_shell.left_face.
+Then move by offset(-0.006,0,0).
+
+---  SECTION 6 – Create connector core  ---
+Create primitive cuboid with size 0.010×0.035×0.008 m and name it connector_core.
+Rotate connector_core so its +Z axis aligns +X (world).
+Align connector_core.center to connector_shield.center.
+Then move by offset(0,0,0).
+
+---  SECTION 7 – Create connector pins  ---
+Create primitive cylinder with Ø0.001×0.005 m and name it pin_1.
+Rotate pin_1 so its +Z axis aligns +X (world).
+Align pin_1.center to connector_core.left_face.
+Then move by offset(0,0.008,0).
+
+Create primitive cylinder with Ø0.001×0.005 m and name it pin_2.
+Rotate pin_2 so its +Z axis aligns +X (world).
+Align pin_2.center to connector_core.left_face.
+Then move by offset(0,0.002,0).
+
+Create primitive cylinder with Ø0.001×0.005 m and name it pin_3.
+Rotate pin_3 so its +Z axis aligns +X (world).
+Align pin_3.center to connector_core.left_face.
+Then move by offset(0,-0.002,0).
+
+Create primitive cylinder with Ø0.001×0.005 m and name it pin_4.
+Rotate pin_4 so its +Z axis aligns +X (world).
+Align pin_4.center to connector_core.left_face.
+Then move by offset(0,-0.008,0).
+
+Stage 7 complete.
+All stages complete.

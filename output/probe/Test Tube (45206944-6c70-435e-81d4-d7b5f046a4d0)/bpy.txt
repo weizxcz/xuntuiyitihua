@@ -1,0 +1,330 @@
+```python
+import bpy
+import bmesh
+import math
+from mathutils import Vector, Matrix
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color, roughness=0.5, metallic=0.0, alpha=1.0):
+    """Create a Principled BSDF material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = (diffuse_color[0], diffuse_color[1], diffuse_color[2], alpha)
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Metallic'].default_value = metallic
+    if alpha < 1.0:
+        mat.blend_method = 'ALPHA'
+        mat.shadow_mode = 'NONE'
+    return mat
+
+def add_cylinder(radius, depth, segments=32, name="Cylinder"):
+    """Add a cylinder oriented along Z."""
+    bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=depth, segments=segments, end_fill_type='NGON')
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_uvsphere(radius, name="Sphere"):
+    """Add a UV sphere oriented along Z."""
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, segments=32, ring_count=16)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def add_cube(size, name="Cube"):
+    """Add a cube centered at origin."""
+    bpy.ops.mesh.primitive_cube_add(size=size)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.location = (0, 0, 0)
+    return obj
+
+def boolean_subtract(target_obj, cutter_obj, keep_cutter=False):
+    """Apply Boolean Subtract modifier."""
+    # Ensure target is active for modifier application if needed, but we'll apply via modifier stack
+    mod = target_obj.modifiers.new(name="BooleanSub", type='BOOLEAN')
+    mod.operation = 'SUBTRACT'
+    mod.object = cutter_obj
+    
+    # Apply modifier
+    bpy.context.view_layer.objects.active = target_obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    
+    if not keep_cutter:
+        bpy.data.objects.remove(cutter_obj, do_unlink=True)
+    else:
+        cutter_obj.select_set(True)
+        bpy.context.view_layer.objects.active = cutter_obj
+        bpy.ops.object.delete()
+
+def align_axis_to_vector(obj, axis='Z', vector=(0, 0, 1)):
+    """Rotate object so its local axis aligns with the given world vector."""
+    # Get current rotation
+    rot_euler = obj.rotation_euler
+    # This is a simplified alignment. For robust alignment, we use matrix math.
+    # We want obj's local axis to point to 'vector'.
+    
+    # Define local axis vectors
+    local_axes = {
+        'X': Vector((1, 0, 0)),
+        'Y': Vector((0, 1, 0)),
+        'Z': Vector((0, 0, 1))
+    }
+    
+    target_vec = Vector(vector).normalized()
+    source_vec = local_axes[axis]
+    
+    # Calculate rotation matrix to align source_vec to target_vec
+    rot_mat = source_vec.rotation_difference(target_vec).to_matrix().to_4x4()
+    
+    # Apply rotation
+    obj.rotation_euler = rot_mat.to_euler()
+    obj.update_tag()
+
+def get_face_normal(obj, face_index):
+    """Get the world normal of a specific face."""
+    # Ensure object is in world space
+    mat_world = obj.matrix_world
+    # Get face normal in local space
+    mesh = obj.data
+    if face_index < len(mesh.polygons):
+        local_normal = mesh.polygons[face_index].normal
+        # Transform to world space
+        world_normal = (mat_world @ local_normal).normalized()
+        return world_normal
+    return Vector((0, 0, 1))
+
+def get_face_center(obj, face_index):
+    """Get the world center of a specific face."""
+    mat_world = obj.matrix_world
+    mesh = obj.data
+    if face_index < len(mesh.polygons):
+        poly = mesh.polygons[face_index]
+        # Calculate center from vertices
+        center_local = Vector((0, 0, 0))
+        for vi in poly.vertices:
+            center_local += mesh.vertices[vi].co
+        center_local /= len(poly.vertices)
+        return mat_world @ center_local
+    return Vector((0, 0, 0))
+
+def align_face_to_face(obj_source, face_source_idx, obj_target, face_target_idx, offset=0.0):
+    """Align source face to target face, optionally with an offset along the normal."""
+    # 1. Align Normals
+    normal_src = get_face_normal(obj_source, face_source_idx)
+    normal_tgt = get_face_normal(obj_target, face_target_idx)
+    
+    # We want source normal to match target normal (or opposite depending on "bottom face" logic)
+    # Assuming "bottom face" means the face pointing in -Z or similar, but here we align geometry.
+    # Let's align the normals directly first.
+    rot_diff = normal_src.rotation_difference(normal_tgt)
+    obj_source.rotation_euler = rot_diff.to_euler()
+    
+    # 2. Align Centers
+    center_src = get_face_center(obj_source, face_source_idx)
+    center_tgt = get_face_center(obj_target, face_target_idx)
+    
+    # Calculate translation to align centers
+    # Note: Rotating the object changes its center position relative to world if not pivoted correctly.
+    # To simplify, we usually pivot at origin or use a temporary pivot.
+    # However, for simple primitives centered at origin, rotation around origin keeps center at origin.
+    # If centers are not at origin, we need to be careful.
+    # Let's assume objects are centered at their geometric center initially.
+    
+    # Move source so its face center matches target face center
+    translation = center_tgt - center_src
+    obj_source.location += translation
+    
+    # 3. Apply Offset along the new normal
+    # The normal is now aligned with target normal
+    obj_source.location += normal_tgt * offset
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+bpy.context.scene.unit_settings.system = 'METRIC'
+
+# --- Block 1: Materials ---
+
+mat_glass = make_material("glass_transparent", (0.8, 0.9, 1.0), alpha=0.3)
+
+# --- Block 2: Geometry Generation ---
+
+# --- SECTION 1 – Create glass_body ---
+
+# Create primitive cylinder with radius 0.012 m and height 0.150 m
+glass_body = add_cylinder(radius=0.012, depth=0.150, name="glass_body")
+
+# Rotate glass_body so its +Z axis aligns +Z (world) - already default, but explicit step
+align_axis_to_vector(glass_body, 'Z', (0, 0, 1))
+
+# Move glass_body to pos=(0,0,0)
+glass_body.location = (0, 0, 0)
+
+# Stage 1 complete.
+
+# --- SECTION 2 – Create bottom_cap ---
+
+# Create full_sphere with radius 0.012 m
+bottom_cap = add_uvsphere(radius=0.012, name="bottom_cap")
+
+# Rotate bottom_cap so its +Z axis aligns +Z (world) - already default
+align_axis_to_vector(bottom_cap, 'Z', (0, 0, 1))
+
+# Create plane_cutter and name it bottom_cap_cut with size 0.024×0.024 m; orientation=axis:+Z
+# A plane of size 0.024x0.024. In Blender, cube size is total width. For a plane, we can use a cube scaled or a plane.
+# Using a cube scaled to be thin is often easier for booleans, or a plane.
+# Let's create a cube and scale it to act as a cutter, or a plane.
+# "plane_cutter" suggests a flat object.
+bpy.ops.mesh.primitive_cube_add(size=0.024) # Default size 2, so scale 0.012 gives 0.024 width
+cutter_obj = bpy.context.active_object
+cutter_obj.name = "bottom_cap_cut"
+cutter_obj.scale = (0.012, 0.012, 0.001) # Make it thin
+cutter_obj.location = (0, 0, 0)
+
+# Orientation: axis +Z. The cube's Z is already up.
+align_axis_to_vector(cutter_obj, 'Z', (0, 0, 1))
+
+# Position the cutter to slice the sphere in half.
+# Sphere center is (0,0,0). To cut it in half, the plane should pass through the center.
+# Let's place the cutter at Z=0.
+cutter_obj.location = (0, 0, 0)
+
+# Boolean-subtract bottom_cap_cut from bottom_cap
+boolean_subtract(bottom_cap, cutter_obj, keep_cutter=False)
+
+# Rotate bottom_cap so its curved face points +Z.
+# After cutting a sphere at Z=0, we have a hemisphere.
+# The flat face is at Z=0 (normal +Z or -Z depending on which half remains).
+# The curved face is the rest.
+# "Curved face points +Z" is ambiguous. Usually, we want the flat face to be the base.
+# If we want the flat face to be at the bottom (facing -Z) or top (facing +Z)?
+# The next step aligns bottom_cap to glass_body's bottom face.
+# Glass body bottom face is at Z = -0.075 (since height is 0.15 and center is 0).
+# Normal of bottom face of cylinder (centered at 0,0,0) is (0,0,-1).
+# So we want bottom_cap's flat face to align with (0,0,-1).
+# Currently, the hemisphere created by cutting Z=0 has a flat face at Z=0.
+# If the boolean kept the top half (Z>0), the flat face normal is (0,0,-1) pointing down? No, normal points out.
+# Let's check: Sphere center (0,0,0). Cut at Z=0.
+# If we keep the part where Z>0, the flat face is at Z=0, normal is (0,0,-1).
+# If we keep the part where Z<0, the flat face is at Z=0, normal is (0,0,1).
+# Blender's boolean operation keeps the volume of the target that does NOT intersect the cutter?
+# Or it subtracts the cutter volume.
+# If cutter is at Z=0 with thickness, it removes material.
+# Let's assume we want the hemisphere that sits ON TOP of the glass body's bottom face.
+# Glass body bottom face is at Z=-0.075.
+# We want to attach the hemisphere there.
+# Let's rotate the hemisphere so its flat face is down (-Z).
+# If the current flat face normal is (0,0,1) (top half), we need to flip it.
+# If the current flat face normal is (0,0,-1) (bottom half), it's already correct.
+# Let's explicitly rotate to ensure flat face points -Z (so it can sit on the bottom face).
+# "Rotate bottom_cap so its curved face points +Z" -> This implies the flat face points -Z.
+# So we want the flat face normal to be (0,0,-1).
+# Let's check the current state.
+# If the boolean subtracted a plane at Z=0, it might leave both halves or one depending on implementation.
+# Usually, boolean subtract removes the cutter volume. If cutter is thin at Z=0, it removes a slice.
+# Let's assume we have a hemisphere.
+# Let's force the orientation: Flat face normal should be (0,0,-1).
+# We can detect the flat face and align it.
+# For simplicity, let's just rotate 180 degrees if needed.
+# But let's look at the instruction: "Rotate bottom_cap so its curved face points +Z."
+# This means the "pointy" part is up. The flat base is down.
+# So flat face normal is (0,0,-1).
+
+# Let's find the flat face (the one created by the cut).
+# It will be a single polygon (or few) with normal roughly (0,0,1) or (0,0,-1).
+# The curved faces will have normals with Z < 1.
+# Let's assume the flat face is the one with the highest/lowest Z normal component.
+# Actually, simpler: Just rotate the object so its local Z (if it was a sphere) is now aligned with the flat face normal?
+# No, let's just use the alignment helper.
+
+# Identify the flat face index.
+# In a hemisphere from a sphere cut at equator, the flat face is the one at Z=0.
+# Let's assume the object is currently oriented such that the cut is at Z=0.
+# If we want the flat face to point -Z, we need its normal to be (0,0,-1).
+# Let's check the normal of the face at the "bottom" of the object in local space?
+# It's easier to just align the face that is roughly Z=0 in local coords to the target.
+
+# Let's find the face with normal closest to (0,0,1) or (0,0,-1).
+flat_face_idx = -1
+max_z = -1
+for i, poly in enumerate(bottom_cap.data.polygons):
+    # Transform normal to world to be sure, but local is fine if object is at origin
+    n = poly.normal
+    if abs(n.z) > max_z:
+        max_z = abs(n.z)
+        flat_face_idx = i
+
+# If the flat face normal is (0,0,1), we want to flip it to (0,0,-1).
+# If it is (0,0,-1), we keep it.
+# Let's check the normal of the identified flat face.
+# Note: poly.normal is in local space.
+flat_normal_local = bottom_cap.data.polygons[flat_face_idx].normal
+
+# We want the flat face to point -Z (so it sits on the bottom face of glass_body).
+# Target normal for the flat face: (0,0,-1).
+# Current normal: flat_normal_local.
+# If flat_normal_local.z > 0, it points up. We need to rotate 180 around X or Y.
+# If flat_normal_local.z < 0, it points down. Good.
+
+if flat_normal_local.z > 0:
+    # Rotate 180 degrees around X axis to flip Z
+    bottom_cap.rotation_euler = (math.pi, 0, 0)
+else:
+    # Already pointing down (or close to it)
+    bottom_cap.rotation_euler = (0, 0, 0)
+
+# Align bottom_cap.XY_face to glass_body.bottom_face.
+# "XY_face" likely refers to the flat face (which lies in the XY plane).
+# "glass_body.bottom_face" is the face at Z = -0.075.
+# Align the flat face of bottom_cap to the bottom face of glass_body.
+# We want the flat face of bottom_cap to be coplanar with the bottom face of glass_body.
+# And we want the bottom_cap to sit ON TOP of the glass body? Or attached to the bottom?
+# "Align bottom_cap.Z_face to glass_body.bottom_face" suggests Z-alignment.
+# Let's align the flat face (which is now facing -Z) to the bottom face of glass_body (which faces -Z).
+# This will place the flat face of bottom_cap at the same Z level as the bottom face of glass_body.
+# Since bottom_cap is a hemisphere, its flat face is at its "bottom".
+# So it will sit on top of the glass body's bottom face? No, if the flat face is at Z=-0.075, and the hemisphere extends to Z=-0.087 (radius 0.012), it will be below the glass body.
+# Wait, glass body is from Z=-0.075 to Z=0.075.
+# Bottom face is at Z=-0.075.
+# If we align bottom_cap's flat face to Z=-0.075, and the hemisphere extends in -Z direction (since flat face normal is -Z), then the hemisphere will be below the glass body.
+# This seems correct for a "bottom cap".
+
+# Align face to face
+# Source: bottom_cap, flat face index
+# Target: glass_body, bottom face index
+# Glass body bottom face is the one with normal (0,0,-1).
+# Let's find it.
+bottom_face_idx = -1
+min_z = 1
+for i, poly in enumerate(glass_body.data.polygons):
+    if poly.normal.z < min_z:
+        min_z = poly.normal.z
+        bottom_face_idx = i
+
+# Align bottom_cap's flat face to glass_body's bottom face
+# Offset: The flat face of bottom_cap is at its geometric bottom.
+# We want it to touch the glass body's bottom face.
+# So offset = 0.
+align_face_to_face(bottom_cap, flat_face_idx, glass_body, bottom_face_idx, offset=0.0)
+
+# Align bottom_cap.Z_face to glass_body.bottom_face.
+# This instruction is redundant if we already aligned the flat face (which is the Z-face of the hemisphere).
+# It might imply ensuring the Z-axis of the cap is aligned with the Z-axis of the glass body.
+# Since we aligned normals, the Z-axes are likely aligned.
+# Let's ensure no rotation around the normal.
+# The alignment function aligns normals but doesn't constrain roll.
+# For a hemisphere, roll doesn't matter visually, but for consistency:
+# Let's assume the current roll is fine.
+
+# Stage 2 complete.
+```

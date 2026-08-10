@@ -1,0 +1,138 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_black_abs; diffuse_color = (0.05,0.05,0.05,1.0).
+Define material mat_clear_acrylic; diffuse_color = (0.9,0.95,1.0,0.3).
+Define material mat_silicone_grey; diffuse_color = (0.4,0.4,0.4,1.0).
+Define material mat_white_pp; diffuse_color = (0.95,0.95,0.95,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create base_plate  ---
+Create primitive cylinder with diameter 0.250 m and height 0.015 m and name it base_plate.
+Rotate base_plate so its +Z axis aligns +Z (world).
+Anchor base_plate to world origin.
+Then move by offset(0,0,0).
+Stage 1 complete.
+
+---  SECTION 2 – Create outer_wall  ---
+Create primitive cylinder with diameter 0.250 m and height 0.120 m and name it outer_wall.
+Rotate outer_wall so its +Z axis aligns +Z (world).
+Anchor outer_wall to world origin.
+Then move by offset(0,0,0.0675).
+Stage 2 complete.
+
+---  SECTION 3 – Create inner_basin  ---
+Create primitive cylinder with diameter 0.220 m and height 0.100 m and name it inner_basin.
+Rotate inner_basin so its +Z axis aligns +Z (world).
+Anchor inner_basin to world origin.
+Then move by offset(0,0,0.0675).
+Stage 3 complete.
+
+---  SECTION 4 – Assemble base_shell  ---
+Boolean-union base_plate, outer_wall, and inner_basin to form base_shell.
+Stage 4 complete.
+
+---  SECTION 5 – Create water_surface  ---
+Create primitive cylinder with diameter 0.210 m and height 0.001 m and name it water_surface.
+Rotate water_surface so its +Z axis aligns +Z (world).
+Anchor water_surface to world origin.
+Then move by offset(0,0,0.110).
+Stage 5 complete.
+
+---  SECTION 6 – Create water_volume  ---
+Create primitive cylinder with diameter 0.210 m and height 0.090 m and name it water_volume.
+Rotate water_volume so its +Z axis aligns +Z (world).
+Anchor water_volume to world origin.
+Then move by offset(0,0,0.060).
+Stage 6 complete.
+
+---  SECTION 7 – Assemble water_basin  ---
+Boolean-union water_surface and water_volume to form water_basin.
+Stage 7 complete.
+
+---  SECTION 8 – Create filter_housing  ---
+Create primitive cylinder with diameter 0.080 m and height 0.040 m and name it filter_housing.
+Rotate filter_housing so its +Z axis aligns +Z (world).
+Anchor filter_housing to world origin.
+Then move by offset(0,0,0.035).
+Stage 8 complete.
+
+---  SECTION 9 – Create filter_cartridge  ---
+Create primitive cylinder with diameter 0.070 m and height 0.030 m and name it filter_cartridge.
+Rotate filter_cartridge so its +Z axis aligns +Z (world).
+Anchor filter_cartridge to world origin.
+Then move by offset(0,0,0.035).
+Stage 9 complete.
+
+---  SECTION 10 – Create filter_sponge  ---
+Create primitive cylinder with diameter 0.075 m and height 0.010 m and name it filter_sponge.
+Rotate filter_sponge so its +Z axis aligns +Z (world).
+Anchor filter_sponge to world origin.
+Then move by offset(0,0,0.040).
+Stage 10 complete.
+
+---  SECTION 11 – Assemble filtration_unit  ---
+Boolean-union filter_housing, filter_cartridge, and filter_sponge to form filtration_unit.
+Stage 11 complete.
+
+---  SECTION 12 – Create pump_motor  ---
+Create primitive cylinder with diameter 0.060 m and height 0.050 m and name it pump_motor.
+Rotate pump_motor so its +Z axis aligns +Z (world).
+Anchor pump_motor to world origin.
+Then move by offset(0,0,0.030).
+Stage 12 complete.
+
+---  SECTION 13 – Create impeller  ---
+Create primitive cylinder with diameter 0.050 m and height 0.010 m and name it impeller.
+Rotate impeller so its +Z axis aligns +Z (world).
+Anchor impeller to world origin.
+Then move by offset(0,0,0.060).
+Stage 13 complete.
+
+---  SECTION 14 – Create intake_strainer  ---
+Create primitive cylinder with diameter 0.040 m and height 0.020 m and name it intake_strainer.
+Rotate intake_strainer so its +Z axis aligns +Z (world).
+Anchor intake_strainer to world origin.
+Then move by offset(0,0,0.020).
+Stage 14 complete.
+
+---  SECTION 15 – Assemble pump_assembly  ---
+Boolean-union pump_motor, impeller, and intake_strainer to form pump_assembly.
+Stage 15 complete.
+
+---  SECTION 16 – Create spout_body  ---
+Create primitive cylinder with diameter 0.030 m and height 0.080 m and name it spout_body.
+Rotate spout_body so its +Z axis aligns +Z (world).
+Anchor spout_body to world origin.
+Then move by offset(0,0,0.055).
+Stage 16 complete.
+
+---  SECTION 17 – Create spout_nozzle  ---
+Create primitive cone with diameter 0.020 m and height 0.010 m and name it spout_nozzle.
+Rotate spout_nozzle so its +Z axis aligns +Z (world).
+Anchor spout_nozzle to world origin.
+Then move by offset(0,0,0.100).
+Stage 17 complete.
+
+---  SECTION 18 – Assemble spout_assembly  ---
+Boolean-union spout_body and spout_nozzle to form spout_assembly.
+Stage 18 complete.
+
+---  SECTION 19 – Create power_cord  ---
+Create primitive cylinder with diameter 0.005 m and height 0.500 m and name it power_cord.
+Rotate power_cord so its +Z axis aligns +Y (world).
+Anchor power_cord to world origin.
+Then move by offset(0.125,0,0.0075).
+Stage 19 complete.
+
+All stages complete.

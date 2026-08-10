@@ -1,0 +1,48 @@
+{
+  "id": "0b39304b-cfde-4e02-89d3-c93429bbda43",
+  "name": "Chevron Pattern",
+  "instruction": "Design a chevron pattern. The pattern should consist of V-shaped lines that repeat in a regular, alternating sequence. Ensure the lines are evenly spaced and the pattern is seamless.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The pattern consists of V-shaped lines.",
+        "The V-shapes are arranged in a chevron pattern.",
+        "Each V-shape is symmetrical."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The height and width of the V-shapes are proportionate.",
+        "The overall pattern maintains a balanced appearance."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The V-shaped lines are arranged in a two-dimensional plane.",
+        "The pattern repeats seamlessly without distortion.",
+        "The alternating sequence is clear and consistent."
+      ],
+      "Object distance and contact": [
+        "There are no overlaps between the V-shaped lines.",
+        "The spacing between the lines is uniform and consistent.",
+        "The edges of the V-shapes connect seamlessly with adjacent shapes."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "The chevron pattern is accurately represented.",
+        "All specified attributes of the pattern are included.",
+        "The lines are evenly spaced as instructed."
+      ]
+    }
+  },
+  "color brightness": "Very Dark",
+  "type": "Simulative"
+}

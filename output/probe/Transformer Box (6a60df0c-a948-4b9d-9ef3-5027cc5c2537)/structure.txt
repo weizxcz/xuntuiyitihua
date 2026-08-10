@@ -1,0 +1,38 @@
+-- MATERIAL LIBRARY --
+mat_aluminum | diffuse_color=(0.75,0.75,0.80,1.0)
+mat_steel | diffuse_color=(0.30,0.30,0.35,1.0)
+mat_steel_dark | diffuse_color=(0.15,0.15,0.15,1.0)
+#END_MATERIALS
+
+# ----------  BEGIN_GRAPH  ----------
+Layer 0 – Root
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| transformer_box | Composite of outer shell, door, and ventilation components | assembly_order=[shell_group], [door_group], [vent_group] |
+
+Layer 1 – Primary Structure (Shell Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| box_base | Rectangular base plate 0.600×0.400×0.010 m | Align(XY) box_base.top_face to world.origin; orientation=axis:+Z; mat=mat_steel; create_method=primitive(cube) |
+| box_back | Back wall 0.600×0.500×0.010 m | Align(XZ) box_back.front_face to box_base.back_face; orientation=axis:+Z; mat=mat_steel; create_method=primitive(cube) |
+| box_left | Left side wall 0.400×0.500×0.010 m | Align(XZ) box_left.right_face to box_base.left_face; Align(Z) box_left.bottom_face to box_base.top_face; orientation=axis:+Z; mat=mat_steel; create_method=primitive(cube) |
+| box_right | Right side wall 0.400×0.500×0.010 m | Align(XZ) box_right.left_face to box_base.right_face; Align(Z) box_right.bottom_face to box_base.top_face; orientation=axis:+Z; mat=mat_steel; create_method=primitive(cube) |
+| box_top | Top cover 0.600×0.400×0.010 m | Align(XY) box_top.bottom_face to box_base.top_face; Align(Z) box_top.front_face to box_back.top_face; orientation=axis:+Z; mat=mat_steel; create_method=primitive(cube) |
+| shell_group | Composite union of box_base, box_back, box_left, box_right, box_top | (1) execute 'box_base': offset(0,0,0); (2) execute 'box_back': offset(0,0,0); (3) execute 'box_left': offset(0,0,0); (4) execute 'box_right': offset(0,0,0); (5) execute 'box_top': offset(0,0,0) |
+
+Layer 2 – Door Assembly (Door Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| door_panel | Front door plate 0.600×0.500×0.010 m | Align(XZ) door_panel.back_face to box_base.front_face; Align(Z) door_panel.bottom_face to box_base.top_face; orientation=axis:+Z; mat=mat_aluminum; create_method=primitive(cube) |
+| door_hinge | Hinge block 0.020×0.020×0.050 m | Align(XYZ) door_hinge.center to box_left.front_face; offset(0.050, 0.025, 0.025); orientation=axis:+X; mat=mat_steel_dark; create_method=primitive(cylinder) |
+| door_handle | Handle grip 0.010×0.010×0.150 m | Align(XYZ) door_handle.center to door_panel.right_face; offset(0.005, 0.000, 0.000); orientation=axis:+Y; mat=mat_steel_dark; create_method=primitive(cylinder) |
+| door_group | Composite union of door_panel, door_hinge, door_handle | (1) execute 'door_panel': offset(0,0,0); (2) execute 'door_hinge': offset(0,0,0); (3) execute 'door_handle': offset(0,0,0) |
+
+Layer 3 – Ventilation (Vent Group)
+| ID | Description | Key attributes / placement |
+|---|---|---|
+| vent_left | Left side vent assembly | Align(XYZ) vent_left.center to box_left.center; offset(-0.005, 0.000, 0.000); orientation=axis:+X; mat=mat_steel_dark; create_method=primitive(cylinder) |
+| vent_right | Right side vent assembly | Align(XYZ) vent_right.center to box_right.center; offset(0.005, 0.000, 0.000); orientation=axis:+X; mat=mat_steel_dark; create_method=primitive(cylinder) |
+| vent_group | Composite union of vent_left, vent_right | (1) execute 'vent_left': offset(0,0,0); (2) execute 'vent_right': offset(0,0,0) |
+
+# ----------  END_GRAPH  ----------

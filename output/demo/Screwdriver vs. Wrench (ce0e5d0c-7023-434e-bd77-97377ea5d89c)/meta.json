@@ -1,0 +1,47 @@
+{
+  "id": "ce0e5d0c-7023-434e-bd77-97377ea5d89c",
+  "name": "Screwdriver vs. Wrench",
+  "instruction": "Compare a screwdriver and a wrench. The screwdriver should have a straight, cylindrical handle with a flat or Phillips head. The wrench should have an open-ended head with a long handle. Both tools should be designed for gripping and turning objects.",
+  "criteria": {
+    "Object Attributes": {
+      "Shape accuracy": [
+        "The screwdriver has a straight, cylindrical handle.",
+        "The screwdriver features either a flat or Phillips head.",
+        "The wrench has an open-ended head.",
+        "The wrench has a long handle."
+      ],
+      "Color representation": [
+        "The color set in the script is reasonable for the object."
+      ],
+      "Size": [
+        "The size set in the script is reasonable for the object."
+      ],
+      "Proportion": [
+        "The head of the screwdriver is proportionate to its handle.",
+        "The open-ended head of the wrench is proportionate to its handle."
+      ],
+      "Texture and surface detail": [
+        "The texture and surface detail set in the script is reasonable for the object."
+      ]
+    },
+    "Spatial Understanding and Structure": {
+      "Three-dimensional spatial awareness": [
+        "The screwdriver's head is positioned correctly at the end of the handle.",
+        "The wrench's open-ended head is aligned with the handle for effective use.",
+        "Both tools are designed to allow for easy rotation and grip."
+      ],
+      "Object distance and contact": [
+        "The head of the screwdriver does not overlap with the handle.",
+        "The open-ended head of the wrench does not interfere with the handle."
+      ]
+    },
+    "User Instruction Understanding and Execution": {
+      "Instruction execution accuracy": [
+        "Both tools are accurately represented according to the instructions.",
+        "The screwdriver and wrench are distinct in their designs and functionalities."
+      ]
+    }
+  },
+  "color brightness": "Dark",
+  "type": "Simulative"
+}

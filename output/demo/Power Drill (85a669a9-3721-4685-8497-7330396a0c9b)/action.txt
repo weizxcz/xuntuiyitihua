@@ -1,0 +1,70 @@
+BLOCK 0 – Scene Reset & Units
+────────────────────────────────────────────────────────
+Delete every existing object to start from a clean scene.
+Set the length unit to **metres**.
+
+---
+
+BLOCK 1 – Materials
+────────────────────────────────────────────────────────
+Define material mat_body; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_chuck; diffuse_color = (0.8,0.8,0.8,1.0).
+Define material mat_trigger; diffuse_color = (0.2,0.2,0.2,1.0).
+Define material mat_switch; diffuse_color = (0.9,0.9,0.9,1.0).
+Define material mat_battery; diffuse_color = (0.1,0.1,0.1,1.0).
+Define material mat_battery_cap; diffuse_color = (0.1,0.1,0.1,1.0).
+
+---
+
+BLOCK 2 – Stage-by-Stage Operations
+────────────────────────────────────────────────────────
+
+---  SECTION 1 – Create main body (Root)  ---
+Create primitive cuboid with size 0.25×0.05×0.02 m and name it main_body.
+Rotate main_body so its +Z axis aligns +Z (world).
+Anchor main_body to world origin.
+Then move by offset(0,0,0).
+Assembly guideline satisfied.
+Stage 1 complete.
+
+---  SECTION 2 – Create trigger  ---
+Create primitive cylinder with size Ø0.02×0.04 m and name it trigger.
+Rotate trigger so its +Z axis aligns +Z (world).
+Align trigger.center to main_body.trigger_slot.center.
+Align trigger.bottom_face to main_body.trigger_slot.bottom_face.
+Then move by offset(0,0,0).
+Stage 2 complete.
+
+---  SECTION 3 – Create fwd_rev_switch  ---
+Create primitive cuboid with size 0.02×0.01×0.01 m and name it fwd_rev_switch.
+Rotate fwd_rev_switch so its +Z axis aligns +Z (world).
+Align fwd_rev_switch.center to main_body.switch_slot.center.
+Align fwd_rev_switch.bottom_face to main_body.switch_slot.bottom_face.
+Then move by offset(0,0,0).
+Stage 3 complete.
+
+---  SECTION 4 – Create chuck  ---
+Create primitive cylinder with size Ø0.03×0.05 m and name it chuck.
+Rotate chuck so its +Z axis aligns +Z (world).
+Align chuck.center to main_body.chuck_mount.center.
+Align chuck.bottom_face to main_body.chuck_mount.top_face.
+Then move by offset(0,0,0).
+Stage 4 complete.
+
+---  SECTION 5 – Create battery_compartment  ---
+Create primitive cylinder with size Ø0.04×0.10 m and name it battery_compartment.
+Rotate battery_compartment so its +Z axis aligns +Z (world).
+Align battery_compartment.center to main_body.battery_mount.center.
+Align battery_compartment.top_face to main_body.battery_mount.bottom_face.
+Then move by offset(0,0,0).
+Stage 5 complete.
+
+---  SECTION 6 – Create battery_cap  ---
+Create primitive cylinder with size Ø0.04×0.01 m and name it battery_cap.
+Rotate battery_cap so its +Z axis aligns +Z (world).
+Align battery_cap.center to battery_compartment.center.
+Align battery_cap.bottom_face to battery_compartment.top_face.
+Then move by offset(0,0,0).
+Stage 6 complete.
+
+All stages complete.

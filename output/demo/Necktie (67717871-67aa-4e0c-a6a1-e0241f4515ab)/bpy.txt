@@ -1,0 +1,199 @@
+import bpy
+import bmesh
+from mathutils import Vector, Matrix
+from math import pi
+
+# --- Helper Functions ---
+
+def make_material(name, diffuse_color):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs['Base Color'].default_value = diffuse_color
+    return mat
+
+def add_cube(name, size, location, rotation_euler, material=None):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (size[0], size[1], size[2])
+    obj.rotation_euler = rotation_euler
+    obj.location = location
+    if material:
+        obj.data.materials.append(material)
+    return obj
+
+def align_face_to_face(align_obj, anchor_obj, align_axis='Z', align_type='MIN'):
+    """
+    Aligns a face of align_obj to a face of anchor_obj.
+    align_axis: 'X', 'Y', or 'Z'
+    align_type: 'MIN' (negative side) or 'MAX' (positive side)
+    """
+    # Get world matrix of anchor object
+    anchor_mat = anchor_obj.matrix_world
+    align_mat = align_obj.matrix_world
+    
+    # Determine the normal vector of the face to align
+    if align_axis == 'X':
+        normal = Vector((1, 0, 0)) if align_type == 'MAX' else Vector((-1, 0, 0))
+    elif align_axis == 'Y':
+        normal = Vector((0, 1, 0)) if align_type == 'MAX' else Vector((0, -1, 0))
+    else: # Z
+        normal = Vector((0, 0, 1)) if align_type == 'MAX' else Vector((0, 0, -1))
+        
+    # Transform normal to world space
+    normal_world = normal @ align_mat.to_3x3()
+    
+    # Get the center of the face on the anchor object
+    # We assume the anchor object's local origin is at its geometric center.
+    # The face center in local space is half the size in the direction of the normal.
+    anchor_size = anchor_obj.dimensions
+    face_offset_local = Vector((0, 0, 0))
+    if align_axis == 'X':
+        face_offset_local.x = anchor_size.x / 2 if align_type == 'MAX' else -anchor_size.x / 2
+    elif align_axis == 'Y':
+        face_offset_local.y = anchor_size.y / 2 if align_type == 'MAX' else -anchor_size.y / 2
+    else:
+        face_offset_local.z = anchor_size.z / 2 if align_type == 'MAX' else -anchor_size.z / 2
+        
+    face_center_world = anchor_mat @ face_offset_local
+    
+    # The target position for the align_obj's face center
+    # align_obj's face center in local space
+    align_size = align_obj.dimensions
+    align_face_offset_local = Vector((0, 0, 0))
+    if align_axis == 'X':
+        align_face_offset_local.x = align_size.x / 2 if align_type == 'MAX' else -align_size.x / 2
+    elif align_axis == 'Y':
+        align_face_offset_local.y = align_size.y / 2 if align_type == 'MAX' else -align_size.y / 2
+    else:
+        align_face_offset_local.z = align_size.z / 2 if align_type == 'MAX' else -align_size.z / 2
+        
+    # We want align_obj's face center to be at face_center_world
+    # So align_obj's origin should be at: face_center_world - (align_face_offset_local transformed by rotation)
+    # Since we are keeping rotation fixed for now, we just subtract the local offset rotated by current rotation.
+    # However, simpler approach: Move align_obj so its face center matches anchor face center.
+    
+    # Current align_obj face center in world
+    current_align_face_center_world = align_mat @ align_face_offset_local
+    
+    # Displacement needed
+    displacement = face_center_world - current_align_face_center_world
+    
+    align_obj.location += displacement
+
+def apply_offset(obj, offset_vector):
+    obj.location += offset_vector
+
+# --- Block 0: Scene Reset & Units ---
+
+# Delete all existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_all(action='ALL')
+bpy.ops.object.delete(use_global=False)
+
+# Set units to metres
+bpy.context.scene.unit_settings.scale_length = 1.0
+
+# --- Block 1: Materials ---
+
+mat_fabric_black = make_material("fabric_black", (0.05, 0.05, 0.05, 1.0))
+mat_fabric_lining = make_material("fabric_lining", (0.1, 0.1, 0.1, 1.0))
+
+# --- Block 2: Geometry Generation ---
+
+# SECTION 1 – Create blade_main
+# Size 0.150×0.001×0.750 m
+# Anchor to world origin
+blade_main = add_cube(
+    name="blade_main",
+    size=(0.150, 0.001, 0.750),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_fabric_black
+)
+
+# SECTION 2 – Create blade_taper
+# Size 0.150×0.001×0.200 m
+# Align bottom face to blade_main top face, then offset(0,0,0.750)
+# Note: The prompt says "Align... Then move by offset".
+# Aligning bottom to top means the bottom of blade_taper touches the top of blade_main.
+# blade_main top is at Z = 0.750/2 = 0.375.
+# blade_taper bottom is at Z = -0.200/2 = -0.100 (relative to its origin).
+# So blade_taper origin should be at Z = 0.375 - (-0.100) = 0.475.
+# Then offset(0,0,0.750) -> Z = 0.475 + 0.750 = 1.225.
+
+blade_taper = add_cube(
+    name="blade_taper",
+    size=(0.150, 0.001, 0.200),
+    location=(0, 0, 0), # Start at origin for alignment calculation
+    rotation_euler=(0, 0, 0),
+    material=mat_fabric_black
+)
+
+# Align blade_taper.bottom_face to blade_main.top_face
+# Align axis Z, align_type MIN (bottom) to MAX (top)
+align_face_to_face(blade_taper, blade_main, align_axis='Z', align_type='MIN')
+
+# Apply offset
+apply_offset(blade_taper, (0, 0, 0.750))
+
+# SECTION 3 – Create necktie_tape
+# Size 0.040×0.001×0.300 m
+# Align bottom to blade_main top, then offset(0,0,0.150)
+
+necktie_tape = add_cube(
+    name="necktie_tape",
+    size=(0.040, 0.001, 0.300),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_fabric_lining
+)
+
+align_face_to_face(necktie_tape, blade_main, align_axis='Z', align_type='MIN')
+apply_offset(necktie_tape, (0, 0, 0.150))
+
+# SECTION 4 – Create necktie_loop
+# Size 0.040×0.001×0.080 m
+# Align bottom to blade_main top, then offset(0,0,0.250)
+
+necktie_loop = add_cube(
+    name="necktie_loop",
+    size=(0.040, 0.001, 0.080),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_fabric_lining
+)
+
+align_face_to_face(necktie_loop, blade_main, align_axis='Z', align_type='MIN')
+apply_offset(necktie_loop, (0, 0, 0.250))
+
+# SECTION 5 – Create necktie_keeper
+# Size 0.040×0.001×0.050 m
+# Align bottom to blade_main top, then offset(0,0,0.350)
+
+necktie_keeper = add_cube(
+    name="necktie_keeper",
+    size=(0.040, 0.001, 0.050),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_fabric_lining
+)
+
+align_face_to_face(necktie_keeper, blade_main, align_axis='Z', align_type='MIN')
+apply_offset(necktie_keeper, (0, 0, 0.350))
+
+# SECTION 6 – Create necktie_tag
+# Size 0.020×0.001×0.030 m
+# Align bottom to blade_main top, then offset(0,0,0.450)
+
+necktie_tag = add_cube(
+    name="necktie_tag",
+    size=(0.020, 0.001, 0.030),
+    location=(0, 0, 0),
+    rotation_euler=(0, 0, 0),
+    material=mat_fabric_lining
+)
+
+align_face_to_face(necktie_tag, blade_main, align_axis='Z', align_type='MIN')
+apply_offset(necktie_tag, (0, 0, 0.450))

@@ -1,0 +1,1 @@
+Design a hoverboard meant for quick commutes. It should have a flat platform for standing and two wheels on either side. Add small LED lights on the front and back for visibility.
