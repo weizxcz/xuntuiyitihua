@@ -1,83 +1,31 @@
-# Dependencies
-node_modules/
-bower_components/
-jspm_packages/
+# ===== 产物 / 生成物（不提交） =====
+output/
+checkpoints/
+qwen3/
 
-# Build outputs
-dist/
-build/
-out/
-*.exe
-*.dll
-*.so
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Cache
-.cache/
-.temp/
-.tmp/
-
-# Python
+# ===== Python 缓存 =====
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-env/
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== 虚拟环境 =====
 venv/
-ENV/
+.venv/
+env/
 
-# Claude
-.claude/
+# ===== 本地配置（含绝对路径的敏感配置） =====
+config/system_config.json
 
-# Misc
-*.bak
-*.tmp
-
-# Internal business-logic notes (not to be tracked)
-YHCADLabeller-platfrom/doc/业务逻辑梳理.md
-YHCADLabeller-platfrom/doc/训练页面业务逻辑汇报.md
-
-# Model weights (large trained artifacts, excluded from repo; keep only source)
+# ===== 模型权重（大体积训练产物，不入库，仅保留源码） =====
 *.ckpt
 *.pt
 *.pth
 *.onnx
-
-# Frontend build cache (Next.js / Vite)
-.next/
-out/
-*.tsbuildinfo
-
-# Python caches / coverage (transient, never source)
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-
-# Virtual environments
-.venv/
